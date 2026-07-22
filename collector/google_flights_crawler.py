@@ -26,16 +26,20 @@ AIRPORT_CITY = {
 }
 
 
-def fetch_lowest_price(origin: str, destination: str, depart: date, return_: date, timeout_ms=25000):
-    """지정한 노선/날짜의 최저가(원)를 반환. 실패 시 None."""
+def build_booking_url(origin: str, destination: str, depart: date, return_: date) -> str:
+    """해당 노선/날짜로 사용자가 직접 예약을 확인할 수 있는 구글 플라이트 링크."""
     origin_city = AIRPORT_CITY.get(origin, origin)
     dest_city = AIRPORT_CITY.get(destination, destination)
-
     query = (
         f"Flights from {origin_city} to {dest_city} "
         f"on {depart.isoformat()} through {return_.isoformat()}"
     )
-    url = "https://www.google.com/travel/flights/search?q=" + query.replace(" ", "%20")
+    return "https://www.google.com/travel/flights/search?q=" + query.replace(" ", "%20")
+
+
+def fetch_lowest_price(origin: str, destination: str, depart: date, return_: date, timeout_ms=25000):
+    """지정한 노선/날짜의 최저가(원)를 반환. 실패 시 None."""
+    url = build_booking_url(origin, destination, depart, return_)
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
