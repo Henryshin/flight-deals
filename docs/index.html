@@ -1161,18 +1161,37 @@
       if (!t) { out.textContent = '토큰을 먼저 입력/저장하세요'; out.className = 'fail'; return; }
       out.textContent = '확인 중…';
       out.className = '';
+      const headers = { 'Authorization': 'Bearer ' + t, 'Accept': 'application/vnd.github+json' };
+
+      let res;
       try {
-        const res = await fetch(`${GH_API}/repos/${GITHUB_REPO}`, {
-          headers: { 'Authorization': 'Bearer ' + t, 'Accept': 'application/vnd.github+json' }
-        });
-        if (res.ok) { out.textContent = '연결 성공 ✓ 저장소 접근 가능'; out.className = 'ok'; }
-        else if (res.status === 401) { out.textContent = '실패: 토큰이 유효하지 않습니다'; out.className = 'fail'; }
-        else if (res.status === 404) { out.textContent = '실패: 저장소를 찾을 수 없습니다 (Repository access 확인)'; out.className = 'fail'; }
-        else { out.textContent = `실패: HTTP ${res.status}`; out.className = 'fail'; }
-      } catch (e) {
-        out.textContent = '실패: 네트워크 오류';
+        res = await fetch(`${GH_API}/repos/${GITHUB_REPO}`, { headers });
+      } catch (e) { out.textContent = '실패: 네트워크 오류'; out.className = 'fail'; return; }
+      if (!res.ok) {
+        if (res.status === 401) { out.textContent = '실패: 토큰이 유효하지 않습니다'; }
+        else if (res.status === 404) { out.textContent = '실패: 저장소를 찾을 수 없습니다 (Repository access 확인)'; }
+        else { out.textContent = `실패: HTTP ${res.status}`; }
         out.className = 'fail';
+        return;
       }
+
+      // 기본 저장소 접근은 Metadata: Read만 있어도 성공하므로, 실제로 쓰는
+      // Contents / Actions 권한을 각각 개별 확인해야 등록·수집 실행 시 403이 나는 걸 미리 잡을 수 있음.
+      const [contentsRes, actionsRes] = await Promise.all([
+        fetch(`${GH_API}/repos/${GITHUB_REPO}/contents/data/routes.json?ref=main`, { headers }),
+        fetch(`${GH_API}/repos/${GITHUB_REPO}/actions/workflows/collect.yml`, { headers }),
+      ]);
+
+      const parts = ['저장소 접근 ✓'];
+      let ok = true;
+      if (contentsRes.ok) parts.push('Contents 권한 ✓');
+      else { parts.push(`Contents 권한 ✗ (HTTP ${contentsRes.status})`); ok = false; }
+      if (actionsRes.ok) parts.push('Actions 권한 ✓');
+      else { parts.push(`Actions 권한 ✗ (HTTP ${actionsRes.status})`); ok = false; }
+
+      out.textContent = (ok ? '연결 성공 ✓ ' : '일부 권한 누락 — ') + parts.join(' · ') +
+        (ok ? '' : ' → 토큰 설정에서 Contents/Actions를 Read and write로 다시 확인하세요.');
+      out.className = ok ? 'ok' : 'fail';
     }
 
     // ===================== 이벤트 연결 / 초기화 =====================
