@@ -37,7 +37,7 @@ AIRPORT_CITY = {
     "ICN": "Seoul",
     "NRT": "Tokyo",
     "KIX": "Osaka",
-    "DAD": "Da Nang",
+    "DAD": "Da Nang International Airport",  # "Da Nang"만 쓰면 구글이 '살펴보기' 랜딩으로 빠져 결과 0건
     "DPS": "Bali",
     "ULN": "Ulaanbaatar",
     "PVG": "Shanghai",
