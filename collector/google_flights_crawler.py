@@ -37,7 +37,7 @@ def build_booking_url(origin: str, destination: str, depart: date, return_: date
     dest_city = AIRPORT_CITY.get(destination, destination)
     query = (
         f"Flights from {origin_city} to {dest_city} "
-        f"on {depart.isoformat()} through {return_.isoformat()}"
+        f"on {depart.isoformat()} returning {return_.isoformat()}"
     )
     return "https://www.google.com/travel/flights/search?q=" + query.replace(" ", "%20")
 
