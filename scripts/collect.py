@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from collector.google_flights_crawler import fetch_lowest_price
+from collector.google_flights_crawler import CrawlerSessionError, PriceCrawlerSession
 from holidays import date_range_candidates, get_holiday_windows
 
 ROOT = Path(__file__).parent.parent
@@ -34,27 +34,45 @@ def build_date_candidates():
     return candidates
 
 
+def fetch_price_with_retry(session, *args, **kwargs):
+    """개별 쿼리 수행. 브라우저 세션이 죽었으면 한 번 재시작해 재시도하고,
+    그래도 죽으면 해당 쿼리는 건너뜀(None)."""
+    try:
+        return session.fetch_lowest_price(*args, **kwargs)
+    except CrawlerSessionError as e:
+        print(f"  브라우저 세션 오류({e}) -> 세션 재시작 후 재시도")
+        session.restart()
+        try:
+            return session.fetch_lowest_price(*args, **kwargs)
+        except CrawlerSessionError as e2:
+            print(f"  세션 재시작 후에도 실패({e2}) -> 이번 쿼리 건너뜀")
+            return None
+
+
 def main():
     routes = json.loads(ROUTES_FILE.read_text(encoding="utf-8"))
     candidates = build_date_candidates()
     collected_at = date.today().isoformat()
 
     rows = []
-    for route in routes:
-        for depart, return_, is_holiday in candidates:
-            price = fetch_lowest_price(
-                route["origin"], route["destination"], depart, return_,
-                origin_city=route.get("origin_city"), dest_city=route.get("destination_city"),
-            )
-            if price is None:
-                print(f"  {route['origin']}->{route['destination']} {depart}~{return_}: 실패")
-                continue
-            print(f"  {route['origin']}->{route['destination']} {depart}~{return_}: {price}원")
-            rows.append([
-                route["origin"], route["destination"],
-                depart.isoformat(), return_.isoformat(),
-                price, int(is_holiday), collected_at,
-            ])
+    # 실행 전체가 브라우저 하나를 재사용 (쿼리마다 크로미움 기동 비용을 내지 않음).
+    with PriceCrawlerSession() as session:
+        for route in routes:
+            for depart, return_, is_holiday in candidates:
+                price = fetch_price_with_retry(
+                    session,
+                    route["origin"], route["destination"], depart, return_,
+                    origin_city=route.get("origin_city"), dest_city=route.get("destination_city"),
+                )
+                if price is None:
+                    print(f"  {route['origin']}->{route['destination']} {depart}~{return_}: 실패")
+                    continue
+                print(f"  {route['origin']}->{route['destination']} {depart}~{return_}: {price}원")
+                rows.append([
+                    route["origin"], route["destination"],
+                    depart.isoformat(), return_.isoformat(),
+                    price, int(is_holiday), collected_at,
+                ])
 
     if not rows:
         print("수집된 가격 없음")

@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Weekly Ops Report</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='2' fill='%23217346'/%3E%3Ctext x='8' y='12' font-size='10' font-weight='bold' text-anchor='middle' fill='white' font-family='Arial'%3EX%3C/text%3E%3C/svg%3E" />
+<style>
+  :root {
+    --excel-green: #217346;
+    --grid: #d0d7de;
+    --bg: #f3f2f1;
+    --sheet: #ffffff;
+    --text: #1f2328;
+    --muted: #6e7781;
+    --sel: #caf0d8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Calibri, "맑은 고딕", Arial, sans-serif;
+    background: var(--bg); color: var(--text);
+    margin: 0; font-size: 12.5px;
+    padding-bottom: 34px;
+  }
+  [hidden] { display: none !important; }
+
+  /* fake ribbon */
+  .ribbon-tabs { background: var(--excel-green); color: #fff; padding: 5px 14px 0; font-size: 12px; display: flex; gap: 18px; overflow-x: auto; }
+  .ribbon-tabs span { padding: 5px 4px; opacity: 0.75; white-space: nowrap; }
+  .ribbon-tabs span.active { opacity: 1; border-bottom: 2px solid #fff; font-weight: 600; }
+  .ribbon-toolbar { background: #fafafa; border-bottom: 1px solid var(--grid); padding: 5px 14px; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .rt-sep { width: 1px; height: 16px; background: var(--grid); }
+  .rt-btn {
+    font-family: inherit; font-size: 11px; padding: 2px 9px; cursor: pointer;
+    border: 1px solid var(--grid); border-radius: 2px; background: #fff; color: var(--text);
+  }
+  .rt-btn:hover { background: var(--sel); border-color: var(--excel-green); }
+  .rt-btn:disabled { opacity: .55; cursor: default; }
+  .rt-fresh { font-size: 11px; color: var(--muted); }
+  .rt-right { margin-left: auto; }
+  .formula-bar { background: #fff; border-bottom: 1px solid var(--grid); padding: 4px 14px; font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .formula-bar .cellref { border: 1px solid var(--grid); background: #fff; padding: 1px 8px; font-weight: 600; color: var(--text); border-radius: 2px; min-width: 46px; text-align: center; }
+  .formula-bar .fx { color: var(--excel-green); font-style: italic; font-weight: 700; }
+  .formula-bar .formula-text { color: var(--text); font-family: Consolas, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .sheet-wrap { padding: 18px 22px; }
+
+  .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin-bottom: 16px; }
+  h1 { font-size: 15px; font-weight: 700; margin: 0 0 2px; }
+  .sub { color: var(--muted); font-size: 11px; }
+  .note { background: #fffbe6; border: 1px solid #e8d98a; border-radius: 2px; padding: 6px 10px; font-size: 10.5px; color: #6b5c1f; margin-bottom: 16px; }
+
+  h2 {
+    font-size: 12px; font-weight: 700; margin: 20px 0 0; color: #fff; background: var(--excel-green);
+    padding: 5px 10px; border: 1px solid #1a5c38;
+  }
+
+  .tbl-wrap { overflow-x: auto; background: var(--sheet); border-bottom: 1px solid var(--grid); }
+  table.sheet { width: 100%; border-collapse: collapse; background: var(--sheet); table-layout: fixed; }
+  table.sheet.wide { min-width: 1080px; }
+  table.sheet th, table.sheet td {
+    border: 1px solid var(--grid); padding: 6px 9px; font-size: 11.5px; text-align: left;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  table.sheet th { background: #eaf3ee; color: #14532d; font-weight: 700; }
+  table.sheet tbody tr:nth-child(even) td { background: #f8faf9; }
+  table.sheet tbody tr:hover td { background: var(--sel); }
+  table.sheet a { color: #0b5cab; text-decoration: none; }
+  table.sheet a:hover { text-decoration: underline; }
+  .empty-row td { color: var(--muted); text-align: center; padding: 18px; font-style: italic; }
+  .cell-sub { display: block; color: var(--muted); font-size: 10px; font-family: Calibri, "맑은 고딕", Arial, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .badge-dday { display: inline-block; background: #b3261e; color: #fff; font-size: 9.5px; padding: 1px 5px; border-radius: 2px; margin-left: 4px; font-weight: 700; font-family: Consolas, monospace; }
+
+  .conf { font-weight: 700; white-space: nowrap; cursor: help; }
+  .conf.high { color: #217346; }
+  .conf.med { color: #c9a227; }
+  .conf.low { color: #6e7781; font-weight: 400; }
+
+  .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; }
+  .status-dot.ok { background: #217346; }
+  .status-dot.waiting { background: #c9a227; }
+
+  .x-btn {
+    background: none; border: none; cursor: pointer; padding: 0 2px; font-size: 12px; line-height: 1;
+    font-family: inherit; vertical-align: middle; color: #b7bcc4; font-weight: 700;
+  }
+  .x-btn:hover { color: #b3261e; }
+
+  /* calendar styled as a mini worksheet */
+  .calendar { background: var(--sheet); border: 1px solid var(--grid); width: 236px; flex-shrink: 0; }
+  .cal-head { display: flex; align-items: center; justify-content: space-between; background: #eaf3ee; border-bottom: 1px solid var(--grid); padding: 4px 8px; }
+  .cal-head button { background: none; border: none; cursor: pointer; color: #14532d; font-size: 12px; padding: 0 4px; font-weight: 700; }
+  .cal-head button:hover { color: var(--excel-green); }
+  .cal-title { font-size: 11.5px; font-weight: 700; color: #14532d; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+  .cal-grid .dow { font-size: 9.5px; color: var(--muted); text-align: center; padding: 2px 0; border: 1px solid var(--grid); background: #fafafa; }
+  .cal-grid .day { font-size: 10.5px; text-align: center; padding: 3px 0 6px; border: 1px solid var(--grid); color: var(--text); position: relative; }
+  .cal-grid .day.blank { background: #fafafa; }
+  .cal-grid .day.sat { color: #0b5cab; }
+  .cal-grid .day.sun, .cal-grid .day.holiday { color: #b3261e; }
+  .cal-grid .day.today { background: var(--excel-green); color: white; font-weight: 700; }
+  .cal-grid .day.holiday:not(.today) { background: #fdecea; }
+  .cal-grid .day.has-evt { font-weight: 700; cursor: help; }
+  .evt-dot { position: absolute; left: 50%; transform: translateX(-50%); bottom: 1px; width: 4px; height: 4px; border-radius: 50%; background: #e8a500; }
+  .day.today .evt-dot { background: #fff; }
+  .cal-evts { border-top: 1px solid var(--grid); background: #fafafa; padding: 5px 8px; }
+  .cal-evts-cap { font-size: 9.5px; color: var(--muted); font-weight: 700; margin-bottom: 2px; }
+  .cal-evt { font-size: 10px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cal-evt.none { color: var(--muted); font-style: italic; }
+
+  #generated-at { color: var(--muted); font-size: 10px; margin-top: 18px; padding: 0 22px 16px; }
+
+  /* filter chips */
+  .chip-bar { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; margin: 16px 0 0; background: #fafafa; border: 1px solid var(--grid); padding: 8px 10px; }
+  .chip-bar .chip-cap { color: var(--muted); font-size: 11px; padding-top: 3px; }
+  #chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-family: inherit; font-size: 11px; padding: 2px 9px; cursor: pointer;
+    border: 1px solid var(--grid); border-radius: 2px; background: #fff; color: var(--text);
+  }
+  .chip:hover { border-color: var(--excel-green); }
+  .chip.active {
+    background: #c8e6d4; border-color: var(--excel-green); color: #14532d; font-weight: 700;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.18);
+  }
+
+  /* excel-style dialog */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 100;
+    display: flex; align-items: flex-start; justify-content: center; padding: 8vh 12px 0;
+  }
+  .excel-dialog {
+    background: #f3f2f1; border: 1px solid #8a8886; box-shadow: 0 6px 22px rgba(0,0,0,0.35);
+    width: 500px; max-width: 96vw; font-size: 11.5px;
+  }
+  .excel-dialog.small { width: 340px; }
+  .dlg-title { background: var(--excel-green); color: #fff; padding: 6px 10px; font-weight: 700; font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+  .dlg-title button { background: none; border: none; color: #fff; cursor: pointer; font-size: 12px; font-family: inherit; padding: 0 2px; }
+  .dlg-body { padding: 12px 14px; line-height: 1.55; max-height: 66vh; overflow-y: auto; }
+  .dlg-body a { color: #0b5cab; }
+  .dlg-btns { display: flex; gap: 8px; justify-content: flex-end; padding: 10px 14px; border-top: 1px solid var(--grid); background: #fafafa; }
+  .dlg-btns button {
+    min-width: 74px; padding: 4px 10px; border: 1px solid #8a8886; background: #fff;
+    cursor: pointer; font-size: 11.5px; border-radius: 2px; font-family: inherit;
+  }
+  .dlg-btns button:hover { background: var(--sel); }
+  .dlg-btns button.primary { background: var(--excel-green); border-color: #1a5c38; color: #fff; }
+  .dlg-btns button.primary:hover { background: #1a5c38; }
+  #confirm-msg { white-space: pre-line; }
+
+  .frm-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .frm-row label { width: 72px; color: var(--muted); flex-shrink: 0; font-size: 11px; }
+  .frm-row input, .frm-row select {
+    flex: 1; min-width: 0; font-family: inherit; font-size: 11.5px; padding: 4px 7px;
+    border: 1px solid var(--grid); border-radius: 2px; background: #fff; color: var(--text);
+  }
+  .frm-row select.short { flex: 0 0 110px; }
+
+  /* toast */
+  #toast-wrap { position: fixed; right: 16px; bottom: 44px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    background: #fff; border: 1px solid var(--grid); border-left: 4px solid var(--excel-green);
+    padding: 8px 14px; font-size: 11.5px; box-shadow: 0 3px 12px rgba(0,0,0,0.18);
+    max-width: 320px; animation: toast-in .22s ease;
+  }
+  .toast.err { border-left-color: #b3261e; }
+  .toast.out { opacity: 0; transition: opacity .4s; }
+  @keyframes toast-in { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  /* excel sheet-tab bar */
+  .sheet-tabs {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
+    display: flex; align-items: stretch;
+    background: #e7e6e5; border-top: 1px solid #b9b7b5;
+    height: 28px; padding: 0 4px; overflow-x: auto; overflow-y: hidden;
+  }
+  .st-nav, .st-plus { align-self: center; color: #6e7781; font-size: 9px; padding: 0 8px; letter-spacing: 3px; user-select: none; white-space: nowrap; }
+  .st-plus { font-size: 12px; letter-spacing: 0; cursor: default; }
+  .sheet-tab {
+    display: flex; align-items: center; padding: 0 16px; margin-right: 1px;
+    font-size: 11.5px; color: #444; text-decoration: none; white-space: nowrap;
+    border-left: 1px solid #c9c7c5; border-right: 1px solid #c9c7c5;
+  }
+  .sheet-tab:hover { background: #f0efee; }
+  .sheet-tab.active {
+    background: #fff; color: var(--excel-green); font-weight: 700;
+    margin-top: -1px; border-top: 1px solid #fff;
+    border-bottom: 2px solid var(--excel-green);
+  }
+
+  @media (max-width: 760px) {
+    .sheet-wrap { padding: 12px 10px; }
+    .topbar { flex-direction: column; }
+    .calendar { width: 100%; max-width: 300px; }
+    #generated-at { padding: 0 10px 16px; }
+  }
+</style>
+</head>
+<body>
+  <div class="ribbon-tabs">
+    <span>파일</span><span class="active">홈</span><span>삽입</span><span>페이지 레이아웃</span><span>데이터</span><span>검토</span><span>보기</span>
+  </div>
+  <div class="ribbon-toolbar">
+    <span>Calibri · 11 · 표준 · 일반</span>
+    <span class="rt-sep"></span>
+    <button class="rt-btn" id="btn-add-event" title="정기 특가 이벤트 추가">➕ 이벤트 추가</button>
+    <span class="rt-fresh" id="freshness"></span>
+  </div>
+  <div class="formula-bar">
+    <span class="cellref">A1</span>
+    <span class="fx">fx</span>
+    <span class="formula-text">=PROMO_CALENDAR()</span>
+  </div>
+
+  <div class="sheet-wrap">
+    <div class="topbar">
+      <div>
+        <h1>항공사 정기 특가 일정</h1>
+        <div class="sub" id="updated-sub">국내 항공사 정기·반복 특가 이벤트 정리</div>
+      </div>
+      <div class="calendar" id="calendar"></div>
+    </div>
+
+    <div class="note" id="disclaimer"></div>
+
+    <div class="chip-bar">
+      <span class="chip-cap">항공사</span>
+      <div id="chip-row"></div>
+    </div>
+
+    <h2>정기 특가 이벤트</h2>
+    <div class="tbl-wrap">
+      <table class="sheet wide">
+        <thead>
+          <tr>
+            <th style="width:9%">항공사</th>
+            <th style="width:13%">이벤트명</th>
+            <th style="width:17%">주기</th>
+            <th style="width:15%">다음 예상 시기</th>
+            <th style="width:17%">할인 수준</th>
+            <th style="width:12%">조건</th>
+            <th style="width:7%">신뢰도</th>
+            <th style="width:7%">링크</th>
+            <th style="width:3%"></th>
+          </tr>
+        </thead>
+        <tbody id="promo-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="generated-at"></div>
+
+  <!-- 시트 탭 바 -->
+  <div class="sheet-tabs">
+    <span class="st-nav">◄ ►</span>
+    <a class="sheet-tab" href="index.html">Report</a>
+    <a class="sheet-tab active" href="events.html">일정</a>
+    <span class="st-plus" title="새 시트">＋</span>
+  </div>
+
+  <!-- 이벤트 추가 dialog -->
+  <div class="modal-backdrop" id="add-backdrop" hidden>
+    <div class="excel-dialog">
+      <div class="dlg-title"><span>이벤트 추가</span><button id="add-x" title="닫기">✕</button></div>
+      <div class="dlg-body">
+        <div class="frm-row">
+          <label for="f-airline">항공사</label>
+          <select id="f-airline"></select>
+        </div>
+        <div id="f-custom-wrap" hidden>
+          <div class="frm-row"><label for="f-airline-name">항공사명</label><input id="f-airline-name" placeholder="예: 플라이강원" /></div>
+          <div class="frm-row"><label for="f-airline-home">홈페이지</label><input id="f-airline-home" placeholder="https://..." /></div>
+        </div>
+        <div class="frm-row"><label for="f-name">이벤트명</label><input id="f-name" placeholder="예: OO 특가" /></div>
+        <div class="frm-row"><label for="f-cadence">주기 텍스트</label><input id="f-cadence" placeholder="예: 연 2회, 2월·7월 오픈" /></div>
+        <div class="frm-row">
+          <label for="f-rtype">반복 유형</label>
+          <select id="f-rtype" class="short">
+            <option value="semiannual">연 2회</option>
+            <option value="annual">연 1회</option>
+            <option value="quarterly">분기</option>
+            <option value="monthly">매월</option>
+            <option value="weekly">매주</option>
+            <option value="irregular" selected>부정기</option>
+          </select>
+          <select id="f-dow" class="short">
+            <option value="">요일 없음</option>
+            <option value="0">월요일</option>
+            <option value="1">화요일</option>
+            <option value="2">수요일</option>
+            <option value="3">목요일</option>
+            <option value="4">금요일</option>
+            <option value="5">토요일</option>
+            <option value="6">일요일</option>
+          </select>
+        </div>
+        <div class="frm-row"><label for="f-months">개최 월</label><input id="f-months" placeholder="예: 2,7 (쉼표 구분 · 없으면 비움)" /></div>
+        <div class="frm-row"><label for="f-detail">상세</label><input id="f-detail" placeholder="예: 오픈 오전 10시, 약 1주일 진행" /></div>
+        <div class="frm-row"><label for="f-discount">할인</label><input id="f-discount" placeholder="예: 최대 90%, 편도 총액 2만원대~" /></div>
+        <div class="frm-row"><label for="f-req">조건</label><input id="f-req" placeholder="예: 회원 가입 필요" /></div>
+        <div class="frm-row"><label for="f-notes">메모</label><input id="f-notes" /></div>
+        <div class="frm-row"><label for="f-link">링크</label><input id="f-link" placeholder="출처 URL (쉼표로 여러 개 가능)" /></div>
+      </div>
+      <div class="dlg-btns">
+        <button id="btn-add-save" class="primary">추가</button>
+        <button id="btn-add-cancel">취소</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 토큰 미등록 안내 dialog -->
+  <div class="modal-backdrop" id="notice-backdrop" hidden>
+    <div class="excel-dialog small">
+      <div class="dlg-title"><span>연결 필요</span><button id="notice-x" title="닫기">✕</button></div>
+      <div class="dlg-body">
+        GitHub 연결 토큰이 등록되어 있지 않습니다.<br />
+        <b>Report</b> 시트의 ⚙️ 설정에서 토큰을 한 번만 등록하면 두 시트에서 모두 사용됩니다.
+      </div>
+      <div class="dlg-btns">
+        <button id="notice-goto" class="primary">Report 시트로 이동</button>
+        <button id="notice-close">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- confirm dialog -->
+  <div class="modal-backdrop" id="confirm-backdrop" hidden>
+    <div class="excel-dialog small">
+      <div class="dlg-title"><span>Microsoft Excel</span></div>
+      <div class="dlg-body" id="confirm-msg"></div>
+      <div class="dlg-btns">
+        <button id="confirm-yes" class="primary">예(Y)</button>
+        <button id="confirm-no">아니요(N)</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-wrap"></div>
+
+  <script>
+    // ===================== 상수 / 공통 헬퍼 =====================
+    const cacheBust = `?t=${Date.now()}`;
+    const GITHUB_REPO = 'Henryshin/flight-deals';
+    const GH_API = 'https://api.github.com';
+    const TOKEN_KEY = 'fd_gh_token'; // Report 시트와 공유
+    const PROMOS_API_PATH = 'docs/data/promos.json';
+    const DOW_KO = ['월', '화', '수', '목', '금', '토', '일']; // recurrence.day_of_week: 0=월요일
+
+    const state = {
+      airlines: [],
+      updatedAt: '',
+      disclaimer: '',
+      loadFailed: false,
+      chip: '' // '' = 전체, 그 외 = 항공사명
+    };
+    let holidaySet = new Set();
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function emptyRow(colspan, msg) {
+      return `<tr class="empty-row"><td colspan="${colspan}">${esc(msg)}</td></tr>`;
+    }
+    function getToken() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
+
+    // ===================== 토스트 / confirm =====================
+    function toast(msg, type) {
+      const wrap = document.getElementById('toast-wrap');
+      const t = document.createElement('div');
+      t.className = 'toast' + (type === 'err' ? ' err' : '');
+      t.textContent = msg;
+      wrap.appendChild(t);
+      setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 450); }, 3800);
+    }
+
+    let confirmResolve = null;
+    function excelConfirm(msg) {
+      return new Promise(resolve => {
+        confirmResolve = resolve;
+        document.getElementById('confirm-msg').textContent = msg;
+        document.getElementById('confirm-backdrop').hidden = false;
+        document.getElementById('confirm-yes').focus();
+      });
+    }
+    function confirmAnswer(v) {
+      document.getElementById('confirm-backdrop').hidden = true;
+      if (confirmResolve) { const r = confirmResolve; confirmResolve = null; r(v); }
+    }
+
+    // ===================== GitHub API =====================
+    function b64EncodeUtf8(str) {
+      const bytes = new TextEncoder().encode(str);
+      let bin = '';
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      return btoa(bin);
+    }
+    function b64DecodeUtf8(b64) {
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return new TextDecoder('utf-8').decode(bytes);
+    }
+    function ghHeaders() {
+      return { 'Authorization': 'Bearer ' + getToken(), 'Accept': 'application/vnd.github+json' };
+    }
+    function ghError(status) { const e = new Error('GitHub API HTTP ' + status); e.status = status; return e; }
+    function handleGhError(e) {
+      const s = e && e.status;
+      if (s === 401) toast('토큰이 유효하지 않습니다. Report 시트의 ⚙️ 설정에서 토큰을 다시 등록하세요.', 'err');
+      else if (s === 403) toast('권한이 없습니다. 토큰 권한(Contents Read and write)을 확인하세요.', 'err');
+      else if (s === 404) toast('저장소 또는 파일을 찾을 수 없습니다. 토큰의 Repository access를 확인하세요.', 'err');
+      else if (s === 409 || s === 422) toast('저장 중 충돌이 발생했습니다. 잠시 후 다시 시도하세요.', 'err');
+      else toast('요청 실패: ' + (s || (e && e.message) || '네트워크 오류'), 'err');
+    }
+    async function ghGetPromos() {
+      const res = await fetch(`${GH_API}/repos/${GITHUB_REPO}/contents/${PROMOS_API_PATH}?ref=main`, { headers: ghHeaders() });
+      if (!res.ok) throw ghError(res.status);
+      const j = await res.json();
+      const data = JSON.parse(b64DecodeUtf8(String(j.content || '').replace(/\s/g, '')));
+      return { data, sha: j.sha };
+    }
+    async function ghPutPromos(data, sha, message) {
+      const body = {
+        message,
+        content: b64EncodeUtf8(JSON.stringify(data, null, 2) + '\n'),
+        sha,
+        branch: 'main'
+      };
+      const res = await fetch(`${GH_API}/repos/${GITHUB_REPO}/contents/${PROMOS_API_PATH}`, {
+        method: 'PUT',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, ghHeaders()),
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw ghError(res.status);
+    }
+
+    // ===================== 다음 예상 시기 계산 =====================
+    // rec.day_of_week: 0=월요일 … 6=일요일 (promos.json 컨벤션)
+    // 반환: { text, date: 'YYYY-MM-DD'|null, dday: number|null }
+    function nextOccurrence(rec, lastSeen, now) {
+      const base = now || new Date();
+      const today = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+      const fmtD = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const ddayOf = d => Math.round((d.getTime() - today.getTime()) / 86400000);
+      const out = { text: '—', date: null, dday: null };
+      if (!rec || !rec.type) return out;
+
+      if (rec.type === 'irregular') {
+        out.text = `부정기 (마지막 확인: ${lastSeen || '미상'})`;
+        return out;
+      }
+
+      const hasDow = typeof rec.day_of_week === 'number';
+      const jsDow = hasDow ? (rec.day_of_week + 1) % 7 : null; // JS getDay(): 0=일
+
+      if (rec.type === 'weekly' && hasDow) {
+        const d = new Date(today);
+        d.setDate(d.getDate() + (jsDow - d.getDay() + 7) % 7);
+        out.date = fmtD(d);
+        out.dday = ddayOf(d);
+        out.text = `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${DOW_KO[rec.day_of_week % 7]})`;
+        return out;
+      }
+
+      const months = Array.isArray(rec.months) && rec.months.length
+        ? [...new Set(rec.months)].sort((a, b) => a - b) : null;
+      const y = today.getFullYear();
+      const m = today.getMonth() + 1;
+
+      if (months) {
+        // 다음 회차 = 현재 달 이후(초과)의 첫 달, 없으면 이듬해 첫 달 (연말 롤오버)
+        let nm = months.find(mm => mm > m);
+        let ny = y;
+        if (nm == null) { nm = months[0]; ny = y + 1; }
+        out.text = `${ny}년 ${nm}월 예상`;
+        if (months.indexOf(m) >= 0) out.text = `이번 달(${m}월) 진행 가능 · 다음 ${out.text}`;
+        if (hasDow) {
+          // 요일 정보가 있으면 예상일(해당 월 첫 목표 요일)로 D-day 계산
+          let ty = ny, tm = nm;
+          if (months.indexOf(m) >= 0) { ty = y; tm = m; }
+          const first = new Date(ty, tm - 1, 1);
+          first.setDate(1 + (jsDow - first.getDay() + 7) % 7);
+          if (first.getTime() >= today.getTime()) {
+            out.date = fmtD(first);
+            out.dday = ddayOf(first);
+          }
+        }
+        return out;
+      }
+
+      if (rec.type === 'monthly') {
+        // 월말(25일~)이면 다음 달 회차로 안내 (연말 롤오버 포함)
+        let ny = y, nm = m, label = '(이번 달) ';
+        if (today.getDate() >= 25) {
+          nm = m === 12 ? 1 : m + 1;
+          ny = m === 12 ? y + 1 : y;
+          label = '';
+        }
+        out.text = `매월 · ${ny}년 ${nm}월 ${label}예상`;
+        return out;
+      }
+
+      return out;
+    }
+
+    // ===================== 필터 칩 =====================
+    function passChip(airline) { return !state.chip || state.chip === airline; }
+
+    function renderChips() {
+      const el = document.getElementById('chip-row');
+      const chip = (value, label) =>
+        `<button class="chip${(state.chip === value) ? ' active' : ''}" data-chip="${esc(value)}">${esc(label)}</button>`;
+      let html = chip('', '전체');
+      for (const al of state.airlines) html += chip(al.airline, `${al.airline}${al.iata ? ' (' + al.iata + ')' : ''}`);
+      el.innerHTML = html;
+    }
+
+    function onChipClick(ch) {
+      const value = ch.getAttribute('data-chip');
+      state.chip = (value && state.chip === value) ? '' : value;
+      renderChips();
+      renderTable();
+      renderCalendar();
+    }
+
+    // ===================== 메인 테이블 =====================
+    const CONF_MAP = {
+      high: ['high', '● 확인됨'],
+      medium: ['med', '◐ 추정'],
+      low: ['low', '○ 미확인']
+    };
+
+    function renderTable() {
+      const tbody = document.getElementById('promo-body');
+      if (state.loadFailed) {
+        tbody.innerHTML = emptyRow(9, 'data/promos.json 을 불러오지 못했습니다. 저장소의 docs/data/promos.json 파일을 확인하세요.');
+        return;
+      }
+      const now = new Date();
+      const rows = [];
+      for (const al of state.airlines) {
+        if (!passChip(al.airline)) continue;
+        for (const ev of (al.events || [])) {
+          const rec = ev.recurrence || {};
+          const nx = nextOccurrence(rec, ev.last_seen, now);
+          const dday = (nx.dday != null && nx.dday >= 0 && nx.dday <= 14)
+            ? ` <span class="badge-dday" title="예상일 ${esc(nx.date)}">${nx.dday === 0 ? 'D-DAY' : 'D-' + nx.dday}</span>` : '';
+          const detailSub = rec.detail
+            ? `<span class="cell-sub" title="${esc(rec.detail)}">${esc(rec.detail)}</span>` : '';
+          const srcTitle = (ev.sources && ev.sources.length)
+            ? '출처:\n' + ev.sources.join('\n') : '출처 미등록';
+          const cf = CONF_MAP[ev.confidence] || CONF_MAP.low;
+          const links = [];
+          if (al.homepage) links.push(`<a href="${esc(al.homepage)}" target="_blank" rel="noopener" title="${esc(al.airline)} 홈페이지">홈</a>`);
+          for (const s of (ev.sources || [])) {
+            links.push(`<a href="${esc(s)}" target="_blank" rel="noopener" title="${esc(s)}">📎</a>`);
+          }
+          rows.push(`
+            <tr>
+              <td title="${esc(al.airline)}">${esc(al.airline)}<span class="cell-sub">${esc(al.iata || '')}</span></td>
+              <td title="${esc(ev.notes || ev.name)}">${esc(ev.name)}</td>
+              <td title="${esc(ev.cadence_text || '')}">${esc(ev.cadence_text || '—')}</td>
+              <td title="${esc(nx.text)}">${esc(nx.text)}${dday}${detailSub}</td>
+              <td title="${esc(ev.discount_text || '')}">${esc(ev.discount_text || '—')}</td>
+              <td title="${esc(ev.requirements || '')}">${esc(ev.requirements || '—')}</td>
+              <td><span class="conf ${cf[0]}" title="${esc(srcTitle)}">${cf[1]}</span></td>
+              <td>${links.join(' ') || '<span class="cell-sub">—</span>'}</td>
+              <td style="text-align:center"><button class="x-btn" data-del-air="${esc(al.airline)}" data-del-evt="${esc(ev.name)}" title="이벤트 삭제">✕</button></td>
+            </tr>
+          `);
+        }
+      }
+      if (!rows.length) {
+        tbody.innerHTML = emptyRow(9, state.airlines.length
+          ? '조건에 맞는 이벤트가 없습니다. 필터를 해제해 보세요.'
+          : "등록된 이벤트가 없습니다. 상단 '➕ 이벤트 추가'로 등록하세요.");
+        return;
+      }
+      tbody.innerHTML = rows.join('');
+    }
+
+    // ===================== 미니 달력 =====================
+    let calYear, calMonth; // month: 0-11
+
+    // 표시 월(month0: 0-11)에서 날짜 단위로 계산 가능한 이벤트: day → [라벨]
+    function eventDayMap(year, month0) {
+      const map = new Map();
+      const daysInMonth = new Date(year, month0 + 1, 0).getDate();
+      for (const al of state.airlines) {
+        if (!passChip(al.airline)) continue;
+        for (const ev of (al.events || [])) {
+          const rec = ev.recurrence || {};
+          if (rec.type === 'irregular') continue;
+          if (typeof rec.day_of_week !== 'number') continue;
+          const months = Array.isArray(rec.months) && rec.months.length ? rec.months : null;
+          const inMonth = rec.type === 'weekly' ? true : (months ? months.indexOf(month0 + 1) >= 0 : false);
+          if (!inMonth) continue;
+          const jsDow = (rec.day_of_week + 1) % 7;
+          for (let d = 1; d <= daysInMonth; d++) {
+            if (new Date(year, month0, d).getDay() === jsDow) {
+              if (!map.has(d)) map.set(d, []);
+              map.get(d).push(`${al.airline} ${ev.name}`);
+            }
+          }
+        }
+      }
+      return map;
+    }
+
+    // 표시 월에 열릴 것으로 예상되는 이벤트 목록 (달 단위)
+    function monthEvents(year, month0) {
+      const out = [];
+      for (const al of state.airlines) {
+        if (!passChip(al.airline)) continue;
+        for (const ev of (al.events || [])) {
+          const rec = ev.recurrence || {};
+          const months = Array.isArray(rec.months) && rec.months.length ? rec.months : null;
+          const hit = rec.type === 'monthly' || rec.type === 'weekly' || (months && months.indexOf(month0 + 1) >= 0);
+          if (hit) out.push({ airline: al.airline, name: ev.name });
+        }
+      }
+      return out;
+    }
+
+    function renderCalendar() {
+      const el = document.getElementById('calendar');
+      const first = new Date(calYear, calMonth, 1);
+      const startDow = (first.getDay() + 6) % 7; // 월요일 시작
+      const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+      const today = new Date();
+      const isCurrentMonth = today.getFullYear() === calYear && today.getMonth() === calMonth;
+      const dayMap = eventDayMap(calYear, calMonth);
+
+      let cells = '';
+      for (let i = 0; i < startDow; i++) cells += '<div class="day blank"></div>';
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${calYear}-${pad(calMonth + 1)}-${pad(d)}`;
+        const dow = (startDow + d - 1) % 7;
+        const classes = ['day'];
+        if (dow === 5) classes.push('sat');
+        if (dow === 6) classes.push('sun');
+        if (holidaySet.has(dateStr)) classes.push('holiday');
+        if (isCurrentMonth && d === today.getDate()) classes.push('today');
+        const evts = dayMap.get(d);
+        if (evts) classes.push('has-evt');
+        const title = evts ? ` title="${esc(evts.join(', '))} 예상"` : '';
+        const dot = evts ? '<span class="evt-dot"></span>' : '';
+        cells += `<div class="${classes.join(' ')}"${title}>${d}${dot}</div>`;
+      }
+
+      const mev = monthEvents(calYear, calMonth);
+      const evtList = mev.length
+        ? mev.map(ev => `<div class="cal-evt" title="${esc(ev.airline)} ${esc(ev.name)}">· ${esc(ev.airline)} ${esc(ev.name)}</div>`).join('')
+        : '<div class="cal-evt none">이 달 예상 이벤트 없음</div>';
+
+      el.innerHTML = `
+        <div class="cal-head">
+          <button onclick="shiftMonth(-1)">‹</button>
+          <div class="cal-title">${calYear}.${pad(calMonth + 1)}</div>
+          <button onclick="shiftMonth(1)">›</button>
+        </div>
+        <div class="cal-grid">
+          <div class="dow">월</div><div class="dow">화</div><div class="dow">수</div>
+          <div class="dow">목</div><div class="dow">금</div><div class="dow">토</div><div class="dow">일</div>
+          ${cells}
+        </div>
+        <div class="cal-evts">
+          <div class="cal-evts-cap">${calMonth + 1}월 예상 이벤트</div>
+          ${evtList}
+        </div>
+      `;
+    }
+
+    function shiftMonth(delta) {
+      calMonth += delta;
+      if (calMonth < 0) { calMonth = 11; calYear -= 1; }
+      if (calMonth > 11) { calMonth = 0; calYear += 1; }
+      renderCalendar();
+    }
+    window.shiftMonth = shiftMonth;
+
+    // ===================== 기준일 표시 =====================
+    function renderMeta() {
+      const fresh = document.getElementById('freshness');
+      const foot = document.getElementById('generated-at');
+      const sub = document.getElementById('updated-sub');
+      if (state.loadFailed || !state.updatedAt) {
+        fresh.innerHTML = '<span class="status-dot waiting"></span>데이터 없음';
+        foot.textContent = '';
+        return;
+      }
+      fresh.innerHTML = `<span class="status-dot ok"></span>기준일: ${esc(state.updatedAt)}`;
+      sub.textContent = `국내 항공사 정기·반복 특가 이벤트 정리 · 기준일 ${state.updatedAt}`;
+      foot.textContent = `Data as of ${state.updatedAt} · 항공사 공지/보도 기준`;
+    }
+
+    // ===================== 이벤트 추가 =====================
+    function openTokenNotice() {
+      document.getElementById('notice-backdrop').hidden = false;
+    }
+    function closeTokenNotice() {
+      document.getElementById('notice-backdrop').hidden = true;
+    }
+
+    function openAddDialog() {
+      if (!getToken()) { openTokenNotice(); return; }
+      const sel = document.getElementById('f-airline');
+      let html = '';
+      for (const al of state.airlines) html += `<option value="${esc(al.airline)}">${esc(al.airline)}${al.iata ? ' (' + al.iata + ')' : ''}</option>`;
+      html += '<option value="__custom">직접입력…</option>';
+      sel.innerHTML = html;
+      document.getElementById('f-custom-wrap').hidden = sel.value !== '__custom';
+      document.getElementById('add-backdrop').hidden = false;
+      document.getElementById('f-name').focus();
+    }
+    function closeAddDialog() {
+      document.getElementById('add-backdrop').hidden = true;
+      ['f-airline-name', 'f-airline-home', 'f-name', 'f-cadence', 'f-months',
+       'f-detail', 'f-discount', 'f-req', 'f-notes', 'f-link'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('f-rtype').value = 'irregular';
+      document.getElementById('f-dow').value = '';
+      document.getElementById('f-custom-wrap').hidden = true;
+    }
+
+    function readAddForm() {
+      const selVal = document.getElementById('f-airline').value;
+      const custom = selVal === '__custom';
+      const airline = custom ? document.getElementById('f-airline-name').value.trim() : selVal;
+      const homepage = custom ? document.getElementById('f-airline-home').value.trim() : '';
+      const name = document.getElementById('f-name').value.trim();
+      if (!airline) { toast('항공사를 선택하거나 입력하세요', 'err'); return null; }
+      if (!name) { toast('이벤트명을 입력하세요', 'err'); return null; }
+      const rtype = document.getElementById('f-rtype').value;
+      const dowRaw = document.getElementById('f-dow').value;
+      if (rtype === 'weekly' && dowRaw === '') { toast("'매주' 유형은 요일을 선택하세요", 'err'); return null; }
+      const months = [...new Set(
+        document.getElementById('f-months').value.split(',')
+          .map(s => parseInt(s.trim(), 10))
+          .filter(n => Number.isInteger(n) && n >= 1 && n <= 12)
+      )].sort((a, b) => a - b);
+      const rec = { type: rtype };
+      if (months.length) rec.months = months;
+      if (dowRaw !== '') rec.day_of_week = parseInt(dowRaw, 10);
+      const detail = document.getElementById('f-detail').value.trim();
+      if (detail) rec.detail = detail;
+      const sources = document.getElementById('f-link').value.split(/[\s,]+/)
+        .map(s => s.trim()).filter(s => /^https?:\/\//.test(s));
+      const now = new Date();
+      return {
+        airline, homepage, custom,
+        event: {
+          name,
+          cadence_text: document.getElementById('f-cadence').value.trim(),
+          recurrence: rec,
+          discount_text: document.getElementById('f-discount').value.trim(),
+          requirements: document.getElementById('f-req').value.trim(),
+          notes: document.getElementById('f-notes').value.trim(),
+          confidence: 'medium',
+          last_seen: `${now.getFullYear()}-${pad(now.getMonth() + 1)}`,
+          sources
+        }
+      };
+    }
+
+    async function saveEventClicked() {
+      if (!getToken()) { openTokenNotice(); return; }
+      const form = readAddForm();
+      if (!form) return;
+      const btn = document.getElementById('btn-add-save');
+      btn.disabled = true;
+      btn.textContent = '저장 중…';
+      try {
+        const { data, sha } = await ghGetPromos();
+        if (!data || !Array.isArray(data.airlines)) throw new Error('promos.json 형식 오류');
+        let al = data.airlines.find(a => a.airline === form.airline);
+        if (!al) {
+          al = { airline: form.airline, iata: '', homepage: form.homepage || '', events: [] };
+          data.airlines.push(al);
+        }
+        if (!Array.isArray(al.events)) al.events = [];
+        if (al.events.some(ev => ev.name === form.event.name)) {
+          toast('이미 같은 이름의 이벤트가 있습니다', 'err');
+          return;
+        }
+        al.events.push(form.event);
+        data.updated_at = `${new Date().getFullYear()}-${pad(new Date().getMonth() + 1)}-${pad(new Date().getDate())}`;
+        await ghPutPromos(data, sha, `feat: add promo event ${form.airline} ${form.event.name}`);
+        // 낙관적 로컬 반영
+        state.airlines = data.airlines;
+        state.updatedAt = data.updated_at;
+        state.loadFailed = false;
+        toast('이벤트 추가 완료 ✓');
+        closeAddDialog();
+        renderAll();
+      } catch (e) {
+        handleGhError(e);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '추가';
+      }
+    }
+
+    // ===================== 이벤트 삭제 =====================
+    async function deleteEvent(airline, name) {
+      if (!getToken()) { openTokenNotice(); return; }
+      const ok = await excelConfirm(`'${airline} ${name}' 이벤트를 삭제할까요?\n(저장소의 docs/data/promos.json에서 제거됩니다)`);
+      if (!ok) return;
+      try {
+        const { data, sha } = await ghGetPromos();
+        if (!data || !Array.isArray(data.airlines)) throw new Error('promos.json 형식 오류');
+        const al = data.airlines.find(a => a.airline === airline);
+        if (!al || !(al.events || []).some(ev => ev.name === name)) {
+          toast('이미 삭제된 이벤트입니다', 'err');
+        } else {
+          al.events = al.events.filter(ev => ev.name !== name);
+          if (!al.events.length) data.airlines = data.airlines.filter(a => a !== al);
+          await ghPutPromos(data, sha, `feat: remove promo event ${airline} ${name}`);
+          toast('삭제 완료 ✓');
+        }
+        // 낙관적 로컬 반영
+        const localAl = state.airlines.find(a => a.airline === airline);
+        if (localAl) {
+          localAl.events = (localAl.events || []).filter(ev => ev.name !== name);
+          if (!localAl.events.length) state.airlines = state.airlines.filter(a => a !== localAl);
+        }
+        if (state.chip && !state.airlines.some(a => a.airline === state.chip)) state.chip = '';
+        renderAll();
+      } catch (e) {
+        handleGhError(e);
+      }
+    }
+
+    // ===================== 이벤트 연결 / 초기화 =====================
+    function renderAll() {
+      renderChips();
+      renderTable();
+      renderCalendar();
+      renderMeta();
+    }
+
+    function wireEvents() {
+      document.getElementById('btn-add-event').addEventListener('click', openAddDialog);
+      document.getElementById('btn-add-save').addEventListener('click', saveEventClicked);
+      document.getElementById('btn-add-cancel').addEventListener('click', closeAddDialog);
+      document.getElementById('add-x').addEventListener('click', closeAddDialog);
+      document.getElementById('add-backdrop').addEventListener('click', e => {
+        if (e.target === e.currentTarget) closeAddDialog();
+      });
+      document.getElementById('f-airline').addEventListener('change', e => {
+        document.getElementById('f-custom-wrap').hidden = e.target.value !== '__custom';
+      });
+      document.getElementById('notice-x').addEventListener('click', closeTokenNotice);
+      document.getElementById('notice-close').addEventListener('click', closeTokenNotice);
+      document.getElementById('notice-goto').addEventListener('click', () => { location.href = 'index.html'; });
+      document.getElementById('notice-backdrop').addEventListener('click', e => {
+        if (e.target === e.currentTarget) closeTokenNotice();
+      });
+      document.getElementById('confirm-yes').addEventListener('click', () => confirmAnswer(true));
+      document.getElementById('confirm-no').addEventListener('click', () => confirmAnswer(false));
+
+      // 동적 요소 이벤트 위임
+      document.addEventListener('click', e => {
+        const delBtn = e.target.closest('[data-del-air]');
+        if (delBtn) { deleteEvent(delBtn.getAttribute('data-del-air'), delBtn.getAttribute('data-del-evt')); return; }
+        const chipBtn = e.target.closest('[data-chip]');
+        if (chipBtn) { onChipClick(chipBtn); return; }
+      });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+          if (!document.getElementById('confirm-backdrop').hidden) confirmAnswer(false);
+          else if (!document.getElementById('add-backdrop').hidden) closeAddDialog();
+          else if (!document.getElementById('notice-backdrop').hidden) closeTokenNotice();
+        }
+      });
+    }
+
+    async function init() {
+      wireEvents();
+      const today = new Date();
+      calYear = today.getFullYear();
+      calMonth = today.getMonth();
+
+      let promos = null;
+      try {
+        const res = await fetch('data/promos.json' + cacheBust);
+        if (res.ok) promos = await res.json();
+      } catch (e) { /* 아래 실패 상태 처리 */ }
+      if (!promos || !Array.isArray(promos.airlines)) {
+        state.loadFailed = true;
+        state.airlines = [];
+      } else {
+        state.airlines = promos.airlines;
+        state.updatedAt = promos.updated_at || '';
+        state.disclaimer = promos.disclaimer || '';
+      }
+      try {
+        const res = await fetch('data/holidays.json' + cacheBust);
+        if (res.ok) {
+          const h = await res.json();
+          holidaySet = new Set(Array.isArray(h) ? h : []);
+        }
+      } catch (e) { /* 공휴일 표시는 선택 사항 */ }
+
+      document.getElementById('disclaimer').textContent = state.loadFailed
+        ? '데이터 파일(docs/data/promos.json)을 불러오지 못했습니다. 파일이 존재하는지 확인하세요.'
+        : (state.disclaimer || '일정·할인폭은 항공사 사정에 따라 변경될 수 있습니다.');
+
+      renderAll();
+    }
+
+    init();
+  </script>
+</body>
+</html>
