@@ -27,6 +27,11 @@
   .ribbon-tabs { background: var(--excel-green); color: #fff; padding: 5px 14px 0; font-size: 12px; display: flex; gap: 18px; overflow-x: auto; }
   .ribbon-tabs span { padding: 5px 4px; opacity: 0.75; white-space: nowrap; }
   .ribbon-tabs span.active { opacity: 1; border-bottom: 2px solid #fff; font-weight: 600; }
+  /* 상단 페이지 선택 바 (노선별 특가 현황 <-> 항공사 정기 특가 일정) */
+  .page-nav { display: flex; gap: 2px; background: #1a5c38; padding: 0 10px; overflow-x: auto; }
+  .page-nav a { padding: 7px 18px; font-size: 12px; color: #d8ebe0; text-decoration: none; border-radius: 3px 3px 0 0; white-space: nowrap; }
+  .page-nav a:hover { background: #22683f; color: #fff; }
+  .page-nav a.active { background: var(--bg); color: var(--excel-green); font-weight: 700; }
   .ribbon-toolbar { background: #fafafa; border-bottom: 1px solid var(--grid); padding: 5px 14px; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .rt-sep { width: 1px; height: 16px; background: var(--grid); }
   .rt-btn {
@@ -229,6 +234,10 @@
 <body>
   <div class="ribbon-tabs">
     <span>파일</span><span class="active">홈</span><span>삽입</span><span>페이지 레이아웃</span><span>데이터</span><span>검토</span><span>보기</span>
+  </div>
+  <div class="page-nav">
+    <a class="active" href="index.html">📋 노선별 특가 현황</a>
+    <a href="events.html">📅 항공사 정기 특가 일정</a>
   </div>
   <div class="ribbon-toolbar">
     <span>Calibri · 11 · 표준 · 일반</span>
