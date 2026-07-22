@@ -15,6 +15,11 @@ from playwright.sync_api import sync_playwright
 
 PRICE_PATTERN = re.compile(r"₩([0-9][0-9,]{2,})")
 
+# 결과 목록의 각 항공편은 <li> 안에 "...₩487,681 | 왕복" 형태로 총액이 들어있음.
+# body 전체 텍스트를 긁으면 날짜별 가격 캘린더 위젯 등 다른 요소의 가격까지 섞여
+# 실제보다 훨씬 낮은 값을 최저가로 잘못 고르는 문제가 있어, 결과 리스트 항목만 대상으로 함.
+ROUND_TRIP_MARKER = "왕복"
+
 # 구글 플라이트는 도시명을 인식하므로 IATA 공항 코드를 도시명으로 매핑.
 # routes.json 에 새 노선을 추가하면 이 표에도 도시명을 추가해야 함.
 AIRPORT_CITY = {
@@ -53,8 +58,16 @@ def fetch_lowest_price(origin: str, destination: str, depart: date, return_: dat
         try:
             page.goto(url, timeout=timeout_ms)
             page.wait_for_timeout(6000)
-            text = page.inner_text("body")
-            prices = [int(m.replace(",", "")) for m in PRICE_PATTERN.findall(text)]
+
+            prices = []
+            for li in page.query_selector_all("li"):
+                item_text = li.inner_text()
+                if ROUND_TRIP_MARKER not in item_text:
+                    continue
+                matches = PRICE_PATTERN.findall(item_text)
+                if matches:
+                    prices.append(int(matches[-1].replace(",", "")))
+
             if not prices:
                 return None
             return min(prices)

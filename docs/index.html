@@ -77,6 +77,24 @@
   .cal-grid .day.holiday:not(.today) { background: #fdecea; }
 
   #generated-at { color: var(--muted); font-size: 10px; margin-top: 18px; padding: 0 22px 16px; }
+
+  .toolbar-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: #fafafa; border: 1px solid var(--grid); border-top: none; padding: 8px 10px; }
+  .toolbar-row input, .toolbar-row select {
+    font-family: Calibri, "맑은 고딕", Arial, sans-serif; font-size: 11.5px; padding: 4px 7px;
+    border: 1px solid var(--grid); border-radius: 2px; background: #fff; color: var(--text);
+  }
+  .toolbar-row button {
+    font-size: 11.5px; padding: 4px 10px; border: 1px solid #1a5c38; border-radius: 2px;
+    background: var(--excel-green); color: #fff; cursor: pointer;
+  }
+  .toolbar-row button:hover { background: #1a5c38; }
+  .toolbar-row .filter-select { margin-left: auto; }
+  .toolbar-row label { color: var(--muted); font-size: 11px; }
+
+  tr.group-header td {
+    background: #dcece2 !important; font-weight: 700; color: #14532d;
+    border-top: 2px solid var(--excel-green);
+  }
 </style>
 </head>
 <body>
@@ -100,16 +118,31 @@
     </div>
 
     <div class="note">
-      항목 추가/삭제는 저장소의 <code>data/routes.json</code>을 수정해 커밋하면 다음 갱신부터 반영됩니다.
+      새 항목은 아래에 입력 후 등록을 누르면 GitHub 편집 화면으로 이동합니다 (내용은 자동으로 복사되어 있어 붙여넣고 커밋하면 됩니다).
       값은 수집 시점의 스냅샷이며, 실제 예약 시점에는 달라질 수 있습니다.
     </div>
 
+    <h2>항목 등록</h2>
+    <div class="toolbar-row">
+      <input id="reg-origin" placeholder="출발지 (예: ICN)" maxlength="3" style="width:90px" />
+      <input id="reg-destination" placeholder="도착지 (예: BKK)" maxlength="3" style="width:90px" />
+      <input id="reg-label" placeholder="라벨 (예: 인천->방콕)" style="width:160px" />
+      <input id="reg-country" placeholder="국가 (예: 태국)" style="width:100px" />
+      <button onclick="registerRoute()">등록</button>
+    </div>
+
     <h2>변동 항목</h2>
+    <div class="toolbar-row">
+      <label for="country-filter">국가 필터</label>
+      <select id="country-filter" class="filter-select" onchange="applyCountryFilter()">
+        <option value="">전체</option>
+      </select>
+    </div>
     <table class="sheet">
       <thead>
         <tr>
           <th style="width:16%">항목</th>
-          <th style="width:26%">기간</th>
+          <th style="width:24%">기간</th>
           <th style="width:14%">일정</th>
           <th style="width:11%">현재값</th>
           <th style="width:11%">기준값</th>
@@ -140,19 +173,59 @@
       const el = document.getElementById('deals');
       if (deals.length === 0) {
         el.innerHTML = '<tr class="empty-row"><td colspan="6">표시할 항목이 없습니다. 데이터가 쌓이면 여기 표시됩니다.</td></tr>';
+        populateCountryFilter([]);
         return;
       }
-      el.innerHTML = deals.map(d => `
-        <tr>
-          <td><a href="${d.booking_url}" target="_blank" rel="noopener">${d.route.label || (d.route.origin + ' → ' + d.route.destination)}</a></td>
-          <td>${d.depart_date} (${d.depart_weekday}) ~ ${d.return_date} (${d.return_weekday})</td>
-          <td>${d.nights}박 ${d.days}일 · 연차 ${d.leave_days}개</td>
-          <td class="num">${d.current_price.toLocaleString()}</td>
-          <td class="num">${d.avg_price.toLocaleString()}</td>
-          <td class="num pct up">-${d.discount_pct}%</td>
-        </tr>
-      `).join('');
+
+      // 노선별로 묶어서 렌더링 (deals.json은 이미 노선 -> 할인율 순으로 정렬되어 있음)
+      const groups = [];
+      let currentKey = null;
+      for (const d of deals) {
+        const key = `${d.route.origin}-${d.route.destination}`;
+        if (key !== currentKey) {
+          groups.push({ route: d.route, items: [] });
+          currentKey = key;
+        }
+        groups[groups.length - 1].items.push(d);
+      }
+
+      el.innerHTML = groups.map(g => {
+        const country = g.route.country || '기타';
+        const label = g.route.label || (g.route.origin + ' → ' + g.route.destination);
+        const header = `<tr class="group-header" data-country="${country}"><td colspan="6">${label} · ${country}</td></tr>`;
+        const rows = g.items.map(d => `
+          <tr data-country="${country}">
+            <td><a href="${d.booking_url}" target="_blank" rel="noopener">${label}</a></td>
+            <td>${d.depart_date} (${d.depart_weekday}) ~ ${d.return_date} (${d.return_weekday})</td>
+            <td>${d.nights}박 ${d.days}일 · 연차 ${d.leave_days}개</td>
+            <td class="num">${d.current_price.toLocaleString()}</td>
+            <td class="num">${d.avg_price.toLocaleString()}</td>
+            <td class="num pct up">-${d.discount_pct}%</td>
+          </tr>
+        `).join('');
+        return header + rows;
+      }).join('');
+
+      populateCountryFilter(groups.map(g => g.route.country || '기타'));
     }
+
+    function populateCountryFilter(countries) {
+      const sel = document.getElementById('country-filter');
+      const unique = [...new Set(countries)].sort();
+      const current = sel.value;
+      sel.innerHTML = '<option value="">전체</option>' +
+        unique.map(c => `<option value="${c}">${c}</option>`).join('');
+      if (unique.includes(current)) sel.value = current;
+    }
+
+    function applyCountryFilter() {
+      const selected = document.getElementById('country-filter').value;
+      document.querySelectorAll('#deals tr').forEach(tr => {
+        const c = tr.getAttribute('data-country');
+        tr.style.display = (!selected || c === selected) ? '' : 'none';
+      });
+    }
+    window.applyCountryFilter = applyCountryFilter;
 
     async function loadRoutesStatus() {
       const res = await fetch(`data/routes_status.json${cacheBust}`);
@@ -250,6 +323,34 @@
       } catch (e) {}
       renderCalendar();
     }
+
+    const GITHUB_REPO = 'Henryshin/flight-deals';
+
+    async function registerRoute() {
+      const origin = document.getElementById('reg-origin').value.trim().toUpperCase();
+      const destination = document.getElementById('reg-destination').value.trim().toUpperCase();
+      const label = document.getElementById('reg-label').value.trim();
+      const country = document.getElementById('reg-country').value.trim();
+
+      if (!origin || !destination) {
+        alert('출발지/도착지를 입력하세요 (IATA 공항 코드, 예: ICN)');
+        return;
+      }
+
+      const res = await fetch(`data/routes.json${cacheBust}`);
+      const routes = await res.json();
+      routes.push({ origin, destination, label: label || `${origin}->${destination}`, country: country || '기타' });
+      const newContent = JSON.stringify(routes, null, 2) + '\n';
+
+      try {
+        await navigator.clipboard.writeText(newContent);
+        alert('새 routes.json 내용이 클립보드에 복사되었습니다.\nGitHub 편집 화면에서 기존 내용을 전체 지우고 붙여넣은 뒤 커밋하세요.\n(신규 공항이면 collector/google_flights_crawler.py의 AIRPORT_CITY 표에도 도시명을 추가해야 합니다)');
+      } catch (e) {
+        alert('클립보드 복사에 실패했습니다. 아래 내용을 직접 복사해 GitHub에 붙여넣으세요:\n\n' + newContent);
+      }
+      window.open(`https://github.com/${GITHUB_REPO}/edit/main/data/routes.json`, '_blank');
+    }
+    window.registerRoute = registerRoute;
 
     loadDeals();
     loadRoutesStatus();

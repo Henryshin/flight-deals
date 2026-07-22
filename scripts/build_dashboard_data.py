@@ -113,10 +113,12 @@ def main():
                     "booking_url": build_booking_url(route["origin"], route["destination"], d1, d2),
                 })
 
-    deals.sort(key=lambda d: d["discount_pct"], reverse=True)
+    # 노선별로 묶어서 보여줄 수 있도록 노선 -> 할인율 내림차순으로 정렬
+    deals.sort(key=lambda d: (d["route"]["origin"], d["route"]["destination"], -d["discount_pct"]))
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUT_DIR / "deals.json").write_text(json.dumps(deals, ensure_ascii=False, indent=2), encoding="utf-8")
+    (OUT_DIR / "routes.json").write_text(json.dumps(routes, ensure_ascii=False, indent=2), encoding="utf-8")
     (OUT_DIR / "routes_status.json").write_text(json.dumps(routes_status, ensure_ascii=False, indent=2), encoding="utf-8")
     (OUT_DIR / "meta.json").write_text(
         json.dumps({"generated_at": datetime.now().isoformat()}, ensure_ascii=False, indent=2),
