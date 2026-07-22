@@ -21,20 +21,35 @@ PRICE_PATTERN = re.compile(r"₩([0-9][0-9,]{2,})")
 ROUND_TRIP_MARKER = "왕복"
 
 # 구글 플라이트는 도시명을 인식하므로 IATA 공항 코드를 도시명으로 매핑.
-# routes.json 에 새 노선을 추가하면 이 표에도 도시명을 추가해야 함.
+# 새 노선은 routes.json 에 origin_city/destination_city 를 함께 넣으므로,
+# 이 표는 도시명이 없는 과거(legacy) 항목을 위한 폴백으로만 쓰임.
 AIRPORT_CITY = {
     "ICN": "Seoul",
     "NRT": "Tokyo",
     "KIX": "Osaka",
     "DAD": "Da Nang",
     "DPS": "Bali",
+    "ULN": "Ulaanbaatar",
+    "PVG": "Shanghai",
+    "TPE": "Taipei",
+    "KHH": "Kaohsiung",
 }
 
 
-def build_booking_url(origin: str, destination: str, depart: date, return_: date) -> str:
-    """해당 노선/날짜로 사용자가 직접 예약을 확인할 수 있는 구글 플라이트 링크."""
-    origin_city = AIRPORT_CITY.get(origin, origin)
-    dest_city = AIRPORT_CITY.get(destination, destination)
+def build_booking_url(
+    origin: str,
+    destination: str,
+    depart: date,
+    return_: date,
+    origin_city: str | None = None,
+    dest_city: str | None = None,
+) -> str:
+    """해당 노선/날짜로 사용자가 직접 예약을 확인할 수 있는 구글 플라이트 링크.
+
+    도시명 결정 순서: 명시적 인자 -> AIRPORT_CITY 표 -> 공항 코드 그대로.
+    """
+    origin_city = origin_city or AIRPORT_CITY.get(origin, origin)
+    dest_city = dest_city or AIRPORT_CITY.get(destination, destination)
     query = (
         f"Flights from {origin_city} to {dest_city} "
         f"on {depart.isoformat()} returning {return_.isoformat()}"
@@ -42,9 +57,17 @@ def build_booking_url(origin: str, destination: str, depart: date, return_: date
     return "https://www.google.com/travel/flights/search?q=" + query.replace(" ", "%20")
 
 
-def fetch_lowest_price(origin: str, destination: str, depart: date, return_: date, timeout_ms=25000):
+def fetch_lowest_price(
+    origin: str,
+    destination: str,
+    depart: date,
+    return_: date,
+    timeout_ms=25000,
+    origin_city: str | None = None,
+    dest_city: str | None = None,
+):
     """지정한 노선/날짜의 최저가(원)를 반환. 실패 시 None."""
-    url = build_booking_url(origin, destination, depart, return_)
+    url = build_booking_url(origin, destination, depart, return_, origin_city=origin_city, dest_city=dest_city)
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)

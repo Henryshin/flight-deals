@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
 jobs:
   collect:
     runs-on: ubuntu-latest
@@ -35,4 +39,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/prices.csv docs/data
           git diff --cached --quiet || git commit -m "chore: update flight price data"
+          # 크롤링(수십 분) 동안 다른 커밋이 먼저 들어오면 non-fast-forward로 push가
+          # 실패해 이번 수집분이 유실되므로, push 전에 rebase로 최신화한다.
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
           git push

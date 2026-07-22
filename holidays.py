@@ -2,8 +2,11 @@
 한국 공휴일 기반 연휴 구간 계산.
 
 공공데이터포털 API는 서비스키 발급이 필요해, 우선 정적 공휴일 목록으로 시작.
-매년 말에 KOREAN_HOLIDAYS 딕셔너리만 갱신하면 됨.
+주의: get_holiday_windows()가 기본 180일 앞까지 내다보므로, '다음 해' 목록은
+연말이 아니라 늦어도 전년도 6월(= 연말 - lookahead_days)까지 채워져 있어야 한다.
+음력 기반 공휴일(설날/부처님오신날/추석)과 대체공휴일도 반드시 포함할 것.
 """
+import sys
 from datetime import date, timedelta
 
 KOREAN_HOLIDAYS = {
@@ -21,14 +24,22 @@ KOREAN_HOLIDAYS = {
         "2026-12-25",  # 성탄절
     ],
     2027: [
-        "2027-01-01",
-        "2027-03-01",
-        "2027-05-05",
-        "2027-06-06",
-        "2027-08-15",
-        "2027-10-03",
-        "2027-10-09",
-        "2027-12-25",
+        "2027-01-01",  # 신정
+        "2027-02-06", "2027-02-07", "2027-02-08",  # 설날 연휴 (토~월)
+        "2027-02-09",  # 설날 대체공휴일 (설날 당일이 일요일)
+        "2027-03-01",  # 삼일절
+        "2027-05-05",  # 어린이날
+        "2027-05-13",  # 부처님오신날
+        "2027-06-06",  # 현충일 (일요일이지만 대체공휴일 미적용 대상)
+        "2027-08-15",  # 광복절
+        "2027-08-16",  # 광복절 대체공휴일 (일요일)
+        "2027-09-14", "2027-09-15", "2027-09-16",  # 추석 연휴 (화~목)
+        "2027-10-03",  # 개천절
+        "2027-10-04",  # 개천절 대체공휴일 (일요일)
+        "2027-10-09",  # 한글날
+        "2027-10-11",  # 한글날 대체공휴일 (토요일)
+        "2027-12-25",  # 성탄절
+        "2027-12-27",  # 성탄절 대체공휴일 (토요일)
     ],
 }
 
@@ -50,6 +61,13 @@ def get_holiday_windows(bridge_days=1, lookahead_days=180):
     holidays = sorted(_all_holidays())
     today = date.today()
     horizon = today + timedelta(days=lookahead_days)
+    last_year = max(KOREAN_HOLIDAYS)
+    if horizon.year > last_year:
+        print(
+            f"[holidays] 경고: 조회 구간이 {horizon}까지인데 KOREAN_HOLIDAYS는 "
+            f"{last_year}년까지만 있습니다. {horizon.year}년 공휴일을 추가하세요.",
+            file=sys.stderr,
+        )
     holidays = [d for d in holidays if today <= d <= horizon]
 
     off_days = set(holidays)
