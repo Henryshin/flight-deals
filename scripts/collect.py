@@ -42,7 +42,10 @@ def main():
     rows = []
     for route in routes:
         for depart, return_, is_holiday in candidates:
-            price = fetch_lowest_price(route["origin"], route["destination"], depart, return_)
+            price = fetch_lowest_price(
+                route["origin"], route["destination"], depart, return_,
+                origin_city=route.get("origin_city"), dest_city=route.get("destination_city"),
+            )
             if price is None:
                 print(f"  {route['origin']}->{route['destination']} {depart}~{return_}: 실패")
                 continue

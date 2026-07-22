@@ -2,7 +2,9 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Weekly Ops Report</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='2' fill='%23217346'/%3E%3Ctext x='8' y='12' font-size='10' font-weight='bold' text-anchor='middle' fill='white' font-family='Arial'%3EX%3C/text%3E%3C/svg%3E" />
 <style>
   :root {
     --excel-green: #217346;
@@ -19,16 +21,26 @@
     background: var(--bg); color: var(--text);
     margin: 0; font-size: 12.5px;
   }
+  [hidden] { display: none !important; }
 
   /* fake ribbon */
-  .ribbon-tabs { background: var(--excel-green); color: #fff; padding: 5px 14px 0; font-size: 12px; display: flex; gap: 18px; }
-  .ribbon-tabs span { padding: 5px 4px; opacity: 0.75; }
+  .ribbon-tabs { background: var(--excel-green); color: #fff; padding: 5px 14px 0; font-size: 12px; display: flex; gap: 18px; overflow-x: auto; }
+  .ribbon-tabs span { padding: 5px 4px; opacity: 0.75; white-space: nowrap; }
   .ribbon-tabs span.active { opacity: 1; border-bottom: 2px solid #fff; font-weight: 600; }
-  .ribbon-toolbar { background: #fafafa; border-bottom: 1px solid var(--grid); padding: 6px 14px; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 10px; }
+  .ribbon-toolbar { background: #fafafa; border-bottom: 1px solid var(--grid); padding: 5px 14px; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .rt-sep { width: 1px; height: 16px; background: var(--grid); }
+  .rt-btn {
+    font-family: inherit; font-size: 11px; padding: 2px 9px; cursor: pointer;
+    border: 1px solid var(--grid); border-radius: 2px; background: #fff; color: var(--text);
+  }
+  .rt-btn:hover { background: var(--sel); border-color: var(--excel-green); }
+  .rt-btn:disabled { opacity: .55; cursor: default; }
+  .rt-fresh { font-size: 11px; color: var(--muted); }
+  .rt-right { margin-left: auto; }
   .formula-bar { background: #fff; border-bottom: 1px solid var(--grid); padding: 4px 14px; font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
   .formula-bar .cellref { border: 1px solid var(--grid); background: #fff; padding: 1px 8px; font-weight: 600; color: var(--text); border-radius: 2px; min-width: 46px; text-align: center; }
   .formula-bar .fx { color: var(--excel-green); font-style: italic; font-weight: 700; }
-  .formula-bar .formula-text { color: var(--text); font-family: Consolas, monospace; }
+  .formula-bar .formula-text { color: var(--text); font-family: Consolas, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   .sheet-wrap { padding: 18px 22px; }
 
@@ -43,23 +55,59 @@
     padding: 5px 10px; border: 1px solid #1a5c38;
   }
 
+  .tbl-wrap { overflow-x: auto; background: var(--sheet); border-bottom: 1px solid var(--grid); }
   table.sheet { width: 100%; border-collapse: collapse; background: var(--sheet); table-layout: fixed; }
+  table.sheet.wide { min-width: 960px; }
   table.sheet th, table.sheet td {
     border: 1px solid var(--grid); padding: 6px 9px; font-size: 11.5px; text-align: left;
+    overflow: hidden; text-overflow: ellipsis;
   }
   table.sheet th { background: #eaf3ee; color: #14532d; font-weight: 700; }
   table.sheet tbody tr:nth-child(even) td { background: #f8faf9; }
   table.sheet tbody tr:hover td { background: var(--sel); }
+  table.sheet tbody tr.target-hit td { background: #fff3c4; }
+  table.sheet tbody tr.target-hit:hover td { background: #ffeda8; }
   table.sheet a { color: #0b5cab; text-decoration: none; }
   table.sheet a:hover { text-decoration: underline; }
   td.num { text-align: right; font-family: Consolas, monospace; }
   td.pct.up { color: #b3261e; font-weight: 700; }
   .empty-row td { color: var(--muted); text-align: center; padding: 18px; font-style: italic; }
+  .cell-sub { display: block; color: var(--muted); font-size: 10px; font-family: Calibri, "맑은 고딕", Arial, sans-serif; }
+
+  .trend { font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+  .trend.up { color: #b3261e; }
+  .trend.down { color: #0b5cab; }
+  .trend.flat { color: var(--muted); font-weight: 400; }
+
+  .badge-hit { display: inline-block; background: var(--excel-green); color: #fff; font-size: 9.5px; padding: 1px 5px; border-radius: 2px; margin-left: 4px; font-family: Calibri, "맑은 고딕", Arial, sans-serif; }
+  .badge-hol { display: inline-block; background: #fdecea; color: #b3261e; border: 1px solid #efc4c0; font-size: 9.5px; padding: 0 4px; border-radius: 2px; margin-left: 4px; }
 
   .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; }
   .status-dot.ok { background: #217346; }
   .status-dot.waiting { background: #c9a227; }
   .status-dot.none { background: #b7bcc4; }
+
+  /* small in-cell buttons */
+  .copy-btn, .fav-btn, .x-btn {
+    background: none; border: none; cursor: pointer; padding: 0 2px; font-size: 12px; line-height: 1;
+    font-family: inherit; vertical-align: middle;
+  }
+  .copy-btn { font-size: 11px; opacity: .65; }
+  .copy-btn:hover { opacity: 1; }
+  .fav-btn { color: #c9ccd1; font-size: 14px; }
+  .fav-btn.on { color: #e8a500; }
+  .fav-btn:hover { color: #e8a500; }
+  .x-btn { color: #b7bcc4; font-weight: 700; }
+  .x-btn:hover { color: #b3261e; }
+  .target-input {
+    width: 72px; font-family: Consolas, monospace; font-size: 11px; text-align: right;
+    border: 1px solid transparent; background: transparent; padding: 2px 4px; border-radius: 2px; color: var(--text);
+  }
+  .target-input:hover { border-color: var(--grid); background: #fff; }
+  .target-input:focus { border-color: var(--excel-green); background: #fff; outline: none; }
+
+  svg.spark { display: block; }
+  .spark-none { color: var(--muted); }
 
   /* calendar styled as a mini worksheet */
   .calendar { background: var(--sheet); border: 1px solid var(--grid); width: 236px; flex-shrink: 0; }
@@ -85,15 +133,96 @@
   }
   .toolbar-row button {
     font-size: 11.5px; padding: 4px 10px; border: 1px solid #1a5c38; border-radius: 2px;
-    background: var(--excel-green); color: #fff; cursor: pointer;
+    background: var(--excel-green); color: #fff; cursor: pointer; font-family: inherit;
   }
   .toolbar-row button:hover { background: #1a5c38; }
-  .toolbar-row .filter-select { margin-left: auto; }
+  .toolbar-row button:disabled { opacity: .6; cursor: default; }
   .toolbar-row label { color: var(--muted); font-size: 11px; }
+  .muted-arrow { color: var(--muted); }
 
   tr.group-header td {
     background: #dcece2 !important; font-weight: 700; color: #14532d;
     border-top: 2px solid var(--excel-green);
+  }
+
+  /* autocomplete */
+  .ac-wrap { position: relative; display: inline-block; }
+  .ac-list {
+    position: absolute; top: 100%; left: 0; z-index: 60; background: #fff;
+    border: 1px solid var(--grid); min-width: 265px; max-height: 224px; overflow-y: auto;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.14);
+  }
+  .ac-item { padding: 5px 9px; font-size: 11.5px; border-bottom: 1px solid #eef1f3; cursor: pointer; white-space: nowrap; }
+  .ac-item:last-child { border-bottom: none; }
+  .ac-item.active, .ac-item:hover { background: var(--sel); }
+  .ac-item b { color: #14532d; font-family: Consolas, monospace; }
+  .ac-sub { color: var(--muted); }
+
+  /* filter chips */
+  .chip-bar { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; margin: 16px 0 0; background: #fafafa; border: 1px solid var(--grid); padding: 8px 10px; }
+  .chip-bar .chip-cap { color: var(--muted); font-size: 11px; padding-top: 3px; }
+  #chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-family: inherit; font-size: 11px; padding: 2px 9px; cursor: pointer;
+    border: 1px solid var(--grid); border-radius: 2px; background: #fff; color: var(--text);
+  }
+  .chip:hover { border-color: var(--excel-green); }
+  .chip.active {
+    background: #c8e6d4; border-color: var(--excel-green); color: #14532d; font-weight: 700;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.18);
+  }
+
+  /* excel-style dialog */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 100;
+    display: flex; align-items: flex-start; justify-content: center; padding: 10vh 12px 0;
+  }
+  .excel-dialog {
+    background: #f3f2f1; border: 1px solid #8a8886; box-shadow: 0 6px 22px rgba(0,0,0,0.35);
+    width: 460px; max-width: 96vw; font-size: 11.5px;
+  }
+  .excel-dialog.small { width: 340px; }
+  .dlg-title { background: var(--excel-green); color: #fff; padding: 6px 10px; font-weight: 700; font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+  .dlg-title button { background: none; border: none; color: #fff; cursor: pointer; font-size: 12px; font-family: inherit; padding: 0 2px; }
+  .dlg-body { padding: 12px 14px; line-height: 1.55; }
+  .dlg-body ol { margin: 6px 0; padding-left: 20px; }
+  .dlg-body a { color: #0b5cab; }
+  .dlg-notice { background: #fffbe6; border: 1px solid #e8d98a; padding: 5px 8px; margin-bottom: 10px; color: #6b5c1f; border-radius: 2px; }
+  .dlg-btns { display: flex; gap: 8px; justify-content: flex-end; padding: 10px 14px; border-top: 1px solid var(--grid); background: #fafafa; }
+  .dlg-btns button {
+    min-width: 74px; padding: 4px 10px; border: 1px solid #8a8886; background: #fff;
+    cursor: pointer; font-size: 11.5px; border-radius: 2px; font-family: inherit;
+  }
+  .dlg-btns button:hover { background: var(--sel); }
+  .dlg-btns button.primary { background: var(--excel-green); border-color: #1a5c38; color: #fff; }
+  .dlg-btns button.primary:hover { background: #1a5c38; }
+  .token-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+  .token-row input {
+    flex: 1; font-family: Consolas, monospace; font-size: 11px; padding: 4px 7px;
+    border: 1px solid var(--grid); border-radius: 2px;
+  }
+  .token-state { font-size: 10.5px; color: var(--muted); font-family: Consolas, monospace; }
+  #test-result { margin-top: 8px; font-size: 11px; min-height: 14px; }
+  #test-result.ok { color: var(--excel-green); font-weight: 700; }
+  #test-result.fail { color: #b3261e; font-weight: 700; }
+  #confirm-msg { white-space: pre-line; }
+
+  /* toast */
+  #toast-wrap { position: fixed; right: 16px; bottom: 16px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    background: #fff; border: 1px solid var(--grid); border-left: 4px solid var(--excel-green);
+    padding: 8px 14px; font-size: 11.5px; box-shadow: 0 3px 12px rgba(0,0,0,0.18);
+    max-width: 320px; animation: toast-in .22s ease;
+  }
+  .toast.err { border-left-color: #b3261e; }
+  .toast.out { opacity: 0; transition: opacity .4s; }
+  @keyframes toast-in { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  @media (max-width: 760px) {
+    .sheet-wrap { padding: 12px 10px; }
+    .topbar { flex-direction: column; }
+    .calendar { width: 100%; max-width: 300px; }
+    #generated-at { padding: 0 10px 16px; }
   }
 </style>
 </head>
@@ -101,7 +230,13 @@
   <div class="ribbon-tabs">
     <span>파일</span><span class="active">홈</span><span>삽입</span><span>페이지 레이아웃</span><span>데이터</span><span>검토</span><span>보기</span>
   </div>
-  <div class="ribbon-toolbar">Calibri · 11 · 표준 · 일반</div>
+  <div class="ribbon-toolbar">
+    <span>Calibri · 11 · 표준 · 일반</span>
+    <span class="rt-sep"></span>
+    <button class="rt-btn" id="btn-collect" title="GitHub Actions 수집 워크플로 실행">▶ 지금 수집 실행</button>
+    <span class="rt-fresh" id="freshness"></span>
+    <button class="rt-btn rt-right" id="btn-settings" title="GitHub 연결 설정">⚙️ 설정</button>
+  </div>
   <div class="formula-bar">
     <span class="cellref">A1</span>
     <span class="fx">fx</span>
@@ -118,157 +253,629 @@
     </div>
 
     <div class="note">
-      새 항목은 아래에 입력 후 등록을 누르면 GitHub 편집 화면으로 이동합니다 (내용은 자동으로 복사되어 있어 붙여넣고 커밋하면 됩니다).
+      새 항목은 아래에서 검색해 등록하면 이 페이지에서 바로 반영됩니다 (최초 1회 상단 ⚙️ 설정에서 연결 토큰 등록 필요).
       값은 수집 시점의 스냅샷이며, 실제 예약 시점에는 달라질 수 있습니다.
     </div>
 
     <h2>항목 등록</h2>
     <div class="toolbar-row">
-      <input id="reg-origin" placeholder="출발지 (예: ICN)" maxlength="3" style="width:90px" />
-      <input id="reg-destination" placeholder="도착지 (예: BKK)" maxlength="3" style="width:90px" />
-      <input id="reg-label" placeholder="라벨 (예: 인천->방콕)" style="width:160px" />
-      <input id="reg-country" placeholder="국가 (예: 태국)" style="width:100px" />
-      <button onclick="registerRoute()">등록</button>
+      <div class="ac-wrap">
+        <input id="reg-origin" placeholder="출발지 (예: ic, 인천)" style="width:150px" autocomplete="off" />
+        <div class="ac-list" id="ac-origin" hidden></div>
+      </div>
+      <span class="muted-arrow">→</span>
+      <div class="ac-wrap">
+        <input id="reg-destination" placeholder="도착지 (예: 도쿄, NRT)" style="width:150px" autocomplete="off" />
+        <div class="ac-list" id="ac-destination" hidden></div>
+      </div>
+      <input id="reg-label" placeholder="라벨 (자동 입력)" style="width:170px" />
+      <input id="reg-country" placeholder="국가 (자동)" style="width:90px" />
+      <span id="reg-flag" style="font-size:14px"></span>
+      <button id="btn-register">등록</button>
+    </div>
+
+    <div class="chip-bar">
+      <span class="chip-cap">필터</span>
+      <div id="chip-row"></div>
     </div>
 
     <h2>변동 항목</h2>
     <div class="toolbar-row">
-      <label for="country-filter">국가 필터</label>
-      <select id="country-filter" class="filter-select" onchange="applyCountryFilter()">
-        <option value="">전체</option>
+      <label for="deal-sort">정렬</label>
+      <select id="deal-sort">
+        <option value="discount">할인율순</option>
+        <option value="price">현재값 낮은순</option>
+        <option value="depart">출발일 빠른순</option>
+        <option value="leave">연차 적은순</option>
+      </select>
+      <label for="deal-max-price">최대 가격</label>
+      <input id="deal-max-price" type="number" min="0" step="10000" placeholder="원" style="width:100px" />
+      <label><input type="checkbox" id="deal-holiday" /> 공휴일 연휴만</label>
+      <label for="deal-max-leave">최대 연차</label>
+      <select id="deal-max-leave">
+        <option value="">제한없음</option>
+        <option value="0">0일</option>
+        <option value="1">1일</option>
+        <option value="2">2일</option>
+        <option value="3">3일</option>
       </select>
     </div>
-    <table class="sheet">
-      <thead>
-        <tr>
-          <th style="width:16%">항목</th>
-          <th style="width:24%">기간</th>
-          <th style="width:14%">일정</th>
-          <th style="width:11%">현재값</th>
-          <th style="width:11%">기준값</th>
-          <th style="width:8%">변동율</th>
-        </tr>
-      </thead>
-      <tbody id="deals"></tbody>
-    </table>
+    <div class="tbl-wrap">
+      <table class="sheet wide">
+        <thead>
+          <tr>
+            <th style="width:19%">항목</th>
+            <th style="width:24%">기간</th>
+            <th style="width:15%">일정</th>
+            <th style="width:12%">현재값</th>
+            <th style="width:10%">기준값</th>
+            <th style="width:8%">변동율</th>
+          </tr>
+        </thead>
+        <tbody id="deals"></tbody>
+      </table>
+    </div>
 
     <h2>모니터링 현황</h2>
-    <table class="sheet">
-      <thead>
-        <tr><th style="width:12%">상태</th><th style="width:24%">항목</th><th style="width:12%">표본 수</th><th style="width:16%">마지막 갱신일</th><th>최근 관측값</th></tr>
-      </thead>
-      <tbody id="routes-status"></tbody>
-    </table>
+    <div class="tbl-wrap">
+      <table class="sheet wide">
+        <thead>
+          <tr>
+            <th style="width:34px">★</th>
+            <th style="width:76px">상태</th>
+            <th style="width:190px">항목</th>
+            <th style="width:170px">최근 관측값</th>
+            <th style="width:140px">30일 최저/평균</th>
+            <th style="width:126px">추이</th>
+            <th style="width:92px">목표가</th>
+            <th style="width:92px">링크</th>
+            <th style="width:36px"></th>
+          </tr>
+        </thead>
+        <tbody id="routes-status"></tbody>
+      </table>
+    </div>
   </div>
 
   <div id="generated-at"></div>
 
+  <!-- 연결 설정 dialog -->
+  <div class="modal-backdrop" id="settings-backdrop" hidden>
+    <div class="excel-dialog">
+      <div class="dlg-title"><span>연결 설정</span><button id="settings-x" title="닫기">✕</button></div>
+      <div class="dlg-body">
+        <div class="dlg-notice" id="settings-notice" hidden></div>
+        GitHub Fine-grained 토큰을 한 번만 등록하면 이 페이지에서 항목 등록/삭제와 수집 실행이 바로 됩니다.
+        토큰은 이 브라우저(localStorage)에만 저장됩니다.
+        <ol>
+          <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">토큰 생성 페이지</a>를 엽니다.</li>
+          <li>Repository access: <b>Henryshin/flight-deals</b>만 선택</li>
+          <li>Permissions: <b>Contents (Read and write)</b> + <b>Actions (Read and write)</b></li>
+        </ol>
+        <div class="token-row">
+          <input id="token-input" type="password" placeholder="github_pat_..." autocomplete="off" />
+          <span class="token-state" id="token-state"></span>
+        </div>
+        <div id="test-result"></div>
+      </div>
+      <div class="dlg-btns">
+        <button id="btn-token-test">연결 테스트</button>
+        <button id="btn-token-delete">삭제</button>
+        <button id="btn-token-save" class="primary">저장</button>
+        <button id="btn-settings-close">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- confirm dialog -->
+  <div class="modal-backdrop" id="confirm-backdrop" hidden>
+    <div class="excel-dialog small">
+      <div class="dlg-title"><span>Microsoft Excel</span></div>
+      <div class="dlg-body" id="confirm-msg"></div>
+      <div class="dlg-btns">
+        <button id="confirm-yes" class="primary">예(Y)</button>
+        <button id="confirm-no">아니요(N)</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-wrap"></div>
+
+  <script src="airports.js"></script>
   <script>
+    // ===================== 상수 / 공통 헬퍼 =====================
     const cacheBust = `?t=${Date.now()}`;
+    const GITHUB_REPO = 'Henryshin/flight-deals';
+    const GH_API = 'https://api.github.com';
+    const TOKEN_KEY = 'fd_gh_token';
+    const FAVS_KEY = 'fd_favs';
+    const TARGETS_KEY = 'fd_targets';
+    const PENDING_KEY = 'fd_pending';
+    const EMPTY_DEALS_MSG = "데이터 초기화 후 재수집 중입니다. 다음 자동 수집(최대 4시간) 또는 '지금 수집 실행'으로 갱신하세요.";
+    const NO_DEALS_MSG = '현재 기준(30일 평균 대비 15% 이상 하락)을 충족하는 항목이 없습니다. 다음 수집에서 다시 계산됩니다.';
+
+    const state = {
+      deals: [],
+      routesStatus: [],
+      history: {},
+      meta: null,
+      chip: { type: 'all', value: '' },
+      favOnly: false
+    };
     let holidaySet = new Set();
 
-    async function loadDeals() {
-      const res = await fetch(`data/deals.json${cacheBust}`);
-      const deals = await res.json();
-      const el = document.getElementById('deals');
-      if (deals.length === 0) {
-        el.innerHTML = '<tr class="empty-row"><td colspan="6">표시할 항목이 없습니다. 데이터가 쌓이면 여기 표시됩니다.</td></tr>';
-        populateCountryFilter([]);
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+    function fmt(n) { return n == null ? '-' : Number(n).toLocaleString('ko-KR'); }
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function rk(r) { return r.origin + '-' + r.destination; }
+    function emptyRow(colspan, msg) {
+      return `<tr class="empty-row"><td colspan="${colspan}">${esc(msg)}</td></tr>`;
+    }
+    function findAirport(iata) {
+      if (!iata || !window.AIRPORTS) return null;
+      const up = String(iata).toUpperCase();
+      for (const ap of window.AIRPORTS) { if (ap.iata === up) return ap; }
+      return null;
+    }
+    function destCityName(r) {
+      const ap = findAirport(r.destination);
+      if (ap) return ap.city_ko;
+      if (r.label && r.label.indexOf('→') >= 0) {
+        return r.label.split('→')[1].replace(/\(.*\)/, '').trim() || r.destination;
+      }
+      return r.destination;
+    }
+
+    // localStorage helpers
+    function getToken() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
+    function getFavs() {
+      try { return new Set(JSON.parse(localStorage.getItem(FAVS_KEY) || '[]')); }
+      catch (e) { return new Set(); }
+    }
+    function setFavs(set) { try { localStorage.setItem(FAVS_KEY, JSON.stringify([...set])); } catch (e) {} }
+    function getTargets() {
+      try { return JSON.parse(localStorage.getItem(TARGETS_KEY) || '{}') || {}; }
+      catch (e) { return {}; }
+    }
+    function setTargets(t) { try { localStorage.setItem(TARGETS_KEY, JSON.stringify(t)); } catch (e) {} }
+
+    // 등록/삭제 직후 ~ 다음 수집 전까지의 낙관적 변경을 새로고침에도 유지하기 위한 대기 목록.
+    // 정적 routes_status.json / deals.json 은 수집 워크플로가 돌아야 갱신되므로,
+    // 그 사이에는 localStorage 의 tombstone(removed) / 대기 등록(added)을 덧입혀 보여준다.
+    function getPending() {
+      try {
+        const p = JSON.parse(localStorage.getItem(PENDING_KEY) || '{}') || {};
+        return {
+          removed: Array.isArray(p.removed) ? p.removed : [],
+          added: Array.isArray(p.added) ? p.added : []
+        };
+      } catch (e) { return { removed: [], added: [] }; }
+    }
+    function setPending(p) { try { localStorage.setItem(PENDING_KEY, JSON.stringify(p)); } catch (e) {} }
+    function pendingMarkRemoved(key) {
+      const p = getPending();
+      p.added = p.added.filter(en => rk(en) !== key);
+      if (p.removed.indexOf(key) < 0) p.removed.push(key);
+      setPending(p);
+    }
+    function pendingMarkAdded(entry) {
+      const p = getPending();
+      p.removed = p.removed.filter(k => k !== rk(entry));
+      p.added = p.added.filter(en => rk(en) !== rk(entry));
+      p.added.push(entry);
+      setPending(p);
+    }
+    function applyPending() {
+      const p = getPending();
+      const statusKeys = new Set(state.routesStatus.map(rk));
+      const removed = [];
+      for (const key of p.removed) {
+        if (statusKeys.has(key)) {
+          // 정적 데이터가 아직 삭제를 모름 → 화면에서 숨기고 tombstone 유지
+          state.routesStatus = state.routesStatus.filter(r => rk(r) !== key);
+          state.deals = state.deals.filter(d => rk(d.route) !== key);
+          removed.push(key);
+        }
+        // 정적 데이터에 이미 없으면 수집이 반영된 것 → tombstone 제거
+      }
+      const added = [];
+      for (const entry of p.added) {
+        if (!statusKeys.has(rk(entry))) {
+          state.routesStatus.push(Object.assign({}, entry, {
+            sample_count: 0, last_collected_at: null, latest_price: null,
+            latest_depart_date: null, latest_return_date: null,
+            prev_price: null, min_price_30d: null, avg_price_30d: null
+          }));
+          added.push(entry);
+        }
+        // 정적 데이터에 이미 있으면 수집이 반영된 것 → 대기 목록에서 제거
+      }
+      setPending({ removed, added });
+    }
+
+    // ===================== 토스트 / confirm =====================
+    function toast(msg, type) {
+      const wrap = document.getElementById('toast-wrap');
+      const t = document.createElement('div');
+      t.className = 'toast' + (type === 'err' ? ' err' : '');
+      t.textContent = msg;
+      wrap.appendChild(t);
+      setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 450); }, 3800);
+    }
+
+    let confirmResolve = null;
+    function excelConfirm(msg) {
+      return new Promise(resolve => {
+        confirmResolve = resolve;
+        document.getElementById('confirm-msg').textContent = msg;
+        document.getElementById('confirm-backdrop').hidden = false;
+        document.getElementById('confirm-yes').focus();
+      });
+    }
+    function confirmAnswer(v) {
+      document.getElementById('confirm-backdrop').hidden = true;
+      if (confirmResolve) { const r = confirmResolve; confirmResolve = null; r(v); }
+    }
+
+    async function copyText(text, okMsg) {
+      try {
+        await navigator.clipboard.writeText(text);
+        toast(okMsg || '링크 복사 완료 📋');
+      } catch (e) {
+        toast('클립보드 복사에 실패했습니다', 'err');
+      }
+    }
+
+    // ===================== GitHub API =====================
+    function b64EncodeUtf8(str) {
+      const bytes = new TextEncoder().encode(str);
+      let bin = '';
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      return btoa(bin);
+    }
+    function b64DecodeUtf8(b64) {
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return new TextDecoder('utf-8').decode(bytes);
+    }
+    function ghHeaders() {
+      return { 'Authorization': 'Bearer ' + getToken(), 'Accept': 'application/vnd.github+json' };
+    }
+    function ghError(status) { const e = new Error('GitHub API HTTP ' + status); e.status = status; return e; }
+    function handleGhError(e) {
+      const s = e && e.status;
+      if (s === 401) toast('토큰이 유효하지 않습니다. ⚙️ 설정에서 토큰을 다시 등록하세요.', 'err');
+      else if (s === 403) toast('권한이 없습니다. 토큰 권한(Contents/Actions Read and write)을 확인하세요.', 'err');
+      else if (s === 404) toast('저장소 또는 파일을 찾을 수 없습니다. 토큰의 Repository access를 확인하세요.', 'err');
+      else if (s === 409 || s === 422) toast('저장 중 충돌이 발생했습니다. 잠시 후 다시 시도하세요.', 'err');
+      else toast('요청 실패: ' + (s || (e && e.message) || '네트워크 오류'), 'err');
+    }
+    async function ghGetRoutes() {
+      const res = await fetch(`${GH_API}/repos/${GITHUB_REPO}/contents/data/routes.json?ref=main`, { headers: ghHeaders() });
+      if (!res.ok) throw ghError(res.status);
+      const j = await res.json();
+      const routes = JSON.parse(b64DecodeUtf8(String(j.content || '').replace(/\s/g, '')));
+      return { routes, sha: j.sha };
+    }
+    async function ghPutRoutes(routes, sha, message) {
+      const body = {
+        message,
+        content: b64EncodeUtf8(JSON.stringify(routes, null, 2) + '\n'),
+        sha,
+        branch: 'main'
+      };
+      const res = await fetch(`${GH_API}/repos/${GITHUB_REPO}/contents/data/routes.json`, {
+        method: 'PUT',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, ghHeaders()),
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw ghError(res.status);
+    }
+    async function dispatchCollect() {
+      const res = await fetch(`${GH_API}/repos/${GITHUB_REPO}/actions/workflows/collect.yml/dispatches`, {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, ghHeaders()),
+        body: JSON.stringify({ ref: 'main' })
+      });
+      if (res.status !== 204) throw ghError(res.status);
+    }
+
+    // ===================== 데이터 로딩 =====================
+    async function fetchJson(path, fallback) {
+      try {
+        const res = await fetch(path + cacheBust);
+        if (!res.ok) return fallback;
+        return await res.json();
+      } catch (e) { return fallback; }
+    }
+
+    // ===================== 필터 칩 =====================
+    function routePassesChip(routeLike) {
+      if (state.favOnly && !getFavs().has(rk(routeLike))) return false;
+      const f = state.chip;
+      if (!f || f.type === 'all') return true;
+      if (f.type === 'country') return (routeLike.country || '기타') === f.value;
+      if (f.type === 'city') return destCityName(routeLike) === f.value;
+      return true;
+    }
+
+    function renderChips() {
+      const el = document.getElementById('chip-row');
+      const countries = new Map();
+      const cities = new Set();
+      for (const r of state.routesStatus) {
+        const c = r.country || '기타';
+        if (!countries.has(c)) countries.set(c, r.flag || (findAirport(r.destination) || {}).flag || '');
+        cities.add(destCityName(r));
+      }
+      const chip = (type, value, label) =>
+        `<button class="chip" data-chip="${type}" data-value="${esc(value)}">${esc(label)}</button>`;
+      let html = chip('all', '', '전체') + chip('fav', '', '★ 즐겨찾기만');
+      for (const [c, flag] of countries) html += chip('country', c, (flag ? flag + ' ' : '') + c);
+      for (const city of cities) html += chip('city', city, city);
+      el.innerHTML = html;
+      updateChipActive();
+    }
+
+    function updateChipActive() {
+      document.querySelectorAll('#chip-row .chip').forEach(ch => {
+        const type = ch.getAttribute('data-chip');
+        const value = ch.getAttribute('data-value');
+        let on = false;
+        if (type === 'fav') on = state.favOnly;
+        else if (type === 'all') on = state.chip.type === 'all';
+        else on = state.chip.type === type && state.chip.value === value;
+        ch.classList.toggle('active', on);
+      });
+    }
+
+    function onChipClick(ch) {
+      const type = ch.getAttribute('data-chip');
+      const value = ch.getAttribute('data-value');
+      if (type === 'fav') {
+        state.favOnly = !state.favOnly;
+      } else if (type === 'all') {
+        state.chip = { type: 'all', value: '' };
+      } else if (state.chip.type === type && state.chip.value === value) {
+        state.chip = { type: 'all', value: '' }; // 같은 칩 재클릭 → 해제
+      } else {
+        state.chip = { type, value };
+      }
+      updateChipActive();
+      renderDeals();
+      renderStatus();
+    }
+
+    // ===================== 변동 항목 (deals) =====================
+    function trendHtml(cur, prev, emptyAsDash) {
+      if (cur == null || prev == null) {
+        return emptyAsDash ? '<span class="trend flat">—</span>' : '';
+      }
+      const diff = cur - prev;
+      if (diff === 0 || !prev) return '<span class="trend flat">—</span>';
+      const pct = (diff / prev) * 100;
+      if (diff > 0) return `<span class="trend up" title="직전 관측 ${fmt(prev)}원">▲ +${pct.toFixed(1)}%</span>`;
+      return `<span class="trend down" title="직전 관측 ${fmt(prev)}원">▼ ${pct.toFixed(1)}%</span>`;
+    }
+
+    function gflightsUrl(route, dep, ret) {
+      const oc = route.origin_city || (findAirport(route.origin) || {}).city_en || route.origin;
+      const dc = route.destination_city || (findAirport(route.destination) || {}).city_en || route.destination;
+      return 'https://www.google.com/travel/flights/search?q=' +
+        encodeURIComponent(`Flights from ${oc} to ${dc} on ${dep} returning ${ret}`);
+    }
+
+    function renderDeals() {
+      const tbody = document.getElementById('deals');
+      if (!state.deals.length) {
+        // 수집이 정상 동작 중(표본 있음)인데 기준을 충족하는 항목이 없는 경우와,
+        // 아직 수집 전(표본 없음)인 경우를 구분해서 안내
+        const collecting = state.routesStatus.some(r => r.sample_count > 0);
+        tbody.innerHTML = emptyRow(6, collecting ? NO_DEALS_MSG : EMPTY_DEALS_MSG);
+        return;
+      }
+      const sortKey = document.getElementById('deal-sort').value;
+      const maxPriceRaw = document.getElementById('deal-max-price').value;
+      const maxPrice = maxPriceRaw ? parseInt(maxPriceRaw, 10) : Infinity;
+      const holidayOnly = document.getElementById('deal-holiday').checked;
+      const maxLeaveRaw = document.getElementById('deal-max-leave').value;
+      const maxLeave = maxLeaveRaw === '' ? Infinity : parseInt(maxLeaveRaw, 10);
+
+      const items = state.deals.filter(d =>
+        routePassesChip(d.route) &&
+        d.current_price <= maxPrice &&
+        (!holidayOnly || d.is_holiday_window) &&
+        d.leave_days <= maxLeave
+      );
+      if (!items.length) {
+        tbody.innerHTML = emptyRow(6, '조건에 맞는 항목이 없습니다. 필터를 조정해 보세요.');
         return;
       }
 
-      // 노선별로 묶어서 렌더링 (deals.json은 이미 노선 -> 할인율 순으로 정렬되어 있음)
-      const groups = [];
-      let currentKey = null;
-      for (const d of deals) {
-        const key = `${d.route.origin}-${d.route.destination}`;
-        if (key !== currentKey) {
-          groups.push({ route: d.route, items: [] });
-          currentKey = key;
-        }
-        groups[groups.length - 1].items.push(d);
-      }
+      const cmpMap = {
+        discount: (a, b) => b.discount_pct - a.discount_pct,
+        price: (a, b) => a.current_price - b.current_price,
+        depart: (a, b) => (a.depart_date < b.depart_date ? -1 : a.depart_date > b.depart_date ? 1 : 0),
+        leave: (a, b) => (a.leave_days - b.leave_days) || (b.discount_pct - a.discount_pct)
+      };
+      const cmp = cmpMap[sortKey] || cmpMap.discount;
 
-      el.innerHTML = groups.map(g => {
+      // 노선별 그룹 유지: 그룹 내부 정렬 후, 그룹 대표값으로 그룹 정렬
+      const groupMap = new Map();
+      for (const d of items) {
+        const k = rk(d.route);
+        if (!groupMap.has(k)) groupMap.set(k, { route: d.route, items: [] });
+        groupMap.get(k).items.push(d);
+      }
+      const groups = [...groupMap.values()];
+      groups.forEach(g => g.items.sort(cmp));
+      groups.sort((ga, gb) => cmp(ga.items[0], gb.items[0]));
+
+      tbody.innerHTML = groups.map(g => {
         const country = g.route.country || '기타';
+        const flag = g.route.flag || '';
         const label = g.route.label || (g.route.origin + ' → ' + g.route.destination);
-        const header = `<tr class="group-header" data-country="${country}"><td colspan="6">${label} · ${country}</td></tr>`;
+        const header = `<tr class="group-header"><td colspan="6">${flag ? esc(flag) + ' ' : ''}${esc(label)} · ${esc(country)}</td></tr>`;
         const rows = g.items.map(d => `
-          <tr data-country="${country}">
-            <td><a href="${d.booking_url}" target="_blank" rel="noopener">${label}</a></td>
-            <td>${d.depart_date} (${d.depart_weekday}) ~ ${d.return_date} (${d.return_weekday})</td>
+          <tr>
+            <td><a href="${esc(d.booking_url)}" target="_blank" rel="noopener">${esc(label)}</a>
+              <button class="copy-btn" data-copy="${esc(d.booking_url)}" title="예약 링크 복사">📋</button></td>
+            <td>${esc(d.depart_date)} (${esc(d.depart_weekday)}) ~ ${esc(d.return_date)} (${esc(d.return_weekday)})${d.is_holiday_window ? ' <span class="badge-hol">연휴</span>' : ''}</td>
             <td>${d.nights}박 ${d.days}일 · 연차 ${d.leave_days}개</td>
-            <td class="num">${d.current_price.toLocaleString()}</td>
-            <td class="num">${d.avg_price.toLocaleString()}</td>
+            <td class="num">${fmt(d.current_price)} ${trendHtml(d.current_price, d.prev_price, false)}</td>
+            <td class="num">${fmt(d.avg_price)}</td>
             <td class="num pct up">-${d.discount_pct}%</td>
           </tr>
         `).join('');
         return header + rows;
       }).join('');
-
-      populateCountryFilter(groups.map(g => g.route.country || '기타'));
     }
 
-    function populateCountryFilter(countries) {
-      const sel = document.getElementById('country-filter');
-      const unique = [...new Set(countries)].sort();
-      const current = sel.value;
-      sel.innerHTML = '<option value="">전체</option>' +
-        unique.map(c => `<option value="${c}">${c}</option>`).join('');
-      if (unique.includes(current)) sel.value = current;
+    // ===================== 스파크라인 =====================
+    function sparklineSVG(points) {
+      if (!points || !points.length) return '<span class="spark-none">—</span>';
+      const w = 110, h = 26, px = 4, py = 4;
+      const vals = points.map(p => p.min);
+      let lo = Math.min.apply(null, vals);
+      let hi = Math.max.apply(null, vals);
+      if (lo === hi) { lo -= 1; hi += 1; }
+      const n = vals.length;
+      const X = i => (n === 1 ? w / 2 : px + i * (w - 2 * px) / (n - 1));
+      const Y = v => py + (h - 2 * py) * (1 - (v - lo) / (hi - lo));
+      let line;
+      if (n < 2) {
+        line = `<line x1="${px}" y1="${h / 2}" x2="${w - px}" y2="${h / 2}" stroke="#217346" stroke-width="1.2" />`;
+      } else {
+        const pts = vals.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+        line = `<polyline points="${pts}" fill="none" stroke="#217346" stroke-width="1.2" />`;
+      }
+      const dots = points.map((p, i) => {
+        const cy = n < 2 ? h / 2 : Y(p.min);
+        return `<circle cx="${X(i).toFixed(1)}" cy="${cy.toFixed(1)}" r="2.4" fill="#217346" fill-opacity="${i === n - 1 ? '1' : '0.18'}">` +
+          `<title>${esc(p.t)} · ${fmt(p.min)}원 (표본 ${p.n})</title></circle>`;
+      }).join('');
+      return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${line}${dots}</svg>`;
     }
 
-    function applyCountryFilter() {
-      const selected = document.getElementById('country-filter').value;
-      document.querySelectorAll('#deals tr').forEach(tr => {
-        const c = tr.getAttribute('data-country');
-        tr.style.display = (!selected || c === selected) ? '' : 'none';
-      });
-    }
-    window.applyCountryFilter = applyCountryFilter;
-
-    async function loadRoutesStatus() {
-      const res = await fetch(`data/routes_status.json${cacheBust}`);
-      const routes = await res.json();
-      const el = document.getElementById('routes-status');
-      if (routes.length === 0) {
-        el.innerHTML = '<tr class="empty-row"><td colspan="5">등록된 항목이 없습니다.</td></tr>';
+    // ===================== 모니터링 현황 =====================
+    function renderStatus() {
+      const tbody = document.getElementById('routes-status');
+      if (!state.routesStatus.length) {
+        tbody.innerHTML = emptyRow(9, "등록된 항목이 없습니다. 위 '항목 등록'에서 추가하세요.");
         return;
       }
-      el.innerHTML = routes.map(r => {
+      const favs = getFavs();
+      const targets = getTargets();
+      let list = state.routesStatus.filter(r => routePassesChip(r));
+      if (!list.length) {
+        tbody.innerHTML = emptyRow(9, state.favOnly ? '즐겨찾기한 항목이 없습니다. ★를 눌러 추가하세요.' : '조건에 맞는 항목이 없습니다.');
+        return;
+      }
+      list = list.slice().sort((a, b) => (favs.has(rk(b)) ? 1 : 0) - (favs.has(rk(a)) ? 1 : 0));
+
+      tbody.innerHTML = list.map(r => {
+        const key = rk(r);
+        const fav = favs.has(key);
+        const target = targets[key];
+        const reached = target != null && r.latest_price != null && r.latest_price <= target;
+
         let dot = 'none', statusText = '대기';
         if (r.sample_count > 0) {
           dot = r.sample_count >= 3 ? 'ok' : 'waiting';
           statusText = r.sample_count >= 3 ? '정상' : '표본 부족';
         }
-        const latestValue = r.latest_price
-          ? `${r.latest_price.toLocaleString()} (${r.latest_depart_date}~${r.latest_return_date})`
-          : '-';
+        const label = r.label || (r.origin + ' → ' + r.destination);
+        const flag = r.flag || (findAirport(r.destination) || {}).flag || '';
+
+        let priceCell = '<span class="spark-none">—</span>';
+        if (r.latest_price != null) {
+          const dates = (r.latest_depart_date && r.latest_return_date)
+            ? `<span class="cell-sub">${esc(r.latest_depart_date)} ~ ${esc(r.latest_return_date)}</span>` : '';
+          priceCell = `${fmt(r.latest_price)} ${trendHtml(r.latest_price, r.prev_price, true)}` +
+            (reached ? '<span class="badge-hit">목표가 도달 🎯</span>' : '') + dates;
+        }
+
+        const range30 = (r.min_price_30d != null || r.avg_price_30d != null)
+          ? `${fmt(r.min_price_30d)} / ${fmt(r.avg_price_30d)}` : '—';
+
+        let linkCell = '<span class="spark-none">—</span>';
+        if (r.latest_depart_date && r.latest_return_date) {
+          const url = gflightsUrl(r, r.latest_depart_date, r.latest_return_date);
+          linkCell = `<a href="${esc(url)}" target="_blank" rel="noopener">보기</a> ` +
+            `<button class="copy-btn" data-copy="${esc(url)}" title="링크 복사">📋</button>`;
+        }
+
         return `
-          <tr>
-            <td><span class="status-dot ${dot}"></span>${statusText}</td>
-            <td>${r.label || (r.origin + ' → ' + r.destination)}</td>
-            <td class="num">${r.sample_count}</td>
-            <td>${r.last_collected_at || '-'}</td>
-            <td class="num">${latestValue}</td>
+          <tr${reached ? ' class="target-hit"' : ''}>
+            <td style="text-align:center"><button class="fav-btn${fav ? ' on' : ''}" data-fav="${esc(key)}" title="즐겨찾기">★</button></td>
+            <td title="표본 ${r.sample_count} · 마지막 갱신 ${esc(r.last_collected_at || '-')}"><span class="status-dot ${dot}"></span>${statusText}</td>
+            <td title="${esc(label)}">${flag ? esc(flag) + ' ' : ''}${esc(label)}<span class="cell-sub">${esc(r.origin)}→${esc(r.destination)} · 표본 ${r.sample_count}</span></td>
+            <td class="num">${priceCell}</td>
+            <td class="num">${range30}</td>
+            <td>${sparklineSVG(state.history[key])}</td>
+            <td class="num"><input class="target-input" data-target-key="${esc(key)}" value="${target != null ? target : ''}" placeholder="입력" inputmode="numeric" title="목표가 (원) — 입력 후 Enter" /></td>
+            <td>${linkCell}</td>
+            <td style="text-align:center"><button class="x-btn" data-del="${esc(key)}" title="항목 삭제">✕</button></td>
           </tr>
         `;
       }).join('');
     }
 
-    async function loadMeta() {
-      try {
-        const res = await fetch(`data/meta.json${cacheBust}`);
-        const meta = await res.json();
-        document.getElementById('generated-at').textContent =
-          `Last sync: ${new Date(meta.generated_at).toLocaleString('ko-KR')}`;
-      } catch (e) {}
+    function toggleFav(key) {
+      const favs = getFavs();
+      if (favs.has(key)) favs.delete(key); else favs.add(key);
+      setFavs(favs);
+      renderStatus();
+      if (state.favOnly) renderDeals();
     }
 
-    // ---- calendar ----
-    let calYear, calMonth; // month: 0-11
+    function onTargetChange(el) {
+      const key = el.getAttribute('data-target-key');
+      const v = parseInt(String(el.value).replace(/[^0-9]/g, ''), 10);
+      const targets = getTargets();
+      if (!v || v <= 0) {
+        if (targets[key] != null) { delete targets[key]; setTargets(targets); toast('목표가를 삭제했습니다'); }
+      } else {
+        targets[key] = v;
+        setTargets(targets);
+        toast(`목표가 저장: ${fmt(v)}원 🎯`);
+      }
+      renderStatus();
+    }
 
-    function pad(n) { return String(n).padStart(2, '0'); }
+    // ===================== 수집 시각 (meta) =====================
+    function renderMeta() {
+      if (!state.meta || !state.meta.generated_at) {
+        document.getElementById('freshness').textContent = '';
+        return;
+      }
+      // generated_at 은 UTC 로 생성됨. 타임존 표기가 없는 (구버전) 값을 로컬 시각으로
+      // 오해하지 않도록 'Z' 를 붙이고, 6자리 소수점 초는 3자리로 잘라 파싱 호환성 확보.
+      let iso = String(state.meta.generated_at).replace(/(\.\d{3})\d+/, '$1');
+      if (!/(Z|[+-]\d{2}:?\d{2})$/.test(iso)) iso += 'Z';
+      const dt = new Date(iso);
+      if (isNaN(dt.getTime())) return;
+      const diffMs = Date.now() - dt.getTime();
+      const mins = Math.max(0, Math.floor(diffMs / 60000));
+      let rel;
+      if (mins < 1) rel = '방금 전';
+      else if (mins < 60) rel = `${mins}분 전`;
+      else if (mins < 1440) rel = `${Math.floor(mins / 60)}시간 전`;
+      else rel = `${Math.floor(mins / 1440)}일 전`;
+      const stamp = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+      const stale = diffMs > 6 * 3600 * 1000;
+      document.getElementById('freshness').innerHTML =
+        `<span class="status-dot ${stale ? 'waiting' : 'ok'}"></span>마지막 수집: ${rel} (${stamp})${stale ? ' · <b style="color:#c9a227">수집 지연</b>' : ''}`;
+      document.getElementById('generated-at').textContent = `Last sync: ${dt.toLocaleString('ko-KR')}`;
+    }
+
+    // ===================== 미니 달력 =====================
+    let calYear, calMonth; // month: 0-11
 
     function renderCalendar() {
       const el = document.getElementById('calendar');
@@ -313,49 +920,349 @@
     }
     window.shiftMonth = shiftMonth;
 
-    async function initCalendar() {
+    // ===================== 공항 자동완성 =====================
+    const regSel = { origin: null, destination: null };
+    let labelTouched = false;
+    let countryTouched = false;
+
+    function setupAutocomplete(inputEl, listEl, onPick) {
+      let items = [];
+      let active = -1;
+      function close() { listEl.hidden = true; items = []; active = -1; }
+      function render() {
+        if (!items.length) { close(); return; }
+        listEl.innerHTML = items.map((ap, i) =>
+          `<div class="ac-item${i === active ? ' active' : ''}" data-i="${i}">` +
+          `<b>${esc(ap.iata)}</b> ${esc(ap.name_ko)} <span class="ac-sub">· ${esc(ap.city_ko)}, ${esc(ap.country_ko)}</span> ${esc(ap.flag || '')}</div>`
+        ).join('');
+        listEl.hidden = false;
+      }
+      function pick(i) {
+        const ap = items[i];
+        if (!ap) return;
+        inputEl.value = ap.iata;
+        close();
+        onPick(ap);
+      }
+      inputEl.addEventListener('input', () => {
+        onPick(null); // 타이핑하면 선택 해제
+        const q = inputEl.value.trim();
+        if (!q) { close(); return; }
+        items = (window.searchAirports ? window.searchAirports(q, 8) : []) || [];
+        active = items.length ? 0 : -1;
+        render();
+      });
+      inputEl.addEventListener('keydown', e => {
+        // 한글 IME 조합 확정용 Enter/키 입력이 자동완성 선택으로 오동작하지 않도록 무시
+        if (e.isComposing || e.keyCode === 229) return;
+        if (listEl.hidden) return;
+        if (e.key === 'ArrowDown') { active = Math.min(active + 1, items.length - 1); render(); e.preventDefault(); }
+        else if (e.key === 'ArrowUp') { active = Math.max(active - 1, 0); render(); e.preventDefault(); }
+        else if (e.key === 'Enter') { if (active >= 0) { pick(active); e.preventDefault(); } }
+        else if (e.key === 'Escape') { close(); }
+      });
+      inputEl.addEventListener('blur', () => { setTimeout(close, 180); });
+      listEl.addEventListener('mousedown', e => {
+        const it = e.target.closest('.ac-item');
+        if (it) { e.preventDefault(); pick(parseInt(it.getAttribute('data-i'), 10)); }
+      });
+    }
+
+    function shortAirportName(ap) {
+      return String(ap.name_ko || '').replace(/국제공항$|공항$/, '');
+    }
+    function makeLabel(o, d) {
+      const dn = shortAirportName(d);
+      const paren = dn && dn !== d.city_ko ? `(${dn})` : '';
+      return `${o.city_ko}→${d.city_ko}${paren}`;
+    }
+    function updateRegAutofill() {
+      const o = regSel.origin, d = regSel.destination;
+      const labelEl = document.getElementById('reg-label');
+      const countryEl = document.getElementById('reg-country');
+      const flagEl = document.getElementById('reg-flag');
+      if (o && d && (!labelTouched || !labelEl.value.trim())) labelEl.value = makeLabel(o, d);
+      if (d) {
+        if (!countryTouched || !countryEl.value.trim()) countryEl.value = d.country_ko || '';
+        flagEl.textContent = d.flag || '';
+      } else {
+        flagEl.textContent = '';
+      }
+    }
+    function resolveSel(which) {
+      if (regSel[which]) return regSel[which];
+      const el = document.getElementById(which === 'origin' ? 'reg-origin' : 'reg-destination');
+      const v = el.value.trim().toUpperCase();
+      if (/^[A-Z]{3}$/.test(v)) return findAirport(v);
+      return null;
+    }
+
+    // ===================== 등록 / 삭제 / 수집 실행 =====================
+    async function registerRoute() {
+      const o = resolveSel('origin');
+      const d = resolveSel('destination');
+      if (!o || !d) {
+        alert('출발지/도착지를 검색 목록에서 선택하세요 (예: "인천" 입력 후 ICN 선택)');
+        return;
+      }
+      if (o.iata === d.iata) { alert('출발지와 도착지가 같습니다.'); return; }
+      if (!getToken()) {
+        openSettings('토큰을 한 번만 등록하면 페이지에서 바로 등록됩니다');
+        return;
+      }
+      const label = document.getElementById('reg-label').value.trim() || makeLabel(o, d);
+      const country = document.getElementById('reg-country').value.trim() || d.country_ko || '기타';
+      const btn = document.getElementById('btn-register');
+      btn.disabled = true;
+      btn.textContent = '등록 중…';
+      try {
+        const { routes, sha } = await ghGetRoutes();
+        if (routes.some(r => r.origin === o.iata && r.destination === d.iata)) {
+          alert(`이미 등록된 항목입니다: ${o.iata}→${d.iata}`);
+          return;
+        }
+        const entry = {
+          origin: o.iata,
+          destination: d.iata,
+          label,
+          country,
+          flag: d.flag || '',
+          origin_city: o.city_en,
+          destination_city: d.city_en
+        };
+        routes.push(entry);
+        await ghPutRoutes(routes, sha, `feat: add route ${o.iata}→${d.iata}`);
+        toast('등록 완료 ✓ 다음 수집부터 반영');
+        pendingMarkAdded(entry); // 새로고침해도 유지되도록 대기 목록에 기록
+        // 화면에 즉시(낙관적) 반영
+        state.routesStatus.push(Object.assign({}, entry, {
+          sample_count: 0, last_collected_at: null, latest_price: null,
+          latest_depart_date: null, latest_return_date: null,
+          prev_price: null, min_price_30d: null, avg_price_30d: null
+        }));
+        clearRegForm();
+        renderChips();
+        renderStatus();
+        if (await excelConfirm('지금 바로 수집을 실행할까요?')) {
+          try {
+            await dispatchCollect();
+            toast('수집 실행 요청 완료 ✓ 몇 분 뒤 데이터가 갱신됩니다');
+          } catch (e2) { handleGhError(e2); }
+        }
+      } catch (e) {
+        handleGhError(e);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '등록';
+      }
+    }
+
+    function clearRegForm() {
+      ['reg-origin', 'reg-destination', 'reg-label', 'reg-country'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('reg-flag').textContent = '';
+      regSel.origin = null;
+      regSel.destination = null;
+      labelTouched = false;
+      countryTouched = false;
+    }
+
+    async function deleteRoute(key) {
+      const r = state.routesStatus.find(x => rk(x) === key);
+      const label = (r && r.label) || key.replace('-', '→');
+      if (!getToken()) {
+        openSettings('토큰을 한 번만 등록하면 페이지에서 바로 삭제됩니다');
+        return;
+      }
+      const ok = await excelConfirm(`'${label}' 항목을 삭제할까요?\n(저장소의 data/routes.json에서 제거되어 다음 수집부터 제외됩니다)`);
+      if (!ok) return;
+      try {
+        const { routes, sha } = await ghGetRoutes();
+        const next = routes.filter(x => (x.origin + '-' + x.destination) !== key);
+        if (next.length === routes.length) {
+          toast('이미 삭제된 항목입니다', 'err');
+        } else {
+          await ghPutRoutes(next, sha, `feat: remove route ${key.replace('-', '→')}`);
+          toast('삭제 완료 ✓ 다음 수집부터 제외');
+        }
+        pendingMarkRemoved(key); // 새로고침해도 다시 나타나지 않도록 tombstone 기록
+        state.routesStatus = state.routesStatus.filter(x => rk(x) !== key);
+        state.deals = state.deals.filter(d => rk(d.route) !== key);
+        renderChips();
+        renderDeals();
+        renderStatus();
+      } catch (e) {
+        handleGhError(e);
+      }
+    }
+
+    async function runCollectClicked() {
+      if (!getToken()) {
+        openSettings('토큰을 한 번만 등록하면 페이지에서 바로 수집을 실행할 수 있습니다');
+        return;
+      }
+      if (!(await excelConfirm('지금 데이터 수집을 실행할까요?\n(GitHub Actions 워크플로가 시작됩니다)'))) return;
+      const btn = document.getElementById('btn-collect');
+      btn.disabled = true;
+      try {
+        await dispatchCollect();
+        toast('수집 실행 요청 완료 ✓ 몇 분 뒤 데이터가 갱신됩니다');
+      } catch (e) {
+        handleGhError(e);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // ===================== 설정 모달 =====================
+    function maskToken(t) {
+      return t.length <= 8 ? t.slice(0, 4) + '****' : t.slice(0, 8) + '****';
+    }
+    function refreshTokenState() {
+      const t = getToken();
+      document.getElementById('token-state').textContent = t ? '저장됨: ' + maskToken(t) : '미등록';
+    }
+    function openSettings(notice) {
+      const noticeEl = document.getElementById('settings-notice');
+      if (notice) {
+        noticeEl.textContent = notice;
+        noticeEl.hidden = false;
+      } else {
+        noticeEl.hidden = true;
+      }
+      const tr = document.getElementById('test-result');
+      tr.textContent = '';
+      tr.className = '';
+      refreshTokenState();
+      document.getElementById('settings-backdrop').hidden = false;
+      document.getElementById('token-input').focus();
+    }
+    function closeSettings() {
+      document.getElementById('token-input').value = '';
+      document.getElementById('settings-backdrop').hidden = true;
+    }
+    function saveTokenClicked() {
+      const v = document.getElementById('token-input').value.trim();
+      if (!v) { toast('토큰을 입력하세요', 'err'); return; }
+      try { localStorage.setItem(TOKEN_KEY, v); } catch (e) { toast('저장 실패 (localStorage 사용 불가)', 'err'); return; }
+      document.getElementById('token-input').value = '';
+      refreshTokenState();
+      toast('토큰 저장 완료 ✓');
+    }
+    function deleteTokenClicked() {
+      try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+      refreshTokenState();
+      toast('토큰을 삭제했습니다');
+    }
+    async function testConnection() {
+      const t = document.getElementById('token-input').value.trim() || getToken();
+      const out = document.getElementById('test-result');
+      if (!t) { out.textContent = '토큰을 먼저 입력/저장하세요'; out.className = 'fail'; return; }
+      out.textContent = '확인 중…';
+      out.className = '';
+      try {
+        const res = await fetch(`${GH_API}/repos/${GITHUB_REPO}`, {
+          headers: { 'Authorization': 'Bearer ' + t, 'Accept': 'application/vnd.github+json' }
+        });
+        if (res.ok) { out.textContent = '연결 성공 ✓ 저장소 접근 가능'; out.className = 'ok'; }
+        else if (res.status === 401) { out.textContent = '실패: 토큰이 유효하지 않습니다'; out.className = 'fail'; }
+        else if (res.status === 404) { out.textContent = '실패: 저장소를 찾을 수 없습니다 (Repository access 확인)'; out.className = 'fail'; }
+        else { out.textContent = `실패: HTTP ${res.status}`; out.className = 'fail'; }
+      } catch (e) {
+        out.textContent = '실패: 네트워크 오류';
+        out.className = 'fail';
+      }
+    }
+
+    // ===================== 이벤트 연결 / 초기화 =====================
+    function wireEvents() {
+      document.getElementById('btn-register').addEventListener('click', registerRoute);
+      document.getElementById('btn-collect').addEventListener('click', runCollectClicked);
+      document.getElementById('btn-settings').addEventListener('click', () => openSettings());
+      document.getElementById('btn-settings-close').addEventListener('click', closeSettings);
+      document.getElementById('settings-x').addEventListener('click', closeSettings);
+      document.getElementById('btn-token-save').addEventListener('click', saveTokenClicked);
+      document.getElementById('btn-token-delete').addEventListener('click', deleteTokenClicked);
+      document.getElementById('btn-token-test').addEventListener('click', testConnection);
+      document.getElementById('settings-backdrop').addEventListener('click', e => {
+        if (e.target === e.currentTarget) closeSettings();
+      });
+      document.getElementById('confirm-yes').addEventListener('click', () => confirmAnswer(true));
+      document.getElementById('confirm-no').addEventListener('click', () => confirmAnswer(false));
+
+      ['deal-sort', 'deal-max-price', 'deal-holiday', 'deal-max-leave'].forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener('change', renderDeals);
+        if (el.tagName === 'INPUT' && el.type === 'number') el.addEventListener('input', renderDeals);
+      });
+
+      document.getElementById('reg-label').addEventListener('input', () => { labelTouched = true; });
+      document.getElementById('reg-country').addEventListener('input', () => { countryTouched = true; });
+
+      setupAutocomplete(
+        document.getElementById('reg-origin'),
+        document.getElementById('ac-origin'),
+        ap => { regSel.origin = ap; if (ap) updateRegAutofill(); }
+      );
+      setupAutocomplete(
+        document.getElementById('reg-destination'),
+        document.getElementById('ac-destination'),
+        ap => { regSel.destination = ap; updateRegAutofill(); }
+      );
+
+      // 동적 요소 이벤트 위임
+      document.addEventListener('click', e => {
+        const copyBtn = e.target.closest('[data-copy]');
+        if (copyBtn) { copyText(copyBtn.getAttribute('data-copy')); return; }
+        const favBtn = e.target.closest('[data-fav]');
+        if (favBtn) { toggleFav(favBtn.getAttribute('data-fav')); return; }
+        const delBtn = e.target.closest('[data-del]');
+        if (delBtn) { deleteRoute(delBtn.getAttribute('data-del')); return; }
+        const chipBtn = e.target.closest('[data-chip]');
+        if (chipBtn) { onChipClick(chipBtn); return; }
+      });
+      document.addEventListener('change', e => {
+        const ti = e.target.closest('[data-target-key]');
+        if (ti) onTargetChange(ti);
+      });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+          if (!document.getElementById('confirm-backdrop').hidden) confirmAnswer(false);
+          else if (!document.getElementById('settings-backdrop').hidden) closeSettings();
+        }
+      });
+    }
+
+    async function init() {
+      wireEvents();
       const today = new Date();
       calYear = today.getFullYear();
       calMonth = today.getMonth();
-      try {
-        const res = await fetch(`data/holidays.json${cacheBust}`);
-        holidaySet = new Set(await res.json());
-      } catch (e) {}
+
+      const [deals, routesStatus, history, meta, holidays] = await Promise.all([
+        fetchJson('data/deals.json', []),
+        fetchJson('data/routes_status.json', []),
+        fetchJson('data/history.json', {}),
+        fetchJson('data/meta.json', null),
+        fetchJson('data/holidays.json', [])
+      ]);
+      state.deals = Array.isArray(deals) ? deals : [];
+      state.routesStatus = Array.isArray(routesStatus) ? routesStatus : [];
+      state.history = (history && typeof history === 'object' && !Array.isArray(history)) ? history : {};
+      state.meta = meta;
+      holidaySet = new Set(Array.isArray(holidays) ? holidays : []);
+      applyPending(); // 마지막 수집 이후 이 브라우저에서 한 등록/삭제를 덧입힘
+
       renderCalendar();
+      renderChips();
+      renderDeals();
+      renderStatus();
+      renderMeta();
+      setInterval(renderMeta, 60000);
     }
 
-    const GITHUB_REPO = 'Henryshin/flight-deals';
-
-    async function registerRoute() {
-      const origin = document.getElementById('reg-origin').value.trim().toUpperCase();
-      const destination = document.getElementById('reg-destination').value.trim().toUpperCase();
-      const label = document.getElementById('reg-label').value.trim();
-      const country = document.getElementById('reg-country').value.trim();
-
-      if (!origin || !destination) {
-        alert('출발지/도착지를 입력하세요 (IATA 공항 코드, 예: ICN)');
-        return;
-      }
-
-      const res = await fetch(`data/routes.json${cacheBust}`);
-      const routes = await res.json();
-      routes.push({ origin, destination, label: label || `${origin}->${destination}`, country: country || '기타' });
-      const newContent = JSON.stringify(routes, null, 2) + '\n';
-
-      try {
-        await navigator.clipboard.writeText(newContent);
-        alert('새 routes.json 내용이 클립보드에 복사되었습니다.\nGitHub 편집 화면에서 기존 내용을 전체 지우고 붙여넣은 뒤 커밋하세요.\n(신규 공항이면 collector/google_flights_crawler.py의 AIRPORT_CITY 표에도 도시명을 추가해야 합니다)');
-      } catch (e) {
-        alert('클립보드 복사에 실패했습니다. 아래 내용을 직접 복사해 GitHub에 붙여넣으세요:\n\n' + newContent);
-      }
-      window.open(`https://github.com/${GITHUB_REPO}/edit/main/data/routes.json`, '_blank');
-    }
-    window.registerRoute = registerRoute;
-
-    loadDeals();
-    loadRoutesStatus();
-    loadMeta();
-    initCalendar();
+    init();
   </script>
 </body>
 </html>
