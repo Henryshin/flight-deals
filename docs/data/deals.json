@@ -3,7 +3,8 @@
     "route": {
       "origin": "ICN",
       "destination": "KIX",
-      "label": "인천->오사카(간사이)"
+      "label": "인천->오사카(간사이)",
+      "country": "일본"
     },
     "depart_date": "2026-09-23",
     "return_date": "2026-09-26",
@@ -21,46 +22,9 @@
   {
     "route": {
       "origin": "ICN",
-      "destination": "NRT",
-      "label": "인천->도쿄(나리타)"
-    },
-    "depart_date": "2026-09-24",
-    "return_date": "2026-09-27",
-    "depart_weekday": "목",
-    "return_weekday": "일",
-    "nights": 3,
-    "days": 4,
-    "leave_days": 0,
-    "current_price": 339015,
-    "avg_price": 436187,
-    "discount_pct": 22.3,
-    "is_holiday_window": true,
-    "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Tokyo%20on%202026-09-24%20through%202026-09-27"
-  },
-  {
-    "route": {
-      "origin": "ICN",
-      "destination": "NRT",
-      "label": "인천->도쿄(나리타)"
-    },
-    "depart_date": "2026-09-25",
-    "return_date": "2026-09-28",
-    "depart_weekday": "금",
-    "return_weekday": "월",
-    "nights": 3,
-    "days": 4,
-    "leave_days": 1,
-    "current_price": 339015,
-    "avg_price": 436187,
-    "discount_pct": 22.3,
-    "is_holiday_window": true,
-    "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Tokyo%20on%202026-09-25%20through%202026-09-28"
-  },
-  {
-    "route": {
-      "origin": "ICN",
       "destination": "KIX",
-      "label": "인천->오사카(간사이)"
+      "label": "인천->오사카(간사이)",
+      "country": "일본"
     },
     "depart_date": "2026-09-24",
     "return_date": "2026-09-27",
@@ -79,7 +43,8 @@
     "route": {
       "origin": "ICN",
       "destination": "KIX",
-      "label": "인천->오사카(간사이)"
+      "label": "인천->오사카(간사이)",
+      "country": "일본"
     },
     "depart_date": "2026-09-25",
     "return_date": "2026-09-28",
@@ -97,27 +62,9 @@
   {
     "route": {
       "origin": "ICN",
-      "destination": "NRT",
-      "label": "인천->도쿄(나리타)"
-    },
-    "depart_date": "2026-09-23",
-    "return_date": "2026-09-26",
-    "depart_weekday": "수",
-    "return_weekday": "토",
-    "nights": 3,
-    "days": 4,
-    "leave_days": 1,
-    "current_price": 362900,
-    "avg_price": 436187,
-    "discount_pct": 16.8,
-    "is_holiday_window": true,
-    "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Tokyo%20on%202026-09-23%20through%202026-09-26"
-  },
-  {
-    "route": {
-      "origin": "ICN",
       "destination": "KIX",
-      "label": "인천->오사카(간사이)"
+      "label": "인천->오사카(간사이)",
+      "country": "일본"
     },
     "depart_date": "2026-10-02",
     "return_date": "2026-10-05",
@@ -131,5 +78,65 @@
     "discount_pct": 15.7,
     "is_holiday_window": true,
     "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Osaka%20on%202026-10-02%20through%202026-10-05"
+  },
+  {
+    "route": {
+      "origin": "ICN",
+      "destination": "NRT",
+      "label": "인천->도쿄(나리타)",
+      "country": "일본"
+    },
+    "depart_date": "2026-09-24",
+    "return_date": "2026-09-27",
+    "depart_weekday": "목",
+    "return_weekday": "일",
+    "nights": 3,
+    "days": 4,
+    "leave_days": 0,
+    "current_price": 339015,
+    "avg_price": 436187,
+    "discount_pct": 22.3,
+    "is_holiday_window": true,
+    "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Tokyo%20on%202026-09-24%20through%202026-09-27"
+  },
+  {
+    "route": {
+      "origin": "ICN",
+      "destination": "NRT",
+      "label": "인천->도쿄(나리타)",
+      "country": "일본"
+    },
+    "depart_date": "2026-09-25",
+    "return_date": "2026-09-28",
+    "depart_weekday": "금",
+    "return_weekday": "월",
+    "nights": 3,
+    "days": 4,
+    "leave_days": 1,
+    "current_price": 339015,
+    "avg_price": 436187,
+    "discount_pct": 22.3,
+    "is_holiday_window": true,
+    "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Tokyo%20on%202026-09-25%20through%202026-09-28"
+  },
+  {
+    "route": {
+      "origin": "ICN",
+      "destination": "NRT",
+      "label": "인천->도쿄(나리타)",
+      "country": "일본"
+    },
+    "depart_date": "2026-09-23",
+    "return_date": "2026-09-26",
+    "depart_weekday": "수",
+    "return_weekday": "토",
+    "nights": 3,
+    "days": 4,
+    "leave_days": 1,
+    "current_price": 362900,
+    "avg_price": 436187,
+    "discount_pct": 16.8,
+    "is_holiday_window": true,
+    "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Tokyo%20on%202026-09-23%20through%202026-09-26"
   }
 ]
