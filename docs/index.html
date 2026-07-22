@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>항공권 특가 대시보드</title>
+<style>
+  body { font-family: -apple-system, "Malgun Gothic", sans-serif; background: #0f1115; color: #eee; margin: 0; padding: 24px; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  .sub { color: #999; font-size: 13px; margin-bottom: 20px; }
+  .note { background: #1a1d24; border: 1px solid #2a2e38; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #999; margin-bottom: 24px; }
+  .note code { color: #ddd; }
+  .deals { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+  .card { background: #1a1d24; border-radius: 10px; padding: 16px; border: 1px solid #2a2e38; }
+  .card .route { font-weight: 600; font-size: 15px; }
+  .card .dates { color: #aaa; font-size: 13px; margin: 4px 0 10px; }
+  .price-now { font-size: 22px; font-weight: 700; color: #4fd17c; }
+  .price-avg { color: #888; font-size: 12px; text-decoration: line-through; }
+  .badge { display: inline-block; background: #ff5c5c; color: white; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-left: 6px; }
+  .badge.holiday { background: #ffb84f; color: #222; }
+  .empty { color: #888; padding: 40px 0; text-align: center; }
+  h2 { font-size: 16px; margin: 30px 0 10px; }
+  table { width: 100%; border-collapse: collapse; background: #1a1d24; border-radius: 10px; overflow: hidden; }
+  th, td { text-align: left; padding: 10px 12px; font-size: 13px; border-bottom: 1px solid #2a2e38; }
+  th { color: #999; font-weight: 500; }
+  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .status-dot.ok { background: #4fd17c; }
+  .status-dot.waiting { background: #ffb84f; }
+  .status-dot.none { background: #666; }
+  .muted { color: #777; }
+  #generated-at { color: #666; font-size: 11px; margin-top: 30px; }
+</style>
+</head>
+<body>
+  <h1>✈️ 항공권 특가 대시보드</h1>
+  <div class="sub">GitHub Actions가 4시간마다 수집 · 최근 30일 평균가 대비 15% 이상 저렴하면 특가로 표시</div>
+
+  <div class="note">
+    노선 추가/삭제는 저장소의 <code>data/routes.json</code>을 수정해 커밋하면 다음 수집부터 반영됩니다.
+  </div>
+
+  <h2>🔥 특가</h2>
+  <div id="deals" class="deals"></div>
+
+  <h2>📡 등록 노선 &amp; 수집 현황</h2>
+  <table>
+    <thead>
+      <tr><th>상태</th><th>노선</th><th>수집된 표본 수</th><th>마지막 수집일</th><th>최근 관측가</th></tr>
+    </thead>
+    <tbody id="routes-status"></tbody>
+  </table>
+
+  <div id="generated-at"></div>
+
+  <script>
+    const cacheBust = `?t=${Date.now()}`;
+
+    async function loadDeals() {
+      const res = await fetch(`data/deals.json${cacheBust}`);
+      const deals = await res.json();
+      const el = document.getElementById('deals');
+      if (deals.length === 0) {
+        el.innerHTML = '<div class="empty">아직 특가가 없습니다. 데이터가 쌓이면 여기 표시됩니다.</div>';
+        return;
+      }
+      el.innerHTML = deals.map(d => `
+        <div class="card">
+          <div class="route">${d.route.label || (d.route.origin + ' → ' + d.route.destination)}
+            ${d.is_holiday_window ? '<span class="badge holiday">연휴</span>' : ''}
+            <span class="badge">-${d.discount_pct}%</span>
+          </div>
+          <div class="dates">${d.depart_date} ~ ${d.return_date}</div>
+          <div class="price-now">${d.current_price.toLocaleString()}원</div>
+          <div class="price-avg">평소 ${d.avg_price.toLocaleString()}원</div>
+        </div>
+      `).join('');
+    }
+
+    async function loadRoutesStatus() {
+      const res = await fetch(`data/routes_status.json${cacheBust}`);
+      const routes = await res.json();
+      const el = document.getElementById('routes-status');
+      if (routes.length === 0) {
+        el.innerHTML = '<tr><td colspan="5" class="muted">등록된 노선이 없습니다.</td></tr>';
+        return;
+      }
+      el.innerHTML = routes.map(r => {
+        let dot = 'none', statusText = '수집 전';
+        if (r.sample_count > 0) {
+          dot = r.sample_count >= 3 ? 'ok' : 'waiting';
+          statusText = r.sample_count >= 3 ? '정상 수집 중' : '표본 부족(대기)';
+        }
+        const latestPrice = r.latest_price
+          ? `${r.latest_price.toLocaleString()}원 (${r.latest_depart_date}~${r.latest_return_date})`
+          : '-';
+        return `
+          <tr>
+            <td><span class="status-dot ${dot}"></span>${statusText}</td>
+            <td>${r.label || (r.origin + ' → ' + r.destination)}</td>
+            <td>${r.sample_count}건</td>
+            <td>${r.last_collected_at || '-'}</td>
+            <td>${latestPrice}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function loadMeta() {
+      try {
+        const res = await fetch(`data/meta.json${cacheBust}`);
+        const meta = await res.json();
+        document.getElementById('generated-at').textContent =
+          `마지막 갱신: ${new Date(meta.generated_at).toLocaleString('ko-KR')}`;
+      } catch (e) {}
+    }
+
+    loadDeals();
+    loadRoutesStatus();
+    loadMeta();
+  </script>
+</body>
+</html>
