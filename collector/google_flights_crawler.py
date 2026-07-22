@@ -50,11 +50,20 @@ def build_booking_url(
     """
     origin_city = origin_city or AIRPORT_CITY.get(origin, origin)
     dest_city = dest_city or AIRPORT_CITY.get(destination, destination)
+    # 연결어는 반드시 "through"여야 함. Actions 러너에서 실측한 결과(debug-crawl):
+    #   - "returning"은 구글 NL 파서가 인식하지 못해 항공검색 홈으로 떨어짐 -> 결과 0건
+    #   - "through"는 왕복 검색으로 정상 파싱됨
+    # hl=ko&curr=KRW가 없으면 러너 IP 지역에 따라 가격이 USD로 표시되어
+    # PRICE_PATTERN(₩)이 아무것도 매칭하지 못하므로 반드시 붙인다.
     query = (
         f"Flights from {origin_city} to {dest_city} "
-        f"on {depart.isoformat()} returning {return_.isoformat()}"
+        f"on {depart.isoformat()} through {return_.isoformat()}"
     )
-    return "https://www.google.com/travel/flights/search?q=" + query.replace(" ", "%20")
+    return (
+        "https://www.google.com/travel/flights/search?q="
+        + query.replace(" ", "%20")
+        + "&hl=ko&curr=KRW"
+    )
 
 
 def fetch_lowest_price(
