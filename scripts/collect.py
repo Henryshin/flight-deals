@@ -88,30 +88,75 @@ def fetch_price_with_retry(session, *args, **kwargs):
             return None
 
 
+def group_routes(routes):
+    """route 엔트리들을 (origin,destination)별로 묶어 크롤 스펙을 만든다.
+
+    같은 (o,d)는 여러 모니터(stops 정책)로 등록될 수 있으나 crawl은 한 번만 한다.
+    - min_nights: 그룹 내 최소값(가장 넓은 날짜 커버리지).
+    - max_stops : 그룹 내 가장 넓은 정책. 하나라도 None이면 None(=전체),
+                  아니면 int들의 최대값.
+    반환: [(origin, destination, origin_city, dest_city, min_nights, max_stops), ...]
+    """
+    groups = {}
+    order = []
+    for route in routes:
+        key = (route["origin"], route["destination"])
+        if key not in groups:
+            groups[key] = {
+                "origin": route["origin"],
+                "destination": route["destination"],
+                "origin_city": route.get("origin_city"),
+                "dest_city": route.get("destination_city"),
+                "min_nights": route.get("min_nights", DEFAULT_TRIP_LENGTH_DAYS),
+                "max_stops": route.get("max_stops"),
+                "max_stops_any_none": route.get("max_stops") is None,
+            }
+            order.append(key)
+        else:
+            g = groups[key]
+            g["min_nights"] = min(g["min_nights"], route.get("min_nights", DEFAULT_TRIP_LENGTH_DAYS))
+            ms = route.get("max_stops")
+            if ms is None:
+                g["max_stops_any_none"] = True
+            elif not g["max_stops_any_none"]:
+                g["max_stops"] = ms if g["max_stops"] is None else max(g["max_stops"], ms)
+
+    specs = []
+    for key in order:
+        g = groups[key]
+        max_stops = None if g["max_stops_any_none"] else g["max_stops"]
+        specs.append((
+            g["origin"], g["destination"], g["origin_city"], g["dest_city"],
+            g["min_nights"], max_stops,
+        ))
+    return specs
+
+
 def main():
     routes = json.loads(ROUTES_FILE.read_text(encoding="utf-8"))
     collected_at = date.today().isoformat()
 
+    # 같은 (origin,destination)를 여러 모니터가 공유하므로 crawl은 (o,d)당 한 번만.
+    specs = group_routes(routes)
+
     rows = []
     # 실행 전체가 브라우저 하나를 재사용 (쿼리마다 크로미움 기동 비용을 내지 않음).
     with PriceCrawlerSession() as session:
-        for route in routes:
-            trip_length = route.get("min_nights", DEFAULT_TRIP_LENGTH_DAYS)
-            candidates = build_date_candidates(trip_length)
-            max_stops = route.get("max_stops")
+        for origin, destination, origin_city, dest_city, min_nights, max_stops in specs:
+            candidates = build_date_candidates(min_nights)
             for depart, return_, is_holiday in candidates:
                 result = fetch_price_with_retry(
                     session,
-                    route["origin"], route["destination"], depart, return_,
-                    origin_city=route.get("origin_city"), dest_city=route.get("destination_city"),
+                    origin, destination, depart, return_,
+                    origin_city=origin_city, dest_city=dest_city,
                     max_stops=max_stops,
                 )
                 if result is None:
-                    print(f"  {route['origin']}->{route['destination']} {depart}~{return_}: 실패")
+                    print(f"  {origin}->{destination} {depart}~{return_}: 실패")
                     continue
-                print(f"  {route['origin']}->{route['destination']} {depart}~{return_}: {result['price']}원")
+                print(f"  {origin}->{destination} {depart}~{return_}: {result['price']}원")
                 rows.append([
-                    route["origin"], route["destination"],
+                    origin, destination,
                     depart.isoformat(), return_.isoformat(),
                     result["price"], int(is_holiday), collected_at,
                     result.get("dep_time", ""), result.get("arr_time", ""),

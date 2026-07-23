@@ -482,7 +482,17 @@
     }
     function fmt(n) { return n == null ? '-' : Number(n).toLocaleString('ko-KR'); }
     function pad(n) { return String(n).padStart(2, '0'); }
-    function rk(r) { return r.origin + '-' + r.destination; }
+    // 모니터 식별자: id 필드가 있으면 그것, 없으면 origin-destination (backend monitor_id 규칙과 일치)
+    function rk(r) { return r.id || (r.origin + '-' + r.destination); }
+    // 노선(레벨1) 그룹 키: origin-destination (같은 o-d 의 여러 stops 모니터를 한 그룹으로 묶음)
+    function routeGroupKey(r) { return r.origin + '-' + r.destination; }
+    // stops 정책 태그: 0 -> "d", null/absent -> "any", n -> "v"+n
+    function stopsTag(maxStops) {
+      if (maxStops == null) return 'any';
+      const n = parseInt(maxStops, 10);
+      if (isNaN(n)) return 'any';
+      return n === 0 ? 'd' : 'v' + n;
+    }
     function emptyRow(colspan, msg) {
       return `<tr class="empty-row"><td colspan="${colspan}">${esc(msg)}</td></tr>`;
     }
@@ -870,7 +880,7 @@
       // 노선별 그룹 유지: 그룹 내부 정렬 후, 그룹 대표값으로 그룹 정렬
       const groupMap = new Map();
       for (const d of items) {
-        const k = rk(d.route);
+        const k = routeGroupKey(d.route); // 레벨1: 노선(origin-destination) 단위로 묶음
         if (!groupMap.has(k)) groupMap.set(k, { route: d.route, items: [] });
         groupMap.get(k).items.push(d);
       }
@@ -942,9 +952,19 @@
         tbody.innerHTML = emptyRow(9, state.favOnly ? '즐겨찾기한 항목이 없습니다. ★를 눌러 추가하세요.' : '조건에 맞는 항목이 없습니다.');
         return;
       }
-      list = list.slice().sort((a, b) => (favs.has(rk(b)) ? 1 : 0) - (favs.has(rk(a)) ? 1 : 0));
+      // 레벨1: 노선(origin-destination)으로 그룹, 레벨2: 각 stops 모니터를 개별 행으로.
+      const groupMap = new Map();
+      for (const r of list) {
+        const gk = routeGroupKey(r);
+        if (!groupMap.has(gk)) groupMap.set(gk, { route: r, items: [] });
+        groupMap.get(gk).items.push(r);
+      }
+      const groups = [...groupMap.values()];
+      const groupFaved = g => g.items.some(r => favs.has(rk(r)));
+      groups.forEach(g => g.items.sort((a, b) => (favs.has(rk(b)) ? 1 : 0) - (favs.has(rk(a)) ? 1 : 0)));
+      groups.sort((ga, gb) => (groupFaved(gb) ? 1 : 0) - (groupFaved(ga) ? 1 : 0));
 
-      tbody.innerHTML = list.map(r => {
+      const renderStatusRow = r => {
         const key = rk(r);
         const fav = favs.has(key);
         const target = targets[key];
@@ -990,6 +1010,17 @@
             <td style="text-align:center"><button class="x-btn" data-del="${esc(key)}" title="항목 삭제">✕</button></td>
           </tr>
         `;
+      };
+
+      tbody.innerHTML = groups.map(g => {
+        const rep = g.route;
+        const label = rep.label || (rep.origin + ' → ' + rep.destination);
+        const flag = rep.flag || (findAirport(rep.destination) || {}).flag || '';
+        // 노선에 모니터가 둘 이상일 때만 그룹 헤더를 표시(단일 모니터는 기존과 동일한 단순 표시).
+        const header = g.items.length > 1
+          ? `<tr class="group-header"><td colspan="9">${flag ? esc(flag) + ' ' : ''}${esc(label)} <span class="cell-sub" style="display:inline">· ${esc(rep.origin)}→${esc(rep.destination)} · 모니터 ${g.items.length}개</span></td></tr>`
+          : '';
+        return header + g.items.map(renderStatusRow).join('');
       }).join('');
     }
 
@@ -1187,11 +1218,28 @@
       btn.textContent = '등록 중…';
       try {
         const { routes, sha } = await ghGetRoutes();
-        if (routes.some(r => r.origin === o.iata && r.destination === d.iata)) {
-          alert(`이미 등록된 항목입니다: ${o.iata}→${d.iata}`);
+        // 중복 검사: 같은 (출발,도착,경유정책) 만 차단. 같은 o-d 라도 stops 가 다르면 허용.
+        const sameOD = routes.filter(r => r.origin === o.iata && r.destination === d.iata);
+        if (sameOD.some(r => (r.max_stops == null ? null : parseInt(r.max_stops, 10)) === maxStops)) {
+          const stopTxt = maxStops === 0 ? '직항' : maxStops == null ? '상관없음' : '경유' + maxStops + '까지';
+          alert(`이미 등록된 항목입니다: ${o.iata}→${d.iata} (${stopTxt})`);
           return;
         }
+        // id 규칙: 해당 o-d 의 첫 모니터면 깨끗한 "O-D", 이미 존재하면 "O-D-${stopsTag}", 충돌 시 -2,-3...
+        const existingIds = new Set(routes.map(rk));
+        let id;
+        if (sameOD.length === 0) {
+          id = `${o.iata}-${d.iata}`;
+        } else {
+          id = `${o.iata}-${d.iata}-${stopsTag(maxStops)}`;
+          if (existingIds.has(id)) {
+            let k = 2;
+            while (existingIds.has(`${id}-${k}`)) k++;
+            id = `${id}-${k}`;
+          }
+        }
         const entry = {
+          id,
           origin: o.iata,
           destination: d.iata,
           label,
@@ -1253,7 +1301,7 @@
       if (!ok) return;
       try {
         const { routes, sha } = await ghGetRoutes();
-        const next = routes.filter(x => (x.origin + '-' + x.destination) !== key);
+        const next = routes.filter(x => rk(x) !== key);
         if (next.length === routes.length) {
           toast('이미 삭제된 항목입니다', 'err');
         } else {
@@ -1300,15 +1348,21 @@
       const maxStops = stopsVal === 'null' ? null : parseInt(stopsVal, 10);
       try {
         const { routes, sha } = await ghGetRoutes();
-        let found = false;
-        const next = routes.map(x => {
-          if ((x.origin + '-' + x.destination) === key) {
-            found = true;
-            return { ...x, min_nights: minNights, max_stops: maxStops };
-          }
-          return x;
-        });
-        if (!found) { toast('노선을 찾을 수 없습니다 (이미 삭제됨?)', 'err'); return; }
+        const target = routes.find(x => rk(x) === key);
+        if (!target) { toast('노선을 찾을 수 없습니다 (이미 삭제됨?)', 'err'); return; }
+        // 다른 모니터와 (출발,도착,경유정책)이 겹치면 차단 (자기 자신 제외)
+        const collides = routes.some(x =>
+          rk(x) !== key &&
+          x.origin === target.origin && x.destination === target.destination &&
+          (x.max_stops == null ? null : parseInt(x.max_stops, 10)) === maxStops
+        );
+        if (collides) {
+          const stopTxt = maxStops === 0 ? '직항' : maxStops == null ? '상관없음' : '경유' + maxStops + '까지';
+          toast(`같은 경유 정책의 항목이 이미 있습니다 (${stopTxt})`, 'err');
+          return;
+        }
+        // id 는 안정적 식별자이므로 그대로 유지
+        const next = routes.map(x => (rk(x) === key ? { ...x, min_nights: minNights, max_stops: maxStops } : x));
         await ghPutRoutes(next, sha, `chore: update ${key.replace('-', '→')} nights/stops`);
         // 로컬 상태도 즉시 반영 (가격 이력·표본은 그대로)
         const r = state.routesStatus.find(x => rk(x) === key);

@@ -50,6 +50,14 @@ def route_key(r):
     return (r["origin"], r["destination"])
 
 
+def monitor_id(route):
+    """모니터(route 엔트리) 식별자. id가 있으면 그것, 없으면 "O-D".
+
+    프론트엔드 rk(r) = r.id || (r.origin + '-' + r.destination) 와 반드시 일치해야 한다.
+    """
+    return route.get("id") or f"{route['origin']}-{route['destination']}"
+
+
 def _row_nights(row):
     """행의 여행 박수(= 귀국일 - 출발일)."""
     return (date.fromisoformat(row["return_date"]) - date.fromisoformat(row["depart_date"])).days
@@ -82,11 +90,23 @@ def stops_class_rows(rows, max_stops):
 
 
 def baseline_rows(rows, max_stops):
-    """동일 기준(stops 클래스) 부분집합을 우선하되, MIN_HISTORY_POINTS 미만이면 전체로 폴백."""
+    """동일 기준(stops 클래스) 부분집합을 우선. 표본이 부족하면 폴백하되,
+    '직항 모니터가 경유편 가격을 기준값/30일 평균으로 끌어오는' 클래스 누수를 막는다.
+
+    - 클래스 부분집합이 MIN_HISTORY_POINTS 이상이면 그대로 사용.
+    - 부족하면: 남은 행이 '전부 stops 미상'(legacy)일 때만 전체로 폴백하고,
+      stops 를 아는 클래스 밖 행(예: 직항 모니터의 경유편)이 있으면 폴백하지 않는다
+      (current_rows 와 동일한 불변식).
+    """
     subset = stops_class_rows(rows, max_stops)
     if len(subset) >= MIN_HISTORY_POINTS:
         return subset
-    return list(rows)
+    if max_stops is None:
+        return list(rows)
+    any_known = any(_stops_val(r) is not None for r in rows)
+    if not any_known:
+        return list(rows)  # 전부 미상(legacy) -> 초기 데이터에서도 특가 보이도록 폴백
+    return subset  # 클래스 밖(경유편)은 절대 끌어오지 않음
 
 
 def current_rows(rows, max_stops):
@@ -95,10 +115,17 @@ def current_rows(rows, max_stops):
     baseline_rows 의 전체-폴백은 avg/baseline 집계에만 쓰고, '현재/최신' 행 선택에는
     쓰지 않는다. 그렇지 않으면 클래스 밖(예: nonstop-only 노선의 경유편) 항공편이
     현재값으로 잡혀 '동일 기준' 불변식을 깨고 가짜 특가를 만들 수 있다.
-    부분집합이 비면(전부 stops 미상) 전체로 폴백한다.
+    부분집합이 '전부 stops 미상'이라 비었을 때만 전체로 폴백한다. 제외된 행 중
+    stops 를 아는 행이 하나라도 있으면(즉 클래스 밖 항공편) 빈 집합을 그대로 돌려주어
+    '직항 모니터가 경유편을 세지 않는다'는 불변식을 지킨다.
     """
     subset = stops_class_rows(rows, max_stops)
-    return subset if subset else list(rows)
+    if subset:
+        return subset
+    if max_stops is None:
+        return list(rows)
+    any_known = any(_stops_val(r) is not None for r in rows)
+    return list(rows) if not any_known else []
 
 
 def main():
@@ -129,10 +156,16 @@ def main():
 
     for route in routes:
         key = route_key(route)
-        route_prices = by_route.get(key, [])
-        sample_count = len(route_prices)
-        last_collected_at = max((r["collected_at"] for r in route_prices), default=None)
+        mid = monitor_id(route)
+        min_nights = route.get("min_nights", 0)
+        # 이 모니터의 모집단: 같은 (o,d) 행 중, 이 모니터의 최소 박수 이상인 날짜쌍만.
+        # (stops 클래스 필터는 아래 baseline/current 헬퍼가 max_stops로 처리)
+        route_prices = [r for r in by_route.get(key, []) if _row_nights(r) >= min_nights]
         max_stops = route.get("max_stops")
+        # sample_count 는 이 모니터의 stops 클래스 모집단 크기(경유 모니터와 직항 모니터가
+        # 같은 (o,d)를 공유해도 각자의 실제 표본 수를 보고하도록).
+        sample_count = len(stops_class_rows(route_prices, max_stops))
+        last_collected_at = max((r["collected_at"] for r in route_prices), default=None)
 
         # 수집일(collected_at) 단위로 묶어서 노선 레벨 스냅샷을 계산.
         # 각 수집일 안에서는 stops 클래스에 맞는 행을 우선(부족하면 전체 폴백)해 최저가 선택.
@@ -143,6 +176,8 @@ def main():
 
         def day_min_row(day_rows):
             candidates = current_rows(day_rows, max_stops)
+            if not candidates:
+                return None
             return min(candidates, key=lambda r: r["price"])
 
         latest_row = None
@@ -150,7 +185,8 @@ def main():
         if days_sorted:
             latest_row = day_min_row(by_day[days_sorted[-1]])
             if len(days_sorted) >= 2:
-                status_prev_price = day_min_row(by_day[days_sorted[-2]])["price"]
+                prev_row = day_min_row(by_day[days_sorted[-2]])
+                status_prev_price = prev_row["price"] if prev_row else None
 
         recent = [r for r in route_prices if datetime.fromisoformat(r["collected_at"]).date() >= lookback_start]
         recent_base = baseline_rows(recent, max_stops)
@@ -176,10 +212,12 @@ def main():
         if days_sorted:
             # 차트의 min/avg 도 status/deal 과 같은 '동일 기준'(stops 클래스) 모집단을 따르도록,
             # 각 수집일에서 stops 클래스 행만 집계(그 날 클래스 행이 없으면 전체 폴백).
-            history[f"{route['origin']}-{route['destination']}"] = []
+            history[mid] = []
             for day in days_sorted:
                 day_rows = current_rows(by_day[day], max_stops)
-                history[f"{route['origin']}-{route['destination']}"].append({
+                if not day_rows:
+                    continue
+                history[mid].append({
                     "t": day,
                     "min": min(r["price"] for r in day_rows),
                     "avg": round(sum(r["price"] for r in day_rows) / len(day_rows)),
