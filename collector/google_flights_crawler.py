@@ -12,11 +12,14 @@
 - 쿼리마다 크로미움을 새로 띄우면 실행당 ~88회의 브라우저 기동 비용을 내게 되므로,
   수집 실행 전체가 PriceCrawlerSession 하나(브라우저 1개)를 재사용하도록 함.
   쿼리별로는 공유 컨텍스트에서 새 페이지만 열고 닫음.
+
+실패 분류:
+- 예전엔 모든 실패가 조용히 None/{} 로 삼켜져 '차단', '결과 없음', '파싱 실패'가
+  구분되지 않았다. fetch_result() 는 typed 결과(status/detail)를 돌려주어
+  수집 스크립트가 노선별 실패 사유를 기록/노출할 수 있게 한다.
 """
 import re
 from datetime import date
-
-from playwright.sync_api import sync_playwright
 
 PRICE_PATTERN = re.compile(r"₩([0-9][0-9,]{2,})")
 
@@ -24,6 +27,60 @@ PRICE_PATTERN = re.compile(r"₩([0-9][0-9,]{2,})")
 TIME_PATTERN = re.compile(r"(오전|오후)\s*([0-9]{1,2}):([0-9]{2})(\+1)?")
 STOPS_NONSTOP = "직항"
 STOPS_PATTERN = re.compile(r"경유\s*([0-9]+)\s*회")
+
+# 결과 목록의 각 항공편은 <li> 안에 "...₩487,681 | 왕복" 형태로 총액이 들어있음.
+# body 전체 텍스트를 긁으면 날짜별 가격 캘린더 위젯 등 다른 요소의 가격까지 섞여
+# 실제보다 훨씬 낮은 값을 최저가로 잘못 고르는 문제가 있어, 결과 리스트 항목만 대상으로 함.
+ROUND_TRIP_MARKER = "왕복"
+
+# 결과 li 가 렌더될 때까지 기다리는 셀렉터 (₩ 가격이 붙은 리스트 항목).
+RESULTS_SELECTOR = 'li:has-text("₩")'
+RESULTS_TIMEOUT_MS = 20000
+SETTLE_MS = 1500  # 셀렉터 등장 후 나머지 항목이 붙을 짧은 여유
+
+# ---- 실패 분류 상태값 (fetch_result 의 status) ----
+STATUS_OK = "ok"                 # 파싱 성공 (by_stops 가 비어있을 수는 있음)
+STATUS_NO_FLIGHTS = "no_flights" # 구글이 '결과 없음'을 명시
+STATUS_PARSE_ZERO = "parse_zero" # 페이지는 떴는데 왕복/₩ 항목 파싱 0건 (구조 변경/통화 의심)
+STATUS_BLOCKED = "blocked"       # 비정상 트래픽/캡차 감지
+STATUS_CONSENT = "consent"       # 동의(consent) 페이지에서 벗어나지 못함
+STATUS_TIMEOUT = "timeout"       # 페이지 로드 타임아웃
+STATUS_ERROR = "error"           # 그 외 예외
+
+CONSENT_BUTTON_SELECTORS = (
+    'button:has-text("모두 동의")',
+    'button:has-text("Accept all")',
+    "#L2AGLb",  # 구글 동의 페이지의 'Accept all' 버튼 id
+)
+BLOCKED_MARKERS = ("비정상적인 트래픽", "unusual traffic", "recaptcha", "로봇이 아닙니다")
+NO_RESULT_MARKERS = (
+    "일치하는 항공편이 없습니다",
+    "검색 결과가 없습니다",
+    "표시할 항공편이 없습니다",
+    "No results",
+)
+
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+)
+
+# 구글 플라이트는 도시명을 인식하므로 IATA 공항 코드를 도시명으로 매핑.
+# 새 노선은 routes.json 에 origin_city/destination_city 를 함께 넣으므로,
+# 이 표는 도시명이 없는 과거(legacy) 항목을 위한 폴백으로만 쓰임.
+AIRPORT_CITY = {
+    "ICN": "Seoul",
+    "NRT": "Tokyo",
+    "KIX": "Osaka",
+    "DAD": "Da Nang International Airport",  # "Da Nang"만 쓰면 구글이 '살펴보기' 랜딩으로 빠져 결과 0건
+    "DPS": "Bali",
+    "ULN": "Ulaanbaatar",
+    "PVG": "Shanghai",
+    "TPE": "Taipei",
+    "KHH": "Kaohsiung",
+    "SHI": "Shimojishima",
+    "ATH": "Athens, Greece",  # "Athens"만 쓰면 미국 조지아주 Athens와 모호 -> 결과 0건
+}
 
 
 def _to_24h(ampm: str, hour: int, minute: int) -> str:
@@ -69,32 +126,23 @@ def parse_itinerary(li_text: str):
 
     return {"price": price, "stops": stops, "dep_time": dep_time, "arr_time": arr_time}
 
-# 결과 목록의 각 항공편은 <li> 안에 "...₩487,681 | 왕복" 형태로 총액이 들어있음.
-# body 전체 텍스트를 긁으면 날짜별 가격 캘린더 위젯 등 다른 요소의 가격까지 섞여
-# 실제보다 훨씬 낮은 값을 최저가로 잘못 고르는 문제가 있어, 결과 리스트 항목만 대상으로 함.
-ROUND_TRIP_MARKER = "왕복"
 
-USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
-)
-
-# 구글 플라이트는 도시명을 인식하므로 IATA 공항 코드를 도시명으로 매핑.
-# 새 노선은 routes.json 에 origin_city/destination_city 를 함께 넣으므로,
-# 이 표는 도시명이 없는 과거(legacy) 항목을 위한 폴백으로만 쓰임.
-AIRPORT_CITY = {
-    "ICN": "Seoul",
-    "NRT": "Tokyo",
-    "KIX": "Osaka",
-    "DAD": "Da Nang International Airport",  # "Da Nang"만 쓰면 구글이 '살펴보기' 랜딩으로 빠져 결과 0건
-    "DPS": "Bali",
-    "ULN": "Ulaanbaatar",
-    "PVG": "Shanghai",
-    "TPE": "Taipei",
-    "KHH": "Kaohsiung",
-    "SHI": "Shimojishima",
-    "ATH": "Athens, Greece",  # "Athens"만 쓰면 미국 조지아주 Athens와 모호 -> 결과 0건
-}
+def classify_no_results(page_url: str, body_text: str, li_count: int, saw_price: bool):
+    """결과 li 파싱이 0건일 때 페이지 내용으로 실패 사유를 분류. (순수 함수)"""
+    text = body_text or ""
+    url = page_url or ""
+    if "consent." in url:
+        return STATUS_CONSENT, "동의(consent) 페이지에서 벗어나지 못함"
+    low = text.lower()
+    for marker in BLOCKED_MARKERS:
+        if marker.lower() in low:
+            return STATUS_BLOCKED, f"차단 의심 문구 감지: '{marker}'"
+    for marker in NO_RESULT_MARKERS:
+        if marker.lower() in low:
+            return STATUS_NO_FLIGHTS, "구글이 '결과 없음'을 표시"
+    if li_count > 0 and not saw_price:
+        return STATUS_PARSE_ZERO, f"li {li_count}개 중 ₩ 가격 없음 (통화/로케일 또는 파서 확인)"
+    return STATUS_PARSE_ZERO, f"li {li_count}개, 왕복 항목 파싱 0건 (사이트 구조 변경?)"
 
 
 class CrawlerSessionError(RuntimeError):
@@ -134,16 +182,24 @@ def build_booking_url(
     )
 
 
+def _default_playwright_factory():
+    # build_dashboard_data.py 등 크롤링하지 않는 소비자가 이 모듈을 import 할 때
+    # playwright 설치를 요구하지 않도록, 실제 세션 시작 시점에만 lazy import 한다.
+    from playwright.sync_api import sync_playwright
+
+    return sync_playwright()
+
+
 class PriceCrawlerSession:
     """수집 실행 전체가 크로미움 브라우저 하나를 재사용하는 세션.
 
     with PriceCrawlerSession() as session:
-        session.fetch_lowest_price(...)  # 쿼리마다 새 페이지만 열고 닫음
+        session.fetch_result(...)  # 쿼리마다 새 페이지만 열고 닫음
     """
 
     def __init__(self, _playwright_factory=None):
         # _playwright_factory: 테스트에서 sync_playwright 를 가짜로 주입하기 위한 지점.
-        self._playwright_factory = _playwright_factory or sync_playwright
+        self._playwright_factory = _playwright_factory or _default_playwright_factory
         self._playwright = None
         self._browser = None
         self._browser_context = None
@@ -190,6 +246,113 @@ class PriceCrawlerSession:
         self._browser = None
         self._playwright = None
 
+    def _dismiss_consent(self, page):
+        """구글 동의(consent) 페이지로 넘어갔으면 '모두 동의'를 한 번 눌러본다."""
+        if "consent." not in page.url:
+            return
+        for sel in CONSENT_BUTTON_SELECTORS:
+            try:
+                page.click(sel, timeout=3000)
+                page.wait_for_load_state("domcontentloaded", timeout=10000)
+                return
+            except Exception:
+                continue
+
+    def _scan_page(self, page, url, timeout_ms):
+        """페이지를 열고 결과 li 를 파싱. (status, itineraries, detail) 반환."""
+        page.goto(url, timeout=timeout_ms)
+        self._dismiss_consent(page)
+
+        # 고정 sleep 대신 결과 항목이 나타날 때까지만 대기 -> 쿼리당 수 초 단축,
+        # 늦게 뜨는 페이지도 타임아웃 한도까지 기다려줌.
+        try:
+            page.wait_for_selector(RESULTS_SELECTOR, timeout=RESULTS_TIMEOUT_MS)
+            page.wait_for_timeout(SETTLE_MS)
+        except Exception:
+            pass  # 아래에서 파싱 0건이면 페이지 내용으로 사유를 분류
+
+        itineraries = []
+        li_count = 0
+        saw_price = False
+        for li in page.query_selector_all("li"):
+            li_count += 1
+            item_text = li.inner_text()
+            if "₩" in item_text:
+                saw_price = True
+            parsed = parse_itinerary(item_text)
+            if parsed is not None:
+                itineraries.append(parsed)
+
+        if itineraries:
+            return STATUS_OK, itineraries, ""
+
+        body_text = ""
+        try:
+            body_text = page.inner_text("body")
+        except Exception:
+            pass
+        status, detail = classify_no_results(page.url, body_text, li_count, saw_price)
+        return status, [], detail
+
+    def fetch_result(
+        self,
+        origin: str,
+        destination: str,
+        depart: date,
+        return_: date,
+        timeout_ms=25000,
+        origin_city: str | None = None,
+        dest_city: str | None = None,
+        max_stops=None,
+    ):
+        """typed 수집 결과 반환:
+        {"status": str, "by_stops": {stops: itinerary_dict}, "detail": str}
+
+        by_stops 는 경유수 클래스별 최저가 (경유수 미상 항목 제외, max_stops 이하만).
+        같은 (o,d,날짜)라도 직항 모니터는 stops=0 최저가를, 경유 모니터는 stops<=1
+        최저가를 각각 필요로 하므로, 총액 최저가 1건이 아니라 클래스별 최저가를 모두 담는다.
+
+        브라우저가 죽어 새 페이지조차 못 여는 경우엔 CrawlerSessionError 를 던져
+        호출 측이 세션을 재시작할 수 있게 함. 그 외 실패는 status/detail 로 반환.
+        """
+        url = build_booking_url(origin, destination, depart, return_, origin_city=origin_city, dest_city=dest_city)
+
+        try:
+            page = self._browser_context.new_page()
+        except Exception as e:
+            raise CrawlerSessionError(f"cannot open new page (browser dead?): {e}") from e
+
+        try:
+            status, itineraries, detail = self._scan_page(page, url, timeout_ms)
+        except Exception as e:
+            kind = STATUS_TIMEOUT if "Timeout" in type(e).__name__ else STATUS_ERROR
+            detail = f"{type(e).__name__}: {e}"
+            print(f"[google_flights_crawler] {kind} for {origin}->{destination} {depart}~{return_}: {detail}")
+            return {"status": kind, "by_stops": {}, "detail": detail[:300]}
+        finally:
+            try:
+                page.close()
+            except Exception:
+                pass
+
+        best = {}
+        for parsed in itineraries:
+            s = parsed["stops"]
+            if s is None:
+                continue  # 경유수 미상 항목은 클래스 오염 방지를 위해 제외
+            if max_stops is not None and s > max_stops:
+                continue
+            if s not in best or parsed["price"] < best[s]["price"]:
+                best[s] = parsed
+
+        if status == STATUS_OK and not best and itineraries:
+            detail = "왕복 항목은 있으나 조건(경유수) 내 항목 없음"
+        return {"status": status, "by_stops": best, "detail": detail}
+
+    def fetch_min_by_stops(self, *args, **kwargs):
+        """(하위호환) 경유수별 최저가 dict 만 반환. 실패/결과 없음 시 {}."""
+        return self.fetch_result(*args, **kwargs)["by_stops"]
+
     def fetch_lowest_price(
         self,
         origin: str,
@@ -205,97 +368,16 @@ class PriceCrawlerSession:
 
         max_stops 이하의 경유수를 가진 왕복편만 후보로 삼고(None이면 전부),
         그중 최저가 항공편의 전체 dict({"price","stops","dep_time","arr_time"})를 반환.
-
-        브라우저가 죽어 새 페이지조차 못 여는 경우엔 CrawlerSessionError 를 던져
-        호출 측이 세션을 재시작할 수 있게 함.
         """
-        url = build_booking_url(origin, destination, depart, return_, origin_city=origin_city, dest_city=dest_city)
-
-        try:
-            page = self._browser_context.new_page()
-        except Exception as e:
-            raise CrawlerSessionError(f"cannot open new page (browser dead?): {e}") from e
-
-        try:
-            page.goto(url, timeout=timeout_ms)
-            page.wait_for_timeout(6000)
-
-            itineraries = []
-            for li in page.query_selector_all("li"):
-                item_text = li.inner_text()
-                parsed = parse_itinerary(item_text)
-                if parsed is None:
-                    continue
-                if max_stops is not None and (
-                    parsed["stops"] is None or parsed["stops"] > max_stops
-                ):
-                    # 경유수 미상 항목은 유계 클래스(max_stops!=None)에 넣지 않는다.
-                    continue
-                itineraries.append(parsed)
-
-            if not itineraries:
-                return None
-            return min(itineraries, key=lambda it: it["price"])
-        except Exception as e:
-            print(f"[google_flights_crawler] failed for {origin}->{destination} {depart}~{return_}: {e}")
+        result = self.fetch_result(
+            origin, destination, depart, return_,
+            timeout_ms=timeout_ms, origin_city=origin_city, dest_city=dest_city,
+            max_stops=max_stops,
+        )
+        candidates = list(result["by_stops"].values())
+        if not candidates:
             return None
-        finally:
-            try:
-                page.close()
-            except Exception:
-                pass
-
-    def fetch_min_by_stops(
-        self,
-        origin: str,
-        destination: str,
-        depart: date,
-        return_: date,
-        timeout_ms=25000,
-        origin_city: str | None = None,
-        dest_city: str | None = None,
-        max_stops=None,
-    ):
-        """(노선/날짜)의 '경유수(stops)별 최저가'를 각각 반환.
-
-        한 번의 페이지 로드에서 모든 왕복편을 파싱해 경유수별로 최저가를 고른다.
-        반환: {0: {..dict..}, 1: {..dict..}, ...} — 경유수 미상 항목은 제외.
-        max_stops 가 None이 아니면 그 이하 경유수만 포함. 결과 없음/실패 시 {}.
-
-        같은 (o,d,날짜)라도 직항 모니터는 stops=0 최저가를, 경유 모니터는 stops<=1
-        최저가를 각각 필요로 하므로, 총액 최저가 1건만 저장하면 직항 모니터가 영원히
-        빈 채로 남는다. 이를 막기 위해 경유수 클래스별 최저가를 모두 저장한다.
-        """
-        url = build_booking_url(origin, destination, depart, return_, origin_city=origin_city, dest_city=dest_city)
-
-        try:
-            page = self._browser_context.new_page()
-        except Exception as e:
-            raise CrawlerSessionError(f"cannot open new page (browser dead?): {e}") from e
-
-        try:
-            page.goto(url, timeout=timeout_ms)
-            page.wait_for_timeout(6000)
-
-            best = {}
-            for li in page.query_selector_all("li"):
-                parsed = parse_itinerary(li.inner_text())
-                if parsed is None or parsed["stops"] is None:
-                    continue
-                s = parsed["stops"]
-                if max_stops is not None and s > max_stops:
-                    continue
-                if s not in best or parsed["price"] < best[s]["price"]:
-                    best[s] = parsed
-            return best
-        except Exception as e:
-            print(f"[google_flights_crawler] failed for {origin}->{destination} {depart}~{return_}: {e}")
-            return {}
-        finally:
-            try:
-                page.close()
-            except Exception:
-                pass
+        return min(candidates, key=lambda it: it["price"])
 
 
 def fetch_lowest_price(
