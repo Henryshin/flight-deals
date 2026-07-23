@@ -76,6 +76,13 @@
   .cell-sub { display: block; color: var(--muted); font-size: 10px; font-family: Calibri, "맑은 고딕", Arial, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   .badge-dday { display: inline-block; background: #b3261e; color: #fff; font-size: 9.5px; padding: 1px 5px; border-radius: 2px; margin-left: 4px; font-weight: 700; font-family: Consolas, monospace; }
+  .badge-confirmed { display: inline-block; background: #0b5cab; color: #fff; font-size: 9.5px; padding: 1px 5px; border-radius: 2px; margin-left: 4px; font-weight: 700; }
+  .badge-confirmed.badge-open { background: #217346; }
+
+  table.sheet tbody tr.confirmed td { background: #fff6d8; }
+  table.sheet tbody tr.confirmed:hover td { background: var(--sel); }
+  table.sheet tbody tr.confirmed td:first-child { box-shadow: inset 3px 0 0 #e8a500; }
+  table.sheet tbody tr.confirmed.status-open td:first-child { box-shadow: inset 3px 0 0 #217346; }
 
   .conf { font-weight: 700; white-space: nowrap; cursor: help; }
   .conf.high { color: #217346; }
@@ -450,13 +457,43 @@
 
     // ===================== 다음 예상 시기 계산 =====================
     // rec.day_of_week: 0=월요일 … 6=일요일 (promos.json 컨벤션)
-    // 반환: { text, date: 'YYYY-MM-DD'|null, dday: number|null }
-    function nextOccurrence(rec, lastSeen, now) {
+    // confirmed: { start: 'YYYY-MM-DD', end: 'YYYY-MM-DD', source? } — 뉴스·공식 발표로 확인된 가장 최근 회차의 실제 판매 기간.
+    //   과거·현재·미래 회차 모두 이 필드로 표현하며(지나간 회차라도 지우지 않음), 상태는 오늘 날짜와 비교해 그때그때 판정한다.
+    // 반환: { text, date: 'YYYY-MM-DD'|null, dday: number|null, confirmed: boolean, status: 'open'|'confirmed'|'past'|null }
+    function nextOccurrence(rec, lastSeen, now, confirmed) {
       const base = now || new Date();
       const today = new Date(base.getFullYear(), base.getMonth(), base.getDate());
       const fmtD = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
       const ddayOf = d => Math.round((d.getTime() - today.getTime()) / 86400000);
-      const out = { text: '—', date: null, dday: null };
+      const todayStr = fmtD(today);
+      const out = { text: '—', date: null, dday: null, confirmed: false, status: null };
+
+      let pastConfirmed = null;
+      if (confirmed && confirmed.start && confirmed.end) {
+        if (confirmed.start <= todayStr && todayStr <= confirmed.end) {
+          // 현재 판매 기간 내
+          out.date = confirmed.start;
+          out.dday = ddayOf(new Date(confirmed.start + 'T00:00:00'));
+          out.confirmed = true;
+          out.status = 'open';
+          out.text = `오픈 중 (~${confirmed.end})`;
+          return out;
+        }
+        if (confirmed.start > todayStr) {
+          // 아직 시작 전이지만 일정이 확정됨
+          const startD = new Date(confirmed.start + 'T00:00:00');
+          out.date = confirmed.start;
+          out.dday = ddayOf(startD);
+          out.confirmed = true;
+          out.status = 'confirmed';
+          out.text = `${confirmed.start} ~ ${confirmed.end} 확정`;
+          return out;
+        }
+        // confirmed.end < today: 이미 지난 회차. 아래 추정 로직에서 "이번 달 가능" 오표시를 막는 데 사용.
+        pastConfirmed = confirmed;
+        out.status = 'past';
+      }
+
       if (!rec || !rec.type) return out;
 
       if (rec.type === 'irregular') {
@@ -487,7 +524,15 @@
         let ny = y;
         if (nm == null) { nm = months[0]; ny = y + 1; }
         out.text = `${ny}년 ${nm}월 예상`;
-        if (months.indexOf(m) >= 0) out.text = `이번 달(${m}월) 진행 가능 · 다음 ${out.text}`;
+        const endedThisCycle = pastConfirmed && (() => {
+          const endD = new Date(pastConfirmed.end + 'T00:00:00');
+          return endD.getFullYear() === y && (endD.getMonth() + 1) === m;
+        })();
+        if (endedThisCycle) {
+          out.text = `이번 회차 종료(${pastConfirmed.start}~${pastConfirmed.end}) · 다음 ${out.text}`;
+        } else if (months.indexOf(m) >= 0) {
+          out.text = `이번 달(${m}월) 진행 가능 · 다음 ${out.text}`;
+        }
         if (hasDow) {
           // 요일 정보가 있으면 예상일(해당 월 첫 목표 요일)로 D-day 계산
           let ty = ny, tm = nm;
@@ -556,9 +601,13 @@
         if (!passChip(al.airline)) continue;
         for (const ev of (al.events || [])) {
           const rec = ev.recurrence || {};
-          const nx = nextOccurrence(rec, ev.last_seen, now);
+          const cp = ev.confirmed_period;
+          const nx = nextOccurrence(rec, ev.last_seen, now, cp);
           const dday = (nx.dday != null && nx.dday >= 0 && nx.dday <= 14)
             ? ` <span class="badge-dday" title="예상일 ${esc(nx.date)}">${nx.dday === 0 ? 'D-DAY' : 'D-' + nx.dday}</span>` : '';
+          const confirmedBadge = nx.status === 'open'
+            ? ' <span class="badge-confirmed badge-open" title="현재 판매 중">오픈중</span>'
+            : (nx.status === 'confirmed' ? ' <span class="badge-confirmed" title="공식 발표로 일정 확정">확정</span>' : '');
           const detailSub = rec.detail
             ? `<span class="cell-sub" title="${esc(rec.detail)}">${esc(rec.detail)}</span>` : '';
           const srcTitle = (ev.sources && ev.sources.length)
@@ -569,12 +618,13 @@
           for (const s of (ev.sources || [])) {
             links.push(`<a href="${esc(s)}" target="_blank" rel="noopener" title="${esc(s)}">📎</a>`);
           }
+          if (nx.confirmed && cp && cp.source) links.push(`<a href="${esc(cp.source)}" target="_blank" rel="noopener" title="일정 확정 출처: ${esc(cp.source)}">✓</a>`);
           rows.push(`
-            <tr>
+            <tr${nx.confirmed ? ` class="confirmed${nx.status === 'open' ? ' status-open' : ''}"` : ''}>
               <td title="${esc(al.airline)}">${esc(al.airline)}<span class="cell-sub">${esc(al.iata || '')}</span></td>
               <td title="${esc(ev.notes || ev.name)}">${esc(ev.name)}</td>
               <td title="${esc(ev.cadence_text || '')}">${esc(ev.cadence_text || '—')}</td>
-              <td title="${esc(nx.text)}">${esc(nx.text)}${dday}${detailSub}</td>
+              <td title="${esc(nx.text)}">${esc(nx.text)}${confirmedBadge}${dday}${detailSub}</td>
               <td title="${esc(ev.discount_text || '')}">${esc(ev.discount_text || '—')}</td>
               <td title="${esc(ev.requirements || '')}">${esc(ev.requirements || '—')}</td>
               <td><span class="conf ${cf[0]}" title="${esc(srcTitle)}">${cf[1]}</span></td>
