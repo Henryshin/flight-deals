@@ -90,6 +90,7 @@
   .nextday { font-size: 8px; color: #b3261e; margin-left: 1px; }
   .period-go { display: block; white-space: nowrap; }
   .period-back { display: block; }
+  .period-cell { line-height: 1.5; }
   .go-time { color: #0b5cab; font-weight: 700; }
   /* 직항/경유 별도 열 */
   .stops-direct { display: inline-block; background: #eaf3ee; color: #14532d; border: 1px solid #c3ddce; font-size: 10.5px; padding: 1px 6px; border-radius: 2px; white-space: nowrap; font-weight: 700; }
@@ -856,7 +857,7 @@
           <tr>
             <td><a href="${esc(d.booking_url)}" target="_blank" rel="noopener">${esc(label)}</a>
               <button class="copy-btn" data-copy="${esc(d.booking_url)}" title="예약 링크 복사">📋</button></td>
-            <td><span class="period-go">${fmtDateYY(d.depart_date, d.depart_weekday)}${depHourStr}</span><span class="period-back cell-sub">~ ${fmtDateYY(d.return_date, d.return_weekday)}${d.is_holiday_window ? ' <span class="badge-hol">연휴</span>' : ''}</span></td>
+            <td class="period-cell">${fmtDateYY(d.depart_date, d.depart_weekday)}${depHourStr} ~ ${fmtDateYY(d.return_date, d.return_weekday)}${d.is_holiday_window ? ' <span class="badge-hol">연휴</span>' : ''}</td>
             <td>${d.nights}박 ${d.days}일 · 연차 ${d.leave_days}개${tripStrip(d.depart_date, d.return_date)}</td>
             <td>${stopsCell(d.stops)}</td>
             <td class="num">${fmt(d.current_price)} ${trendHtml(d.current_price, d.prev_price, false)}</td>
