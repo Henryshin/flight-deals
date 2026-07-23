@@ -15,6 +15,7 @@ permissions:
 
 # 전체 수집은 서로 직렬화(collect-all)하되, 신규 노선의 타겟 수집은
 # 노선별 그룹으로 분리해 전체 수집이 도는 중에도 즉시 시작되게 한다.
+# 동시 런의 push 경합은 .gitattributes(merge=union/ours) + 아래 재시도 루프가 흡수한다.
 concurrency:
   group: collect-${{ github.event.inputs.only || 'all' }}
   cancel-in-progress: false
@@ -22,6 +23,7 @@ concurrency:
 jobs:
   collect:
     runs-on: ubuntu-latest
+    timeout-minutes: 210
     steps:
       - uses: actions/checkout@v4
 
@@ -38,17 +40,34 @@ jobs:
         run: python scripts/collect.py
         env:
           COLLECT_ONLY: ${{ github.event.inputs.only }}
+          # 이 시간(분)을 넘기면 새 쿼리를 시작하지 않고 종료. 수집 순서가
+          # stale-first 라 이번에 잘린 노선은 다음 런에서 먼저 수집된다.
+          TIME_BUDGET_MIN: "170"
 
-      - name: Build dashboard data
-        run: python scripts/build_dashboard_data.py
-
+      # 대시보드 JSON 빌드는 별도 워크플로(build.yml)가 data/** push 를 받아 수행.
+      # 여기서 docs/data 를 같이 커밋하면 (수십 분 크롤 동안 먼저 들어온 커밋과)
+      # 생성 파일 rebase 충돌로 이번 수집분 전체가 유실되는 문제가 있었다.
       - name: Commit and push updated data
+        # 수집 스크립트가 도중에 죽어도 노선 그룹 단위로 이미 append 된 부분 데이터는
+        # 커밋되도록 항상 실행한다 (변경이 없으면 커밋 자체가 스킵됨).
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/prices.csv docs/data
+          # .gitattributes 의 collect_status.json merge=ours 는 내장 드라이버가 아니라
+          # 이 설정이 있어야 동작한다 (없으면 동시 런 rebase 시 그대로 충돌).
+          git config merge.ours.driver true
+          git add data/
           git diff --cached --quiet || git commit -m "chore: update flight price data"
-          # 크롤링(수십 분) 동안 다른 커밋이 먼저 들어오면 non-fast-forward로 push가
-          # 실패해 이번 수집분이 유실되므로, push 전에 rebase로 최신화한다.
-          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
-          git push
+          # 크롤링 동안 다른 커밋(동시 수집 런, 노선 편집)이 먼저 들어와도
+          # prices.csv 는 merge=union 으로 자동 병합된다. 순간적인 경합은 재시도로 흡수.
+          for i in 1 2 3 4; do
+            if git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push; then
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            echo "push 경합 -> 재시도 ($i/4)"
+            sleep $((i * 5))
+          done
+          echo "::error::4회 재시도 후에도 push 실패"
+          exit 1

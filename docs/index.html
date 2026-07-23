@@ -198,6 +198,17 @@
     box-shadow: inset 0 1px 2px rgba(0,0,0,0.18);
   }
 
+  /* 연휴 가성비 보드: 할증률 배지 (평시 대비 낮을수록 초록) */
+  .gv-badge { display: inline-block; padding: 1px 7px; border-radius: 2px; font-weight: 700; font-size: 12.5px; white-space: nowrap; }
+  .gv-r0 { background: #e6f4ea; color: #1e7e34; border: 1px solid #b7dfc2; }
+  .gv-r1 { background: #fff8e1; color: #8a6d00; border: 1px solid #e8d98a; }
+  .gv-r2 { background: #fff0e1; color: #a35a00; border: 1px solid #eec49a; }
+  .gv-r3 { background: #fdecea; color: #b3261e; border: 1px solid #efc4c0; }
+  .gv-na { background: #f1f3f4; color: #6e7781; border: 1px solid #d0d7de; font-weight: 400; }
+  .gv-rank { text-align: center; font-family: Consolas, monospace; font-weight: 700; color: #14532d; }
+  .gv-reason { color: var(--muted); font-style: italic; }
+  .status-dot.err { background: #b3261e; }
+
   /* excel-style dialog */
   .modal-backdrop {
     position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 100;
@@ -305,7 +316,45 @@
           <span class="chip-sub">지역</span>
           <div id="chip-region"></div>
         </div>
+        <div class="chip-line" id="chip-concept-line">
+          <span class="chip-sub">컨셉</span>
+          <div id="chip-concept"></div>
+        </div>
       </div>
+    </div>
+
+    <h2>연휴 가성비 보드</h2>
+    <div class="note" style="margin-bottom:0">
+      연휴를 고르면 <b>평시(비연휴) 최저가 대비 할증률</b>이 낮은 순으로 여행지를 정렬합니다.
+      연휴엔 어디든 비싸지지만, <b>상대적으로 덜 비싸지는 곳</b>이 위로 올라옵니다.
+      평시 기준가는 하루 1회 자동 수집되며, 쌓이기 전에는 <b>기준가 수집 중</b>으로 표시됩니다.
+    </div>
+    <div class="toolbar-row">
+      <label>연휴</label>
+      <div id="gv-windows" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      <label for="gv-sort" style="margin-left:12px">정렬</label>
+      <select id="gv-sort">
+        <option value="ratio">할증률 낮은순</option>
+        <option value="price">최저가순</option>
+        <option value="eff">연차 효율순</option>
+      </select>
+    </div>
+    <div class="tbl-wrap">
+      <table class="sheet wide">
+        <thead>
+          <tr>
+            <th style="width:5%">순위</th>
+            <th style="width:17%">목적지</th>
+            <th style="width:11%">최저가</th>
+            <th style="width:13%">할증률(평시 대비)</th>
+            <th style="width:27%">추천 일정</th>
+            <th style="width:9%">직항/경유</th>
+            <th style="width:7%">연차</th>
+            <th style="width:8%">링크</th>
+          </tr>
+        </thead>
+        <tbody id="gv-board"></tbody>
+      </table>
     </div>
 
     <h2>변동 항목</h2>
@@ -480,6 +529,7 @@
   <div id="toast-wrap"></div>
 
   <script src="airports.js"></script>
+  <script src="destmeta.js"></script>
   <script>
     // ===================== 상수 / 공통 헬퍼 =====================
     const cacheBust = `?t=${Date.now()}`;
@@ -526,8 +576,12 @@
       routesStatus: [],
       history: {},
       meta: null,
+      matrix: null,        // 연휴 가성비 매트릭스 (docs/data/matrix.json)
+      holidayWindows: [],  // 연휴 윈도우 목록 (holidays.json 신형식)
+      gvWindow: null,      // 가성비 보드에서 선택된 연휴 윈도우 id
       selCountries: new Set(), // 1차 필터: 선택된 국가들 (다중선택)
       selCities: new Set(),    // 2차 필터: 선택된 지역(도착 도시)들 (다중선택, 선택 국가에 종속)
+      selConcepts: new Set(),  // 컨셉 필터: 휴양/도시/대자연 및 조합 (다중선택, OR)
       // 내 목록을 담아본 적 있으면(또는 지난번 '내 목록' 뷰였으면) 내 목록으로 시작.
       favOnly: (function () {
         try {
@@ -656,6 +710,16 @@
         guard++;
       }
       return `<span class="tstrip" title="공휴일(빨강)·주말(파랑)·평일(회색)">${cells}</span>`;
+    }
+    // 목적지 x 출발월 기후 배지 (destmeta.js의 평년값). 데이터 없으면 생략.
+    function climateBadge(iata, departDateStr) {
+      if (!window.climateFor) return '';
+      const m = /^\d{4}-(\d{2})/.exec(String(departDateStr || ''));
+      if (!m) return '';
+      const c = window.climateFor(iata, parseInt(m[1], 10));
+      if (!c) return '';
+      const rain = c.rain === '우기' ? '🌧 우기' : c.rain === '건기' ? '☀️ 건기' : '⛅ 보통';
+      return `<span class="cell-sub" title="출발월 기준 월평균 기후 (평년값, 참고용)">${rain} · ${c.temp}°C · 습도 ${c.humidity}%</span>`;
     }
     // 노선 정책 서브라벨: "3박4일 · 직항+경유1" (누락 시 3박 / 경유1 가정)
     function routePolicyLabel(r) {
@@ -837,13 +901,28 @@
       } catch (e) { return fallback; }
     }
 
-    // ===================== 필터 칩 (2층위 다중선택: 국가 → 지역) =====================
+    // ===================== 필터 칩 (국가 → 지역 + 컨셉) =====================
+    // 컨셉 필터 옵션: 단일 태그와 조합. 조합 칩은 두 태그를 모두 가진 목적지만 통과.
+    const CONCEPT_OPTIONS = ['휴양', '도시', '대자연', '휴양+도시', '휴양+대자연', '도시+대자연'];
+    function destConcepts(iata) {
+      const meta = (window.DEST_META || {})[iata];
+      return new Set((meta && meta.concepts) || []);
+    }
     function routePassesChip(routeLike) {
       if (state.favOnly && !getFavs().has(rk(routeLike))) return false;
       // 1차: 국가 (선택된 게 없으면 전체 통과)
       if (state.selCountries.size && !state.selCountries.has(routeLike.country || '기타')) return false;
       // 2차: 지역(도착 도시) — 선택된 게 없으면 통과. 도시 선택은 국가에 종속.
       if (state.selCities.size && !state.selCities.has(destCityName(routeLike))) return false;
+      // 컨셉: 선택된 옵션 중 하나라도 만족하면 통과(OR). '휴양+도시'는 둘 다 필요.
+      if (state.selConcepts.size) {
+        const tags = destConcepts(routeLike.destination);
+        let ok = false;
+        for (const opt of state.selConcepts) {
+          if (opt.split('+').every(t => tags.has(t))) { ok = true; break; }
+        }
+        if (!ok) return false;
+      }
       return true;
     }
 
@@ -869,12 +948,17 @@
         const c = r.country || '기타';
         if (!countries.has(c)) countries.set(c, r.flag || (findAirport(r.destination) || {}).flag || '');
       }
-      const noSel = state.selCountries.size === 0 && state.selCities.size === 0;
+      const noSel = state.selCountries.size === 0 && state.selCities.size === 0 && state.selConcepts.size === 0;
       let html = chip('all', '', '전체', noSel) + chip('fav', '', '★ 내 목록', state.favOnly);
       for (const [c, flag] of countries) {
         html += chip('country', c, (flag ? flag + ' ' : '') + c, state.selCountries.has(c));
       }
       document.getElementById('chip-country').innerHTML = html;
+
+      // ── 컨셉 (국가와 독립적인 별도 축) ──
+      document.getElementById('chip-concept').innerHTML = CONCEPT_OPTIONS
+        .map(opt => chip('concept', opt, opt, state.selConcepts.has(opt)))
+        .join('');
 
       // ── 2차: 지역(도착 도시) — 선택된 국가들의 도시만 노출 ──
       const regionLine = document.getElementById('chip-region-line');
@@ -904,6 +988,7 @@
       } else if (type === 'all') {
         state.selCountries.clear();
         state.selCities.clear();
+        state.selConcepts.clear();
       } else if (type === 'country') {
         if (state.selCountries.has(value)) state.selCountries.delete(value);
         else state.selCountries.add(value);
@@ -911,10 +996,158 @@
       } else if (type === 'city') {
         if (state.selCities.has(value)) state.selCities.delete(value);
         else state.selCities.add(value);
+      } else if (type === 'concept') {
+        if (state.selConcepts.has(value)) state.selConcepts.delete(value);
+        else state.selConcepts.add(value);
       }
       renderChips();
+      renderGvBoard();
       renderDeals();
       renderStatus();
+    }
+
+    // ===================== 연휴 가성비 보드 =====================
+    function gvWindows() {
+      if (state.matrix && Array.isArray(state.matrix.windows) && state.matrix.windows.length) {
+        return state.matrix.windows;
+      }
+      return state.holidayWindows || [];
+    }
+    function gvCurrentWindow() {
+      const ws = gvWindows();
+      if (!ws.length) return null;
+      if (state.gvWindow) {
+        const w = ws.find(x => x.id === state.gvWindow);
+        if (w) return w;
+      }
+      return ws[0]; // 빌드가 오늘 이후 윈도우만 시작일 순으로 내보내므로 첫 항목 = 가장 가까운 연휴
+    }
+    function renderGvWindows() {
+      const el = document.getElementById('gv-windows');
+      const ws = gvWindows();
+      if (!ws.length) { el.innerHTML = '<span class="cell-sub">연휴 정보가 없습니다</span>'; return; }
+      const cur = gvCurrentWindow();
+      el.innerHTML = ws.map(w => {
+        const m = /^\d{4}-(\d{2})-(\d{2})/.exec(w.id) || null;
+        const dateTxt = m ? `${parseInt(m[1], 10)}/${parseInt(m[2], 10)} ` : '';
+        return `<button class="chip${cur && w.id === cur.id ? ' active' : ''}" data-gvwin="${esc(w.id)}">${esc(dateTxt + (w.label || ''))}</button>`;
+      }).join('');
+    }
+    // 할증률 배지: ratio = 연휴 최저가 / 평시 기준가. 낮을수록 '연휴 프리미엄'이 적음.
+    function gvRatioBadge(cell) {
+      if (!cell) return '<span class="gv-badge gv-na">수집 대기</span>';
+      if (cell.ratio == null) {
+        return '<span class="gv-badge gv-na" title="평시(비연휴) 기준가가 아직 없습니다 — 하루 1회 자동 수집됩니다">기준가 수집 중</span>';
+      }
+      const pct = (cell.ratio - 1) * 100;
+      const cls = pct <= 10 ? 'gv-r0' : pct <= 30 ? 'gv-r1' : pct <= 60 ? 'gv-r2' : 'gv-r3';
+      const txt = `평시 ${pct >= 0 ? '+' : ''}${pct.toFixed(0)}%`;
+      const dim = cell.tier === 'B' ? ' style="opacity:.6"' : '';
+      const title = `평시 기준가 ${fmt(cell.baseline)}원 · 표본 ${cell.n_baseline}` +
+        (cell.baseline_loose ? ' (박수 불일치 폴백)' : '') +
+        (cell.tier === 'B' ? ' · 표본 부족 — 참고용' : '');
+      return `<span class="gv-badge ${cls}"${dim} title="${esc(title)}">${esc(txt)}</span>`;
+    }
+    // 이 연휴에 데이터가 없는 노선의 사유 (막연한 '—' 대신 이유를 보여준다)
+    function gvEmptyReason(monitors) {
+      const r = monitors[0] || {};
+      if (r.no_direct) return '직항 없음 — 박수/경유(✎)에서 경유 허용으로 바꾸면 수집됩니다';
+      const cs = r.collect_status;
+      if (cs === 'blocked' || cs === 'consent') return '⚠ 수집 차단 감지 — 다음 런에서 재시도합니다';
+      if (cs === 'no_flights') return '검색 결과 없음 (검색어/노선 확인 필요할 수 있음)';
+      if (cs === 'parse_zero') return '파싱 실패 — 구글 화면 구조 변경 의심';
+      if (cs === 'timeout' || cs === 'error') return '수집 오류 — 다음 런에서 재시도합니다';
+      if (r.sample_count > 0) return '이 연휴 날짜의 관측이 아직 없습니다 — 다음 수집에서 채워집니다';
+      return '수집 대기 — 다음 자동 수집(최대 4시간)에서 채워집니다';
+    }
+    function renderGvBoard() {
+      const tbody = document.getElementById('gv-board');
+      renderGvWindows();
+      const w = gvCurrentWindow();
+      if (!w) {
+        tbody.innerHTML = emptyRow(8, '연휴 정보가 없습니다. 다음 수집 후 다시 확인하세요.');
+        return;
+      }
+      const cells = (state.matrix && state.matrix.cells && state.matrix.cells[w.id]) || {};
+
+      // 노선(o-d) 그룹별로 가장 유리한 모니터 칸 하나를 고른다 (티어 -> 할증률 -> 최저가).
+      const groupMap = new Map();
+      for (const r of state.routesStatus) {
+        if (!routePassesChip(r)) continue;
+        const gk = routeGroupKey(r);
+        if (!groupMap.has(gk)) groupMap.set(gk, { route: r, monitors: [] });
+        groupMap.get(gk).monitors.push(r);
+      }
+      const tierRank = t => ({ A: 0, B: 1, C: 2 }[t] != null ? { A: 0, B: 1, C: 2 }[t] : 3);
+      const rows = [];
+      for (const g of groupMap.values()) {
+        let best = null;
+        for (const mon of g.monitors) {
+          const c = cells[rk(mon)];
+          if (!c) continue;
+          if (!best) { best = c; continue; }
+          const a = [tierRank(c.tier), c.ratio == null ? Infinity : c.ratio, c.min_price];
+          const b = [tierRank(best.tier), best.ratio == null ? Infinity : best.ratio, best.min_price];
+          if (a[0] < b[0] || (a[0] === b[0] && (a[1] < b[1] || (a[1] === b[1] && a[2] < b[2])))) best = c;
+        }
+        rows.push({ route: g.route, monitors: g.monitors, cell: best });
+      }
+      if (!rows.length) {
+        tbody.innerHTML = emptyRow(8, '조건에 맞는 노선이 없습니다. 필터를 조정해 보세요.');
+        return;
+      }
+
+      const ratioCmp = (a, b) => {
+        const ar = a.cell && a.cell.ratio != null ? a.cell.ratio : Infinity;
+        const br = b.cell && b.cell.ratio != null ? b.cell.ratio : Infinity;
+        if (ar !== br) return ar - br;
+        const ap = a.cell ? a.cell.min_price : Infinity;
+        const bp = b.cell ? b.cell.min_price : Infinity;
+        return ap - bp;
+      };
+      const priceCmp = (a, b) => {
+        const ap = a.cell ? a.cell.min_price : Infinity;
+        const bp = b.cell ? b.cell.min_price : Infinity;
+        return (ap - bp) || ratioCmp(a, b);
+      };
+      // 연차 효율 = 최저가 / (연차 없이 얻는 여행일 수). 낮을수록 '공짜 하루'가 싸다.
+      const gvEff = r => {
+        const b = r.cell && r.cell.best;
+        if (!b) return Infinity;
+        const freeDays = b.days - b.leave_days;
+        return freeDays > 0 ? r.cell.min_price / freeDays : Infinity;
+      };
+      const effCmp = (a, b) => (gvEff(a) - gvEff(b)) || priceCmp(a, b);
+      const sortKey = document.getElementById('gv-sort').value;
+      rows.sort(sortKey === 'price' ? priceCmp : sortKey === 'eff' ? effCmp : ratioCmp);
+
+      let rank = 0;
+      tbody.innerHTML = rows.map(r => {
+        const label = r.route.label || (r.route.origin + ' → ' + r.route.destination);
+        const flag = r.route.flag || (findAirport(r.route.destination) || {}).flag || '';
+        const nameCell = `${flag ? esc(flag) + ' ' : ''}${esc(label)}<span class="cell-sub">${esc(r.route.origin)}→${esc(r.route.destination)}</span>`;
+        if (!r.cell) {
+          return `<tr><td class="gv-rank">—</td><td>${nameCell}</td>` +
+            `<td colspan="6" class="gv-reason">${esc(gvEmptyReason(r.monitors))}</td></tr>`;
+        }
+        rank++;
+        const b = r.cell.best;
+        const period = `${fmtDateYY(b.depart_date, b.depart_weekday)} ~ ${fmtDateYY(b.return_date, b.return_weekday)}`;
+        const sched = `${b.nights}박 ${b.days}일${tripStrip(b.depart_date, b.return_date)}`;
+        return `
+          <tr>
+            <td class="gv-rank">${rank}</td>
+            <td>${nameCell}</td>
+            <td class="num">${fmt(r.cell.min_price)}</td>
+            <td>${gvRatioBadge(r.cell)}</td>
+            <td class="period-cell">${period}<span class="cell-sub">${sched}</span>${climateBadge(r.route.destination, b.depart_date)}</td>
+            <td>${stopsCell(b.stops)}</td>
+            <td class="num">${b.leave_days}개</td>
+            <td><a href="${esc(b.booking_url)}" target="_blank" rel="noopener">예약 확인</a>
+              <button class="copy-btn" data-copy="${esc(b.booking_url)}" title="예약 링크 복사">📋</button></td>
+          </tr>
+        `;
+      }).join('');
     }
 
     // ===================== 변동 항목 (deals) =====================
@@ -932,8 +1165,11 @@
     function gflightsUrl(route, dep, ret) {
       const oc = route.origin_city || (findAirport(route.origin) || {}).city_en || route.origin;
       const dc = route.destination_city || (findAirport(route.destination) || {}).city_en || route.destination;
+      // 크롤러(build_booking_url)와 동일 포맷 유지: "returning"은 구글 NL 파서가
+      // 인식하지 못해 검색 홈으로 떨어지고, hl/curr 없이는 지역에 따라 USD로 표시됨.
       return 'https://www.google.com/travel/flights/search?q=' +
-        encodeURIComponent(`Flights from ${oc} to ${dc} on ${dep} returning ${ret}`);
+        encodeURIComponent(`Flights from ${oc} to ${dc} on ${dep} through ${ret}`) +
+        '&hl=ko&curr=KRW';
     }
 
     function renderDeals() {
@@ -992,7 +1228,7 @@
             <td><a href="${esc(d.booking_url)}" target="_blank" rel="noopener">${esc(label)}</a>
               <button class="copy-btn" data-copy="${esc(d.booking_url)}" title="예약 링크 복사">📋</button></td>
             <td class="period-cell">${fmtDateYY(d.depart_date, d.depart_weekday)}${depHourStr} ~ ${fmtDateYY(d.return_date, d.return_weekday)}${d.is_holiday_window ? ' <span class="badge-hol">연휴</span>' : ''}</td>
-            <td>${d.nights}박 ${d.days}일 · 연차 ${d.leave_days}개${tripStrip(d.depart_date, d.return_date)}</td>
+            <td>${d.nights}박 ${d.days}일 · 연차 ${d.leave_days}개${tripStrip(d.depart_date, d.return_date)}${climateBadge(d.route.destination, d.depart_date)}</td>
             <td>${stopsCell(d.stops)}</td>
             <td class="num">${fmt(d.current_price)} ${trendHtml(d.current_price, d.prev_price, false)}</td>
             <td class="num">${fmt(d.avg_price)}</td>
@@ -1070,6 +1306,15 @@
           // 직항 전용 노선인데 직항편이 검색되지 않음 (경유 허용으로 바꾸면 수집됨)
           dot = 'none';
           statusText = '직항 없음';
+        } else {
+          // 표본 0 인 경우: 수집 파이프라인이 남긴 실패 사유를 그대로 보여준다
+          // (예전엔 차단/결과없음/파싱실패가 전부 '대기'로 보여 원인을 알 수 없었음)
+          const cs = r.collect_status;
+          if (cs === 'blocked' || cs === 'consent') { dot = 'err'; statusText = '차단 감지'; }
+          else if (cs === 'no_flights') { dot = 'none'; statusText = '결과 없음'; }
+          else if (cs === 'parse_zero') { dot = 'err'; statusText = '파싱 실패'; }
+          else if (cs === 'timeout' || cs === 'error') { dot = 'err'; statusText = '수집 오류'; }
+          else if (cs === 'skipped_budget' || cs === 'skipped_blocked') { dot = 'waiting'; statusText = '대기(순번)'; }
         }
         const label = r.label || (r.origin + ' → ' + r.destination);
         const flag = r.flag || (findAirport(r.destination) || {}).flag || '';
@@ -1096,7 +1341,7 @@
         return `
           <tr${reached ? ' class="target-hit"' : ''}>
             <td style="text-align:center"><button class="fav-btn${fav ? ' on' : ''}" data-fav="${esc(key)}" title="내 목록에 담기/빼기">★</button></td>
-            <td title="${r.no_direct && r.sample_count === 0 ? '직항편이 검색되지 않음 · 박수/경유(✎)에서 경유 허용으로 바꾸면 수집됩니다' : '표본 ' + r.sample_count + ' · 마지막 갱신 ' + esc(r.last_collected_at || '-')}"><span class="status-dot ${dot}"></span>${statusText}</td>
+            <td title="${r.no_direct && r.sample_count === 0 ? '직항편이 검색되지 않음 · 박수/경유(✎)에서 경유 허용으로 바꾸면 수집됩니다' : esc(['표본 ' + r.sample_count, '마지막 갱신 ' + (r.last_collected_at || '-'), r.last_attempt_at ? '마지막 시도 ' + r.last_attempt_at : '', r.collect_status_detail || ''].filter(Boolean).join(' · '))}"><span class="status-dot ${dot}"></span>${statusText}</td>
             <td title="${esc(label)}">${flag ? esc(flag) + ' ' : ''}${esc(label)}<span class="cell-sub">${esc(r.origin)}→${esc(r.destination)} · 표본 ${r.sample_count}</span><button class="policy-edit" data-edit="${esc(key)}" title="박수/경유 수정">${esc(routePolicyLabel(r))} ✎</button></td>
             <td class="num">${priceCell}</td>
             <td class="num">${range30}</td>
@@ -1125,7 +1370,7 @@
       if (favs.has(key)) favs.delete(key); else favs.add(key);
       setFavs(favs);
       renderStatus();
-      if (state.favOnly) renderDeals();
+      if (state.favOnly) { renderDeals(); renderGvBoard(); }
     }
 
     function onTargetChange(el) {
@@ -1394,6 +1639,7 @@
           clearRegForm();
           renderChips();
           renderStatus();
+          renderGvBoard(); // 새 노선이 가성비 보드에도 '수집 대기'로 즉시 보이도록
           return;
         }
         const { routes, sha } = await ghGetRoutes();
@@ -1443,6 +1689,7 @@
         clearRegForm();
         renderChips();
         renderStatus();
+        renderGvBoard(); // 새 노선이 가성비 보드에도 '수집 대기'로 즉시 보이도록
         // 신규 노선은 등록 즉시 그 노선만 1회 크롤링 (전체 수집은 4시간 주기 유지).
         try {
           await dispatchCollect(`${o.iata}-${d.iata}`);
@@ -1499,6 +1746,7 @@
         renderChips();
         renderDeals();
         renderStatus();
+        renderGvBoard(); // 삭제된 노선이 가성비 보드에 남지 않도록
       } catch (e) {
         usingProxy() ? handleProxyError(e) : handleGhError(e);
       }
@@ -1710,6 +1958,7 @@
         el.addEventListener('change', renderDeals);
         if (el.tagName === 'INPUT' && el.type === 'number') el.addEventListener('input', renderDeals);
       });
+      document.getElementById('gv-sort').addEventListener('change', renderGvBoard);
 
       document.getElementById('reg-label').addEventListener('input', () => { labelTouched = true; });
       document.getElementById('reg-country').addEventListener('input', () => { countryTouched = true; });
@@ -1729,6 +1978,8 @@
       document.addEventListener('click', e => {
         const copyBtn = e.target.closest('[data-copy]');
         if (copyBtn) { copyText(copyBtn.getAttribute('data-copy')); return; }
+        const gvBtn = e.target.closest('[data-gvwin]');
+        if (gvBtn) { state.gvWindow = gvBtn.getAttribute('data-gvwin'); renderGvBoard(); return; }
         const favBtn = e.target.closest('[data-fav]');
         if (favBtn) { toggleFav(favBtn.getAttribute('data-fav')); return; }
         const delBtn = e.target.closest('[data-del]');
@@ -1756,22 +2007,35 @@
       calYear = today.getFullYear();
       calMonth = today.getMonth();
 
-      const [deals, routesStatus, history, meta, holidays] = await Promise.all([
+      const [deals, routesStatus, history, meta, holidays, matrix] = await Promise.all([
         fetchJson('data/deals.json', []),
         fetchJson('data/routes_status.json', []),
         fetchJson('data/history.json', {}),
         fetchJson('data/meta.json', null),
-        fetchJson('data/holidays.json', [])
+        fetchJson('data/holidays.json', []),
+        fetchJson('data/matrix.json', null)
       ]);
       state.deals = Array.isArray(deals) ? deals : [];
       state.routesStatus = Array.isArray(routesStatus) ? routesStatus : [];
       state.history = (history && typeof history === 'object' && !Array.isArray(history)) ? history : {};
       state.meta = meta;
-      holidaySet = new Set(Array.isArray(holidays) ? holidays : []);
+      // holidays.json: 구형식(날짜 배열) / 신형식({holidays, windows}) 모두 수용
+      if (Array.isArray(holidays)) {
+        holidaySet = new Set(holidays);
+        state.holidayWindows = [];
+      } else if (holidays && typeof holidays === 'object') {
+        holidaySet = new Set(Array.isArray(holidays.holidays) ? holidays.holidays : []);
+        state.holidayWindows = Array.isArray(holidays.windows) ? holidays.windows : [];
+      } else {
+        holidaySet = new Set();
+        state.holidayWindows = [];
+      }
+      state.matrix = (matrix && typeof matrix === 'object' && !Array.isArray(matrix)) ? matrix : null;
       applyPending(); // 마지막 수집 이후 이 브라우저에서 한 등록/삭제를 덧입힘
 
       renderCalendar();
       renderChips();
+      renderGvBoard();
       renderDeals();
       renderStatus();
       renderMeta();

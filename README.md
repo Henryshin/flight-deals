@@ -7,12 +7,28 @@
 
 ```
 data/routes.json      # 관심 노선 등록 (여기에 추가/삭제)
-data/prices.csv        # 가격 이력 (Actions가 자동으로 append & 커밋)
-scripts/collect.py      # 크롤링 실행 → prices.csv에 append
-scripts/build_dashboard_data.py  # prices.csv → docs/data/*.json 생성
+data/prices.csv        # 가격 이력 (Actions가 자동으로 append & 커밋, merge=union)
+data/collect_status.json  # 노선별 수집 상태/실패 사유 (collect.py가 기록)
+scripts/collect.py      # 크롤링 실행 → prices.csv에 append (연휴 + 평시 기준가)
+scripts/build_dashboard_data.py  # prices.csv → docs/data/*.json 생성 (할증률 matrix 포함)
 docs/index.html        # GitHub Pages가 서빙하는 대시보드
-.github/workflows/collect.yml   # 4시간마다 자동 실행하는 cron
+.github/workflows/collect.yml   # 4시간마다 자동 수집하는 cron (data/ 만 커밋)
+.github/workflows/build.yml     # data/** push 시 docs/data/*.json 재생성·커밋
+tests/test_smoke.py    # 브라우저 없이 도는 스모크 테스트 (python tests/test_smoke.py)
 ```
+
+수집과 빌드가 분리되어 있어서:
+- 노선 등록/삭제는 다음 수집을 기다리지 않고 1분 내 대시보드에 반영됩니다.
+- 수십 분짜리 수집 런이 생성 파일(docs/data) 때문에 rebase 충돌로 죽는 일이 없습니다
+  (prices.csv 는 `.gitattributes` 의 `merge=union` 으로 동시 런과도 자동 병합).
+
+### 연휴 가성비 (할증률)
+
+수집기는 연휴 날짜 외에 노선당 하루 1회 **평시(비연휴) 기준가**도 수집합니다.
+`build_dashboard_data.py` 가 연휴 윈도우별로 `할증률 = 연휴 최저가 / 평시 기준가 중앙값` 을
+계산해 `docs/data/matrix.json` 으로 내보내고, 대시보드의 "연휴 가성비 보드"가
+연휴를 골라 할증률 낮은 순으로 여행지를 랭킹합니다. 기준가 표본이 3개 이상 쌓여야
+정식(티어 A) 지표로 표시되며, 그 전에는 "기준가 수집 중"으로 나옵니다.
 
 ## 노선 추가/삭제
 

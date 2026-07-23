@@ -1,0 +1,63 @@
+name: Build dashboard data
+
+# data/ (prices.csv, routes.json, collect_status.json) 가 바뀔 때마다
+# docs/data/*.json 을 재생성해 커밋한다. 수집 워크플로에서 분리한 이유:
+#   - 노선 등록/삭제(via proxy)가 다음 수집을 기다리지 않고 즉시 대시보드에 반영됨
+#   - 생성 파일(docs/data)을 수십 분짜리 수집 런이 커밋하지 않게 되어
+#     rebase 충돌로 수집분이 유실되는 문제가 사라짐
+# 이 잡의 커밋은 docs/data/** 만 건드리므로 자기 자신을 다시 트리거하지 않는다.
+
+on:
+  # 주의: collect.yml 이 GITHUB_TOKEN 으로 push 한 커밋은 GitHub 의 재귀 방지
+  # 정책상 push 이벤트를 발화하지 않는다. 그래서 push 트리거(아래)는 사실상
+  # Cloudflare Worker(PAT)의 routes.json 편집·수동 push 용이고, 수집 후 빌드는
+  # workflow_run 트리거가 담당한다.
+  push:
+    branches: [main]
+    paths:
+      - "data/**"
+  workflow_run:
+    workflows: ["Collect flight prices"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-dashboard
+  # 빌드는 data/ 전체에서 항상 완전 재생성되므로, 새 데이터가 오면
+  # 돌고 있던 빌드는 취소해도 안전하다 (최신 빌드가 전부 포함).
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # build_dashboard_data.py 는 표준 라이브러리만 사용 (playwright 불필요 — 수 초 내 완료)
+      - name: Build dashboard data
+        run: python scripts/build_dashboard_data.py
+
+      - name: Commit and push docs/data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/data
+          git diff --cached --quiet || git commit -m "chore: rebuild dashboard data"
+          for i in 1 2 3; do
+            if git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push; then
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            echo "push 경합 -> 재시도 ($i/3)"
+            sleep $((i * 3))
+          done
+          echo "::error::재시도 후에도 push 실패"
+          exit 1
