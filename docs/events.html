@@ -76,6 +76,11 @@
   .cell-sub { display: block; color: var(--muted); font-size: 10px; font-family: Calibri, "맑은 고딕", Arial, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   .badge-dday { display: inline-block; background: #b3261e; color: #fff; font-size: 9.5px; padding: 1px 5px; border-radius: 2px; margin-left: 4px; font-weight: 700; font-family: Consolas, monospace; }
+  .badge-confirmed { display: inline-block; background: #0b5cab; color: #fff; font-size: 9.5px; padding: 1px 5px; border-radius: 2px; margin-left: 4px; font-weight: 700; }
+
+  table.sheet tbody tr.confirmed td { background: #fff6d8; }
+  table.sheet tbody tr.confirmed:hover td { background: var(--sel); }
+  table.sheet tbody tr.confirmed td:first-child { box-shadow: inset 3px 0 0 #e8a500; }
 
   .conf { font-weight: 700; white-space: nowrap; cursor: help; }
   .conf.high { color: #217346; }
@@ -450,13 +455,24 @@
 
     // ===================== 다음 예상 시기 계산 =====================
     // rec.day_of_week: 0=월요일 … 6=일요일 (promos.json 컨벤션)
-    // 반환: { text, date: 'YYYY-MM-DD'|null, dday: number|null }
-    function nextOccurrence(rec, lastSeen, now) {
+    // confirmed: { start: 'YYYY-MM-DD', end: 'YYYY-MM-DD', source? } — 공식 발표로 일정이 확정된 경우
+    // 반환: { text, date: 'YYYY-MM-DD'|null, dday: number|null, confirmed: boolean }
+    function nextOccurrence(rec, lastSeen, now, confirmed) {
       const base = now || new Date();
       const today = new Date(base.getFullYear(), base.getMonth(), base.getDate());
       const fmtD = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
       const ddayOf = d => Math.round((d.getTime() - today.getTime()) / 86400000);
-      const out = { text: '—', date: null, dday: null };
+      const out = { text: '—', date: null, dday: null, confirmed: false };
+
+      if (confirmed && confirmed.start && confirmed.end && confirmed.end >= fmtD(today)) {
+        const startD = new Date(confirmed.start + 'T00:00:00');
+        out.date = confirmed.start;
+        out.dday = ddayOf(startD);
+        out.confirmed = true;
+        out.text = `${confirmed.start} ~ ${confirmed.end} 확정`;
+        return out;
+      }
+
       if (!rec || !rec.type) return out;
 
       if (rec.type === 'irregular') {
@@ -556,9 +572,11 @@
         if (!passChip(al.airline)) continue;
         for (const ev of (al.events || [])) {
           const rec = ev.recurrence || {};
-          const nx = nextOccurrence(rec, ev.last_seen, now);
+          const cp = ev.confirmed_period;
+          const nx = nextOccurrence(rec, ev.last_seen, now, cp);
           const dday = (nx.dday != null && nx.dday >= 0 && nx.dday <= 14)
             ? ` <span class="badge-dday" title="예상일 ${esc(nx.date)}">${nx.dday === 0 ? 'D-DAY' : 'D-' + nx.dday}</span>` : '';
+          const confirmedBadge = nx.confirmed ? ' <span class="badge-confirmed" title="공식 발표로 일정 확정">확정</span>' : '';
           const detailSub = rec.detail
             ? `<span class="cell-sub" title="${esc(rec.detail)}">${esc(rec.detail)}</span>` : '';
           const srcTitle = (ev.sources && ev.sources.length)
@@ -569,12 +587,13 @@
           for (const s of (ev.sources || [])) {
             links.push(`<a href="${esc(s)}" target="_blank" rel="noopener" title="${esc(s)}">📎</a>`);
           }
+          if (nx.confirmed && cp && cp.source) links.push(`<a href="${esc(cp.source)}" target="_blank" rel="noopener" title="일정 확정 출처: ${esc(cp.source)}">✓</a>`);
           rows.push(`
-            <tr>
+            <tr${nx.confirmed ? ' class="confirmed"' : ''}>
               <td title="${esc(al.airline)}">${esc(al.airline)}<span class="cell-sub">${esc(al.iata || '')}</span></td>
               <td title="${esc(ev.notes || ev.name)}">${esc(ev.name)}</td>
               <td title="${esc(ev.cadence_text || '')}">${esc(ev.cadence_text || '—')}</td>
-              <td title="${esc(nx.text)}">${esc(nx.text)}${dday}${detailSub}</td>
+              <td title="${esc(nx.text)}">${esc(nx.text)}${confirmedBadge}${dday}${detailSub}</td>
               <td title="${esc(ev.discount_text || '')}">${esc(ev.discount_text || '—')}</td>
               <td title="${esc(ev.requirements || '')}">${esc(ev.requirements || '—')}</td>
               <td><span class="conf ${cf[0]}" title="${esc(srcTitle)}">${cf[1]}</span></td>
