@@ -750,11 +750,13 @@
       });
       if (!res.ok) throw ghError(res.status);
     }
-    async function dispatchCollect() {
+    // only: "ICN-DPS" 처럼 특정 노선(origin-destination)만 수집. 비우면 전체 수집.
+    async function dispatchCollect(only) {
+      const inputs = (only && only.trim()) ? { only: only.trim() } : {};
       const res = await fetch(`${GH_API}/repos/${GITHUB_REPO}/actions/workflows/collect.yml/dispatches`, {
         method: 'POST',
         headers: Object.assign({ 'Content-Type': 'application/json' }, ghHeaders()),
-        body: JSON.stringify({ ref: 'main' })
+        body: JSON.stringify({ ref: 'main', inputs })
       });
       if (res.status !== 204) throw ghError(res.status);
     }
@@ -1263,12 +1265,11 @@
         clearRegForm();
         renderChips();
         renderStatus();
-        if (await excelConfirm('지금 바로 수집을 실행할까요?')) {
-          try {
-            await dispatchCollect();
-            toast('수집 실행 요청 완료 ✓ 몇 분 뒤 데이터가 갱신됩니다');
-          } catch (e2) { handleGhError(e2); }
-        }
+        // 신규 노선은 등록 즉시 그 노선만 1회 크롤링 (전체 수집은 4시간 주기 유지).
+        try {
+          await dispatchCollect(`${o.iata}-${d.iata}`);
+          toast('새 노선 수집을 시작했습니다 · 몇 분 뒤 반영됩니다');
+        } catch (e2) { handleGhError(e2); }
       } catch (e) {
         handleGhError(e);
       } finally {

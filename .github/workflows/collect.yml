@@ -3,13 +3,20 @@ name: Collect flight prices
 on:
   schedule:
     - cron: "0 */4 * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "특정 노선만 수집 (origin-destination, 예: ICN-DPS). 비우면 전체 수집."
+        required: false
+        default: ""
 
 permissions:
   contents: write
 
+# 전체 수집은 서로 직렬화(collect-all)하되, 신규 노선의 타겟 수집은
+# 노선별 그룹으로 분리해 전체 수집이 도는 중에도 즉시 시작되게 한다.
 concurrency:
-  group: collect
+  group: collect-${{ github.event.inputs.only || 'all' }}
   cancel-in-progress: false
 
 jobs:
@@ -29,6 +36,8 @@ jobs:
 
       - name: Collect prices
         run: python scripts/collect.py
+        env:
+          COLLECT_ONLY: ${{ github.event.inputs.only }}
 
       - name: Build dashboard data
         run: python scripts/build_dashboard_data.py
