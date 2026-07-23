@@ -19,6 +19,10 @@
           "confirmed_period": {
             "start": "2026-07-07",
             "end": "2026-07-14",
+            "opens": [
+              { "at": "2026-07-07T10:00", "label": "국내선" },
+              { "at": "2026-07-08T10:00", "label": "국제선" }
+            ],
             "source": "https://v.daum.net/v/20260707100530665"
           },
           "requirements": "",
@@ -69,6 +73,10 @@
           "confirmed_period": {
             "start": "2026-07-13",
             "end": "2026-07-16",
+            "opens": [
+              { "at": "2026-07-13T10:00", "label": "동남아·괌·국내선" },
+              { "at": "2026-07-13T14:00", "label": "일본·중화권" }
+            ],
             "source": "https://news.nate.com/view/20260713n17110"
           },
           "requirements": "진에어 회원 로그인 필요(프로모션 코드 입력 방식으로 할인 운임 확인). 행사 전 신규 회원 가입 시 행사 기간용 할인 쿠폰 지급.",
@@ -126,6 +134,11 @@
           "confirmed_period": {
             "start": "2026-07-22",
             "end": "2026-07-28",
+            "opens": [
+              { "at": "2026-07-22T11:00", "label": "국제선(일본 제외)" },
+              { "at": "2026-07-22T14:00", "label": "일본" },
+              { "at": "2026-07-23T11:00", "label": "국내선" }
+            ],
             "source": "https://www.mt.co.kr/policy/2026/07/21/2026072115195251283"
           },
           "requirements": "",
@@ -157,6 +170,10 @@
           "confirmed_period": {
             "start": "2026-07-13",
             "end": "2026-07-17",
+            "opens": [
+              { "at": "2026-07-13T10:00", "label": "일본·중화권" },
+              { "at": "2026-07-14T10:00", "label": "동남아·제주" }
+            ],
             "source": "https://www.asiae.co.kr/article/2026070609471771948"
           },
           "requirements": "이스타항공 홈페이지·모바일 앱/웹에서 구매 (회원은 국제선 출발 14일 전까지 변경 수수료 면제)",
@@ -205,6 +222,9 @@
           "confirmed_period": {
             "start": "2026-07-13",
             "end": "2026-07-31",
+            "opens": [
+              { "at": "2026-07-13T10:00", "label": "국제선 전 노선" }
+            ],
             "source": "https://www.news2day.co.kr/article/20260710500266"
           },
           "requirements": "",
@@ -254,6 +274,10 @@
           "confirmed_period": {
             "start": "2026-07-06",
             "end": "2026-07-19",
+            "opens": [
+              { "at": "2026-07-06T10:00", "label": "아시아" },
+              { "at": "2026-07-09T10:00", "label": "미주" }
+            ],
             "source": "https://www.hankyung.com/article/202607066970P"
           },
           "requirements": "에어프레미아 공식 홈페이지·앱에서 구매 (선착순)",

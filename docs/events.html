@@ -78,6 +78,8 @@
   .badge-dday { display: inline-block; background: #b3261e; color: #fff; font-size: 9.5px; padding: 1px 5px; border-radius: 2px; margin-left: 4px; font-weight: 700; font-family: Consolas, monospace; }
   .badge-confirmed { display: inline-block; background: #0b5cab; color: #fff; font-size: 9.5px; padding: 1px 5px; border-radius: 2px; margin-left: 4px; font-weight: 700; }
   .badge-confirmed.badge-open { background: #217346; }
+  .badge-openat { display: inline-block; background: #b3261e; color: #fff; font-size: 9.5px; padding: 1px 5px; border-radius: 2px; margin-left: 4px; font-weight: 700; font-family: Consolas, monospace; }
+  .opens-line { color: #b3261e !important; font-weight: 700; white-space: normal; }
 
   table.sheet tbody tr.confirmed td { background: #fff6d8; }
   table.sheet tbody tr.confirmed:hover td { background: var(--sel); }
@@ -382,6 +384,30 @@
     function emptyRow(colspan, msg) {
       return `<tr class="empty-row"><td colspan="${colspan}">${esc(msg)}</td></tr>`;
     }
+    // 'YYYY-MM-DDTHH:mm'(로컬) → Date. 시각이 없으면 자정으로.
+    function parseLocal(s) {
+      if (!s) return null;
+      const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}))?/);
+      if (!m) return null;
+      return new Date(+m[1], +m[2] - 1, +m[3], m[4] ? +m[4] : 0, m[5] ? +m[5] : 0);
+    }
+    // Date → 'M/D(요일) HH:mm'. 시각이 자정이면 날짜만.
+    function fmtOpenAt(d, hasTime) {
+      const dow = DOW_KO[(d.getDay() + 6) % 7]; // JS 0=일 → 0=월 컨벤션
+      let s = `${d.getMonth() + 1}/${d.getDate()}(${dow})`;
+      if (hasTime) s += ` ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      return s;
+    }
+    // 목표 시각까지 남은 시간(분/시간/일 단위 근사)
+    function fmtCountdown(target, now) {
+      const ms = target.getTime() - now.getTime();
+      if (ms <= 0) return '';
+      const mins = Math.floor(ms / 60000);
+      if (mins < 60) return `${mins}분 후`;
+      const hours = Math.floor(mins / 60);
+      if (hours < 24) return `${hours}시간 후`;
+      return `D-${Math.floor(hours / 24)}`;
+    }
     function getToken() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
 
     // ===================== 토스트 / confirm =====================
@@ -610,6 +636,25 @@
           const confirmedBadge = nx.status === 'open'
             ? ' <span class="badge-confirmed badge-open" title="현재 판매 중">오픈중</span>'
             : (nx.status === 'confirmed' ? ' <span class="badge-confirmed" title="공식 발표로 일정 확정">확정</span>' : '');
+          // 정확한 오픈 일시(권역별 순차 오픈 포함). 특가는 오픈 즉시 매진되므로 시각까지 표기.
+          let opensSub = '', nextOpenBadge = '';
+          if (cp && Array.isArray(cp.opens) && cp.opens.length) {
+            const parsed = cp.opens
+              .filter(o => o && o.at)
+              .map(o => ({ label: o.label || '', d: parseLocal(o.at), hasTime: /[T\s]\d{2}:\d{2}/.test(o.at) }))
+              .filter(o => o.d)
+              .sort((a, b) => a.d - b.d);
+            if (parsed.length) {
+              const parts = parsed.map(o => `${o.label ? esc(o.label) + ' ' : ''}${esc(fmtOpenAt(o.d, o.hasTime))}`);
+              opensSub = `<span class="cell-sub opens-line" title="정확한 오픈 일시 — 특가는 오픈 즉시 매진될 수 있습니다">🕐 ${parts.join(' · ')}</span>`;
+              const future = parsed.filter(o => o.d.getTime() > now.getTime());
+              if (future.length) {
+                const no = future[0];
+                const cd = fmtCountdown(no.d, now);
+                nextOpenBadge = ` <span class="badge-openat" title="다음 오픈: ${esc(fmtOpenAt(no.d, no.hasTime))}">▶ ${no.label ? esc(no.label) + ' ' : ''}${esc(cd)}</span>`;
+              }
+            }
+          }
           const detailSub = rec.detail
             ? `<span class="cell-sub" title="${esc(rec.detail)}">${esc(rec.detail)}</span>` : '';
           const srcTitle = (ev.sources && ev.sources.length)
@@ -626,7 +671,7 @@
               <td title="${esc(al.airline)}">${esc(al.airline)}<span class="cell-sub">${esc(al.iata || '')}</span></td>
               <td title="${esc(ev.notes || ev.name)}">${esc(ev.name)}</td>
               <td title="${esc(ev.cadence_text || '')}">${esc(ev.cadence_text || '—')}</td>
-              <td title="${esc(nx.text)}">${esc(nx.text)}${confirmedBadge}${dday}${detailSub}</td>
+              <td title="${esc(nx.text)}">${esc(nx.text)}${confirmedBadge}${nextOpenBadge}${dday}${opensSub}${detailSub}</td>
               <td title="${esc(ev.discount_text || '')}">${esc(ev.discount_text || '—')}</td>
               <td title="${esc(ev.requirements || '')}">${esc(ev.requirements || '—')}</td>
               <td><span class="conf ${cf[0]}" title="${esc(srcTitle)}">${cf[1]}</span></td>
