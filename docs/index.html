@@ -280,7 +280,9 @@
     </div>
 
     <div class="note">
-      새 항목은 아래에서 검색해 등록하면 이 페이지에서 바로 반영됩니다 (최초 1회 상단 ⚙️ 설정에서 연결 토큰 등록 필요).
+      새 항목은 아래에서 검색해 등록하면 이 페이지에서 바로 반영됩니다 (최초 1회 상단 ⚙️ 설정에서 공유 암호 입력 필요).
+      <b>★ 내 목록</b>: 별(★)을 눌러 담은 노선만 내 화면에 모아 볼 수 있어요. 등록한 노선은 자동으로 담깁니다.
+      아래 필터에서 <b>전체 노선</b> ↔ <b>★ 내 목록</b>을 전환하세요. (내 목록·즐겨찾기는 이 브라우저에만 저장됩니다.)
       값은 수집 시점의 스냅샷이며, 실제 예약 시점에는 달라질 수 있습니다.
     </div>
 
@@ -494,7 +496,8 @@
       if (s === 401) { openSettings('공유 암호를 입력하세요 (한 번만 저장하면 계속 사용됩니다)'); }
       else toast('요청 실패: ' + ((e && e.message) || '네트워크 오류'), 'err');
     }
-    const FAVS_KEY = 'fd_favs';
+    const FAVS_KEY = 'fd_favs';       // 내 목록(브라우저별): 담은 모니터 키 집합
+    const VIEWMINE_KEY = 'fd_viewmine'; // 마지막으로 고른 뷰(내 목록/전체)를 기억
     const TARGETS_KEY = 'fd_targets';
     const PENDING_KEY = 'fd_pending';
     const EMPTY_DEALS_MSG = "데이터 초기화 후 재수집 중입니다. 다음 자동 수집(최대 4시간) 또는 '지금 수집 실행'으로 갱신하세요.";
@@ -506,7 +509,15 @@
       history: {},
       meta: null,
       chip: { type: 'all', value: '' },
-      favOnly: false
+      // 내 목록을 담아본 적 있으면(또는 지난번 '내 목록' 뷰였으면) 내 목록으로 시작.
+      favOnly: (function () {
+        try {
+          const v = localStorage.getItem(VIEWMINE_KEY);
+          if (v === '1') return true;
+          if (v === '0') return false;
+          return new Set(JSON.parse(localStorage.getItem(FAVS_KEY) || '[]')).size > 0;
+        } catch (e) { return false; }
+      })()
     };
     let holidaySet = new Set();
 
@@ -646,6 +657,7 @@
       catch (e) { return new Set(); }
     }
     function setFavs(set) { try { localStorage.setItem(FAVS_KEY, JSON.stringify([...set])); } catch (e) {} }
+    function addToMyList(key) { const f = getFavs(); f.add(key); setFavs(f); } // 내 목록에 담기
     function getTargets() {
       try { return JSON.parse(localStorage.getItem(TARGETS_KEY) || '{}') || {}; }
       catch (e) { return {}; }
@@ -827,7 +839,7 @@
       }
       const chip = (type, value, label) =>
         `<button class="chip" data-chip="${type}" data-value="${esc(value)}">${esc(label)}</button>`;
-      let html = chip('all', '', '전체') + chip('fav', '', '★ 즐겨찾기만');
+      let html = chip('all', '', '전체 노선') + chip('fav', '', '★ 내 목록');
       for (const [c, flag] of countries) html += chip('country', c, (flag ? flag + ' ' : '') + c);
       for (const city of cities) html += chip('city', city, city);
       el.innerHTML = html;
@@ -851,6 +863,7 @@
       const value = ch.getAttribute('data-value');
       if (type === 'fav') {
         state.favOnly = !state.favOnly;
+        try { localStorage.setItem(VIEWMINE_KEY, state.favOnly ? '1' : '0'); } catch (e) {} // 뷰 선택 기억
       } else if (type === 'all') {
         state.chip = { type: 'all', value: '' };
       } else if (state.chip.type === type && state.chip.value === value) {
@@ -987,7 +1000,7 @@
       const targets = getTargets();
       let list = state.routesStatus.filter(r => routePassesChip(r));
       if (!list.length) {
-        tbody.innerHTML = emptyRow(9, state.favOnly ? '즐겨찾기한 항목이 없습니다. ★를 눌러 추가하세요.' : '조건에 맞는 항목이 없습니다.');
+        tbody.innerHTML = emptyRow(9, state.favOnly ? '내 목록이 비었습니다. ★를 눌러 담거나 "전체 노선"에서 골라 담으세요.' : '조건에 맞는 항목이 없습니다.');
         return;
       }
       // 레벨1: 노선(origin-destination)으로 그룹, 레벨2: 각 stops 모니터를 개별 행으로.
@@ -1037,7 +1050,7 @@
 
         return `
           <tr${reached ? ' class="target-hit"' : ''}>
-            <td style="text-align:center"><button class="fav-btn${fav ? ' on' : ''}" data-fav="${esc(key)}" title="즐겨찾기">★</button></td>
+            <td style="text-align:center"><button class="fav-btn${fav ? ' on' : ''}" data-fav="${esc(key)}" title="내 목록에 담기/빼기">★</button></td>
             <td title="표본 ${r.sample_count} · 마지막 갱신 ${esc(r.last_collected_at || '-')}"><span class="status-dot ${dot}"></span>${statusText}</td>
             <td title="${esc(label)}">${flag ? esc(flag) + ' ' : ''}${esc(label)}<span class="cell-sub">${esc(r.origin)}→${esc(r.destination)} · 표본 ${r.sample_count}</span><button class="policy-edit" data-edit="${esc(key)}" title="박수/경유 수정">${esc(routePolicyLabel(r))} ✎</button></td>
             <td class="num">${priceCell}</td>
@@ -1324,6 +1337,7 @@
           };
           const r = await proxyCall('add', { route: entry });
           entry.id = r.id || `${o.iata}-${d.iata}`;
+          addToMyList(rk(entry)); // 내가 등록한 노선은 내 목록에 자동으로 담김
           markCollectStarted();
           toast(r.collected ? '등록 완료 ✓ 새 노선 수집을 시작했습니다' : '등록 완료 ✓ 다음 수집부터 반영');
           pendingMarkAdded(entry);
@@ -1372,6 +1386,7 @@
         };
         routes.push(entry);
         await ghPutRoutes(routes, sha, `feat: add route ${o.iata}→${d.iata}`);
+        addToMyList(rk(entry)); // 내가 등록한 노선은 내 목록에 자동으로 담김
         toast('등록 완료 ✓ 다음 수집부터 반영');
         pendingMarkAdded(entry); // 새로고침해도 유지되도록 대기 목록에 기록
         // 화면에 즉시(낙관적) 반영
