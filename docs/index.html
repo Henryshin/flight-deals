@@ -183,7 +183,11 @@
   /* filter chips */
   .chip-bar { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; margin: 16px 0 0; background: #fafafa; border: 1px solid var(--grid); padding: 8px 10px; }
   .chip-bar .chip-cap { color: var(--muted); font-size: 13px; padding-top: 3px; }
-  #chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip-groups { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+  .chip-line { display: flex; align-items: flex-start; gap: 8px; }
+  .chip-line .chip-sub { color: var(--muted); font-size: 13px; padding-top: 3px; min-width: 28px; flex-shrink: 0; }
+  #chip-country, #chip-region { display: flex; flex-wrap: wrap; gap: 6px; }
+  #chip-region-line { border-top: 1px dashed var(--grid); padding-top: 6px; }
   .chip {
     font-family: inherit; font-size: 13px; padding: 2px 9px; cursor: pointer;
     border: 1px solid var(--grid); border-radius: 2px; background: #fff; color: var(--text);
@@ -317,7 +321,16 @@
 
     <div class="chip-bar">
       <span class="chip-cap">필터</span>
-      <div id="chip-row"></div>
+      <div class="chip-groups">
+        <div class="chip-line">
+          <span class="chip-sub">국가</span>
+          <div id="chip-country"></div>
+        </div>
+        <div class="chip-line" id="chip-region-line" hidden>
+          <span class="chip-sub">지역</span>
+          <div id="chip-region"></div>
+        </div>
+      </div>
     </div>
 
     <h2>변동 항목</h2>
@@ -508,7 +521,8 @@
       routesStatus: [],
       history: {},
       meta: null,
-      chip: { type: 'all', value: '' },
+      selCountries: new Set(), // 1차 필터: 선택된 국가들 (다중선택)
+      selCities: new Set(),    // 2차 필터: 선택된 지역(도착 도시)들 (다중선택, 선택 국가에 종속)
       // 내 목록을 담아본 적 있으면(또는 지난번 '내 목록' 뷰였으면) 내 목록으로 시작.
       favOnly: (function () {
         try {
@@ -818,44 +832,62 @@
       } catch (e) { return fallback; }
     }
 
-    // ===================== 필터 칩 =====================
+    // ===================== 필터 칩 (2층위 다중선택: 국가 → 지역) =====================
     function routePassesChip(routeLike) {
       if (state.favOnly && !getFavs().has(rk(routeLike))) return false;
-      const f = state.chip;
-      if (!f || f.type === 'all') return true;
-      if (f.type === 'country') return (routeLike.country || '기타') === f.value;
-      if (f.type === 'city') return destCityName(routeLike) === f.value;
+      // 1차: 국가 (선택된 게 없으면 전체 통과)
+      if (state.selCountries.size && !state.selCountries.has(routeLike.country || '기타')) return false;
+      // 2차: 지역(도착 도시) — 선택된 게 없으면 통과. 도시 선택은 국가에 종속.
+      if (state.selCities.size && !state.selCities.has(destCityName(routeLike))) return false;
       return true;
     }
 
+    // 선택 국가에 속하지 않게 된 도시 선택은 제거 (드릴다운 정합성 유지)
+    function pruneSelectedCities() {
+      if (!state.selCountries.size) { state.selCities.clear(); return; }
+      const valid = new Set();
+      for (const r of state.routesStatus) {
+        if (state.selCountries.has(r.country || '기타')) valid.add(destCityName(r));
+      }
+      for (const city of [...state.selCities]) {
+        if (!valid.has(city)) state.selCities.delete(city);
+      }
+    }
+
     function renderChips() {
-      const el = document.getElementById('chip-row');
+      const chip = (type, value, label, on) =>
+        `<button class="chip${on ? ' active' : ''}" data-chip="${type}" data-value="${esc(value)}">${esc(label)}</button>`;
+
+      // ── 1차: 국가 ──
       const countries = new Map();
-      const cities = new Set();
       for (const r of state.routesStatus) {
         const c = r.country || '기타';
         if (!countries.has(c)) countries.set(c, r.flag || (findAirport(r.destination) || {}).flag || '');
-        cities.add(destCityName(r));
       }
-      const chip = (type, value, label) =>
-        `<button class="chip" data-chip="${type}" data-value="${esc(value)}">${esc(label)}</button>`;
-      let html = chip('all', '', '전체 노선') + chip('fav', '', '★ 내 목록');
-      for (const [c, flag] of countries) html += chip('country', c, (flag ? flag + ' ' : '') + c);
-      for (const city of cities) html += chip('city', city, city);
-      el.innerHTML = html;
-      updateChipActive();
-    }
+      const noSel = state.selCountries.size === 0 && state.selCities.size === 0;
+      let html = chip('all', '', '전체', noSel) + chip('fav', '', '★ 내 목록', state.favOnly);
+      for (const [c, flag] of countries) {
+        html += chip('country', c, (flag ? flag + ' ' : '') + c, state.selCountries.has(c));
+      }
+      document.getElementById('chip-country').innerHTML = html;
 
-    function updateChipActive() {
-      document.querySelectorAll('#chip-row .chip').forEach(ch => {
-        const type = ch.getAttribute('data-chip');
-        const value = ch.getAttribute('data-value');
-        let on = false;
-        if (type === 'fav') on = state.favOnly;
-        else if (type === 'all') on = state.chip.type === 'all';
-        else on = state.chip.type === type && state.chip.value === value;
-        ch.classList.toggle('active', on);
-      });
+      // ── 2차: 지역(도착 도시) — 선택된 국가들의 도시만 노출 ──
+      const regionLine = document.getElementById('chip-region-line');
+      const regionEl = document.getElementById('chip-region');
+      if (!state.selCountries.size) {
+        regionLine.hidden = true;
+        regionEl.innerHTML = '';
+        return;
+      }
+      const cities = [];
+      const seen = new Set();
+      for (const r of state.routesStatus) {
+        if (!state.selCountries.has(r.country || '기타')) continue;
+        const city = destCityName(r);
+        if (!seen.has(city)) { seen.add(city); cities.push(city); }
+      }
+      regionLine.hidden = false;
+      regionEl.innerHTML = cities.map(city => chip('city', city, city, state.selCities.has(city))).join('');
     }
 
     function onChipClick(ch) {
@@ -865,13 +897,17 @@
         state.favOnly = !state.favOnly;
         try { localStorage.setItem(VIEWMINE_KEY, state.favOnly ? '1' : '0'); } catch (e) {} // 뷰 선택 기억
       } else if (type === 'all') {
-        state.chip = { type: 'all', value: '' };
-      } else if (state.chip.type === type && state.chip.value === value) {
-        state.chip = { type: 'all', value: '' }; // 같은 칩 재클릭 → 해제
-      } else {
-        state.chip = { type, value };
+        state.selCountries.clear();
+        state.selCities.clear();
+      } else if (type === 'country') {
+        if (state.selCountries.has(value)) state.selCountries.delete(value);
+        else state.selCountries.add(value);
+        pruneSelectedCities();
+      } else if (type === 'city') {
+        if (state.selCities.has(value)) state.selCities.delete(value);
+        else state.selCities.add(value);
       }
-      updateChipActive();
+      renderChips();
       renderDeals();
       renderStatus();
     }
@@ -1025,6 +1061,10 @@
         if (r.sample_count > 0) {
           dot = r.sample_count >= 3 ? 'ok' : 'waiting';
           statusText = r.sample_count >= 3 ? '정상' : '표본 부족';
+        } else if (r.no_direct) {
+          // 직항 전용 노선인데 직항편이 검색되지 않음 (경유 허용으로 바꾸면 수집됨)
+          dot = 'none';
+          statusText = '직항 없음';
         }
         const label = r.label || (r.origin + ' → ' + r.destination);
         const flag = r.flag || (findAirport(r.destination) || {}).flag || '';
@@ -1051,7 +1091,7 @@
         return `
           <tr${reached ? ' class="target-hit"' : ''}>
             <td style="text-align:center"><button class="fav-btn${fav ? ' on' : ''}" data-fav="${esc(key)}" title="내 목록에 담기/빼기">★</button></td>
-            <td title="표본 ${r.sample_count} · 마지막 갱신 ${esc(r.last_collected_at || '-')}"><span class="status-dot ${dot}"></span>${statusText}</td>
+            <td title="${r.no_direct && r.sample_count === 0 ? '직항편이 검색되지 않음 · 박수/경유(✎)에서 경유 허용으로 바꾸면 수집됩니다' : '표본 ' + r.sample_count + ' · 마지막 갱신 ' + esc(r.last_collected_at || '-')}"><span class="status-dot ${dot}"></span>${statusText}</td>
             <td title="${esc(label)}">${flag ? esc(flag) + ' ' : ''}${esc(label)}<span class="cell-sub">${esc(r.origin)}→${esc(r.destination)} · 표본 ${r.sample_count}</span><button class="policy-edit" data-edit="${esc(key)}" title="박수/경유 수정">${esc(routePolicyLabel(r))} ✎</button></td>
             <td class="num">${priceCell}</td>
             <td class="num">${range30}</td>
