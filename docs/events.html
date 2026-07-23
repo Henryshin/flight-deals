@@ -241,7 +241,7 @@
     <div class="note" id="disclaimer"></div>
 
     <div class="chip-bar">
-      <span class="chip-cap">항공사</span>
+      <span class="chip-cap">상태</span>
       <div id="chip-row"></div>
     </div>
 
@@ -369,7 +369,7 @@
       updatedAt: '',
       disclaimer: '',
       loadFailed: false,
-      chip: '' // '' = 전체, 그 외 = 항공사명
+      statusFilter: '' // '' = 전체, 'ended' = 이번 회차 종료, 'upcoming' = 오픈예정(진행중 포함)
     };
     let holidaySet = new Set();
 
@@ -562,24 +562,26 @@
       return out;
     }
 
-    // ===================== 필터 칩 =====================
-    function passChip(airline) { return !state.chip || state.chip === airline; }
+    // ===================== 필터 칩 (오픈예정/종료) =====================
+    // 회차가 완전히 종료(status === 'past')된 이벤트만 '종료'로 분류하고,
+    // 아직 시작 전이거나 현재 판매 중인 이벤트는 모두 '오픈예정'으로 묶는다
+    // (진행 중인 이벤트를 '종료'로 잘못 분류해 놓치는 일이 없도록). 개별 상태는
+    // 각 행의 배지(오픈중/확정)로 구분해서 보여준다.
+    function statusBucket(nx) { return nx.status === 'past' ? 'ended' : 'upcoming'; }
+    function passStatusFilter(nx) { return !state.statusFilter || state.statusFilter === statusBucket(nx); }
 
     function renderChips() {
       const el = document.getElementById('chip-row');
       const chip = (value, label) =>
-        `<button class="chip${(state.chip === value) ? ' active' : ''}" data-chip="${esc(value)}">${esc(label)}</button>`;
-      let html = chip('', '전체');
-      for (const al of state.airlines) html += chip(al.airline, `${al.airline}${al.iata ? ' (' + al.iata + ')' : ''}`);
-      el.innerHTML = html;
+        `<button class="chip${(state.statusFilter === value) ? ' active' : ''}" data-chip="${esc(value)}">${esc(label)}</button>`;
+      el.innerHTML = chip('', '전체') + chip('upcoming', '오픈예정') + chip('ended', '종료');
     }
 
     function onChipClick(ch) {
       const value = ch.getAttribute('data-chip');
-      state.chip = (value && state.chip === value) ? '' : value;
+      state.statusFilter = (value && state.statusFilter === value) ? '' : value;
       renderChips();
       renderTable();
-      renderCalendar();
     }
 
     // ===================== 메인 테이블 =====================
@@ -598,11 +600,11 @@
       const now = new Date();
       const rows = [];
       for (const al of state.airlines) {
-        if (!passChip(al.airline)) continue;
         for (const ev of (al.events || [])) {
           const rec = ev.recurrence || {};
           const cp = ev.confirmed_period;
           const nx = nextOccurrence(rec, ev.last_seen, now, cp);
+          if (!passStatusFilter(nx)) continue;
           const dday = (nx.dday != null && nx.dday >= 0 && nx.dday <= 14)
             ? ` <span class="badge-dday" title="예상일 ${esc(nx.date)}">${nx.dday === 0 ? 'D-DAY' : 'D-' + nx.dday}</span>` : '';
           const confirmedBadge = nx.status === 'open'
@@ -651,7 +653,6 @@
       const map = new Map();
       const daysInMonth = new Date(year, month0 + 1, 0).getDate();
       for (const al of state.airlines) {
-        if (!passChip(al.airline)) continue;
         for (const ev of (al.events || [])) {
           const rec = ev.recurrence || {};
           if (rec.type === 'irregular') continue;
@@ -675,7 +676,6 @@
     function monthEvents(year, month0) {
       const out = [];
       for (const al of state.airlines) {
-        if (!passChip(al.airline)) continue;
         for (const ev of (al.events || [])) {
           const rec = ev.recurrence || {};
           const months = Array.isArray(rec.months) && rec.months.length ? rec.months : null;
@@ -889,7 +889,6 @@
           localAl.events = (localAl.events || []).filter(ev => ev.name !== name);
           if (!localAl.events.length) state.airlines = state.airlines.filter(a => a !== localAl);
         }
-        if (state.chip && !state.airlines.some(a => a.airline === state.chip)) state.chip = '';
         renderAll();
       } catch (e) {
         handleGhError(e);
