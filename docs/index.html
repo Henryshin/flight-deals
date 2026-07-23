@@ -383,7 +383,7 @@
       <div class="dlg-title"><span>연결 설정</span><button id="settings-x" title="닫기">✕</button></div>
       <div class="dlg-body">
         <div class="dlg-notice" id="settings-notice" hidden></div>
-        GitHub Fine-grained 토큰을 한 번만 등록하면 이 페이지에서 항목 등록/삭제와 수집 실행이 바로 됩니다.
+        GitHub Fine-grained 토큰을 <b>한 번만</b> 붙여넣으면 자동 저장되어, 이후 항목 등록/삭제·수집 실행 때 다시 입력할 필요가 없습니다.
         토큰은 이 브라우저(localStorage)에만 저장됩니다.
         <ol>
           <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">토큰 생성 페이지</a>를 엽니다.</li>
@@ -1359,12 +1359,20 @@
       tr.textContent = '';
       tr.className = '';
       refreshTokenState();
+      // 이미 저장된 토큰이 있으면 입력칸에 채워 보여줘서 "저장돼 있음"을 분명히 한다.
+      document.getElementById('token-input').value = getToken();
       document.getElementById('settings-backdrop').hidden = false;
       document.getElementById('token-input').focus();
     }
     function closeSettings() {
       document.getElementById('token-input').value = '';
       document.getElementById('settings-backdrop').hidden = true;
+    }
+    // 붙여넣거나 입력하는 즉시 자동 저장 -> "저장" 클릭을 잊어도 다음부터 다시 입력 불필요.
+    function autoSaveToken() {
+      const v = document.getElementById('token-input').value.trim();
+      if (!v) return;
+      try { localStorage.setItem(TOKEN_KEY, v); refreshTokenState(); } catch (e) {}
     }
     function saveTokenClicked() {
       const v = document.getElementById('token-input').value.trim();
@@ -1428,6 +1436,8 @@
       document.getElementById('btn-token-save').addEventListener('click', saveTokenClicked);
       document.getElementById('btn-token-delete').addEventListener('click', deleteTokenClicked);
       document.getElementById('btn-token-test').addEventListener('click', testConnection);
+      // 붙여넣기/입력 즉시 자동 저장 ("저장" 안 눌러도 유지됨)
+      document.getElementById('token-input').addEventListener('input', autoSaveToken);
       document.getElementById('settings-backdrop').addEventListener('click', e => {
         if (e.target === e.currentTarget) closeSettings();
       });
