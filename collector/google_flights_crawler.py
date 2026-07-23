@@ -20,6 +20,55 @@ from playwright.sync_api import sync_playwright
 
 PRICE_PATTERN = re.compile(r"₩([0-9][0-9,]{2,})")
 
+# li 안의 "오전/오후 H:MM" 시각. 뒤에 "+1"(익일 도착) 마커가 붙을 수 있음.
+TIME_PATTERN = re.compile(r"(오전|오후)\s*([0-9]{1,2}):([0-9]{2})(\+1)?")
+STOPS_NONSTOP = "직항"
+STOPS_PATTERN = re.compile(r"경유\s*([0-9]+)\s*회")
+
+
+def _to_24h(ampm: str, hour: int, minute: int) -> str:
+    """'오전 12:xx' -> 00:xx, '오후 12:xx' -> 12:xx, '오전 H' -> 0H, '오후 H' -> H+12."""
+    if ampm == "오전":
+        hour = 0 if hour == 12 else hour
+    else:  # 오후
+        hour = 12 if hour == 12 else hour + 12
+    return f"{hour:02d}:{minute:02d}"
+
+
+def parse_itinerary(li_text: str):
+    """왕복 li 텍스트 하나를 파싱해 {"price","stops","dep_time","arr_time"} 반환.
+
+    ₩ 가격이 없거나 왕복이 아니면 None. 브라우저 없이 단위테스트 가능하도록 순수 함수.
+    """
+    if ROUND_TRIP_MARKER not in li_text:
+        return None
+    price_matches = PRICE_PATTERN.findall(li_text)
+    if not price_matches:
+        return None
+    price = int(price_matches[-1].replace(",", ""))
+
+    times = TIME_PATTERN.findall(li_text)  # [(ampm, H, MM, plus1), ...]
+    dep_time = ""
+    arr_time = ""
+    if len(times) >= 1:
+        ampm, h, m, _plus = times[0]
+        dep_time = _to_24h(ampm, int(h), int(m))
+    if len(times) >= 2:
+        ampm, h, m, plus = times[1]
+        arr_time = _to_24h(ampm, int(h), int(m))
+        if plus:
+            arr_time += "+1"
+
+    if STOPS_NONSTOP in li_text:
+        stops = 0
+    else:
+        m = STOPS_PATTERN.search(li_text)
+        # 직항도 '경유 N회'도 매칭되지 않으면 경유수 미상(None). 0으로 단정하면
+        # 파싱 못한 항목이 nonstop 클래스로 오염되므로 '알 수 없음'으로 남긴다.
+        stops = int(m.group(1)) if m else None
+
+    return {"price": price, "stops": stops, "dep_time": dep_time, "arr_time": arr_time}
+
 # 결과 목록의 각 항공편은 <li> 안에 "...₩487,681 | 왕복" 형태로 총액이 들어있음.
 # body 전체 텍스트를 긁으면 날짜별 가격 캘린더 위젯 등 다른 요소의 가격까지 섞여
 # 실제보다 훨씬 낮은 값을 최저가로 잘못 고르는 문제가 있어, 결과 리스트 항목만 대상으로 함.
@@ -148,8 +197,12 @@ class PriceCrawlerSession:
         timeout_ms=25000,
         origin_city: str | None = None,
         dest_city: str | None = None,
+        max_stops=None,
     ):
-        """지정한 노선/날짜의 최저가(원)를 반환. 개별 쿼리 실패 시 None.
+        """지정한 노선/날짜의 최저가 항공편 정보를 반환. 개별 쿼리 실패 시 None.
+
+        max_stops 이하의 경유수를 가진 왕복편만 후보로 삼고(None이면 전부),
+        그중 최저가 항공편의 전체 dict({"price","stops","dep_time","arr_time"})를 반환.
 
         브라우저가 죽어 새 페이지조차 못 여는 경우엔 CrawlerSessionError 를 던져
         호출 측이 세션을 재시작할 수 있게 함.
@@ -165,18 +218,22 @@ class PriceCrawlerSession:
             page.goto(url, timeout=timeout_ms)
             page.wait_for_timeout(6000)
 
-            prices = []
+            itineraries = []
             for li in page.query_selector_all("li"):
                 item_text = li.inner_text()
-                if ROUND_TRIP_MARKER not in item_text:
+                parsed = parse_itinerary(item_text)
+                if parsed is None:
                     continue
-                matches = PRICE_PATTERN.findall(item_text)
-                if matches:
-                    prices.append(int(matches[-1].replace(",", "")))
+                if max_stops is not None and (
+                    parsed["stops"] is None or parsed["stops"] > max_stops
+                ):
+                    # 경유수 미상 항목은 유계 클래스(max_stops!=None)에 넣지 않는다.
+                    continue
+                itineraries.append(parsed)
 
-            if not prices:
+            if not itineraries:
                 return None
-            return min(prices)
+            return min(itineraries, key=lambda it: it["price"])
         except Exception as e:
             print(f"[google_flights_crawler] failed for {origin}->{destination} {depart}~{return_}: {e}")
             return None
@@ -195,17 +252,21 @@ def fetch_lowest_price(
     timeout_ms=25000,
     origin_city: str | None = None,
     dest_city: str | None = None,
+    max_stops=None,
 ):
-    """지정한 노선/날짜의 최저가(원)를 반환. 실패 시 None.
+    """지정한 노선/날짜의 최저가(원, int)를 반환. 실패 시 None.
 
-    단발 호출용 하위호환 래퍼. 여러 쿼리를 돌릴 땐 PriceCrawlerSession 을 직접 써서
+    단발 호출용 하위호환 래퍼. 세션 결과 dict에서 ['price']만 추출해 int로 돌려준다.
+    여러 쿼리를 돌릴 땐 PriceCrawlerSession 을 직접 써서
     브라우저 기동 비용을 한 번만 내는 것을 권장.
     """
     with PriceCrawlerSession() as session:
-        return session.fetch_lowest_price(
+        result = session.fetch_lowest_price(
             origin, destination, depart, return_,
             timeout_ms=timeout_ms, origin_city=origin_city, dest_city=dest_city,
+            max_stops=max_stops,
         )
+        return result["price"] if result else None
 
 
 if __name__ == "__main__":

@@ -86,6 +86,10 @@
 
   .badge-hit { display: inline-block; background: var(--excel-green); color: #fff; font-size: 9.5px; padding: 1px 5px; border-radius: 2px; margin-left: 4px; font-family: Calibri, "맑은 고딕", Arial, sans-serif; }
   .badge-hol { display: inline-block; background: #fdecea; color: #b3261e; border: 1px solid #efc4c0; font-size: 9.5px; padding: 0 4px; border-radius: 2px; margin-left: 4px; }
+  .badge-stops { display: inline-block; background: #eaf3ee; color: #14532d; border: 1px solid #c3ddce; font-size: 9.5px; padding: 0 4px; border-radius: 2px; margin-left: 4px; white-space: nowrap; }
+  .nextday { font-size: 8px; color: #b3261e; margin-left: 1px; }
+  .period-go { display: block; white-space: nowrap; }
+  .period-back { display: block; }
 
   .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; }
   .status-dot.ok { background: #217346; }
@@ -280,6 +284,18 @@
       <input id="reg-label" placeholder="라벨 (자동 입력)" style="width:170px" />
       <input id="reg-country" placeholder="국가 (자동)" style="width:90px" />
       <span id="reg-flag" style="font-size:14px"></span>
+      <select id="reg-nights" title="여행 기간(박수)">
+        <option value="2">2박3일</option>
+        <option value="3" selected>3박4일</option>
+        <option value="4">4박5일</option>
+        <option value="5">5박6일</option>
+        <option value="6">6박7일</option>
+      </select>
+      <select id="reg-stops" title="직항/경유 정책">
+        <option value="0">직항만</option>
+        <option value="1" selected>직항+경유1회까지</option>
+        <option value="null">상관없음</option>
+      </select>
       <button id="btn-register">등록</button>
     </div>
 
@@ -437,6 +453,53 @@
         return r.label.split('→')[1].replace(/\(.*\)/, '').trim() || r.destination;
       }
       return r.destination;
+    }
+
+    // ===================== 날짜/시간 포맷 (연도 생략) =====================
+    const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+    function weekdayOf(dateStr) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateStr == null ? '' : dateStr));
+      if (!m) return '';
+      const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+      if (isNaN(d.getTime())) return '';
+      return WEEKDAYS[d.getDay()];
+    }
+    // "YYYY-MM-DD" -> "MM-DD(요일)" (esc-safe). wd optional (falls back to computed weekday).
+    function fmtDateShort(dateStr, wd) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateStr == null ? '' : dateStr));
+      if (!m) return esc(dateStr == null ? '' : dateStr);
+      const w = wd || weekdayOf(dateStr);
+      return `${m[2]}-${m[3]}(${esc(w)})`;
+    }
+    // 가는편 leg: "MM-DD(요일) HH:MM→HH:MM" with optional next-day (+1) marker on arrival.
+    function fmtGoLeg(dateStr, depTime, arrTime, wd) {
+      const dep = fmtDateShort(dateStr, wd);
+      const dt = String(depTime == null ? '' : depTime).trim();
+      const at = String(arrTime == null ? '' : arrTime).trim();
+      if (!dt && !at) return dep;
+      let arr = at, plus = '';
+      if (/\+1$/.test(arr)) { plus = '<sup class="nextday">+1</sup>'; arr = arr.replace(/\+1$/, ''); }
+      // 한쪽 시각만 아는 경우에도 그 값을 버리지 않고 보여준다.
+      const timeStr = (dt || at) ? `${dt ? esc(dt) : ''}→${arr ? esc(arr) : ''}${plus}` : '';
+      return `${dep} ${timeStr}`.trim();
+    }
+    // 직항/경유N 뱃지 (stops: "0"|0 -> 직항, N -> 경유N, ""/null -> 없음)
+    function stopsBadge(stops) {
+      if (stops === '' || stops == null) return '';
+      const n = parseInt(stops, 10);
+      if (isNaN(n)) return '';
+      return ` <span class="badge-stops">${n === 0 ? '직항' : '경유' + n}</span>`;
+    }
+    // 노선 정책 서브라벨: "3박4일 · 직항+경유1" (누락 시 3박 / 경유1 가정)
+    function routePolicyLabel(r) {
+      const n = (r && r.min_nights != null) ? parseInt(r.min_nights, 10) : 3;
+      const nn = isNaN(n) ? 3 : n;
+      let stopsTxt;
+      if (!r || !('max_stops' in r)) stopsTxt = '직항+경유1';
+      else if (r.max_stops === 0) stopsTxt = '직항';
+      else if (r.max_stops == null) stopsTxt = '상관없음';
+      else stopsTxt = '직항+경유' + parseInt(r.max_stops, 10);
+      return `${nn}박${nn + 1}일 · ${stopsTxt}`;
     }
 
     // localStorage helpers
@@ -734,7 +797,7 @@
           <tr>
             <td><a href="${esc(d.booking_url)}" target="_blank" rel="noopener">${esc(label)}</a>
               <button class="copy-btn" data-copy="${esc(d.booking_url)}" title="예약 링크 복사">📋</button></td>
-            <td>${esc(d.depart_date)} (${esc(d.depart_weekday)}) ~ ${esc(d.return_date)} (${esc(d.return_weekday)})${d.is_holiday_window ? ' <span class="badge-hol">연휴</span>' : ''}</td>
+            <td><span class="period-go">가는편 ${fmtGoLeg(d.depart_date, d.dep_time, d.arr_time, d.depart_weekday)}${stopsBadge(d.stops)}</span><span class="period-back cell-sub">귀국 ${fmtDateShort(d.return_date, d.return_weekday)}${d.is_holiday_window ? ' <span class="badge-hol">연휴</span>' : ''}</span></td>
             <td>${d.nights}박 ${d.days}일 · 연차 ${d.leave_days}개</td>
             <td class="num">${fmt(d.current_price)} ${trendHtml(d.current_price, d.prev_price, false)}</td>
             <td class="num">${fmt(d.avg_price)}</td>
@@ -804,7 +867,7 @@
         let priceCell = '<span class="spark-none">—</span>';
         if (r.latest_price != null) {
           const dates = (r.latest_depart_date && r.latest_return_date)
-            ? `<span class="cell-sub">${esc(r.latest_depart_date)} ~ ${esc(r.latest_return_date)}</span>` : '';
+            ? `<span class="cell-sub">${fmtGoLeg(r.latest_depart_date, r.dep_time, r.arr_time)} ~ ${fmtDateShort(r.latest_return_date)}${stopsBadge(r.stops)}</span>` : '';
           priceCell = `${fmt(r.latest_price)} ${trendHtml(r.latest_price, r.prev_price, true)}` +
             (reached ? '<span class="badge-hit">목표가 도달 🎯</span>' : '') + dates;
         }
@@ -823,7 +886,7 @@
           <tr${reached ? ' class="target-hit"' : ''}>
             <td style="text-align:center"><button class="fav-btn${fav ? ' on' : ''}" data-fav="${esc(key)}" title="즐겨찾기">★</button></td>
             <td title="표본 ${r.sample_count} · 마지막 갱신 ${esc(r.last_collected_at || '-')}"><span class="status-dot ${dot}"></span>${statusText}</td>
-            <td title="${esc(label)}">${flag ? esc(flag) + ' ' : ''}${esc(label)}<span class="cell-sub">${esc(r.origin)}→${esc(r.destination)} · 표본 ${r.sample_count}</span></td>
+            <td title="${esc(label)}">${flag ? esc(flag) + ' ' : ''}${esc(label)}<span class="cell-sub">${esc(r.origin)}→${esc(r.destination)} · 표본 ${r.sample_count}</span><span class="cell-sub">${esc(routePolicyLabel(r))}</span></td>
             <td class="num">${priceCell}</td>
             <td class="num">${range30}</td>
             <td>${sparklineSVG(state.history[key])}</td>
@@ -1021,6 +1084,9 @@
       }
       const label = document.getElementById('reg-label').value.trim() || makeLabel(o, d);
       const country = document.getElementById('reg-country').value.trim() || d.country_ko || '기타';
+      const minNights = parseInt(document.getElementById('reg-nights').value, 10) || 3;
+      const stopsVal = document.getElementById('reg-stops').value;
+      const maxStops = stopsVal === 'null' ? null : parseInt(stopsVal, 10);
       const btn = document.getElementById('btn-register');
       btn.disabled = true;
       btn.textContent = '등록 중…';
@@ -1037,7 +1103,9 @@
           country,
           flag: d.flag || '',
           origin_city: o.city_en,
-          destination_city: d.city_en
+          destination_city: d.city_en,
+          min_nights: minNights,
+          max_stops: maxStops
         };
         routes.push(entry);
         await ghPutRoutes(routes, sha, `feat: add route ${o.iata}→${d.iata}`);
@@ -1071,6 +1139,8 @@
         document.getElementById(id).value = '';
       });
       document.getElementById('reg-flag').textContent = '';
+      document.getElementById('reg-nights').value = '3';
+      document.getElementById('reg-stops').value = '1';
       regSel.origin = null;
       regSel.destination = null;
       labelTouched = false;

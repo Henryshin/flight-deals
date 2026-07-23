@@ -16,22 +16,51 @@ from holidays import date_range_candidates, get_holiday_windows
 ROOT = Path(__file__).parent.parent
 ROUTES_FILE = ROOT / "data" / "routes.json"
 PRICES_FILE = ROOT / "data" / "prices.csv"
-TRIP_LENGTH_DAYS = 3
+DEFAULT_TRIP_LENGTH_DAYS = 3
+NEW_HEADER = [
+    "origin", "destination", "depart_date", "return_date", "price",
+    "is_holiday_window", "collected_at", "dep_time", "arr_time", "stops",
+]
+OLD_HEADER = NEW_HEADER[:7]
 
 
-def build_date_candidates():
+def build_date_candidates(trip_length_days=DEFAULT_TRIP_LENGTH_DAYS):
+    """해당 노선의 여행 길이(min_nights)로 (출발, 귀국, 연휴여부) 후보 생성."""
     windows = get_holiday_windows()
     candidates = []
     for w in windows:
-        for depart, return_ in date_range_candidates(w, TRIP_LENGTH_DAYS):
+        for depart, return_ in date_range_candidates(w, trip_length_days):
             candidates.append((depart, return_, True))
 
     if not candidates:
         today = date.today()
         for offset in (14, 30, 45):
             d = today + timedelta(days=offset)
-            candidates.append((d, d + timedelta(days=TRIP_LENGTH_DAYS), False))
+            candidates.append((d, d + timedelta(days=trip_length_days), False))
     return candidates
+
+
+def migrate_prices_file():
+    """구(7열) prices.csv를 신(10열) 헤더로 1회 재작성하고 기존 행을 빈 3열로 패딩.
+
+    이미 신 헤더면 아무 것도 하지 않음. 파일이 없으면 아무 것도 하지 않음.
+    """
+    if not PRICES_FILE.exists() or PRICES_FILE.stat().st_size == 0:
+        return
+    with open(PRICES_FILE, newline="", encoding="utf-8") as f:
+        rows = list(csv.reader(f))
+    if not rows:
+        return
+    header = rows[0]
+    if header == NEW_HEADER:
+        return
+    if header != OLD_HEADER:
+        return  # 알 수 없는 헤더는 건드리지 않음
+    with open(PRICES_FILE, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(NEW_HEADER)
+        for row in rows[1:]:
+            writer.writerow(row + ["", "", ""])
 
 
 def fetch_price_with_retry(session, *args, **kwargs):
@@ -51,38 +80,45 @@ def fetch_price_with_retry(session, *args, **kwargs):
 
 def main():
     routes = json.loads(ROUTES_FILE.read_text(encoding="utf-8"))
-    candidates = build_date_candidates()
     collected_at = date.today().isoformat()
 
     rows = []
     # 실행 전체가 브라우저 하나를 재사용 (쿼리마다 크로미움 기동 비용을 내지 않음).
     with PriceCrawlerSession() as session:
         for route in routes:
+            trip_length = route.get("min_nights", DEFAULT_TRIP_LENGTH_DAYS)
+            candidates = build_date_candidates(trip_length)
+            max_stops = route.get("max_stops")
             for depart, return_, is_holiday in candidates:
-                price = fetch_price_with_retry(
+                result = fetch_price_with_retry(
                     session,
                     route["origin"], route["destination"], depart, return_,
                     origin_city=route.get("origin_city"), dest_city=route.get("destination_city"),
+                    max_stops=max_stops,
                 )
-                if price is None:
+                if result is None:
                     print(f"  {route['origin']}->{route['destination']} {depart}~{return_}: 실패")
                     continue
-                print(f"  {route['origin']}->{route['destination']} {depart}~{return_}: {price}원")
+                print(f"  {route['origin']}->{route['destination']} {depart}~{return_}: {result['price']}원")
                 rows.append([
                     route["origin"], route["destination"],
                     depart.isoformat(), return_.isoformat(),
-                    price, int(is_holiday), collected_at,
+                    result["price"], int(is_holiday), collected_at,
+                    result.get("dep_time", ""), result.get("arr_time", ""),
+                    result.get("stops", ""),
                 ])
 
     if not rows:
         print("수집된 가격 없음")
         return
 
+    # 구 헤더 파일이면 먼저 신 헤더로 마이그레이션해 csv.DictReader 일관성 유지.
+    migrate_prices_file()
     write_header = not PRICES_FILE.exists() or PRICES_FILE.stat().st_size == 0
     with open(PRICES_FILE, "a", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         if write_header:
-            writer.writerow(["origin", "destination", "depart_date", "return_date", "price", "is_holiday_window", "collected_at"])
+            writer.writerow(NEW_HEADER)
         writer.writerows(rows)
 
     print(f"{len(rows)}건 저장 완료")
