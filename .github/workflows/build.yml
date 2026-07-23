@@ -8,10 +8,17 @@ name: Build dashboard data
 # 이 잡의 커밋은 docs/data/** 만 건드리므로 자기 자신을 다시 트리거하지 않는다.
 
 on:
+  # 주의: collect.yml 이 GITHUB_TOKEN 으로 push 한 커밋은 GitHub 의 재귀 방지
+  # 정책상 push 이벤트를 발화하지 않는다. 그래서 push 트리거(아래)는 사실상
+  # Cloudflare Worker(PAT)의 routes.json 편집·수동 push 용이고, 수집 후 빌드는
+  # workflow_run 트리거가 담당한다.
   push:
     branches: [main]
     paths:
       - "data/**"
+  workflow_run:
+    workflows: ["Collect flight prices"]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
