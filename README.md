@@ -23,7 +23,23 @@ docs/index.html        # GitHub Pages가 서빙하는 대시보드
 ```
 
 - `origin`/`destination`은 IATA 공항 코드
-- 구글 플라이트 크롤러는 도시명을 인식하므로, 새 공항 코드를 쓰려면 `collector/google_flights_crawler.py`의 `AIRPORT_CITY` 표에도 추가해야 함
+- 구글 플라이트 크롤러는 도시명을 인식하므로, 새 공항 코드를 쓰려면 `collector/google_flights_crawler.py`의 `AIRPORT_CITY` 표에도 추가해야 함 (단, 대시보드에서 등록하면 도시명이 `routes.json`에 함께 저장되어 폴백 표가 없어도 동작)
+
+## 공항 검색 데이터베이스 (`docs/airports.js`)
+
+대시보드의 항목 등록 자동완성은 `docs/airports.js`의 공항 목록을 사용합니다. 목록은 두 부분으로 구성됩니다.
+
+- **상단 큐레이션 목록**: 한국인 여행자 기준 인기순으로 한글 도시/공항명을 손으로 관리 (검색 우선순위 상단)
+- **`GENERATED_EXT` 블록**: 전 세계 정기 IATA 공항 전체를 자동 생성 (시모지시마 등 소규모·지방 공항 포함)
+
+`GENERATED_EXT` 블록은 직접 수정하지 말고 생성 스크립트로 갱신합니다.
+
+```bash
+pip install airportsdata pycountry
+python scripts/build_airports.py
+```
+
+큐레이션 목록에 새 공항을 예쁜 한글명으로 추가하고 싶으면 `airports.js` 상단(마커 위)에 `a(...)` 한 줄을 넣으면 됩니다. 같은 IATA가 큐레이션에 있으면 생성 스크립트가 자동으로 중복을 건너뜁니다.
 
 ## 로컬 테스트
 
