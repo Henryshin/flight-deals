@@ -3,4 +3,6 @@
 data/prices.csv merge=union
 # collect_status.json 은 런마다 통째로 다시 쓰는 상태 파일. 동시 런이 겹치면
 # 어느 쪽이 남아도 무방(다음 런이 갱신)하므로 충돌 없이 한쪽을 유지한다.
+# 주의: 'ours' 는 내장 low-level 드라이버가 아니므로 사용하는 쪽에서
+#       `git config merge.ours.driver true` 설정이 필요 (collect.yml 이 수행).
 data/collect_status.json merge=ours

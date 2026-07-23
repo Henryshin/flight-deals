@@ -51,6 +51,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # .gitattributes 의 collect_status.json merge=ours 는 내장 드라이버가 아니라
+          # 이 설정이 있어야 동작한다 (없으면 동시 런 rebase 시 그대로 충돌).
+          git config merge.ours.driver true
           git add data/
           git diff --cached --quiet || git commit -m "chore: update flight price data"
           # 크롤링 동안 다른 커밋(동시 수집 런, 노선 편집)이 먼저 들어와도
