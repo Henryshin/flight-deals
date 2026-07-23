@@ -358,6 +358,13 @@
     </div>
 
     <h2>변동 항목</h2>
+    <div class="note" style="margin-bottom:0">
+      <b>기준값</b>은 <b>이 노선의 최근 30일 연휴 시세 평균</b>(같은 박수·직항/경유 조건)입니다.
+      즉 <b>현재값이 이 노선 자신의 평소 연휴 시세보다 얼마나 싼가</b>를 <b>변동율</b>로 보여줍니다
+      (평균 대비 15% 이상 하락한 날짜만 표시).
+      이 값은 <b>같은 노선 안에서의 저렴한 날짜 찾기</b>용이라 여행지끼리 비교하는 지표는 아닙니다 —
+      <b>여행지 간 비교는 위의 '연휴 가성비 보드'(평시 대비 할증률)</b>를 사용하세요.
+    </div>
     <div class="toolbar-row">
       <label for="deal-sort">정렬</label>
       <select id="deal-sort">
@@ -712,14 +719,18 @@
       return `<span class="tstrip" title="공휴일(빨강)·주말(파랑)·평일(회색)">${cells}</span>`;
     }
     // 목적지 x 출발월 기후 배지 (destmeta.js의 평년값). 데이터 없으면 생략.
+    // 현재/예보 날씨가 아니라 '그 달의 통상적인(평년) 기후 수준'이다.
     function climateBadge(iata, departDateStr) {
       if (!window.climateFor) return '';
       const m = /^\d{4}-(\d{2})/.exec(String(departDateStr || ''));
       if (!m) return '';
-      const c = window.climateFor(iata, parseInt(m[1], 10));
+      const month = parseInt(m[1], 10);
+      const c = window.climateFor(iata, month);
       if (!c) return '';
       const rain = c.rain === '우기' ? '🌧 우기' : c.rain === '건기' ? '☀️ 건기' : '⛅ 보통';
-      return `<span class="cell-sub" title="출발월 기준 월평균 기후 (평년값, 참고용)">${rain} · ${c.temp}°C · 습도 ${c.humidity}%</span>`;
+      const title = `${month}월 평년(예년 평균) 기후 · ${rain} · 낮 최고 ${c.temp}°C · 습도 ${c.humidity}%\n` +
+        `※ 현재/예보 날씨가 아니라 그 시기의 통상적인 날씨 수준입니다`;
+      return `<span class="cell-sub" title="${esc(title)}">평년 ${rain} · ${c.temp}°C · 습도 ${c.humidity}%</span>`;
     }
     // 노선 정책 서브라벨: "3박4일 · 직항+경유1" (누락 시 3박 / 경유1 가정)
     function routePolicyLabel(r) {
