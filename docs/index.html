@@ -316,6 +316,10 @@
           <span class="chip-sub">지역</span>
           <div id="chip-region"></div>
         </div>
+        <div class="chip-line" id="chip-concept-line">
+          <span class="chip-sub">컨셉</span>
+          <div id="chip-concept"></div>
+        </div>
       </div>
     </div>
 
@@ -525,6 +529,7 @@
   <div id="toast-wrap"></div>
 
   <script src="airports.js"></script>
+  <script src="destmeta.js"></script>
   <script>
     // ===================== 상수 / 공통 헬퍼 =====================
     const cacheBust = `?t=${Date.now()}`;
@@ -576,6 +581,7 @@
       gvWindow: null,      // 가성비 보드에서 선택된 연휴 윈도우 id
       selCountries: new Set(), // 1차 필터: 선택된 국가들 (다중선택)
       selCities: new Set(),    // 2차 필터: 선택된 지역(도착 도시)들 (다중선택, 선택 국가에 종속)
+      selConcepts: new Set(),  // 컨셉 필터: 휴양/도시/대자연 및 조합 (다중선택, OR)
       // 내 목록을 담아본 적 있으면(또는 지난번 '내 목록' 뷰였으면) 내 목록으로 시작.
       favOnly: (function () {
         try {
@@ -704,6 +710,16 @@
         guard++;
       }
       return `<span class="tstrip" title="공휴일(빨강)·주말(파랑)·평일(회색)">${cells}</span>`;
+    }
+    // 목적지 x 출발월 기후 배지 (destmeta.js의 평년값). 데이터 없으면 생략.
+    function climateBadge(iata, departDateStr) {
+      if (!window.climateFor) return '';
+      const m = /^\d{4}-(\d{2})/.exec(String(departDateStr || ''));
+      if (!m) return '';
+      const c = window.climateFor(iata, parseInt(m[1], 10));
+      if (!c) return '';
+      const rain = c.rain === '우기' ? '🌧 우기' : c.rain === '건기' ? '☀️ 건기' : '⛅ 보통';
+      return `<span class="cell-sub" title="출발월 기준 월평균 기후 (평년값, 참고용)">${rain} · ${c.temp}°C · 습도 ${c.humidity}%</span>`;
     }
     // 노선 정책 서브라벨: "3박4일 · 직항+경유1" (누락 시 3박 / 경유1 가정)
     function routePolicyLabel(r) {
@@ -885,13 +901,28 @@
       } catch (e) { return fallback; }
     }
 
-    // ===================== 필터 칩 (2층위 다중선택: 국가 → 지역) =====================
+    // ===================== 필터 칩 (국가 → 지역 + 컨셉) =====================
+    // 컨셉 필터 옵션: 단일 태그와 조합. 조합 칩은 두 태그를 모두 가진 목적지만 통과.
+    const CONCEPT_OPTIONS = ['휴양', '도시', '대자연', '휴양+도시', '휴양+대자연', '도시+대자연'];
+    function destConcepts(iata) {
+      const meta = (window.DEST_META || {})[iata];
+      return new Set((meta && meta.concepts) || []);
+    }
     function routePassesChip(routeLike) {
       if (state.favOnly && !getFavs().has(rk(routeLike))) return false;
       // 1차: 국가 (선택된 게 없으면 전체 통과)
       if (state.selCountries.size && !state.selCountries.has(routeLike.country || '기타')) return false;
       // 2차: 지역(도착 도시) — 선택된 게 없으면 통과. 도시 선택은 국가에 종속.
       if (state.selCities.size && !state.selCities.has(destCityName(routeLike))) return false;
+      // 컨셉: 선택된 옵션 중 하나라도 만족하면 통과(OR). '휴양+도시'는 둘 다 필요.
+      if (state.selConcepts.size) {
+        const tags = destConcepts(routeLike.destination);
+        let ok = false;
+        for (const opt of state.selConcepts) {
+          if (opt.split('+').every(t => tags.has(t))) { ok = true; break; }
+        }
+        if (!ok) return false;
+      }
       return true;
     }
 
@@ -917,12 +948,17 @@
         const c = r.country || '기타';
         if (!countries.has(c)) countries.set(c, r.flag || (findAirport(r.destination) || {}).flag || '');
       }
-      const noSel = state.selCountries.size === 0 && state.selCities.size === 0;
+      const noSel = state.selCountries.size === 0 && state.selCities.size === 0 && state.selConcepts.size === 0;
       let html = chip('all', '', '전체', noSel) + chip('fav', '', '★ 내 목록', state.favOnly);
       for (const [c, flag] of countries) {
         html += chip('country', c, (flag ? flag + ' ' : '') + c, state.selCountries.has(c));
       }
       document.getElementById('chip-country').innerHTML = html;
+
+      // ── 컨셉 (국가와 독립적인 별도 축) ──
+      document.getElementById('chip-concept').innerHTML = CONCEPT_OPTIONS
+        .map(opt => chip('concept', opt, opt, state.selConcepts.has(opt)))
+        .join('');
 
       // ── 2차: 지역(도착 도시) — 선택된 국가들의 도시만 노출 ──
       const regionLine = document.getElementById('chip-region-line');
@@ -952,6 +988,7 @@
       } else if (type === 'all') {
         state.selCountries.clear();
         state.selCities.clear();
+        state.selConcepts.clear();
       } else if (type === 'country') {
         if (state.selCountries.has(value)) state.selCountries.delete(value);
         else state.selCountries.add(value);
@@ -959,6 +996,9 @@
       } else if (type === 'city') {
         if (state.selCities.has(value)) state.selCities.delete(value);
         else state.selCities.add(value);
+      } else if (type === 'concept') {
+        if (state.selConcepts.has(value)) state.selConcepts.delete(value);
+        else state.selConcepts.add(value);
       }
       renderChips();
       renderGvBoard();
@@ -1100,7 +1140,7 @@
             <td>${nameCell}</td>
             <td class="num">${fmt(r.cell.min_price)}</td>
             <td>${gvRatioBadge(r.cell)}</td>
-            <td class="period-cell">${period}<span class="cell-sub">${sched}</span></td>
+            <td class="period-cell">${period}<span class="cell-sub">${sched}</span>${climateBadge(r.route.destination, b.depart_date)}</td>
             <td>${stopsCell(b.stops)}</td>
             <td class="num">${b.leave_days}개</td>
             <td><a href="${esc(b.booking_url)}" target="_blank" rel="noopener">예약 확인</a>
@@ -1188,7 +1228,7 @@
             <td><a href="${esc(d.booking_url)}" target="_blank" rel="noopener">${esc(label)}</a>
               <button class="copy-btn" data-copy="${esc(d.booking_url)}" title="예약 링크 복사">📋</button></td>
             <td class="period-cell">${fmtDateYY(d.depart_date, d.depart_weekday)}${depHourStr} ~ ${fmtDateYY(d.return_date, d.return_weekday)}${d.is_holiday_window ? ' <span class="badge-hol">연휴</span>' : ''}</td>
-            <td>${d.nights}박 ${d.days}일 · 연차 ${d.leave_days}개${tripStrip(d.depart_date, d.return_date)}</td>
+            <td>${d.nights}박 ${d.days}일 · 연차 ${d.leave_days}개${tripStrip(d.depart_date, d.return_date)}${climateBadge(d.route.destination, d.depart_date)}</td>
             <td>${stopsCell(d.stops)}</td>
             <td class="num">${fmt(d.current_price)} ${trendHtml(d.current_price, d.prev_price, false)}</td>
             <td class="num">${fmt(d.avg_price)}</td>

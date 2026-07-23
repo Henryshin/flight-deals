@@ -173,6 +173,27 @@ def test_window_id_stable_during_window():
     assert w["label"] == "추석"
 
 
+def test_destmeta_covers_all_destinations():
+    """routes.json 의 모든 목적지가 destmeta.js 에 등록되어 있어야 한다 (컨셉 필터/기후 배지)."""
+    import json
+    import re
+
+    root = Path(__file__).parent.parent
+    routes = json.loads((root / "data" / "routes.json").read_text(encoding="utf-8"))
+    dests = {r["destination"] for r in routes}
+    js = (root / "docs" / "destmeta.js").read_text(encoding="utf-8")
+    entries = dict(re.findall(r"d\('([A-Z]{3})',\s*'([^']+)'", js))
+    missing = dests - set(entries)
+    assert not missing, f"destmeta.js 에 없는 목적지: {sorted(missing)}"
+    allowed = {"휴양", "도시", "대자연"}
+    for iata, concepts in entries.items():
+        tags = set(concepts.split("+"))
+        assert tags and tags <= allowed, f"{iata}: 잘못된 컨셉 태그 {tags - allowed}"
+    # 강수 시즌 문자열은 반드시 12자(1~12월)
+    for m in re.finditer(r"d\('([A-Z]{3})'[^)]*'([dmw]+)'\)", js):
+        assert len(m.group(2)) == 12, f"{m.group(1)}: r 문자열이 {len(m.group(2))}자 (12자여야 함)"
+
+
 def main():
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     failed = 0
