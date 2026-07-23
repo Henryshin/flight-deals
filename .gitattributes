@@ -1,0 +1,6 @@
+# prices.csv 는 append-only 이력 파일. 동시 수집 런이 서로 다른 행을 추가해도
+# rebase 시 충돌 대신 양쪽 행을 모두 살리도록 union merge 를 쓴다.
+data/prices.csv merge=union
+# collect_status.json 은 런마다 통째로 다시 쓰는 상태 파일. 동시 런이 겹치면
+# 어느 쪽이 남아도 무방(다음 런이 갱신)하므로 충돌 없이 한쪽을 유지한다.
+data/collect_status.json merge=ours
