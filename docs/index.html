@@ -468,7 +468,7 @@
     const TOKEN_KEY = 'fd_gh_token';
     // 등록 프록시(Cloudflare Worker) 주소. 비우면 기존 '토큰 직접' 방식.
     // 프록시를 배포한 뒤 그 URL을 여기 넣으면, 방문자는 토큰 없이(공유 암호만) 등록 가능.
-    const PROXY_URL = '';
+    const PROXY_URL = 'https://flight-register.klplmfp.workers.dev';
     const SHARE_PASS_KEY = 'fd_share_pass';
     function usingProxy() { return !!PROXY_URL; }
     function getSharePass() { try { return localStorage.getItem(SHARE_PASS_KEY) || ''; } catch (e) { return ''; } }
