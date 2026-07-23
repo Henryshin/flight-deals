@@ -93,6 +93,7 @@ AIRPORT_CITY = {
     "TPE": "Taipei",
     "KHH": "Kaohsiung",
     "SHI": "Shimojishima",
+    "ATH": "Athens, Greece",  # "Athens"만 쓰면 미국 조지아주 Athens와 모호 -> 결과 0건
 }
 
 
