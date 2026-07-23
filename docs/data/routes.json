@@ -100,18 +100,6 @@
     "max_stops": 1
   },
   {
-    "id": "ICN-PER",
-    "origin": "ICN",
-    "destination": "PER",
-    "label": "인천→퍼스",
-    "country": "호주",
-    "flag": "🇦🇺",
-    "origin_city": "Seoul",
-    "destination_city": "Perth",
-    "min_nights": 4,
-    "max_stops": 0
-  },
-  {
     "id": "ICN-PQC",
     "origin": "ICN",
     "destination": "PQC",
@@ -164,19 +152,19 @@
     "origin": "ICN",
     "destination": "ATH",
     "max_stops": 1,
-    "min_nights": 5,
+    "min_nights": 6,
     "label": "인천→아테네",
     "country": "그리스",
     "flag": "🇬🇷",
     "origin_city": "Seoul",
-    "destination_city": "Athens"
+    "destination_city": "Athens, Greece"
   },
   {
     "id": "ICN-CDG",
     "origin": "ICN",
     "destination": "CDG",
     "max_stops": 1,
-    "min_nights": 5,
+    "min_nights": 6,
     "label": "인천→파리(샤를드골)",
     "country": "프랑스",
     "flag": "🇫🇷",
