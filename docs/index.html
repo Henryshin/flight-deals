@@ -78,6 +78,8 @@
   td.pct.up { color: #b3261e; font-weight: 700; }
   .empty-row td { color: var(--muted); text-align: center; padding: 18px; font-style: italic; }
   .cell-sub { display: block; color: var(--muted); font-size: 10px; font-family: Calibri, "맑은 고딕", Arial, sans-serif; }
+  .policy-edit { display: inline-block; margin-top: 1px; padding: 0; border: none; background: none; cursor: pointer; color: #0b5cab; font-size: 10px; font-family: Calibri, "맑은 고딕", Arial, sans-serif; }
+  .policy-edit:hover { text-decoration: underline; }
 
   .trend { font-size: 10.5px; font-weight: 700; white-space: nowrap; }
   .trend.up { color: #b3261e; }
@@ -326,7 +328,6 @@
       </select>
       <label for="deal-max-price">최대 가격</label>
       <input id="deal-max-price" type="number" min="0" step="10000" placeholder="원" style="width:100px" />
-      <label><input type="checkbox" id="deal-holiday" /> 공휴일 연휴만</label>
       <label for="deal-max-leave">최대 연차</label>
       <select id="deal-max-leave">
         <option value="">제한없음</option>
@@ -412,6 +413,39 @@
       <div class="dlg-btns">
         <button id="confirm-yes" class="primary">예(Y)</button>
         <button id="confirm-no">아니요(N)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 노선 수정 dialog (박수/경유) -->
+  <div class="modal-backdrop" id="edit-backdrop" hidden>
+    <div class="excel-dialog">
+      <div class="dlg-title"><span id="edit-title">노선 수정</span><button id="edit-x" title="닫기">✕</button></div>
+      <div class="dlg-body">
+        <p style="margin:0 0 8px; color:var(--muted); font-size:11px">박수·경유 정책만 바꿉니다. 수집된 가격 이력은 그대로 유지됩니다.</p>
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px">
+          <label style="width:70px">최소 박수</label>
+          <select id="edit-nights">
+            <option value="2">최소 2박</option>
+            <option value="3">최소 3박</option>
+            <option value="4">최소 4박</option>
+            <option value="5">최소 5박</option>
+            <option value="6">최소 6박</option>
+            <option value="7">최소 7박</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center">
+          <label style="width:70px">직항/경유</label>
+          <select id="edit-stops">
+            <option value="0">직항만</option>
+            <option value="1">직항+경유1회까지</option>
+            <option value="null">상관없음</option>
+          </select>
+        </div>
+      </div>
+      <div class="dlg-btns">
+        <button id="edit-save" class="primary">저장</button>
+        <button id="edit-close">닫기</button>
       </div>
     </div>
   </div>
@@ -812,14 +846,12 @@
       const sortKey = document.getElementById('deal-sort').value;
       const maxPriceRaw = document.getElementById('deal-max-price').value;
       const maxPrice = maxPriceRaw ? parseInt(maxPriceRaw, 10) : Infinity;
-      const holidayOnly = document.getElementById('deal-holiday').checked;
       const maxLeaveRaw = document.getElementById('deal-max-leave').value;
       const maxLeave = maxLeaveRaw === '' ? Infinity : parseInt(maxLeaveRaw, 10);
 
       const items = state.deals.filter(d =>
         routePassesChip(d.route) &&
         d.current_price <= maxPrice &&
-        (!holidayOnly || d.is_holiday_window) &&
         d.leave_days <= maxLeave
       );
       if (!items.length) {
@@ -949,7 +981,7 @@
           <tr${reached ? ' class="target-hit"' : ''}>
             <td style="text-align:center"><button class="fav-btn${fav ? ' on' : ''}" data-fav="${esc(key)}" title="즐겨찾기">★</button></td>
             <td title="표본 ${r.sample_count} · 마지막 갱신 ${esc(r.last_collected_at || '-')}"><span class="status-dot ${dot}"></span>${statusText}</td>
-            <td title="${esc(label)}">${flag ? esc(flag) + ' ' : ''}${esc(label)}<span class="cell-sub">${esc(r.origin)}→${esc(r.destination)} · 표본 ${r.sample_count}</span><span class="cell-sub">${esc(routePolicyLabel(r))}</span></td>
+            <td title="${esc(label)}">${flag ? esc(flag) + ' ' : ''}${esc(label)}<span class="cell-sub">${esc(r.origin)}→${esc(r.destination)} · 표본 ${r.sample_count}</span><button class="policy-edit" data-edit="${esc(key)}" title="박수/경유 수정">${esc(routePolicyLabel(r))} ✎</button></td>
             <td class="num">${priceCell}</td>
             <td class="num">${range30}</td>
             <td>${sparklineSVG(state.history[key])}</td>
@@ -1239,6 +1271,56 @@
       }
     }
 
+    // ===================== 노선 박수/경유 수정 =====================
+    let editingKey = null;
+    function openRouteEdit(key) {
+      const r = state.routesStatus.find(x => rk(x) === key);
+      if (!r) return;
+      if (!getToken()) {
+        openSettings('토큰을 한 번만 등록하면 페이지에서 바로 수정할 수 있습니다');
+        return;
+      }
+      editingKey = key;
+      document.getElementById('edit-title').textContent = (r.label || key.replace('-', '→')) + ' 수정';
+      const n = (r.min_nights != null && !isNaN(parseInt(r.min_nights, 10))) ? String(parseInt(r.min_nights, 10)) : '3';
+      document.getElementById('edit-nights').value = ['2', '3', '4', '5', '6', '7'].includes(n) ? n : '3';
+      document.getElementById('edit-stops').value =
+        (r.max_stops === 0) ? '0' : (r.max_stops == null && 'max_stops' in r) ? 'null' : '1';
+      document.getElementById('edit-backdrop').hidden = false;
+    }
+    function closeRouteEdit() {
+      editingKey = null;
+      document.getElementById('edit-backdrop').hidden = true;
+    }
+    async function saveRouteEdit() {
+      if (!editingKey) return;
+      const key = editingKey;
+      const minNights = parseInt(document.getElementById('edit-nights').value, 10) || 3;
+      const stopsVal = document.getElementById('edit-stops').value;
+      const maxStops = stopsVal === 'null' ? null : parseInt(stopsVal, 10);
+      try {
+        const { routes, sha } = await ghGetRoutes();
+        let found = false;
+        const next = routes.map(x => {
+          if ((x.origin + '-' + x.destination) === key) {
+            found = true;
+            return { ...x, min_nights: minNights, max_stops: maxStops };
+          }
+          return x;
+        });
+        if (!found) { toast('노선을 찾을 수 없습니다 (이미 삭제됨?)', 'err'); return; }
+        await ghPutRoutes(next, sha, `chore: update ${key.replace('-', '→')} nights/stops`);
+        // 로컬 상태도 즉시 반영 (가격 이력·표본은 그대로)
+        const r = state.routesStatus.find(x => rk(x) === key);
+        if (r) { r.min_nights = minNights; r.max_stops = maxStops; }
+        toast('수정 완료 ✓ 다음 수집부터 반영 (기존 이력 유지)');
+        closeRouteEdit();
+        renderStatus();
+      } catch (e) {
+        handleGhError(e);
+      }
+    }
+
     async function runCollectClicked() {
       if (!getToken()) {
         openSettings('토큰을 한 번만 등록하면 페이지에서 바로 수집을 실행할 수 있습니다');
@@ -1351,8 +1433,14 @@
       });
       document.getElementById('confirm-yes').addEventListener('click', () => confirmAnswer(true));
       document.getElementById('confirm-no').addEventListener('click', () => confirmAnswer(false));
+      document.getElementById('edit-save').addEventListener('click', saveRouteEdit);
+      document.getElementById('edit-close').addEventListener('click', closeRouteEdit);
+      document.getElementById('edit-x').addEventListener('click', closeRouteEdit);
+      document.getElementById('edit-backdrop').addEventListener('click', e => {
+        if (e.target === e.currentTarget) closeRouteEdit();
+      });
 
-      ['deal-sort', 'deal-max-price', 'deal-holiday', 'deal-max-leave'].forEach(id => {
+      ['deal-sort', 'deal-max-price', 'deal-max-leave'].forEach(id => {
         const el = document.getElementById(id);
         el.addEventListener('change', renderDeals);
         if (el.tagName === 'INPUT' && el.type === 'number') el.addEventListener('input', renderDeals);
@@ -1380,6 +1468,8 @@
         if (favBtn) { toggleFav(favBtn.getAttribute('data-fav')); return; }
         const delBtn = e.target.closest('[data-del]');
         if (delBtn) { deleteRoute(delBtn.getAttribute('data-del')); return; }
+        const editBtn = e.target.closest('[data-edit]');
+        if (editBtn) { openRouteEdit(editBtn.getAttribute('data-edit')); return; }
         const chipBtn = e.target.closest('[data-chip]');
         if (chipBtn) { onChipClick(chipBtn); return; }
       });
