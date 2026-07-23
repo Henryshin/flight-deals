@@ -50,6 +50,11 @@ def route_key(r):
     return (r["origin"], r["destination"])
 
 
+def _row_nights(row):
+    """행의 여행 박수(= 귀국일 - 출발일)."""
+    return (date.fromisoformat(row["return_date"]) - date.fromisoformat(row["depart_date"])).days
+
+
 def _stops_val(row):
     """행의 stops 정수값 반환. 미상('' / 없음)이면 None."""
     s = row.get("stops", "")
@@ -183,8 +188,20 @@ def main():
 
         if len(recent) < MIN_HISTORY_POINTS:
             continue
-        # 동일 기준(stops 클래스) 평균가. 부족하면 전체로 폴백.
-        avg_price = sum(r["price"] for r in recent_base) / len(recent_base)
+
+        # 동일 기준: 같은 박수(nights) + stops 클래스끼리 평균가를 낸다.
+        # 박수가 다르면 가격대가 크게 달라 하나의 평균으로 비교하면 짧은 일정이
+        # 항상 싸 보이는 착시가 생기므로, 박수별로 기준값을 분리한다.
+        recent_by_nights = defaultdict(list)
+        for r in recent:
+            recent_by_nights[_row_nights(r)].append(r)
+
+        def avg_for_nights(n):
+            grp = recent_by_nights.get(n, [])
+            if len(grp) < MIN_HISTORY_POINTS:
+                return None  # 같은 박수 표본이 부족하면 특가 판정 보류(가짜 특가 방지)
+            base = baseline_rows(grp, max_stops)  # 같은 박수 안에서 stops 클래스 우선(부족 시 폴백)
+            return sum(x["price"] for x in base) / len(base)
 
         # 날짜쌍별 관측치: 최신 관측치와 그 직전(더 이른 collected_at) 관측치.
         # 현재값/직전값 선택도 stops 클래스로 제한(부족하면 전체 폴백).
@@ -206,13 +223,17 @@ def main():
             # 최신 관측치가 30일 기준 구간보다 오래됐으면 '현재값'으로 쓸 수 없음
             if datetime.fromisoformat(r["collected_at"]).date() < lookback_start:
                 continue
+            d1 = date.fromisoformat(depart_date)
+            d2 = date.fromisoformat(return_date)
+            nights = (d2 - d1).days
+            # 같은 박수 기준값이 없으면(표본 부족) 이 날짜쌍은 특가 판정 보류
+            avg_price = avg_for_nights(nights)
+            if avg_price is None:
+                continue
             earlier = [o for o in obs if o["collected_at"] < r["collected_at"]]
             prev_price = earlier[-1]["price"] if earlier else None
             discount = (avg_price - r["price"]) / avg_price
             if discount >= DEAL_THRESHOLD:
-                d1 = date.fromisoformat(depart_date)
-                d2 = date.fromisoformat(return_date)
-                nights = (d2 - d1).days
                 deals.append({
                     "route": route,
                     "depart_date": depart_date,

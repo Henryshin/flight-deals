@@ -90,6 +90,16 @@
   .nextday { font-size: 8px; color: #b3261e; margin-left: 1px; }
   .period-go { display: block; white-space: nowrap; }
   .period-back { display: block; }
+  .go-time { color: #0b5cab; font-weight: 700; }
+  /* 직항/경유 별도 열 */
+  .stops-direct { display: inline-block; background: #eaf3ee; color: #14532d; border: 1px solid #c3ddce; font-size: 10.5px; padding: 1px 6px; border-radius: 2px; white-space: nowrap; font-weight: 700; }
+  .stops-via { display: inline-block; background: #fff6e6; color: #8a5a00; border: 1px solid #e6cf98; font-size: 10.5px; padding: 1px 6px; border-radius: 2px; white-space: nowrap; }
+  /* 공휴일/연휴 시각화 스트립 */
+  .tstrip { display: flex; gap: 2px; margin-top: 3px; }
+  .tstrip-day { width: 9px; height: 9px; border-radius: 2px; border: 1px solid rgba(0,0,0,0.12); }
+  .tstrip-day.hol { background: #e5484d; }
+  .tstrip-day.wknd { background: #6aa3e0; }
+  .tstrip-day.wd { background: #d4d8dc; }
 
   .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; }
   .status-dot.ok { background: #217346; }
@@ -284,12 +294,12 @@
       <input id="reg-label" placeholder="라벨 (자동 입력)" style="width:170px" />
       <input id="reg-country" placeholder="국가 (자동)" style="width:90px" />
       <span id="reg-flag" style="font-size:14px"></span>
-      <select id="reg-nights" title="여행 기간(박수)">
-        <option value="2">2박3일</option>
-        <option value="3" selected>3박4일</option>
-        <option value="4">4박5일</option>
-        <option value="5">5박6일</option>
-        <option value="6">6박7일</option>
+      <select id="reg-nights" title="최소 여행 박수 (이 박수 이상 일정을 모두 수집)">
+        <option value="2">최소 2박</option>
+        <option value="3" selected>최소 3박</option>
+        <option value="4">최소 4박</option>
+        <option value="5">최소 5박</option>
+        <option value="6">최소 6박</option>
       </select>
       <select id="reg-stops" title="직항/경유 정책">
         <option value="0">직항만</option>
@@ -329,11 +339,12 @@
       <table class="sheet wide">
         <thead>
           <tr>
-            <th style="width:19%">항목</th>
-            <th style="width:24%">기간</th>
-            <th style="width:15%">일정</th>
-            <th style="width:12%">현재값</th>
-            <th style="width:10%">기준값</th>
+            <th style="width:16%">항목</th>
+            <th style="width:22%">기간</th>
+            <th style="width:17%">일정</th>
+            <th style="width:9%">직항/경유</th>
+            <th style="width:11%">현재값</th>
+            <th style="width:9%">기준값</th>
             <th style="width:8%">변동율</th>
           </tr>
         </thead>
@@ -490,6 +501,52 @@
       if (isNaN(n)) return '';
       return ` <span class="badge-stops">${n === 0 ? '직항' : '경유' + n}</span>`;
     }
+    // "YYYY-MM-DD" -> "YY-MM-DD (요일)" (2자리 연도 + 요일, esc-safe)
+    function fmtDateYY(dateStr, wd) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateStr == null ? '' : dateStr));
+      if (!m) return esc(dateStr == null ? '' : dateStr);
+      const w = wd || weekdayOf(dateStr);
+      return `${m[1].slice(2)}-${m[2]}-${m[3]} (${esc(w)})`;
+    }
+    // "HH:MM"(+1) -> "H시" (분은 생략; 예 "11:30"->"11시", "00:15"->"00시"). 빈 값이면 ''.
+    function depHour(t) {
+      const s = String(t == null ? '' : t).trim().replace(/\+1$/, '');
+      const m = /^(\d{1,2}):/.exec(s);
+      if (!m) return '';
+      return `${m[1].padStart(2, '0')}시`;
+    }
+    // 직항/경유 셀 (별도 열): "직항" / "경유N" / "—"
+    function stopsCell(stops) {
+      if (stops === '' || stops == null) return '<span class="cell-sub">—</span>';
+      const n = parseInt(stops, 10);
+      if (isNaN(n)) return '<span class="cell-sub">—</span>';
+      return n === 0
+        ? '<span class="stops-direct">직항</span>'
+        : `<span class="stops-via">경유${n}</span>`;
+    }
+    // 공휴일/연휴 시각화: 여행 각 날을 작은 칸으로, 공휴일=빨강 / 주말=파랑 / 평일=회색.
+    // 연휴가 여행에 어떻게 껴있는지 한눈에 보이게 함.
+    function tripStrip(departStr, returnStr) {
+      const md = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(departStr || ''));
+      const mr = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(returnStr || ''));
+      if (!md || !mr) return '';
+      let cur = new Date(Number(md[1]), Number(md[2]) - 1, Number(md[3]));
+      const end = new Date(Number(mr[1]), Number(mr[2]) - 1, Number(mr[3]));
+      if (isNaN(cur.getTime()) || isNaN(end.getTime()) || end < cur) return '';
+      let cells = '', guard = 0;
+      while (cur <= end && guard < 40) {
+        const y = cur.getFullYear(), mo = cur.getMonth() + 1, da = cur.getDate();
+        const iso = `${y}-${String(mo).padStart(2, '0')}-${String(da).padStart(2, '0')}`;
+        const dow = cur.getDay(); // 0=일..6=토
+        let cls = 'wd', kind = '평일';
+        if (holidaySet.has(iso)) { cls = 'hol'; kind = '공휴일'; }
+        else if (dow === 0 || dow === 6) { cls = 'wknd'; kind = dow === 0 ? '일요일' : '토요일'; }
+        cells += `<span class="tstrip-day ${cls}" title="${esc(iso)} ${kind}"></span>`;
+        cur.setDate(cur.getDate() + 1);
+        guard++;
+      }
+      return `<span class="tstrip" title="공휴일(빨강)·주말(파랑)·평일(회색)">${cells}</span>`;
+    }
     // 노선 정책 서브라벨: "3박4일 · 직항+경유1" (누락 시 3박 / 경유1 가정)
     function routePolicyLabel(r) {
       const n = (r && r.min_nights != null) ? parseInt(r.min_nights, 10) : 3;
@@ -499,7 +556,7 @@
       else if (r.max_stops === 0) stopsTxt = '직항';
       else if (r.max_stops == null) stopsTxt = '상관없음';
       else stopsTxt = '직항+경유' + parseInt(r.max_stops, 10);
-      return `${nn}박${nn + 1}일 · ${stopsTxt}`;
+      return `최소 ${nn}박 · ${stopsTxt}`;
     }
 
     // localStorage helpers
@@ -748,7 +805,7 @@
         // 수집이 정상 동작 중(표본 있음)인데 기준을 충족하는 항목이 없는 경우와,
         // 아직 수집 전(표본 없음)인 경우를 구분해서 안내
         const collecting = state.routesStatus.some(r => r.sample_count > 0);
-        tbody.innerHTML = emptyRow(6, collecting ? NO_DEALS_MSG : EMPTY_DEALS_MSG);
+        tbody.innerHTML = emptyRow(7, collecting ? NO_DEALS_MSG : EMPTY_DEALS_MSG);
         return;
       }
       const sortKey = document.getElementById('deal-sort').value;
@@ -765,7 +822,7 @@
         d.leave_days <= maxLeave
       );
       if (!items.length) {
-        tbody.innerHTML = emptyRow(6, '조건에 맞는 항목이 없습니다. 필터를 조정해 보세요.');
+        tbody.innerHTML = emptyRow(7, '조건에 맞는 항목이 없습니다. 필터를 조정해 보세요.');
         return;
       }
 
@@ -792,18 +849,22 @@
         const country = g.route.country || '기타';
         const flag = g.route.flag || '';
         const label = g.route.label || (g.route.origin + ' → ' + g.route.destination);
-        const header = `<tr class="group-header"><td colspan="6">${flag ? esc(flag) + ' ' : ''}${esc(label)} · ${esc(country)}</td></tr>`;
-        const rows = g.items.map(d => `
+        const header = `<tr class="group-header"><td colspan="7">${flag ? esc(flag) + ' ' : ''}${esc(label)} · ${esc(country)}</td></tr>`;
+        const rows = g.items.map(d => {
+          const depHourStr = depHour(d.dep_time) ? ` <span class="go-time">${depHour(d.dep_time)}</span>` : '';
+          return `
           <tr>
             <td><a href="${esc(d.booking_url)}" target="_blank" rel="noopener">${esc(label)}</a>
               <button class="copy-btn" data-copy="${esc(d.booking_url)}" title="예약 링크 복사">📋</button></td>
-            <td><span class="period-go">가는편 ${fmtGoLeg(d.depart_date, d.dep_time, d.arr_time, d.depart_weekday)}${stopsBadge(d.stops)}</span><span class="period-back cell-sub">귀국 ${fmtDateShort(d.return_date, d.return_weekday)}${d.is_holiday_window ? ' <span class="badge-hol">연휴</span>' : ''}</span></td>
-            <td>${d.nights}박 ${d.days}일 · 연차 ${d.leave_days}개</td>
+            <td><span class="period-go">${fmtDateYY(d.depart_date, d.depart_weekday)}${depHourStr}</span><span class="period-back cell-sub">~ ${fmtDateYY(d.return_date, d.return_weekday)}${d.is_holiday_window ? ' <span class="badge-hol">연휴</span>' : ''}</span></td>
+            <td>${d.nights}박 ${d.days}일 · 연차 ${d.leave_days}개${tripStrip(d.depart_date, d.return_date)}</td>
+            <td>${stopsCell(d.stops)}</td>
             <td class="num">${fmt(d.current_price)} ${trendHtml(d.current_price, d.prev_price, false)}</td>
             <td class="num">${fmt(d.avg_price)}</td>
             <td class="num pct up">-${d.discount_pct}%</td>
           </tr>
-        `).join('');
+        `;
+        }).join('');
         return header + rows;
       }).join('');
     }
@@ -866,8 +927,9 @@
 
         let priceCell = '<span class="spark-none">—</span>';
         if (r.latest_price != null) {
+          const monHour = depHour(r.dep_time) ? ` ${depHour(r.dep_time)}` : '';
           const dates = (r.latest_depart_date && r.latest_return_date)
-            ? `<span class="cell-sub">${fmtGoLeg(r.latest_depart_date, r.dep_time, r.arr_time)} ~ ${fmtDateShort(r.latest_return_date)}${stopsBadge(r.stops)}</span>` : '';
+            ? `<span class="cell-sub">${fmtDateYY(r.latest_depart_date)}${monHour} ~ ${fmtDateYY(r.latest_return_date)}${stopsBadge(r.stops)}</span>` : '';
           priceCell = `${fmt(r.latest_price)} ${trendHtml(r.latest_price, r.prev_price, true)}` +
             (reached ? '<span class="badge-hit">목표가 도달 🎯</span>' : '') + dates;
         }

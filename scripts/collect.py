@@ -24,19 +24,29 @@ NEW_HEADER = [
 OLD_HEADER = NEW_HEADER[:7]
 
 
-def build_date_candidates(trip_length_days=DEFAULT_TRIP_LENGTH_DAYS):
-    """해당 노선의 여행 길이(min_nights)로 (출발, 귀국, 연휴여부) 후보 생성."""
+def build_date_candidates(min_nights=DEFAULT_TRIP_LENGTH_DAYS):
+    """해당 노선의 '최소 박수' 이상 모든 여행 길이로 (출발, 귀국, 연휴여부) 후보 생성.
+
+    각 연휴 구간 안에서 박수 L = min_nights .. (구간 길이)까지 모두 훑어,
+    '최소 N박' 지정 시 N박 이상 일정을 전부 수집한다. 중복 날짜쌍은 한 번만.
+    """
     windows = get_holiday_windows()
     candidates = []
+    seen = set()
     for w in windows:
-        for depart, return_ in date_range_candidates(w, trip_length_days):
-            candidates.append((depart, return_, True))
+        window_len = (w["end"] - w["start"]).days
+        for length in range(min_nights, window_len + 1):
+            for depart, return_ in date_range_candidates(w, length):
+                if (depart, return_) in seen:
+                    continue
+                seen.add((depart, return_))
+                candidates.append((depart, return_, True))
 
     if not candidates:
         today = date.today()
         for offset in (14, 30, 45):
             d = today + timedelta(days=offset)
-            candidates.append((d, d + timedelta(days=trip_length_days), False))
+            candidates.append((d, d + timedelta(days=min_nights), False))
     return candidates
 
 
