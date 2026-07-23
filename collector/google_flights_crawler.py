@@ -92,6 +92,7 @@ AIRPORT_CITY = {
     "PVG": "Shanghai",
     "TPE": "Taipei",
     "KHH": "Kaohsiung",
+    "SHI": "Shimojishima",
 }
 
 
