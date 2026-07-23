@@ -60,6 +60,35 @@
   {
     "route": {
       "origin": "ICN",
+      "destination": "DPS",
+      "label": "인천→발리(덴파사르)",
+      "country": "인도네시아",
+      "flag": "🇮🇩",
+      "origin_city": "Seoul",
+      "destination_city": "Bali",
+      "min_nights": 5,
+      "max_stops": 1
+    },
+    "depart_date": "2026-09-23",
+    "return_date": "2026-09-28",
+    "depart_weekday": "수",
+    "return_weekday": "월",
+    "nights": 5,
+    "days": 6,
+    "leave_days": 2,
+    "current_price": 654642,
+    "prev_price": null,
+    "avg_price": 788299,
+    "dep_time": "11:30",
+    "arr_time": "00:05+1",
+    "stops": "1",
+    "discount_pct": 17.0,
+    "is_holiday_window": true,
+    "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Bali%20on%202026-09-23%20through%202026-09-28&hl=ko&curr=KRW"
+  },
+  {
+    "route": {
+      "origin": "ICN",
       "destination": "KHH",
       "label": "인천→가오슝",
       "country": "대만",
