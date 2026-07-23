@@ -48,6 +48,9 @@ jobs:
       # 여기서 docs/data 를 같이 커밋하면 (수십 분 크롤 동안 먼저 들어온 커밋과)
       # 생성 파일 rebase 충돌로 이번 수집분 전체가 유실되는 문제가 있었다.
       - name: Commit and push updated data
+        # 수집 스크립트가 도중에 죽어도 노선 그룹 단위로 이미 append 된 부분 데이터는
+        # 커밋되도록 항상 실행한다 (변경이 없으면 커밋 자체가 스킵됨).
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

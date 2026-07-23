@@ -140,7 +140,11 @@ def classify_no_results(page_url: str, body_text: str, li_count: int, saw_price:
     for marker in NO_RESULT_MARKERS:
         if marker.lower() in low:
             return STATUS_NO_FLIGHTS, "구글이 '결과 없음'을 표시"
-    if li_count > 0 and not saw_price:
+    if li_count == 0:
+        # 리스트 자체가 렌더되지 않음 -> 파서 문제가 아니라 로드 실패(느린 페이지/빈 응답).
+        # parse_zero 로 분류하면 '사이트 구조 변경'으로 오도된다.
+        return STATUS_TIMEOUT, "결과 리스트가 렌더되지 않음 (느린 로드/빈 응답)"
+    if not saw_price:
         return STATUS_PARSE_ZERO, f"li {li_count}개 중 ₩ 가격 없음 (통화/로케일 또는 파서 확인)"
     return STATUS_PARSE_ZERO, f"li {li_count}개, 왕복 항목 파싱 0건 (사이트 구조 변경?)"
 

@@ -1330,7 +1330,7 @@
       if (favs.has(key)) favs.delete(key); else favs.add(key);
       setFavs(favs);
       renderStatus();
-      if (state.favOnly) renderDeals();
+      if (state.favOnly) { renderDeals(); renderGvBoard(); }
     }
 
     function onTargetChange(el) {
@@ -1599,6 +1599,7 @@
           clearRegForm();
           renderChips();
           renderStatus();
+          renderGvBoard(); // 새 노선이 가성비 보드에도 '수집 대기'로 즉시 보이도록
           return;
         }
         const { routes, sha } = await ghGetRoutes();
@@ -1648,6 +1649,7 @@
         clearRegForm();
         renderChips();
         renderStatus();
+        renderGvBoard(); // 새 노선이 가성비 보드에도 '수집 대기'로 즉시 보이도록
         // 신규 노선은 등록 즉시 그 노선만 1회 크롤링 (전체 수집은 4시간 주기 유지).
         try {
           await dispatchCollect(`${o.iata}-${d.iata}`);
@@ -1704,6 +1706,7 @@
         renderChips();
         renderDeals();
         renderStatus();
+        renderGvBoard(); // 삭제된 노선이 가성비 보드에 남지 않도록
       } catch (e) {
         usingProxy() ? handleProxyError(e) : handleGhError(e);
       }

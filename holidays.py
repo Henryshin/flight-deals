@@ -82,8 +82,11 @@ def get_holiday_windows(bridge_days=1, lookahead_days=180):
             f"{last_year}년까지만 있습니다. {horizon.year}년 공휴일을 추가하세요.",
             file=sys.stderr,
         )
-    holidays = [d for d in holidays if today <= d <= horizon]
 
+    # 블록(연휴 구간)은 '전체' 공휴일 목록으로 먼저 만들고 마지막에 기간으로 거른다.
+    # today/horizon 으로 먼저 거르면 연휴 진행 중이거나 호라이즌 경계에 걸린 블록의
+    # 구성(첫 공휴일)이 조회 시점마다 바뀌어 id 가 흔들리고, prices.csv 에
+    # window_id 로 태깅해 둔 행이 matrix 집계에서 고아가 된다.
     off_days = set(holidays)
 
     def is_off(d):
@@ -126,7 +129,9 @@ def get_holiday_windows(bridge_days=1, lookahead_days=180):
             "holiday_dates": block,
         })
 
-    return windows
+    # 진행 중인 연휴(end 가 아직 안 지남)도 포함해 조회 기간으로 필터.
+    # 과거 출발일 후보는 소비자(collect/build)가 각자 걸러낸다.
+    return [w for w in windows if w["end"] >= today and w["start"] <= horizon]
 
 
 def date_range_candidates(window, trip_length_days=3):

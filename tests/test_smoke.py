@@ -14,11 +14,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from collector.google_flights_crawler import (
-    STATUS_BLOCKED, STATUS_CONSENT, STATUS_NO_FLIGHTS, STATUS_PARSE_ZERO,
+    STATUS_BLOCKED, STATUS_CONSENT, STATUS_NO_FLIGHTS, STATUS_PARSE_ZERO, STATUS_TIMEOUT,
     classify_no_results, parse_itinerary,
 )
 from holidays import get_holiday_windows
-from scripts.collect import build_baseline_candidates, build_date_candidates
+from scripts.collect import build_baseline_candidates, build_date_candidates, group_routes
 
 
 def test_parse_itinerary():
@@ -49,6 +49,9 @@ def test_classify_no_results():
     assert s == STATUS_PARSE_ZERO and "₩" in d  # 통화 힌트
     s, _ = classify_no_results("https://google.com/travel", "가격은 있는데 왕복 파싱 실패 ₩", 40, True)
     assert s == STATUS_PARSE_ZERO
+    # 리스트 자체가 안 렌더된 페이지(li 0개)는 '구조 변경'이 아니라 로드 실패로 분류
+    s, _ = classify_no_results("https://google.com/travel", "빈 페이지", 0, False)
+    assert s == STATUS_TIMEOUT
 
 
 def test_date_candidates_short_window_unlocked():
@@ -120,6 +123,54 @@ def test_build_dedup_and_ratio():
         today - timedelta(days=30), today - timedelta(days=60),
     )
     assert cell_c["tier"] == "C" and cell_c["ratio"] is None
+
+
+def test_group_routes_nights_variants():
+    """같은 (o,d)에 박수가 다른 모니터가 있으면 값별 후보가 모두 크롤되어야 한다."""
+    routes = [
+        {"origin": "ICN", "destination": "NRT", "min_nights": 3, "max_stops": 1},
+        {"origin": "ICN", "destination": "NRT", "min_nights": 7, "max_stops": 0, "id": "ICN-NRT-d"},
+    ]
+    specs = group_routes(routes)
+    assert len(specs) == 1
+    assert specs[0][4] == [3, 7]  # nights_variants
+    assert specs[0][5] == 1       # max_stops 는 가장 넓은 정책
+
+
+def test_latest_min_same_timestamp_cluster():
+    """같은 시각에 저장된 클래스별(직항/경유) 행 중 최저가를 '현재값'으로 골라야 한다."""
+    from scripts.build_dashboard_data import _latest_min
+    rows = [
+        {"collected_at": "2026-07-23T01:00:00+00:00", "price": 500000},
+        {"collected_at": "2026-07-23T01:00:00+00:00", "price": 460000},
+        {"collected_at": "2026-07-22T01:00:00+00:00", "price": 300000},
+    ]
+    picked = _latest_min(rows)
+    assert picked["price"] == 460000  # 과거의 30만원도, 같은 시각의 50만원도 아님
+
+
+def test_window_id_stable_during_window():
+    """연휴가 진행 중이어도(첫 공휴일이 지나도) 윈도우 id 가 유지되어야 한다.
+
+    today 필터를 블록 구성 '전'에 적용하던 버그: 2026-09-25 시점에 추석 id 가
+    2026-09-24 -> 2026-09-25 로 밀리며 window_id 태깅 행이 matrix 에서 고아가 됐다.
+    """
+    import holidays as hol
+
+    class FakeDate(date):
+        @classmethod
+        def today(cls):
+            return date(2026, 9, 25)
+
+    orig = hol.date
+    hol.date = FakeDate
+    try:
+        ids = {w["id"]: w for w in hol.get_holiday_windows()}
+    finally:
+        hol.date = orig
+    assert "2026-09-24" in ids, f"추석 id 가 유지되어야 함: {sorted(ids)}"
+    w = ids["2026-09-24"]
+    assert w["label"] == "추석"
 
 
 def main():

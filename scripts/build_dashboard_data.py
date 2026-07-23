@@ -170,18 +170,39 @@ def current_rows(rows, max_stops):
     return list(rows) if not any_known else []
 
 
-def _row_in_window(row, window):
-    """행이 해당 연휴 윈도우 소속인지. window_id 가 있으면 그것, 없으면(legacy) 날짜 겹침."""
+def _row_in_window(row, window, known_window_ids):
+    """행이 해당 연휴 윈도우 소속인지.
+
+    - window_id 가 현재 유효한 윈도우를 가리키면 정확 일치로만 판정.
+    - window_id 가 없거나(legacy) 더 이상 유효하지 않으면(공휴일표 수정 등)
+      날짜 겹침으로 폴백해 행이 고아가 되지 않게 한다.
+    """
     wid = row.get("window_id") or ""
     if wid:
-        return wid == window["id"]
+        if wid == window["id"]:
+            return True
+        if wid in known_window_ids:
+            return False  # 다른 (유효한) 윈도우 소속
     d1 = date.fromisoformat(row["depart_date"])
     d2 = date.fromisoformat(row["return_date"])
     return d1 <= window["end"] and d2 >= window["start"]
 
 
+def _latest_min(obs):
+    """관측 목록에서 '가장 최근 시각' 클러스터의 최저가 행.
+
+    크롤러는 쿼리 1회에 경유수 클래스별(직항/경유) 행을 같은 collected_at 으로
+    여러 개 저장하므로, 단순 obs[-1] 은 같은 시각의 더 싼 클래스 행을 임의로
+    제쳐 '현재값'이 과대 표시될 수 있다.
+    """
+    latest_ts = max(o["collected_at"] for o in obs)
+    cluster = [o for o in obs if o["collected_at"] == latest_ts]
+    return min(cluster, key=lambda o: o["price"])
+
+
 def build_matrix_cell(route_prices, offpeak_rows, max_stops, window, route,
-                      today, lookback_start, baseline_lookback_start):
+                      today, lookback_start, baseline_lookback_start,
+                      known_window_ids=frozenset()):
     """모니터 x 연휴윈도우 한 칸: 윈도우 최저가 + 평시 기준가 + 할증률 + 신뢰도 티어.
 
     - 윈도우 최저가: 윈도우 소속 행 중 날짜쌍별 '최신 관측'의 최저가
@@ -190,7 +211,7 @@ def build_matrix_cell(route_prices, offpeak_rows, max_stops, window, route,
       최저가 일정과 같은 박수(±1)를 우선하고, 없으면 전체로 폴백(baseline_loose).
     - 할증률 ratio = 윈도우 최저가 / 평시 기준가. 노선별 정규화라 여행지 간 비교 가능.
     """
-    in_window = [r for r in route_prices if _row_in_window(r, window)]
+    in_window = [r for r in route_prices if _row_in_window(r, window, known_window_ids)]
     by_pair = defaultdict(list)
     for r in in_window:
         by_pair[(r["depart_date"], r["return_date"])].append(r)
@@ -202,8 +223,7 @@ def build_matrix_cell(route_prices, offpeak_rows, max_stops, window, route,
         obs = current_rows(all_obs, max_stops)
         if not obs:
             continue
-        obs.sort(key=lambda r: r["collected_at"])
-        r = obs[-1]
+        r = _latest_min(obs)
         if datetime.fromisoformat(r["collected_at"]).date() < lookback_start:
             continue
         latest_per_pair.append(r)
@@ -275,8 +295,9 @@ def main():
     lookback_start = today - timedelta(days=LOOKBACK_DAYS)
     baseline_lookback_start = today - timedelta(days=LOOKBACK_BASELINE_DAYS)
 
-    # 연휴 윈도우 (id/label 포함, 이미 오늘 이후만 반환됨)
+    # 연휴 윈도우 (id/label 포함, 진행 중~조회 기간 내만 반환됨)
     windows = get_holiday_windows()
+    known_window_ids = frozenset(w["id"] for w in windows)
 
     by_route = defaultdict(list)          # 연휴 시세 행 (deals/status/history/matrix 분자)
     offpeak_by_route = defaultdict(list)  # 평시 기준가 행 (matrix 분모 전용)
@@ -389,6 +410,7 @@ def main():
             cell = build_matrix_cell(
                 route_prices, offpeak, max_stops, w, route,
                 today, lookback_start, baseline_lookback_start,
+                known_window_ids=known_window_ids,
             )
             if cell:
                 matrix_cells[w["id"]][mid] = cell
@@ -425,8 +447,7 @@ def main():
             obs = current_rows(all_obs, max_stops)
             if not obs:
                 continue
-            obs.sort(key=lambda r: r["collected_at"])
-            r = obs[-1]
+            r = _latest_min(obs)
             # 최신 관측치가 30일 기준 구간보다 오래됐으면 '현재값'으로 쓸 수 없음
             if datetime.fromisoformat(r["collected_at"]).date() < lookback_start:
                 continue
@@ -438,7 +459,7 @@ def main():
             if avg_price is None:
                 continue
             earlier = [o for o in obs if o["collected_at"] < r["collected_at"]]
-            prev_price = earlier[-1]["price"] if earlier else None
+            prev_price = _latest_min(earlier)["price"] if earlier else None
             discount = (avg_price - r["price"]) / avg_price
             if discount >= DEAL_THRESHOLD:
                 deals.append({

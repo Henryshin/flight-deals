@@ -186,6 +186,28 @@ def load_collection_meta():
     return last_any, last_baseline
 
 
+def load_status_attempts():
+    """collect_status.json 에서 (o,d)별 마지막 '시도' 시각.
+
+    prices.csv 는 성공한 수집만 기록하므로, 계속 실패하는 노선(결과 없음/차단 등)이
+    stale-first 정렬에서 매 런 최우선 순위를 영구 점유하지 않도록 시도 시각도 반영한다.
+    """
+    if not STATUS_FILE.exists():
+        return {}
+    try:
+        data = json.loads(STATUS_FILE.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return {}
+    routes = data.get("routes")
+    if not isinstance(routes, dict):
+        return {}
+    out = {}
+    for group_key, entry in routes.items():
+        if isinstance(entry, dict) and entry.get("last_attempt_at"):
+            out[group_key] = entry["last_attempt_at"]
+    return out
+
+
 def hours_since(ts):
     """ISO 시각 문자열(날짜만도 허용) 이후 경과 시간. 파싱 불가면 None."""
     if not ts:
@@ -217,11 +239,13 @@ def fetch_result_with_retry(session, *args, **kwargs):
 def group_routes(routes):
     """route 엔트리들을 (origin,destination)별로 묶어 크롤 스펙을 만든다.
 
-    같은 (o,d)는 여러 모니터(stops 정책)로 등록될 수 있으나 crawl은 한 번만 한다.
-    - min_nights: 그룹 내 최소값(가장 넓은 날짜 커버리지).
+    같은 (o,d)는 여러 모니터(stops 정책/박수)로 등록될 수 있으나 crawl은 한 번만 한다.
+    - nights_variants: 그룹 내 '고유' min_nights 오름차순 목록. 최소값 하나만 쓰면
+      연휴보다 긴 박수(예: 7박) 모니터의 후보가 아예 생성되지 않아 그 모니터가
+      영구 미수집되므로, 값별로 후보를 만들어 합친다.
     - max_stops : 그룹 내 가장 넓은 정책. 하나라도 None이면 None(=전체),
                   아니면 int들의 최대값.
-    반환: [(origin, destination, origin_city, dest_city, min_nights, max_stops), ...]
+    반환: [(origin, destination, origin_city, dest_city, nights_variants, max_stops), ...]
     """
     groups = {}
     order = []
@@ -233,14 +257,14 @@ def group_routes(routes):
                 "destination": route["destination"],
                 "origin_city": route.get("origin_city"),
                 "dest_city": route.get("destination_city"),
-                "min_nights": route.get("min_nights", DEFAULT_TRIP_LENGTH_DAYS),
+                "nights_variants": {route.get("min_nights", DEFAULT_TRIP_LENGTH_DAYS)},
                 "max_stops": route.get("max_stops"),
                 "max_stops_any_none": route.get("max_stops") is None,
             }
             order.append(key)
         else:
             g = groups[key]
-            g["min_nights"] = min(g["min_nights"], route.get("min_nights", DEFAULT_TRIP_LENGTH_DAYS))
+            g["nights_variants"].add(route.get("min_nights", DEFAULT_TRIP_LENGTH_DAYS))
             ms = route.get("max_stops")
             if ms is None:
                 g["max_stops_any_none"] = True
@@ -253,7 +277,7 @@ def group_routes(routes):
         max_stops = None if g["max_stops_any_none"] else g["max_stops"]
         specs.append((
             g["origin"], g["destination"], g["origin_city"], g["dest_city"],
-            g["min_nights"], max_stops,
+            sorted(g["nights_variants"]), max_stops,
         ))
     return specs
 
@@ -349,10 +373,15 @@ def main():
     # 같은 (origin,destination)를 여러 모니터가 공유하므로 crawl은 (o,d)당 한 번만.
     specs = group_routes(routes)
 
-    # stale-first: 한 번도 수집 안 된 노선 먼저, 그 다음 오래된 순.
-    # (예산에 잘린 노선이 다음 런에서 자동으로 앞에 오는 로테이션 효과)
+    # stale-first: 한 번도 시도 안 된 노선 먼저, 그 다음 오래된 순.
+    # (예산에 잘린 노선이 다음 런에서 자동으로 앞에 오는 로테이션 효과.
+    #  '시도' 시각도 반영해 계속 실패하는 노선이 앞자리를 영구 점유하지 않게 한다.)
     last_any, last_baseline = load_collection_meta()
-    specs.sort(key=lambda s: last_any.get((s[0], s[1]), ""))
+    attempts = load_status_attempts()
+    specs.sort(key=lambda s: max(
+        last_any.get((s[0], s[1]), ""),
+        attempts.get(f"{s[0]}-{s[1]}", ""),
+    ))
 
     # 구 헤더 파일이면 먼저 신 헤더로 마이그레이션해 csv.DictReader 일관성 유지.
     migrate_prices_file()
@@ -366,7 +395,7 @@ def main():
 
     # 실행 전체가 브라우저 하나를 재사용 (쿼리마다 크로미움 기동 비용을 내지 않음).
     with PriceCrawlerSession() as session:
-        for origin, destination, origin_city, dest_city, min_nights, max_stops in specs:
+        for origin, destination, origin_city, dest_city, nights_variants, max_stops in specs:
             group_key = f"{origin}-{destination}"
             now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")
             if aborted_blocked:
@@ -384,58 +413,75 @@ def main():
                 }
                 continue
 
-            candidates = build_date_candidates(min_nights)
-            # 평시 기준가는 하루 1회만 (연휴 가성비 지표의 분모).
+            # 그룹 내 '고유 min_nights'별 후보의 합집합 (같은 날짜쌍은 한 번만).
+            candidates = []
+            seen_pairs = set()
+            for mn in nights_variants:
+                for cand in build_date_candidates(mn):
+                    pair = (cand[0], cand[1])
+                    if pair not in seen_pairs:
+                        seen_pairs.add(pair)
+                        candidates.append(cand)
+            # 평시 기준가는 하루 1회만 (연휴 가성비 지표의 분모). 박수 변형별로 수집해
+            # 각 모니터가 자기 박수(±1)의 기준가를 갖게 한다.
             h = hours_since(last_baseline.get((origin, destination), ""))
             if h is None or h >= BASELINE_REFRESH_HOURS:
-                candidates += [
-                    (d, r, False, "") for d, r in build_baseline_candidates(min_nights)
-                ]
+                for mn in nights_variants:
+                    for d, r in build_baseline_candidates(mn):
+                        if (d, r) not in seen_pairs:
+                            seen_pairs.add((d, r))
+                            candidates.append((d, r, False, ""))
 
             rows = []
             statuses = Counter()
             last_detail = ""
-            for depart, return_, is_holiday, window_id in candidates:
-                if time.monotonic() > deadline:
-                    last_detail = "시간 예산 초과로 노선 일부만 수집"
-                    break
-                result = fetch_result_with_retry(
-                    session,
-                    origin, destination, depart, return_,
-                    origin_city=origin_city, dest_city=dest_city,
-                    max_stops=max_stops,
-                )
-                st = result["status"]
-                statuses[st] += 1
-                if st in ("blocked", "consent"):
-                    blocked_streak += 1
-                    if blocked_streak >= BLOCKED_ABORT_STREAK:
-                        aborted_blocked = True
-                        last_detail = result.get("detail") or "연속 차단 감지"
-                        print(f"연속 {BLOCKED_ABORT_STREAK}회 차단 감지 -> 런 조기 중단")
+            try:
+                for depart, return_, is_holiday, window_id in candidates:
+                    if time.monotonic() > deadline:
+                        last_detail = "시간 예산 초과로 노선 일부만 수집"
                         break
-                else:
-                    blocked_streak = 0
-                if st != "ok":
-                    last_detail = result.get("detail") or st
-                    print(f"  {origin}->{destination} {depart}~{return_}: {st} ({last_detail})")
+                    result = fetch_result_with_retry(
+                        session,
+                        origin, destination, depart, return_,
+                        origin_city=origin_city, dest_city=dest_city,
+                        max_stops=max_stops,
+                    )
+                    st = result["status"]
+                    statuses[st] += 1
+                    if st in ("blocked", "consent"):
+                        blocked_streak += 1
+                        if blocked_streak >= BLOCKED_ABORT_STREAK:
+                            aborted_blocked = True
+                            last_detail = result.get("detail") or "연속 차단 감지"
+                            print(f"연속 {BLOCKED_ABORT_STREAK}회 차단 감지 -> 런 조기 중단")
+                            break
+                    else:
+                        blocked_streak = 0
+                    if st != "ok":
+                        last_detail = result.get("detail") or st
+                        print(f"  {origin}->{destination} {depart}~{return_}: {st} ({last_detail})")
 
-                by_stops = result["by_stops"]
-                if not by_stops:
-                    continue
-                collected_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
-                prices_txt = ", ".join(f"{s}경유 {it['price']}원" for s, it in sorted(by_stops.items()))
-                print(f"  {origin}->{destination} {depart}~{return_}: {prices_txt}")
-                # 경유수 클래스별 최저가를 각각 한 행씩 저장 (직항/경유 모니터가 각자 필터).
-                for _stops, it in sorted(by_stops.items()):
-                    rows.append([
-                        origin, destination,
-                        depart.isoformat(), return_.isoformat(),
-                        it["price"], int(is_holiday), collected_at,
-                        it.get("dep_time", ""), it.get("arr_time", ""),
-                        it.get("stops", ""),
-                        window_id,
-                    ])
+                    by_stops = result["by_stops"]
+                    if not by_stops:
+                        continue
+                    collected_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+                    prices_txt = ", ".join(f"{s}경유 {it['price']}원" for s, it in sorted(by_stops.items()))
+                    print(f"  {origin}->{destination} {depart}~{return_}: {prices_txt}")
+                    # 경유수 클래스별 최저가를 각각 한 행씩 저장 (직항/경유 모니터가 각자 필터).
+                    for _stops, it in sorted(by_stops.items()):
+                        rows.append([
+                            origin, destination,
+                            depart.isoformat(), return_.isoformat(),
+                            it["price"], int(is_holiday), collected_at,
+                            it.get("dep_time", ""), it.get("arr_time", ""),
+                            it.get("stops", ""),
+                            window_id,
+                        ])
+            except Exception as e:  # noqa: BLE001 - 한 노선의 예기치 못한 크래시(세션 재기동
+                # 실패 등)가 남은 노선 수집과 상태 기록 전체를 유실시키지 않도록 격리.
+                statuses["error"] += 1
+                last_detail = f"{type(e).__name__}: {e}"
+                print(f"  {group_key}: 예기치 못한 오류로 노선 건너뜀 ({last_detail})")
 
             # 노선 그룹 단위로 즉시 저장 -> 런이 중간에 죽어도 여기까지는 보존.
             append_rows(rows)
