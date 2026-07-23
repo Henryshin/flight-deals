@@ -193,9 +193,14 @@ def main():
         min_price_30d = min((r["price"] for r in recent_base), default=None)
         avg_price_30d = round(sum(r["price"] for r in recent_base) / len(recent_base)) if recent_base else None
 
+        # 직항 전용(max_stops==0) 모니터인데 직항 관측치가 한 번도 안 잡힌 경우.
+        # 수집은 build 전에 돌므로, 이 조건은 '수집을 시도했으나 직항편이 없다'를 의미한다
+        # (신규 등록 직후 낙관적 항목은 프론트에서 no_direct 없이 '대기'로 표시).
+        no_direct = max_stops == 0 and sample_count == 0
         routes_status.append({
             **route,
             "sample_count": sample_count,
+            "no_direct": no_direct,
             "last_collected_at": last_collected_at,
             "latest_price": latest_row["price"] if latest_row else None,
             "latest_depart_date": latest_row["depart_date"] if latest_row else None,
