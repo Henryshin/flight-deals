@@ -1,7 +1,12 @@
 """
-data/prices.csv + data/routes.json 을 읽어
-docs/data/deals.json, docs/data/routes_status.json, docs/data/history.json 을 생성
+data/prices.csv + data/routes.json (+ data/collect_status.json) 을 읽어
+docs/data/deals.json, routes_status.json, history.json, matrix.json 등을 생성
 (GitHub Pages가 읽는 정적 파일).
+
+지표 구분:
+- deals.json: '이 노선의 최근 연휴 시세 평균' 대비 하락(변동성 신호). 노선 내부 비교용.
+- matrix.json: 연휴 윈도우별 '평시(비연휴) 기준가 대비 할증률'. 노선별로 정규화되므로
+  여행지 간 가성비 비교가 가능한 지표 (연휴 가성비 보드의 데이터).
 """
 import csv
 import json
@@ -9,20 +14,27 @@ import sys
 from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+from statistics import median
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from collector.google_flights_crawler import build_booking_url
-from holidays import KOREAN_HOLIDAYS
+from holidays import KOREAN_HOLIDAYS, get_holiday_windows
 
 ROOT = Path(__file__).parent.parent
 ROUTES_FILE = ROOT / "data" / "routes.json"
 PRICES_FILE = ROOT / "data" / "prices.csv"
+STATUS_FILE = ROOT / "data" / "collect_status.json"
 OUT_DIR = ROOT / "docs" / "data"
 
 DEAL_THRESHOLD = 0.15
 MIN_HISTORY_POINTS = 3
 LOOKBACK_DAYS = 30
+# 평시(비연휴) 기준가 룩백. 기준가는 천천히 변하므로 연휴 시세보다 길게 잡는다.
+LOOKBACK_BASELINE_DAYS = 60
+# 할증률 신뢰도 티어: A = 기준가 표본 3+ & 윈도우 날짜쌍 2+, B = 기준가 1~2, C = 기준가 없음
+TIER_A_MIN_BASELINE = 3
+TIER_A_MIN_WINDOW = 2
 
 WEEKDAY_KO = ["월", "화", "수", "목", "금", "토", "일"]
 HOLIDAY_DATES = {date.fromisoformat(d) for days in KOREAN_HOLIDAYS.values() for d in days}
@@ -39,11 +51,41 @@ def count_leave_days(depart: date, return_: date) -> int:
     return n
 
 
+def _day(row):
+    """collected_at 의 날짜 부분 (구 스키마는 날짜만, 신 스키마는 UTC 타임스탬프)."""
+    return (row.get("collected_at") or "")[:10]
+
+
 def load_prices():
     if not PRICES_FILE.exists():
         return []
     with open(PRICES_FILE, encoding="utf-8") as f:
-        return list(csv.DictReader(f))
+        rows = list(csv.DictReader(f))
+    # 같은 날 여러 런이 재수집한 동일 (노선, 날짜쌍, stops) 관측은 마지막 것만 유지.
+    # (하루 ~6회 크론이 같은 후보를 다시 긁으므로, dedup 없이는 표본수/평균이 부풀려짐)
+    dedup = {}
+    for row in rows:
+        key = (
+            row["origin"], row["destination"],
+            row["depart_date"], row["return_date"],
+            row.get("stops") or "", _day(row),
+        )
+        prev = dedup.get(key)
+        if prev is None or (row.get("collected_at") or "") >= (prev.get("collected_at") or ""):
+            dedup[key] = row
+    return list(dedup.values())
+
+
+def load_collect_status():
+    """collect.py 가 남긴 노선별 수집 상태 ("O-D" -> {status, detail, ...})."""
+    if not STATUS_FILE.exists():
+        return {}
+    try:
+        data = json.loads(STATUS_FILE.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return {}
+    routes = data.get("routes")
+    return routes if isinstance(routes, dict) else {}
 
 
 def route_key(r):
@@ -128,31 +170,138 @@ def current_rows(rows, max_stops):
     return list(rows) if not any_known else []
 
 
+def _row_in_window(row, window):
+    """행이 해당 연휴 윈도우 소속인지. window_id 가 있으면 그것, 없으면(legacy) 날짜 겹침."""
+    wid = row.get("window_id") or ""
+    if wid:
+        return wid == window["id"]
+    d1 = date.fromisoformat(row["depart_date"])
+    d2 = date.fromisoformat(row["return_date"])
+    return d1 <= window["end"] and d2 >= window["start"]
+
+
+def build_matrix_cell(route_prices, offpeak_rows, max_stops, window, route,
+                      today, lookback_start, baseline_lookback_start):
+    """모니터 x 연휴윈도우 한 칸: 윈도우 최저가 + 평시 기준가 + 할증률 + 신뢰도 티어.
+
+    - 윈도우 최저가: 윈도우 소속 행 중 날짜쌍별 '최신 관측'의 최저가
+      (deals 와 동일하게 미래 출발 + stops 클래스 + 30일 신선도 기준).
+    - 평시 기준가: 같은 stops 클래스의 비연휴 관측(60일 룩백) 중앙값.
+      최저가 일정과 같은 박수(±1)를 우선하고, 없으면 전체로 폴백(baseline_loose).
+    - 할증률 ratio = 윈도우 최저가 / 평시 기준가. 노선별 정규화라 여행지 간 비교 가능.
+    """
+    in_window = [r for r in route_prices if _row_in_window(r, window)]
+    by_pair = defaultdict(list)
+    for r in in_window:
+        by_pair[(r["depart_date"], r["return_date"])].append(r)
+
+    latest_per_pair = []
+    for (depart_date, return_date), all_obs in by_pair.items():
+        if date.fromisoformat(depart_date) < today:
+            continue
+        obs = current_rows(all_obs, max_stops)
+        if not obs:
+            continue
+        obs.sort(key=lambda r: r["collected_at"])
+        r = obs[-1]
+        if datetime.fromisoformat(r["collected_at"]).date() < lookback_start:
+            continue
+        latest_per_pair.append(r)
+
+    if not latest_per_pair:
+        return None
+
+    best = min(latest_per_pair, key=lambda r: r["price"])
+    n_window = len(latest_per_pair)
+    nights = _row_nights(best)
+
+    base_pool = [
+        r for r in stops_class_rows(offpeak_rows, max_stops)
+        if datetime.fromisoformat(r["collected_at"]).date() >= baseline_lookback_start
+    ]
+    tight = [r for r in base_pool if abs(_row_nights(r) - nights) <= 1]
+    baseline_loose = False
+    pool = tight
+    if not pool and base_pool:
+        pool = base_pool
+        baseline_loose = True
+
+    n_baseline = len(pool)
+    baseline = round(median(r["price"] for r in pool)) if pool else None
+    ratio = round(best["price"] / baseline, 3) if baseline else None
+
+    if n_baseline >= TIER_A_MIN_BASELINE and n_window >= TIER_A_MIN_WINDOW:
+        tier = "A"
+    elif n_baseline >= 1:
+        tier = "B"
+    else:
+        tier = "C"
+
+    d1 = date.fromisoformat(best["depart_date"])
+    d2 = date.fromisoformat(best["return_date"])
+    return {
+        "min_price": best["price"],
+        "ratio": ratio,
+        "tier": tier,
+        "n_window": n_window,
+        "n_baseline": n_baseline,
+        "baseline": baseline,
+        "baseline_loose": baseline_loose,
+        "best": {
+            "depart_date": best["depart_date"],
+            "return_date": best["return_date"],
+            "depart_weekday": WEEKDAY_KO[d1.weekday()],
+            "return_weekday": WEEKDAY_KO[d2.weekday()],
+            "nights": nights,
+            "days": nights + 1,
+            "leave_days": count_leave_days(d1, d2),
+            "stops": best.get("stops", ""),
+            "dep_time": best.get("dep_time", ""),
+            "arr_time": best.get("arr_time", ""),
+            "booking_url": build_booking_url(
+                route["origin"], route["destination"], d1, d2,
+                origin_city=route.get("origin_city"),
+                dest_city=route.get("destination_city"),
+            ),
+        },
+    }
+
+
 def main():
     routes = json.loads(ROUTES_FILE.read_text(encoding="utf-8"))
     prices = load_prices()
+    collect_status = load_collect_status()
     today = date.today()
     lookback_start = today - timedelta(days=LOOKBACK_DAYS)
+    baseline_lookback_start = today - timedelta(days=LOOKBACK_BASELINE_DAYS)
 
-    by_route = defaultdict(list)
+    # 연휴 윈도우 (id/label 포함, 이미 오늘 이후만 반환됨)
+    windows = get_holiday_windows()
+
+    by_route = defaultdict(list)          # 연휴 시세 행 (deals/status/history/matrix 분자)
+    offpeak_by_route = defaultdict(list)  # 평시 기준가 행 (matrix 분모 전용)
+    last_seen_by_route = {}               # 노선별 마지막 수집시각 (연휴+평시 모두 포함)
     for row in prices:
         row["price"] = int(row["price"])
         row["is_holiday_window"] = bool(int(row["is_holiday_window"]))
-        # 구 스키마(7열) 행은 이 키들이 없을 수 있음 -> 빈 문자열로 정규화.
-        row.setdefault("dep_time", "")
-        row.setdefault("arr_time", "")
-        row.setdefault("stops", "")
-        if row.get("dep_time") is None:
-            row["dep_time"] = ""
-        if row.get("arr_time") is None:
-            row["arr_time"] = ""
-        if row.get("stops") is None:
-            row["stops"] = ""
-        by_route[(row["origin"], row["destination"])].append(row)
+        # 구 스키마(7열/10열) 행은 이 키들이 없을 수 있음 -> 빈 문자열로 정규화.
+        for k in ("dep_time", "arr_time", "stops", "window_id"):
+            row.setdefault(k, "")
+            if row.get(k) is None:
+                row[k] = ""
+        key = (row["origin"], row["destination"])
+        ts = row.get("collected_at") or ""
+        if ts > last_seen_by_route.get(key, ""):
+            last_seen_by_route[key] = ts
+        if row["is_holiday_window"]:
+            by_route[key].append(row)
+        else:
+            offpeak_by_route[key].append(row)
 
     routes_status = []
     deals = []
     history = {}
+    matrix_cells = {w["id"]: {} for w in windows}
 
     for route in routes:
         key = route_key(route)
@@ -165,13 +314,13 @@ def main():
         # sample_count 는 이 모니터의 stops 클래스 모집단 크기(경유 모니터와 직항 모니터가
         # 같은 (o,d)를 공유해도 각자의 실제 표본 수를 보고하도록).
         sample_count = len(stops_class_rows(route_prices, max_stops))
-        last_collected_at = max((r["collected_at"] for r in route_prices), default=None)
+        last_collected_at = last_seen_by_route.get(key)
 
-        # 수집일(collected_at) 단위로 묶어서 노선 레벨 스냅샷을 계산.
+        # 수집일 단위로 묶어서 노선 레벨 스냅샷을 계산.
         # 각 수집일 안에서는 stops 클래스에 맞는 행을 우선(부족하면 전체 폴백)해 최저가 선택.
         by_day = defaultdict(list)
         for r in route_prices:
-            by_day[r["collected_at"]].append(r)
+            by_day[_day(r)].append(r)
         days_sorted = sorted(by_day)
 
         def day_min_row(day_rows):
@@ -197,6 +346,7 @@ def main():
         # 수집은 build 전에 돌므로, 이 조건은 '수집을 시도했으나 직항편이 없다'를 의미한다
         # (신규 등록 직후 낙관적 항목은 프론트에서 no_direct 없이 '대기'로 표시).
         no_direct = max_stops == 0 and sample_count == 0
+        cs = collect_status.get(f"{route['origin']}-{route['destination']}") or {}
         routes_status.append({
             **route,
             "sample_count": sample_count,
@@ -211,6 +361,10 @@ def main():
             "prev_price": status_prev_price,
             "min_price_30d": min_price_30d,
             "avg_price_30d": avg_price_30d,
+            # 수집 파이프라인 상태 (빈 칸의 '이유'를 대시보드가 보여주기 위함)
+            "collect_status": cs.get("status"),
+            "collect_status_detail": cs.get("detail", ""),
+            "last_attempt_at": cs.get("last_attempt_at"),
         })
 
         # history.json: 수집일별 min/avg/n (t 오름차순)
@@ -228,6 +382,16 @@ def main():
                     "avg": round(sum(r["price"] for r in day_rows) / len(day_rows)),
                     "n": len(day_rows),
                 })
+
+        # 연휴 가성비 매트릭스: 이 모니터의 윈도우별 칸 계산 (연휴 행이 있어야 의미 있음)
+        offpeak = offpeak_by_route.get(key, [])
+        for w in windows:
+            cell = build_matrix_cell(
+                route_prices, offpeak, max_stops, w, route,
+                today, lookback_start, baseline_lookback_start,
+            )
+            if cell:
+                matrix_cells[w["id"]][mid] = cell
 
         if len(recent) < MIN_HISTORY_POINTS:
             continue
@@ -304,20 +468,38 @@ def main():
     # 노선별로 묶어서 보여줄 수 있도록 노선 -> 할인율 내림차순으로 정렬
     deals.sort(key=lambda d: (d["route"]["origin"], d["route"]["destination"], -d["discount_pct"]))
 
+    windows_out = [
+        {
+            "id": w["id"],
+            "label": w["label"],
+            "start": w["start"].isoformat(),
+            "end": w["end"].isoformat(),
+            "holiday_dates": [d.isoformat() for d in w["holiday_dates"]],
+        }
+        for w in windows
+    ]
+
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUT_DIR / "deals.json").write_text(json.dumps(deals, ensure_ascii=False, indent=2), encoding="utf-8")
     (OUT_DIR / "routes.json").write_text(json.dumps(routes, ensure_ascii=False, indent=2), encoding="utf-8")
     (OUT_DIR / "routes_status.json").write_text(json.dumps(routes_status, ensure_ascii=False, indent=2), encoding="utf-8")
     (OUT_DIR / "history.json").write_text(json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8")
+    (OUT_DIR / "matrix.json").write_text(
+        json.dumps({"windows": windows_out, "cells": matrix_cells}, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
     (OUT_DIR / "meta.json").write_text(
         json.dumps({"generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+    # holidays.json: 구(배열) 대신 {holidays, windows} 객체. 프론트는 두 형식 모두 수용.
     all_holidays = sorted(d.isoformat() for d in HOLIDAY_DATES)
     (OUT_DIR / "holidays.json").write_text(
-        json.dumps(all_holidays, ensure_ascii=False, indent=2), encoding="utf-8"
+        json.dumps({"holidays": all_holidays, "windows": windows_out}, ensure_ascii=False, indent=2),
+        encoding="utf-8",
     )
-    print(f"deals: {len(deals)}, routes: {len(routes_status)}")
+    n_cells = sum(len(v) for v in matrix_cells.values())
+    print(f"deals: {len(deals)}, routes: {len(routes_status)}, matrix cells: {n_cells}")
 
 
 if __name__ == "__main__":
