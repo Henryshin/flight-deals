@@ -20,8 +20,14 @@
             "start": "2026-07-07",
             "end": "2026-07-14",
             "opens": [
-              { "at": "2026-07-07T10:00", "label": "국내선" },
-              { "at": "2026-07-08T10:00", "label": "국제선" }
+              {
+                "at": "2026-07-07T10:00",
+                "label": "국내선"
+              },
+              {
+                "at": "2026-07-08T10:00",
+                "label": "국제선"
+              }
             ],
             "source": "https://v.daum.net/v/20260707100530665"
           },
@@ -33,24 +39,6 @@
             "https://www.fnnews.com/news/202602030917493083",
             "https://www.newspim.com/news/view/20260707000874",
             "https://v.daum.net/v/20260707100530665"
-          ]
-        },
-        {
-          "name": "J멤버스위크 (구 JJ멤버스위크)",
-          "cadence_text": "연중 수시 (약 7일씩, 회원 전용)",
-          "recurrence": {
-            "type": "monthly",
-            "detail": "약 7일간 진행, 시작일은 매회 상이(예: 2025-10-22~10-28 회차는 이듬해 2월 탑승분 대상). 고정 요일·오픈 시간은 확인되지 않음"
-          },
-          "discount_text": "최대 86% 할인. 국내선 1.6만원대~, 일본 5만원대~, 중화권 6만원대~, 동남아 9만원대~",
-          "requirements": "제주항공 리프레시 포인트(J멤버스) 회원 가입 필요",
-          "notes": "각 회차가 1~2개 탑승월(예: 8월 회차→12월 탑승분, 10월 회차→익년 2월 탑승분)을 겨냥해 미리 파는 방식. 2026년 2월 17일, 7월 17일 무렵 회차가 캐시워크 퀴즈·언론 노출로 확인됨. '매달' 진행은 2024년 출시 기사 기준이며 2026년 전 월 개최 여부까지는 별도 확인 필요.",
-          "confidence": "medium",
-          "last_seen": "2026-07",
-          "sources": [
-            "https://www.newspim.com/news/view/20240522000133",
-            "https://www.fnnews.com/news/202508131028576577",
-            "https://www.sentv.co.kr/article/view/sentv202510220066"
           ]
         }
       ]
@@ -74,8 +62,14 @@
             "start": "2026-07-13",
             "end": "2026-07-16",
             "opens": [
-              { "at": "2026-07-13T10:00", "label": "동남아·괌·국내선" },
-              { "at": "2026-07-13T14:00", "label": "일본·중화권" }
+              {
+                "at": "2026-07-13T10:00",
+                "label": "동남아·괌·국내선"
+              },
+              {
+                "at": "2026-07-13T14:00",
+                "label": "일본·중화권"
+              }
             ],
             "source": "https://news.nate.com/view/20260713n17110"
           },
@@ -135,9 +129,18 @@
             "start": "2026-07-22",
             "end": "2026-07-28",
             "opens": [
-              { "at": "2026-07-22T11:00", "label": "국제선(일본 제외)" },
-              { "at": "2026-07-22T14:00", "label": "일본" },
-              { "at": "2026-07-23T11:00", "label": "국내선" }
+              {
+                "at": "2026-07-22T11:00",
+                "label": "국제선(일본 제외)"
+              },
+              {
+                "at": "2026-07-22T14:00",
+                "label": "일본"
+              },
+              {
+                "at": "2026-07-23T11:00",
+                "label": "국내선"
+              }
             ],
             "source": "https://www.mt.co.kr/policy/2026/07/21/2026072115195251283"
           },
@@ -171,8 +174,14 @@
             "start": "2026-07-13",
             "end": "2026-07-17",
             "opens": [
-              { "at": "2026-07-13T10:00", "label": "일본·중화권" },
-              { "at": "2026-07-14T10:00", "label": "동남아·제주" }
+              {
+                "at": "2026-07-13T10:00",
+                "label": "일본·중화권"
+              },
+              {
+                "at": "2026-07-14T10:00",
+                "label": "동남아·제주"
+              }
             ],
             "source": "https://www.asiae.co.kr/article/2026070609471771948"
           },
@@ -184,24 +193,6 @@
             "https://www.asiae.co.kr/article/2026070609471771948",
             "https://news.nate.com/view/20260706n27969",
             "https://www.mt.co.kr/industry/2026/07/06/2026070613445515377"
-          ]
-        },
-        {
-          "name": "얼리버드 특가",
-          "cadence_text": "매월 (셋째 주경, 2~3개월 후 출발편)",
-          "recurrence": {
-            "type": "monthly",
-            "detail": "매월 셋째 주 정기 진행으로 정례화(2025년 5월 발표), 2~3개월 후 출발 항공권을 초특가 운임으로 오픈. 회차별 오픈 주차는 다소 유동적"
-          },
-          "discount_text": "제주 12,700~17,900원, 일본 46,900원~, 동북아 47,600원~, 베트남 73,700원~",
-          "requirements": "이스타항공 홈페이지·모바일 앱에서 구매 (국제선 특가는 출발 날짜·시간 변경 수수료 무료)",
-          "notes": "국내/국제선 20~27개 노선 대상. 2026년 7월 현재 동계 시즌(2026.10.25~2027.3.27) 탑승분 얼리버드 판매 확인. 대표 특가 예: 인천-알마티 편도 19만9400원.",
-          "confidence": "high",
-          "last_seen": "2026-07",
-          "sources": [
-            "https://v.daum.net/v/20250520083210599",
-            "https://biz.heraldcorp.com/article/10491022",
-            "https://www.fnnews.com/news/202505200833358207"
           ]
         }
       ]
@@ -223,7 +214,10 @@
             "start": "2026-07-13",
             "end": "2026-07-31",
             "opens": [
-              { "at": "2026-07-13T10:00", "label": "국제선 전 노선" }
+              {
+                "at": "2026-07-13T10:00",
+                "label": "국제선 전 노선"
+              }
             ],
             "source": "https://www.news2day.co.kr/article/20260710500266"
           },
@@ -235,24 +229,6 @@
             "https://www.fnnews.com/news/202607101451039734",
             "https://www.news2day.co.kr/article/20260710500266",
             "https://www.viva100.com/article/20250320500750"
-          ]
-        },
-        {
-          "name": "민트패스 (MINT PASS)",
-          "cadence_text": "비정기 (2019·2021·2024년 판매, 정기 주기 없음)",
-          "recurrence": {
-            "type": "irregular",
-            "detail": "수년 간격 한정 판매(2019·2021·2024). 정기 주기 없음"
-          },
-          "discount_text": "일본 무제한 왕복 399,000원, 동남아 무제한 왕복 499,000원, 3회 왕복 20만~30만원대",
-          "requirements": "SSG닷컴(쓱라이브) 단독 판매(2024년 기준), 월~목 주중 출발 항공편만 이용 가능, 성수기(어린이날·현충일 등) 제외",
-          "notes": "특가 항공권이 아닌 기간제 무제한/횟수제 탑승 패스. 2024년 회차는 탑승기간 4~6월, 대상 노선 일본(나리타·오사카·후쿠오카·다카마쓰·요나고)과 동남아(다낭·나트랑·보라카이 등). 현재 공식 페이지 기준 판매 종료 상태이며 다음 판매 일정 미공지.",
-          "confidence": "low",
-          "last_seen": "2024-02",
-          "sources": [
-            "https://flyairseoul.com/CW/ko/mintpass.do",
-            "https://www.newspim.com/news/view/20240131000835",
-            "https://www.shinsegaegroupnewsroom.com/ssg-airseoul-international-mintpass-unlimited/"
           ]
         }
       ]
@@ -275,8 +251,14 @@
             "start": "2026-07-06",
             "end": "2026-07-19",
             "opens": [
-              { "at": "2026-07-06T10:00", "label": "아시아" },
-              { "at": "2026-07-09T10:00", "label": "미주" }
+              {
+                "at": "2026-07-06T10:00",
+                "label": "아시아"
+              },
+              {
+                "at": "2026-07-09T10:00",
+                "label": "미주"
+              }
             ],
             "source": "https://www.hankyung.com/article/202607066970P"
           },
@@ -333,50 +315,6 @@
             "https://www.sisunnews.co.kr/news/articleView.html?idxno=226790",
             "https://www.thepublic.kr/news/articleView.html?idxno=270464",
             "https://www.datanews.co.kr/news/article.html?no=139752"
-          ]
-        }
-      ]
-    },
-    {
-      "airline": "아시아나항공",
-      "iata": "OZ",
-      "homepage": "https://flyasiana.com",
-      "events": [
-        {
-          "name": "OZ 드림페어 (얼리버드 특가)",
-          "cadence_text": "과거 매월 첫째 화요일~14일간 (2015년 기준, 2025~2026년 운영 미확인·사실상 중단 추정)",
-          "recurrence": {
-            "type": "irregular",
-            "day_of_week": 1,
-            "detail": "과거 기준: 매월 첫째 화요일 오픈 후 14일간 판매 (2015년 개편). 현재 운영 여부 미확인."
-          },
-          "discount_text": "탑승 3~5개월 전 얼리버드 특가 (예: 2014년 인천-후쿠오카 왕복 197,000원)",
-          "requirements": "아시아나항공 홈페이지/모바일에서 직접 구매",
-          "notes": "아시아나의 대표 정기 얼리버드 특가 브랜드였으나 최근 2년간 개최 흔적이 없음. 현재 확인되는 반복 이벤트는 '주말·모바일 전용 얼리버드 타임세일'(매주 토·일 10시 선착순 쿠폰, 일본/중국/동남아 최대 15%) 정도로 할인 폭이 얕아 찐특가로 보기 어려움.",
-          "confidence": "low",
-          "last_seen": "2015-08",
-          "sources": [
-            "http://www.newswire.co.kr/newsRead.php?no=744130",
-            "https://www.kyeonggi.com/article/201508030667339",
-            "https://www.hankyung.com/article/201508032957g"
-          ]
-        },
-        {
-          "name": "라스트 미닛(LAST MINUTE) 땡처리 특가",
-          "cadence_text": "1회성 (2025년 3월, 정기 개최 근거 없음)",
-          "recurrence": {
-            "type": "irregular",
-            "detail": "1회성으로 확인됨(2025년 3월). 정기 일정 없음."
-          },
-          "discount_text": "미주·유럽 왕복 50만~74만원대 (평시 대비 절반 이하)",
-          "requirements": "출발 임박 일정(판매 종료 후 약 1개월여 내 출발) 한정, 좌석 소진 시 종료",
-          "notes": "업계 최초 수준의 파격 땡처리로 다수 언론 보도. 2026년 재개최 여부는 미확인이므로 알림용으로만 참고.",
-          "confidence": "low",
-          "last_seen": "2025-03",
-          "sources": [
-            "https://www.asiae.co.kr/article/2025031816315932308",
-            "https://www.fnnews.com/news/202503190611311407",
-            "https://biz.heraldcorp.com/article/10447690"
           ]
         }
       ]

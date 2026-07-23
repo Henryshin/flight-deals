@@ -79,7 +79,16 @@
   .badge-confirmed { display: inline-block; background: #0b5cab; color: #fff; font-size: 9.5px; padding: 1px 5px; border-radius: 2px; margin-left: 4px; font-weight: 700; }
   .badge-confirmed.badge-open { background: #217346; }
   .badge-openat { display: inline-block; background: #b3261e; color: #fff; font-size: 9.5px; padding: 1px 5px; border-radius: 2px; margin-left: 4px; font-weight: 700; font-family: Consolas, monospace; }
-  .opens-line { color: #b3261e !important; font-weight: 700; white-space: normal; }
+
+  /* 엑셀처럼 셀 안에서 여러 줄로 표시 (세로 정렬 위쪽) */
+  table.sheet td { vertical-align: top; }
+  .line-main { display: block; font-weight: 600; white-space: normal; }
+  .open-line { display: block; color: #b3261e; font-weight: 700; font-size: 10.5px; white-space: normal; margin-top: 1px; }
+  .next-line { display: block; color: var(--muted); font-size: 10px; white-space: normal; margin-top: 1px; }
+  .disc-head { display: block; font-weight: 700; color: #14532d; white-space: normal; }
+  .disc-item { display: block; color: var(--text); font-size: 11px; white-space: normal; padding-left: 6px; text-indent: -6px; }
+  .disc-item::before { content: "· "; color: var(--muted); }
+  .disc-note { display: block; color: var(--muted); font-size: 10px; white-space: normal; margin-top: 2px; }
 
   table.sheet tbody tr.confirmed td { background: #fff6d8; }
   table.sheet tbody tr.confirmed:hover td { background: var(--sel); }
@@ -252,14 +261,14 @@
       <table class="sheet wide">
         <thead>
           <tr>
-            <th style="width:9%">항공사</th>
-            <th style="width:13%">이벤트명</th>
-            <th style="width:17%">주기</th>
-            <th style="width:15%">다음 예상 시기</th>
-            <th style="width:17%">할인 수준</th>
-            <th style="width:12%">조건</th>
-            <th style="width:7%">신뢰도</th>
-            <th style="width:7%">링크</th>
+            <th style="width:8%">항공사</th>
+            <th style="width:11%">이벤트명</th>
+            <th style="width:13%">주기</th>
+            <th style="width:19%">다음 예상 시기</th>
+            <th style="width:20%">할인 수준</th>
+            <th style="width:11%">조건</th>
+            <th style="width:6%">신뢰도</th>
+            <th style="width:6%">링크</th>
             <th style="width:3%"></th>
           </tr>
         </thead>
@@ -408,6 +417,25 @@
       if (hours < 24) return `${hours}시간 후`;
       return `D-${Math.floor(hours / 24)}`;
     }
+    // 할인 수준 텍스트를 엑셀처럼 여러 줄로 분해: { head(할인 요약), items[](노선별), note(괄호 부연) }
+    function splitDiscount(text) {
+      if (!text) return null;
+      let s = String(text).trim();
+      let note = '';
+      const noteM = s.match(/\s*(\([^()]*\))\s*$/);
+      if (noteM) { note = noteM[1]; s = s.slice(0, noteM.index).trim(); }
+      let head = '';
+      const dotIdx = s.search(/\.\s+/);
+      if (dotIdx >= 0) {
+        const cand = s.slice(0, dotIdx).trim();
+        if (/할인|%/.test(cand)) { head = cand; s = s.slice(dotIdx + 1).trim(); }
+      } else if (/할인|%/.test(s) && !/[,·]/.test(s)) {
+        head = s; s = '';
+      }
+      // 노선 항목 구분자는 ', '(쉼표+공백). 금액 안의 쉼표(29,800)는 뒤에 공백이 없어 보존됨.
+      const items = s ? s.split(/,\s+/).map(x => x.trim()).filter(Boolean) : [];
+      return { head, items, note };
+    }
     function getToken() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
 
     // ===================== 토스트 / confirm =====================
@@ -485,14 +513,15 @@
     // rec.day_of_week: 0=월요일 … 6=일요일 (promos.json 컨벤션)
     // confirmed: { start: 'YYYY-MM-DD', end: 'YYYY-MM-DD', source? } — 뉴스·공식 발표로 확인된 가장 최근 회차의 실제 판매 기간.
     //   과거·현재·미래 회차 모두 이 필드로 표현하며(지나간 회차라도 지우지 않음), 상태는 오늘 날짜와 비교해 그때그때 판정한다.
-    // 반환: { text, date: 'YYYY-MM-DD'|null, dday: number|null, confirmed: boolean, status: 'open'|'confirmed'|'past'|null }
+    // 반환: { text, date, dday, confirmed, status: 'open'|'confirmed'|'past'|null, sortKey }
+    //   sortKey: 예상 다음 회차의 타임스탬프(ms). 정렬(예상 시계열 순)에 사용. 미상은 Infinity.
     function nextOccurrence(rec, lastSeen, now, confirmed) {
       const base = now || new Date();
       const today = new Date(base.getFullYear(), base.getMonth(), base.getDate());
       const fmtD = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
       const ddayOf = d => Math.round((d.getTime() - today.getTime()) / 86400000);
       const todayStr = fmtD(today);
-      const out = { text: '—', date: null, dday: null, confirmed: false, status: null };
+      const out = { text: '—', date: null, dday: null, confirmed: false, status: null, sortKey: Infinity };
 
       let pastConfirmed = null;
       if (confirmed && confirmed.start && confirmed.end) {
@@ -503,6 +532,7 @@
           out.confirmed = true;
           out.status = 'open';
           out.text = `오픈 중 (~${confirmed.end})`;
+          out.sortKey = new Date(confirmed.start + 'T00:00:00').getTime();
           return out;
         }
         if (confirmed.start > todayStr) {
@@ -513,6 +543,7 @@
           out.confirmed = true;
           out.status = 'confirmed';
           out.text = `${confirmed.start} ~ ${confirmed.end} 확정`;
+          out.sortKey = startD.getTime();
           return out;
         }
         // confirmed.end < today: 이미 지난 회차. 아래 추정 로직에서 "이번 달 가능" 오표시를 막는 데 사용.
@@ -536,6 +567,7 @@
         out.date = fmtD(d);
         out.dday = ddayOf(d);
         out.text = `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${DOW_KO[rec.day_of_week % 7]})`;
+        out.sortKey = d.getTime();
         return out;
       }
 
@@ -550,6 +582,7 @@
         let ny = y;
         if (nm == null) { nm = months[0]; ny = y + 1; }
         out.text = `${ny}년 ${nm}월 예상`;
+        out.sortKey = new Date(ny, nm - 1, 1).getTime();
         const endedThisCycle = pastConfirmed && (() => {
           const endD = new Date(pastConfirmed.end + 'T00:00:00');
           return endD.getFullYear() === y && (endD.getMonth() + 1) === m;
@@ -582,6 +615,7 @@
           label = '';
         }
         out.text = `매월 · ${ny}년 ${nm}월 ${label}예상`;
+        out.sortKey = new Date(ny, nm - 1, 1).getTime();
         return out;
       }
 
@@ -624,62 +658,92 @@
         return;
       }
       const now = new Date();
-      const rows = [];
+      // 1) 이벤트 수집 + 상태 계산 + 필터
+      const items = [];
       for (const al of state.airlines) {
         for (const ev of (al.events || [])) {
-          const rec = ev.recurrence || {};
-          const cp = ev.confirmed_period;
-          const nx = nextOccurrence(rec, ev.last_seen, now, cp);
+          const nx = nextOccurrence(ev.recurrence || {}, ev.last_seen, now, ev.confirmed_period);
           if (!passStatusFilter(nx)) continue;
-          const dday = (nx.dday != null && nx.dday >= 0 && nx.dday <= 14)
-            ? ` <span class="badge-dday" title="예상일 ${esc(nx.date)}">${nx.dday === 0 ? 'D-DAY' : 'D-' + nx.dday}</span>` : '';
-          const confirmedBadge = nx.status === 'open'
-            ? ' <span class="badge-confirmed badge-open" title="현재 판매 중">오픈중</span>'
-            : (nx.status === 'confirmed' ? ' <span class="badge-confirmed" title="공식 발표로 일정 확정">확정</span>' : '');
-          // 정확한 오픈 일시(권역별 순차 오픈 포함). 특가는 오픈 즉시 매진되므로 시각까지 표기.
-          let opensSub = '', nextOpenBadge = '';
-          if (cp && Array.isArray(cp.opens) && cp.opens.length) {
-            const parsed = cp.opens
-              .filter(o => o && o.at)
-              .map(o => ({ label: o.label || '', d: parseLocal(o.at), hasTime: /[T\s]\d{2}:\d{2}/.test(o.at) }))
-              .filter(o => o.d)
-              .sort((a, b) => a.d - b.d);
-            if (parsed.length) {
-              const parts = parsed.map(o => `${o.label ? esc(o.label) + ' ' : ''}${esc(fmtOpenAt(o.d, o.hasTime))}`);
-              opensSub = `<span class="cell-sub opens-line" title="정확한 오픈 일시 — 특가는 오픈 즉시 매진될 수 있습니다">🕐 ${parts.join(' · ')}</span>`;
-              const future = parsed.filter(o => o.d.getTime() > now.getTime());
-              if (future.length) {
-                const no = future[0];
-                const cd = fmtCountdown(no.d, now);
-                nextOpenBadge = ` <span class="badge-openat" title="다음 오픈: ${esc(fmtOpenAt(no.d, no.hasTime))}">▶ ${no.label ? esc(no.label) + ' ' : ''}${esc(cd)}</span>`;
-              }
+          items.push({ al, ev, nx });
+        }
+      }
+      // 2) 정렬: 오픈중(status==='open') 최상단 → 그 외는 예상 시계열(sortKey) 오름차순
+      items.sort((a, b) => {
+        const ga = a.nx.status === 'open' ? 0 : 1;
+        const gb = b.nx.status === 'open' ? 0 : 1;
+        if (ga !== gb) return ga - gb;
+        if (a.nx.sortKey !== b.nx.sortKey) return a.nx.sortKey - b.nx.sortKey;
+        return a.al.airline.localeCompare(b.al.airline, 'ko');
+      });
+
+      // 3) 렌더
+      const rows = [];
+      for (const { al, ev, nx } of items) {
+        const rec = ev.recurrence || {};
+        const cp = ev.confirmed_period;
+        const dday = (nx.dday != null && nx.dday >= 0 && nx.dday <= 14)
+          ? ` <span class="badge-dday" title="예상일 ${esc(nx.date)}">${nx.dday === 0 ? 'D-DAY' : 'D-' + nx.dday}</span>` : '';
+        const confirmedBadge = nx.status === 'open'
+          ? ' <span class="badge-confirmed badge-open" title="현재 판매 중">오픈중</span>'
+          : (nx.status === 'confirmed' ? ' <span class="badge-confirmed" title="공식 발표로 일정 확정">확정</span>' : '');
+        // 정확한 오픈 일시(권역별 순차 오픈)를 한 줄씩 분리 표시. 특가는 오픈 즉시 매진되므로 시각까지.
+        let opensLines = '', nextOpenBadge = '';
+        if (cp && Array.isArray(cp.opens) && cp.opens.length) {
+          const parsed = cp.opens
+            .filter(o => o && o.at)
+            .map(o => ({ label: o.label || '', d: parseLocal(o.at), hasTime: /[T\s]\d{2}:\d{2}/.test(o.at) }))
+            .filter(o => o.d)
+            .sort((a, b) => a.d - b.d);
+          if (parsed.length) {
+            opensLines = parsed.map(o =>
+              `<span class="open-line" title="오픈 즉시 매진될 수 있습니다">🕐 ${o.label ? esc(o.label) + ' ' : ''}${esc(fmtOpenAt(o.d, o.hasTime))}</span>`
+            ).join('');
+            const future = parsed.filter(o => o.d.getTime() > now.getTime());
+            if (future.length) {
+              const no = future[0];
+              nextOpenBadge = ` <span class="badge-openat" title="다음 오픈: ${esc(fmtOpenAt(no.d, no.hasTime))}">▶ ${no.label ? esc(no.label) + ' ' : ''}${esc(fmtCountdown(no.d, now))}</span>`;
             }
           }
-          const detailSub = rec.detail
-            ? `<span class="cell-sub" title="${esc(rec.detail)}">${esc(rec.detail)}</span>` : '';
-          const srcTitle = (ev.sources && ev.sources.length)
-            ? '출처:\n' + ev.sources.join('\n') : '출처 미등록';
-          const cf = CONF_MAP[ev.confidence] || CONF_MAP.low;
-          const links = [];
-          if (al.homepage) links.push(`<a href="${esc(al.homepage)}" target="_blank" rel="noopener" title="${esc(al.airline)} 홈페이지">홈</a>`);
-          for (const s of (ev.sources || [])) {
-            links.push(`<a href="${esc(s)}" target="_blank" rel="noopener" title="${esc(s)}">📎</a>`);
-          }
-          if (nx.confirmed && cp && cp.source) links.push(`<a href="${esc(cp.source)}" target="_blank" rel="noopener" title="일정 확정 출처: ${esc(cp.source)}">✓</a>`);
-          rows.push(`
+        }
+        // 다음 예상 시기: 본문을 ' · ' 기준으로 여러 줄로 분리
+        const textParts = String(nx.text).split(' · ');
+        const nextCell = textParts.map((t, i) =>
+          i === 0
+            ? `<span class="line-main">${esc(t)}${confirmedBadge}${nextOpenBadge}${dday}</span>`
+            : `<span class="next-line">${esc(t)}</span>`
+        ).join('') + opensLines;
+        // 할인 수준: 요약 + 노선별 여러 줄
+        const dc = splitDiscount(ev.discount_text);
+        let discCell;
+        if (dc && (dc.head || dc.items.length)) {
+          discCell = (dc.head ? `<span class="disc-head">${esc(dc.head)}</span>` : '')
+            + dc.items.map(it => `<span class="disc-item">${esc(it)}</span>`).join('')
+            + (dc.note ? `<span class="disc-note">${esc(dc.note)}</span>` : '');
+        } else {
+          discCell = esc(ev.discount_text || '—');
+        }
+        const srcTitle = (ev.sources && ev.sources.length)
+          ? '출처:\n' + ev.sources.join('\n') : '출처 미등록';
+        const cf = CONF_MAP[ev.confidence] || CONF_MAP.low;
+        const links = [];
+        if (al.homepage) links.push(`<a href="${esc(al.homepage)}" target="_blank" rel="noopener" title="${esc(al.airline)} 홈페이지">홈</a>`);
+        for (const s of (ev.sources || [])) {
+          links.push(`<a href="${esc(s)}" target="_blank" rel="noopener" title="${esc(s)}">📎</a>`);
+        }
+        if (nx.confirmed && cp && cp.source) links.push(`<a href="${esc(cp.source)}" target="_blank" rel="noopener" title="일정 확정 출처: ${esc(cp.source)}">✓</a>`);
+        rows.push(`
             <tr${nx.confirmed ? ` class="confirmed${nx.status === 'open' ? ' status-open' : ''}"` : ''}>
               <td title="${esc(al.airline)}">${esc(al.airline)}<span class="cell-sub">${esc(al.iata || '')}</span></td>
               <td title="${esc(ev.notes || ev.name)}">${esc(ev.name)}</td>
               <td title="${esc(ev.cadence_text || '')}">${esc(ev.cadence_text || '—')}</td>
-              <td title="${esc(nx.text)}">${esc(nx.text)}${confirmedBadge}${nextOpenBadge}${dday}${opensSub}${detailSub}</td>
-              <td title="${esc(ev.discount_text || '')}">${esc(ev.discount_text || '—')}</td>
+              <td title="${esc(nx.text)}">${nextCell}</td>
+              <td title="${esc(ev.discount_text || '')}">${discCell}</td>
               <td title="${esc(ev.requirements || '')}">${esc(ev.requirements || '—')}</td>
               <td><span class="conf ${cf[0]}" title="${esc(srcTitle)}">${cf[1]}</span></td>
               <td>${links.join(' ') || '<span class="cell-sub">—</span>'}</td>
               <td style="text-align:center"><button class="x-btn" data-del-air="${esc(al.airline)}" data-del-evt="${esc(ev.name)}" title="이벤트 삭제">✕</button></td>
             </tr>
           `);
-        }
       }
       if (!rows.length) {
         tbody.innerHTML = emptyRow(9, state.airlines.length
