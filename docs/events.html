@@ -1071,7 +1071,8 @@
         const res = await fetch('data/holidays.json' + cacheBust);
         if (res.ok) {
           const h = await res.json();
-          holidaySet = new Set(Array.isArray(h) ? h : []);
+          // holidays.json: 구형식(날짜 배열) / 신형식({holidays, windows}) 모두 수용
+          holidaySet = new Set(Array.isArray(h) ? h : (h && Array.isArray(h.holidays)) ? h.holidays : []);
         }
       } catch (e) { /* 공휴일 표시는 선택 사항 */ }
 
