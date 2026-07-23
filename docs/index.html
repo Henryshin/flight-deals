@@ -260,6 +260,7 @@
     <span>Calibri · 11 · 표준 · 일반</span>
     <span class="rt-sep"></span>
     <button class="rt-btn" id="btn-collect" title="GitHub Actions 수집 워크플로 실행">▶ 지금 수집 실행</button>
+    <span class="rt-fresh" id="next-update" title="자동 수집은 4시간마다 실행됩니다"></span>
     <span class="rt-fresh" id="freshness"></span>
     <button class="rt-btn rt-right" id="btn-settings" title="GitHub 연결 설정">⚙️ 설정</button>
   </div>
@@ -1074,6 +1075,66 @@
       document.getElementById('generated-at').textContent = `Last sync: ${dt.toLocaleString('ko-KR')}`;
     }
 
+    // ===================== 다음 수집 카운트다운 / 진행중 표시 =====================
+    const SCHED_INTERVAL_H = 4;   // collect.yml cron "0 */4 * * *" -> UTC 0,4,8,12,16,20시
+    const TYPICAL_RUN_MIN = 18;   // 전체 수집 1회 대략 소요(분)
+    const collectRun = { running: false, startedMs: null, lastPoll: 0 };
+
+    function nextScheduledMs(nowMs) {
+      const d = new Date(nowMs);
+      const nextH = (Math.floor(d.getUTCHours() / SCHED_INTERVAL_H) + 1) * SCHED_INTERVAL_H;
+      const nd = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0));
+      nd.setUTCHours(nextH); // 24 이상이면 자동으로 다음날로 넘어감
+      return nd.getTime();
+    }
+    function fmtDur(ms) {
+      const m = Math.max(0, Math.round(ms / 60000));
+      if (m < 1) return '1분 미만';
+      if (m < 60) return `${m}분`;
+      return `${Math.floor(m / 60)}시간 ${m % 60}분`;
+    }
+    function renderNextUpdate() {
+      const el = document.getElementById('next-update');
+      if (!el) return;
+      const now = Date.now();
+      if (collectRun.running) {
+        const elapsed = collectRun.startedMs ? (now - collectRun.startedMs) : 0;
+        const remain = TYPICAL_RUN_MIN * 60000 - elapsed;
+        el.innerHTML = remain > 60000
+          ? `<span class="status-dot waiting"></span>🔄 수집 중 · 완료까지 약 ${fmtDur(remain)}`
+          : '<span class="status-dot waiting"></span>🔄 수집 중 · 거의 완료';
+        return;
+      }
+      el.innerHTML = `<span class="status-dot ok"></span>다음 자동 수집까지 약 ${fmtDur(nextScheduledMs(now) - now)}`;
+    }
+    async function pollCollectRunning() {
+      if (!getToken()) { collectRun.running = false; return; } // 토큰 없으면 진행중 감지 생략
+      const now = Date.now();
+      if (now - collectRun.lastPoll < 40000) return;
+      collectRun.lastPoll = now;
+      try {
+        const res = await fetch(`${GH_API}/repos/${GITHUB_REPO}/actions/workflows/collect.yml/runs?per_page=1`, { headers: ghHeaders() });
+        if (!res.ok) return;
+        const run = ((await res.json()).workflow_runs || [])[0];
+        if (run && (run.status === 'in_progress' || run.status === 'queued')) {
+          collectRun.running = true;
+          collectRun.startedMs = run.run_started_at ? new Date(run.run_started_at).getTime() : now;
+        } else {
+          collectRun.running = false;
+        }
+      } catch (e) {}
+    }
+    function markCollectStarted() { // 수집 트리거 직후 낙관적 표시
+      collectRun.running = true; collectRun.startedMs = Date.now(); collectRun.lastPoll = 0;
+      renderNextUpdate();
+    }
+    function startCountdown() {
+      renderNextUpdate();
+      setInterval(renderNextUpdate, 30000);
+      pollCollectRunning().then(renderNextUpdate);
+      setInterval(() => pollCollectRunning().then(renderNextUpdate), 45000);
+    }
+
     // ===================== 미니 달력 =====================
     let calYear, calMonth; // month: 0-11
 
@@ -1268,6 +1329,7 @@
         // 신규 노선은 등록 즉시 그 노선만 1회 크롤링 (전체 수집은 4시간 주기 유지).
         try {
           await dispatchCollect(`${o.iata}-${d.iata}`);
+          markCollectStarted();
           toast('새 노선 수집을 시작했습니다 · 몇 분 뒤 반영됩니다');
         } catch (e2) { handleGhError(e2); }
       } catch (e) {
@@ -1386,6 +1448,7 @@
       btn.disabled = true;
       try {
         await dispatchCollect();
+        markCollectStarted();
         toast('수집 실행 요청 완료 ✓ 몇 분 뒤 데이터가 갱신됩니다');
       } catch (e) {
         handleGhError(e);
@@ -1576,6 +1639,7 @@
       renderStatus();
       renderMeta();
       setInterval(renderMeta, 60000);
+      startCountdown();
     }
 
     init();

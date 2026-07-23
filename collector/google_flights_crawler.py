@@ -243,6 +243,58 @@ class PriceCrawlerSession:
             except Exception:
                 pass
 
+    def fetch_min_by_stops(
+        self,
+        origin: str,
+        destination: str,
+        depart: date,
+        return_: date,
+        timeout_ms=25000,
+        origin_city: str | None = None,
+        dest_city: str | None = None,
+        max_stops=None,
+    ):
+        """(노선/날짜)의 '경유수(stops)별 최저가'를 각각 반환.
+
+        한 번의 페이지 로드에서 모든 왕복편을 파싱해 경유수별로 최저가를 고른다.
+        반환: {0: {..dict..}, 1: {..dict..}, ...} — 경유수 미상 항목은 제외.
+        max_stops 가 None이 아니면 그 이하 경유수만 포함. 결과 없음/실패 시 {}.
+
+        같은 (o,d,날짜)라도 직항 모니터는 stops=0 최저가를, 경유 모니터는 stops<=1
+        최저가를 각각 필요로 하므로, 총액 최저가 1건만 저장하면 직항 모니터가 영원히
+        빈 채로 남는다. 이를 막기 위해 경유수 클래스별 최저가를 모두 저장한다.
+        """
+        url = build_booking_url(origin, destination, depart, return_, origin_city=origin_city, dest_city=dest_city)
+
+        try:
+            page = self._browser_context.new_page()
+        except Exception as e:
+            raise CrawlerSessionError(f"cannot open new page (browser dead?): {e}") from e
+
+        try:
+            page.goto(url, timeout=timeout_ms)
+            page.wait_for_timeout(6000)
+
+            best = {}
+            for li in page.query_selector_all("li"):
+                parsed = parse_itinerary(li.inner_text())
+                if parsed is None or parsed["stops"] is None:
+                    continue
+                s = parsed["stops"]
+                if max_stops is not None and s > max_stops:
+                    continue
+                if s not in best or parsed["price"] < best[s]["price"]:
+                    best[s] = parsed
+            return best
+        except Exception as e:
+            print(f"[google_flights_crawler] failed for {origin}->{destination} {depart}~{return_}: {e}")
+            return {}
+        finally:
+            try:
+                page.close()
+            except Exception:
+                pass
+
 
 def fetch_lowest_price(
     origin: str,

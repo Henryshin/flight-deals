@@ -74,19 +74,19 @@ def migrate_prices_file():
             writer.writerow(row + ["", "", ""])
 
 
-def fetch_price_with_retry(session, *args, **kwargs):
-    """개별 쿼리 수행. 브라우저 세션이 죽었으면 한 번 재시작해 재시도하고,
-    그래도 죽으면 해당 쿼리는 건너뜀(None)."""
+def fetch_by_stops_with_retry(session, *args, **kwargs):
+    """경유수별 최저가 dict를 수집. 세션이 죽으면 한 번 재시작해 재시도하고,
+    그래도 죽으면 해당 쿼리는 건너뜀({})."""
     try:
-        return session.fetch_lowest_price(*args, **kwargs)
+        return session.fetch_min_by_stops(*args, **kwargs)
     except CrawlerSessionError as e:
         print(f"  브라우저 세션 오류({e}) -> 세션 재시작 후 재시도")
         session.restart()
         try:
-            return session.fetch_lowest_price(*args, **kwargs)
+            return session.fetch_min_by_stops(*args, **kwargs)
         except CrawlerSessionError as e2:
             print(f"  세션 재시작 후에도 실패({e2}) -> 이번 쿼리 건너뜀")
-            return None
+            return {}
 
 
 def group_routes(routes):
@@ -169,23 +169,26 @@ def main():
         for origin, destination, origin_city, dest_city, min_nights, max_stops in specs:
             candidates = build_date_candidates(min_nights)
             for depart, return_, is_holiday in candidates:
-                result = fetch_price_with_retry(
+                by_stops = fetch_by_stops_with_retry(
                     session,
                     origin, destination, depart, return_,
                     origin_city=origin_city, dest_city=dest_city,
                     max_stops=max_stops,
                 )
-                if result is None:
+                if not by_stops:
                     print(f"  {origin}->{destination} {depart}~{return_}: 실패")
                     continue
-                print(f"  {origin}->{destination} {depart}~{return_}: {result['price']}원")
-                rows.append([
-                    origin, destination,
-                    depart.isoformat(), return_.isoformat(),
-                    result["price"], int(is_holiday), collected_at,
-                    result.get("dep_time", ""), result.get("arr_time", ""),
-                    result.get("stops", ""),
-                ])
+                # 경유수 클래스별 최저가를 각각 한 행씩 저장 (직항/경유 모니터가 각자 필터).
+                prices_txt = ", ".join(f"{s}경유 {it['price']}원" for s, it in sorted(by_stops.items()))
+                print(f"  {origin}->{destination} {depart}~{return_}: {prices_txt}")
+                for _stops, it in sorted(by_stops.items()):
+                    rows.append([
+                        origin, destination,
+                        depart.isoformat(), return_.isoformat(),
+                        it["price"], int(is_holiday), collected_at,
+                        it.get("dep_time", ""), it.get("arr_time", ""),
+                        it.get("stops", ""),
+                    ])
 
     if not rows:
         print("수집된 가격 없음")
