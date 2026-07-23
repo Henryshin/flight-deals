@@ -294,35 +294,6 @@
       <span style="color:#8a7a2f">※ 값은 수집 시점의 스냅샷이며, 실제 예약 시점에는 달라질 수 있습니다.</span>
     </div>
 
-    <h2>항목 등록</h2>
-    <div class="toolbar-row">
-      <div class="ac-wrap">
-        <input id="reg-origin" placeholder="출발지 (예: ic, 인천)" style="width:150px" autocomplete="off" />
-        <div class="ac-list" id="ac-origin" hidden></div>
-      </div>
-      <span class="muted-arrow">→</span>
-      <div class="ac-wrap">
-        <input id="reg-destination" placeholder="도착지 (예: 도쿄, NRT)" style="width:150px" autocomplete="off" />
-        <div class="ac-list" id="ac-destination" hidden></div>
-      </div>
-      <input id="reg-label" placeholder="라벨 (자동 입력)" style="width:170px" />
-      <input id="reg-country" placeholder="국가 (자동)" style="width:90px" />
-      <span id="reg-flag" style="font-size:16px"></span>
-      <select id="reg-nights" title="최소 여행 박수 (이 박수 이상 일정을 모두 수집)">
-        <option value="2">최소 2박</option>
-        <option value="3" selected>최소 3박</option>
-        <option value="4">최소 4박</option>
-        <option value="5">최소 5박</option>
-        <option value="6">최소 6박</option>
-      </select>
-      <select id="reg-stops" title="직항/경유 정책">
-        <option value="0">직항만</option>
-        <option value="1" selected>직항+경유1회까지</option>
-        <option value="null">상관없음</option>
-      </select>
-      <button id="btn-register">등록</button>
-    </div>
-
     <div class="chip-bar">
       <span class="chip-cap">필터</span>
       <div class="chip-groups">
@@ -372,6 +343,36 @@
         </thead>
         <tbody id="deals"></tbody>
       </table>
+    </div>
+
+    <h2>항목 등록</h2>
+    <div class="note" style="margin-bottom:10px">목록에 없는 노선을 직접 추가할 때만 사용합니다. (최초 1회 ⚙️ 설정에서 공유 암호/토큰 필요)</div>
+    <div class="toolbar-row">
+      <div class="ac-wrap">
+        <input id="reg-origin" placeholder="출발지 (예: ic, 인천)" style="width:150px" autocomplete="off" />
+        <div class="ac-list" id="ac-origin" hidden></div>
+      </div>
+      <span class="muted-arrow">→</span>
+      <div class="ac-wrap">
+        <input id="reg-destination" placeholder="도착지 (예: 도쿄, NRT)" style="width:150px" autocomplete="off" />
+        <div class="ac-list" id="ac-destination" hidden></div>
+      </div>
+      <input id="reg-label" placeholder="라벨 (자동 입력)" style="width:170px" />
+      <input id="reg-country" placeholder="국가 (자동)" style="width:90px" />
+      <span id="reg-flag" style="font-size:16px"></span>
+      <select id="reg-nights" title="최소 여행 박수 (이 박수 이상 일정을 모두 수집)">
+        <option value="2">최소 2박</option>
+        <option value="3" selected>최소 3박</option>
+        <option value="4">최소 4박</option>
+        <option value="5">최소 5박</option>
+        <option value="6">최소 6박</option>
+      </select>
+      <select id="reg-stops" title="직항/경유 정책">
+        <option value="0">직항만</option>
+        <option value="1" selected>직항+경유1회까지</option>
+        <option value="null">상관없음</option>
+      </select>
+      <button id="btn-register">등록</button>
     </div>
 
     <h2>모니터링 현황</h2>
