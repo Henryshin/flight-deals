@@ -730,7 +730,7 @@
       const rain = c.rain === '우기' ? '🌧 우기' : c.rain === '건기' ? '☀️ 건기' : '⛅ 보통';
       const title = `${month}월 평년(예년 평균) 기후 · ${rain} · 낮 최고 ${c.temp}°C · 습도 ${c.humidity}%\n` +
         `※ 현재/예보 날씨가 아니라 그 시기의 통상적인 날씨 수준입니다`;
-      return `<span class="cell-sub" title="${esc(title)}">평년 ${rain} · ${c.temp}°C · 습도 ${c.humidity}%</span>`;
+      return `<span class="cell-sub" title="${esc(title)}">${rain} · ${c.temp}°C · 습도 ${c.humidity}%</span>`;
     }
     // 노선 정책 서브라벨: "3박4일 · 직항+경유1" (누락 시 3박 / 경유1 가정)
     function routePolicyLabel(r) {
