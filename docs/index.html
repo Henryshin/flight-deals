@@ -131,8 +131,9 @@
   svg.spark { display: block; }
   .spark-none { color: var(--muted); }
 
-  /* calendar styled as a mini worksheet */
-  .calendar { background: var(--sheet); border: 1px solid var(--grid); width: 236px; flex-shrink: 0; }
+  /* calendar styled as a mini worksheet — 향후 3개월 한 번에 표시 */
+  .calendar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .cal-month { background: var(--sheet); border: 1px solid var(--grid); width: 228px; flex-shrink: 0; }
   .cal-head { display: flex; align-items: center; justify-content: space-between; background: #eaf3ee; border-bottom: 1px solid var(--grid); padding: 4px 8px; }
   .cal-head button { background: none; border: none; cursor: pointer; color: #14532d; font-size: 16px; padding: 0 4px; font-weight: 700; }
   .cal-head button:hover { color: var(--excel-green); }
@@ -258,7 +259,7 @@
   @media (max-width: 760px) {
     .sheet-wrap { padding: 12px 10px; }
     .topbar { flex-direction: column; }
-    .calendar { width: 100%; max-width: 300px; }
+    .calendar { justify-content: center; }
     #generated-at { padding: 0 10px 16px; }
   }
 </style>
@@ -315,7 +316,7 @@
     <h2>연휴 특가 보드</h2>
     <div class="note" style="margin-bottom:0; line-height:1.7">
       <b>📖 사용 메뉴얼</b><br />
-      1. 위에서 가고 싶은 <b>연휴</b>를 고르세요.<br />
+      1. 위에서 가고 싶은 <b>연휴</b>를 고르세요 (여러 개 선택 가능, <b>전체</b>면 모든 연휴 중 가장 싼 특가를 모아 보여줍니다).<br />
       2. 그 연휴의 <b>통상 시세보다 싼 항공권</b>(프로모션·숨은 특가)이 많이 남은 여행지가 위로 올라옵니다.<br />
       3. <b>특가율</b> = 그 연휴의 통상 시세 대비 현재 최저가가 얼마나 싼지입니다 (예: <b>통상가 −15%</b> = 평소 이 연휴 시세보다 15% 싼 표가 있음).<br />
       4. 연휴라 절대 가격은 비쌉니다. 이 보드는 <b>"같은 연휴에 어디가 특가가 떴나"</b>를 알려줍니다 (연휴끼리·여행지끼리 비교).<br />
@@ -574,7 +575,7 @@
       meta: null,
       matrix: null,        // 연휴 가성비 매트릭스 (docs/data/matrix.json)
       holidayWindows: [],  // 연휴 윈도우 목록 (holidays.json 신형식)
-      gvWindow: null,      // 가성비 보드에서 선택된 연휴 윈도우 id
+      gvWindows: new Set(), // 특가 보드에서 선택된 연휴 id들 (비어있으면 = 전체)
       selCountries: new Set(), // 1차 필터: 선택된 국가들 (다중선택)
       selCities: new Set(),    // 2차 필터: 선택된 지역(도착 도시)들 (다중선택, 선택 국가에 종속)
       selConcepts: new Set(),  // 컨셉 필터: 휴양/도시/대자연 및 조합 (다중선택, OR)
@@ -1016,25 +1017,33 @@
       }
       return state.holidayWindows || [];
     }
-    function gvCurrentWindow() {
+    // 보드에서 고려할 연휴 id 목록. 선택이 없으면(전체) 모든 연휴.
+    function gvActiveWindowIds() {
       const ws = gvWindows();
-      if (!ws.length) return null;
-      if (state.gvWindow) {
-        const w = ws.find(x => x.id === state.gvWindow);
-        if (w) return w;
-      }
-      return ws[0]; // 빌드가 오늘 이후 윈도우만 시작일 순으로 내보내므로 첫 항목 = 가장 가까운 연휴
+      if (state.gvWindows.size) return ws.filter(w => state.gvWindows.has(w.id)).map(w => w.id);
+      return ws.map(w => w.id);
+    }
+    function gvWindowLabel(id) {
+      const w = gvWindows().find(x => x.id === id);
+      if (!w) return '';
+      const m = /^\d{4}-(\d{2})-(\d{2})/.exec(id) || null;
+      const dateTxt = m ? `${parseInt(m[1], 10)}/${parseInt(m[2], 10)} ` : '';
+      return dateTxt + (w.label || '');
     }
     function renderGvWindows() {
       const el = document.getElementById('gv-windows');
       const ws = gvWindows();
       if (!ws.length) { el.innerHTML = '<span class="cell-sub">연휴 정보가 없습니다</span>'; return; }
-      const cur = gvCurrentWindow();
-      el.innerHTML = ws.map(w => {
+      // 맨 앞 '전체'(선택 비었을 때 활성) + 각 연휴(다중 선택 토글)
+      const allActive = state.gvWindows.size === 0;
+      let html = `<button class="chip${allActive ? ' active' : ''}" data-gvwin="__all__">전체</button>`;
+      html += ws.map(w => {
         const m = /^\d{4}-(\d{2})-(\d{2})/.exec(w.id) || null;
         const dateTxt = m ? `${parseInt(m[1], 10)}/${parseInt(m[2], 10)} ` : '';
-        return `<button class="chip${cur && w.id === cur.id ? ' active' : ''}" data-gvwin="${esc(w.id)}">${esc(dateTxt + (w.label || ''))}</button>`;
+        const on = state.gvWindows.has(w.id);
+        return `<button class="chip${on ? ' active' : ''}" data-gvwin="${esc(w.id)}">${esc(dateTxt + (w.label || ''))}</button>`;
       }).join('');
+      el.innerHTML = html;
     }
     // 이 연휴에 신뢰할 만한 특가율이 있으면 그 값, 아니면 null (tier C/무데이터).
     function gvDealVal(cell) {
@@ -1075,14 +1084,15 @@
     function renderGvBoard() {
       const tbody = document.getElementById('gv-board');
       renderGvWindows();
-      const w = gvCurrentWindow();
-      if (!w) {
+      const activeIds = gvActiveWindowIds();
+      if (!activeIds.length) {
         tbody.innerHTML = emptyRow(8, '연휴 정보가 없습니다. 다음 수집 후 다시 확인하세요.');
         return;
       }
-      const cells = (state.matrix && state.matrix.cells && state.matrix.cells[w.id]) || {};
+      const allCells = (state.matrix && state.matrix.cells) || {};
+      const multiWindow = activeIds.length > 1; // 전체/다중 선택이면 행에 어느 연휴인지 표시
 
-      // 노선(o-d) 그룹별로 가장 유리한 모니터 칸 하나를 고른다 (티어 -> 특가율 -> 최저가).
+      // 노선(o-d) 그룹별로, 선택된 연휴들 x 모니터 조합 중 가장 유리한 칸 하나를 고른다.
       const groupMap = new Map();
       for (const r of state.routesStatus) {
         if (!routePassesChip(r)) continue;
@@ -1093,17 +1103,19 @@
       const tierRank = t => ({ A: 0, B: 1, C: 2 }[t] != null ? { A: 0, B: 1, C: 2 }[t] : 3);
       const rows = [];
       for (const g of groupMap.values()) {
-        let best = null;
+        let best = null, bestWin = null;
         for (const mon of g.monitors) {
-          const c = cells[rk(mon)];
-          if (!c) continue;
-          if (!best) { best = c; continue; }
-          // 티어 좋은 것 -> 특가율 큰 것 -> 최저가 싼 것 순으로 대표 칸 선택
-          const a = [tierRank(c.tier), -(gvDealVal(c) == null ? -1 : gvDealVal(c)), c.min_price];
-          const b = [tierRank(best.tier), -(gvDealVal(best) == null ? -1 : gvDealVal(best)), best.min_price];
-          if (a[0] < b[0] || (a[0] === b[0] && (a[1] < b[1] || (a[1] === b[1] && a[2] < b[2])))) best = c;
+          for (const wid of activeIds) {
+            const c = (allCells[wid] || {})[rk(mon)];
+            if (!c) continue;
+            if (!best) { best = c; bestWin = wid; continue; }
+            // 티어 좋은 것 -> 특가율 큰 것 -> 최저가 싼 것 순으로 대표 칸 선택
+            const a = [tierRank(c.tier), -(gvDealVal(c) == null ? -1 : gvDealVal(c)), c.min_price];
+            const b = [tierRank(best.tier), -(gvDealVal(best) == null ? -1 : gvDealVal(best)), best.min_price];
+            if (a[0] < b[0] || (a[0] === b[0] && (a[1] < b[1] || (a[1] === b[1] && a[2] < b[2])))) { best = c; bestWin = wid; }
+          }
         }
-        rows.push({ route: g.route, monitors: g.monitors, cell: best });
+        rows.push({ route: g.route, monitors: g.monitors, cell: best, win: bestWin });
       }
       if (!rows.length) {
         tbody.innerHTML = emptyRow(8, '조건에 맞는 노선이 없습니다. 필터를 조정해 보세요.');
@@ -1148,13 +1160,15 @@
         const b = r.cell.best;
         const period = `${fmtDateYY(b.depart_date, b.depart_weekday)} ~ ${fmtDateYY(b.return_date, b.return_weekday)}`;
         const sched = `${b.nights}박 ${b.days}일${tripStrip(b.depart_date, b.return_date)}`;
+        // 전체/다중 선택이면 이 특가가 어느 연휴 것인지 표시
+        const winTag = multiWindow && r.win ? `<span class="badge-hol">${esc(gvWindowLabel(r.win))}</span> ` : '';
         return `
           <tr>
             <td class="gv-rank">${rank}</td>
             <td>${nameCell}</td>
             <td class="num">${fmt(r.cell.min_price)}</td>
             <td>${gvDealBadge(r.cell)}</td>
-            <td class="period-cell">${period}<span class="cell-sub">${sched}</span>${climateBadge(r.route.destination, b.depart_date)}</td>
+            <td class="period-cell">${winTag}${period}<span class="cell-sub">${sched}</span>${climateBadge(r.route.destination, b.depart_date)}</td>
             <td>${stopsCell(b.stops, b.airline)}</td>
             <td class="num">${b.leave_days}개</td>
             <td><a href="${esc(b.booking_url)}" target="_blank" rel="noopener">예약 확인</a>
@@ -1490,18 +1504,18 @@
     // ===================== 미니 달력 =====================
     let calYear, calMonth; // month: 0-11
 
-    function renderCalendar() {
-      const el = document.getElementById('calendar');
-      const first = new Date(calYear, calMonth, 1);
+    // 한 달치 미니 워크시트 블록 HTML
+    function monthBlock(year, month) {
+      const first = new Date(year, month, 1);
       const startDow = (first.getDay() + 6) % 7; // 월요일 시작
-      const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
       const today = new Date();
-      const isCurrentMonth = today.getFullYear() === calYear && today.getMonth() === calMonth;
+      const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
 
       let cells = '';
       for (let i = 0; i < startDow; i++) cells += '<div class="day blank"></div>';
       for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${calYear}-${pad(calMonth + 1)}-${pad(d)}`;
+        const dateStr = `${year}-${pad(month + 1)}-${pad(d)}`;
         const dow = (startDow + d - 1) % 7;
         const classes = ['day'];
         if (dow === 5) classes.push('sat');
@@ -1510,28 +1524,27 @@
         if (isCurrentMonth && d === today.getDate()) classes.push('today');
         cells += `<div class="${classes.join(' ')}">${d}</div>`;
       }
-
-      el.innerHTML = `
-        <div class="cal-head">
-          <button onclick="shiftMonth(-1)">‹</button>
-          <div class="cal-title">${calYear}.${pad(calMonth + 1)}</div>
-          <button onclick="shiftMonth(1)">›</button>
-        </div>
-        <div class="cal-grid">
-          <div class="dow">월</div><div class="dow">화</div><div class="dow">수</div>
-          <div class="dow">목</div><div class="dow">금</div><div class="dow">토</div><div class="dow">일</div>
-          ${cells}
+      return `
+        <div class="cal-month">
+          <div class="cal-head"><div class="cal-title">${year}.${pad(month + 1)}</div></div>
+          <div class="cal-grid">
+            <div class="dow">월</div><div class="dow">화</div><div class="dow">수</div>
+            <div class="dow">목</div><div class="dow">금</div><div class="dow">토</div><div class="dow">일</div>
+            ${cells}
+          </div>
         </div>
       `;
     }
 
-    function shiftMonth(delta) {
-      calMonth += delta;
-      if (calMonth < 0) { calMonth = 11; calYear -= 1; }
-      if (calMonth > 11) { calMonth = 0; calYear += 1; }
-      renderCalendar();
+    // 이번 달부터 향후 3개월을 한 번에 표시
+    function renderCalendar() {
+      let html = '';
+      for (let i = 0; i < 3; i++) {
+        const d = new Date(calYear, calMonth + i, 1);
+        html += monthBlock(d.getFullYear(), d.getMonth());
+      }
+      document.getElementById('calendar').innerHTML = html;
     }
-    window.shiftMonth = shiftMonth;
 
     // ===================== 공항 자동완성 =====================
     const regSel = { origin: null, destination: null };
@@ -1993,7 +2006,14 @@
         const copyBtn = e.target.closest('[data-copy]');
         if (copyBtn) { copyText(copyBtn.getAttribute('data-copy')); return; }
         const gvBtn = e.target.closest('[data-gvwin]');
-        if (gvBtn) { state.gvWindow = gvBtn.getAttribute('data-gvwin'); renderGvBoard(); return; }
+        if (gvBtn) {
+          const id = gvBtn.getAttribute('data-gvwin');
+          if (id === '__all__') state.gvWindows.clear();               // 전체 = 선택 비움
+          else if (state.gvWindows.has(id)) state.gvWindows.delete(id); // 토글 해제
+          else state.gvWindows.add(id);                                 // 토글 선택
+          renderGvBoard();
+          return;
+        }
         const favBtn = e.target.closest('[data-fav]');
         if (favBtn) { toggleFav(favBtn.getAttribute('data-fav')); return; }
         const delBtn = e.target.closest('[data-del]');
