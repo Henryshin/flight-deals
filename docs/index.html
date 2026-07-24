@@ -131,9 +131,14 @@
   svg.spark { display: block; }
   .spark-none { color: var(--muted); }
 
-  /* calendar styled as a mini worksheet — 향후 3개월 한 번에 표시 */
-  .calendar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  /* calendar styled as a mini worksheet — 3개월 한 번에 표시(항상 한 줄, 넘치면 가로 스크롤) */
+  .calendar { display: flex; gap: 8px; flex-wrap: nowrap; justify-content: flex-end; overflow-x: auto; }
   .cal-month { background: var(--sheet); border: 1px solid var(--grid); width: 228px; flex-shrink: 0; }
+  .cal-select {
+    font-family: inherit; font-size: 15.5px; font-weight: 700; color: #14532d;
+    background: #eaf3ee; border: 1px solid #c3ddce; border-radius: 2px; padding: 1px 4px; cursor: pointer;
+  }
+  .cal-select:hover { border-color: var(--excel-green); }
   .cal-head { display: flex; align-items: center; justify-content: space-between; background: #eaf3ee; border-bottom: 1px solid var(--grid); padding: 4px 8px; }
   .cal-head button { background: none; border: none; cursor: pointer; color: #14532d; font-size: 16px; padding: 0 4px; font-weight: 700; }
   .cal-head button:hover { color: var(--excel-green); }
@@ -256,10 +261,14 @@
   .toast.out { opacity: 0; transition: opacity .4s; }
   @keyframes toast-in { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
 
+  /* 제목 옆에 3개월(약 700px)이 다 안 들어가는 폭에서는 달력을 아래 줄로 내려
+     전체 너비를 확보 -> 3개월이 한 줄로 유지되도록 한다. */
+  @media (max-width: 1080px) {
+    .topbar { flex-direction: column; }
+    .calendar { justify-content: flex-start; }
+  }
   @media (max-width: 760px) {
     .sheet-wrap { padding: 12px 10px; }
-    .topbar { flex-direction: column; }
-    .calendar { justify-content: center; }
     #generated-at { padding: 0 10px 16px; }
   }
 </style>
@@ -1504,8 +1513,21 @@
     // ===================== 미니 달력 =====================
     let calYear, calMonth; // month: 0-11
 
-    // 한 달치 미니 워크시트 블록 HTML
-    function monthBlock(year, month) {
+    // 가운데 달 선택 드롭다운 옵션: 이번 달 +1 ~ +12 (과거 달은 왼쪽 블록으로만 보임)
+    function monthOptions(selY, selM) {
+      const today = new Date();
+      let opts = '';
+      for (let i = 1; i <= 12; i++) {
+        const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
+        const y = d.getFullYear(), m = d.getMonth();
+        const sel = (y === selY && m === selM) ? ' selected' : '';
+        opts += `<option value="${y}-${pad(m + 1)}"${sel}>${y}.${pad(m + 1)}</option>`;
+      }
+      return opts;
+    }
+
+    // 한 달치 미니 워크시트 블록 HTML (isCenter면 헤더에 월 선택 드롭다운)
+    function monthBlock(year, month, isCenter) {
       const first = new Date(year, month, 1);
       const startDow = (first.getDay() + 6) % 7; // 월요일 시작
       const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -1524,9 +1546,12 @@
         if (isCurrentMonth && d === today.getDate()) classes.push('today');
         cells += `<div class="${classes.join(' ')}">${d}</div>`;
       }
+      const head = isCenter
+        ? `<div class="cal-head"><select id="cal-center-select" class="cal-select" title="가운데 달 선택 — 바꾸면 3개월이 함께 이동합니다">${monthOptions(year, month)}</select></div>`
+        : `<div class="cal-head"><div class="cal-title">${year}.${pad(month + 1)}</div></div>`;
       return `
         <div class="cal-month">
-          <div class="cal-head"><div class="cal-title">${year}.${pad(month + 1)}</div></div>
+          ${head}
           <div class="cal-grid">
             <div class="dow">월</div><div class="dow">화</div><div class="dow">수</div>
             <div class="dow">목</div><div class="dow">금</div><div class="dow">토</div><div class="dow">일</div>
@@ -1536,12 +1561,12 @@
       `;
     }
 
-    // 이번 달부터 향후 3개월을 한 번에 표시
+    // calYear/calMonth = 가운데 달. [가운데-1, 가운데, 가운데+1] 3개월을 표시.
     function renderCalendar() {
       let html = '';
-      for (let i = 0; i < 3; i++) {
+      for (let i = -1; i <= 1; i++) {
         const d = new Date(calYear, calMonth + i, 1);
-        html += monthBlock(d.getFullYear(), d.getMonth());
+        html += monthBlock(d.getFullYear(), d.getMonth(), i === 0);
       }
       document.getElementById('calendar').innerHTML = html;
     }
@@ -2025,7 +2050,14 @@
       });
       document.addEventListener('change', e => {
         const ti = e.target.closest('[data-target-key]');
-        if (ti) onTargetChange(ti);
+        if (ti) { onTargetChange(ti); return; }
+        const calSel = e.target.closest('#cal-center-select');
+        if (calSel) {
+          const parts = calSel.value.split('-');
+          calYear = parseInt(parts[0], 10);
+          calMonth = parseInt(parts[1], 10) - 1;
+          renderCalendar();
+        }
       });
       document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
@@ -2038,8 +2070,10 @@
     async function init() {
       wireEvents();
       const today = new Date();
-      calYear = today.getFullYear();
-      calMonth = today.getMonth();
+      // 가운데 달 = 이번 달 +1 -> 기본 표시는 [이번 달, +1, +2] (과거 달 없음)
+      const calCenter = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+      calYear = calCenter.getFullYear();
+      calMonth = calCenter.getMonth();
 
       const [deals, routesStatus, history, meta, holidays, matrix] = await Promise.all([
         fetchJson('data/deals.json', []),
