@@ -192,7 +192,7 @@
   .chip-groups { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
   .chip-line { display: flex; align-items: flex-start; gap: 8px; }
   .chip-line .chip-sub { color: var(--muted); font-size: 15px; padding-top: 3px; min-width: 28px; flex-shrink: 0; }
-  #chip-country, #chip-region { display: flex; flex-wrap: wrap; gap: 6px; }
+  #chip-country, #chip-region, #chip-concept, #gv-windows { display: flex; flex-wrap: wrap; gap: 6px; }
   #chip-region-line { border-top: 1px dashed var(--grid); padding-top: 6px; }
   .chip {
     font-family: inherit; font-size: 15px; padding: 2px 9px; cursor: pointer;
@@ -332,10 +332,16 @@
       5. 통상 시세를 잡을 데이터가 쌓이기 전에는 <b>수집 중</b>으로 표시되며, 이때는 최저가만 참고하세요.<br />
       6. 일정 옆 날씨(🌧/☀️/⛅)는 <b>해당 기간(출발월)의 평균 날씨</b>입니다.
     </div>
+    <div class="chip-bar">
+      <span class="chip-cap">연휴</span>
+      <div class="chip-groups">
+        <div class="chip-line">
+          <div id="gv-windows"></div>
+        </div>
+      </div>
+    </div>
     <div class="toolbar-row">
-      <label>연휴</label>
-      <div id="gv-windows" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-      <label for="gv-sort" style="margin-left:12px">정렬</label>
+      <label for="gv-sort">정렬</label>
       <select id="gv-sort">
         <option value="deal">특가율 높은순</option>
         <option value="price">최저가순</option>
