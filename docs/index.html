@@ -198,7 +198,7 @@
     box-shadow: inset 0 1px 2px rgba(0,0,0,0.18);
   }
 
-  /* 연휴 가성비 보드: 할증률 배지 (평시 대비 낮을수록 초록) */
+  /* 연휴 특가 보드: 특가율 배지 (통상가 대비 많이 쌀수록 초록) */
   .gv-badge { display: inline-block; padding: 1px 7px; border-radius: 2px; font-weight: 700; font-size: 12.5px; white-space: nowrap; }
   .gv-r0 { background: #e6f4ea; color: #1e7e34; border: 1px solid #b7dfc2; }
   .gv-r1 { background: #fff8e1; color: #8a6d00; border: 1px solid #e8d98a; }
@@ -323,19 +323,22 @@
       </div>
     </div>
 
-    <h2>연휴 가성비 보드</h2>
-    <div class="note" style="margin-bottom:0">
-      연휴를 고르면 <b>평시(비연휴) 최저가 대비 할증률</b>이 낮은 순으로 여행지를 정렬합니다.
-      연휴엔 어디든 비싸지지만, <b>상대적으로 덜 비싸지는 곳</b>이 위로 올라옵니다.
-      평시 기준가는 하루 1회 자동 수집되며, 쌓이기 전에는 <b>기준가 수집 중</b>으로 표시됩니다.
-      일정 옆 날씨(🌧/☀️/⛅)는 <b>해당 기간(출발월)의 평균 날씨</b>입니다.
+    <h2>연휴 특가 보드</h2>
+    <div class="note" style="margin-bottom:0; line-height:1.7">
+      <b>📖 사용 메뉴얼</b><br />
+      1. 위에서 가고 싶은 <b>연휴</b>를 고르세요.<br />
+      2. 그 연휴의 <b>통상 시세보다 싼 항공권</b>(프로모션·숨은 특가)이 많이 남은 여행지가 위로 올라옵니다.<br />
+      3. <b>특가율</b> = 그 연휴의 통상 시세 대비 현재 최저가가 얼마나 싼지입니다 (예: <b>통상가 −15%</b> = 평소 이 연휴 시세보다 15% 싼 표가 있음).<br />
+      4. 연휴라 절대 가격은 비쌉니다. 이 보드는 <b>"같은 연휴에 어디가 특가가 떴나"</b>를 알려줍니다 (연휴끼리·여행지끼리 비교).<br />
+      5. 통상 시세를 잡을 데이터가 쌓이기 전에는 <b>수집 중</b>으로 표시되며, 이때는 최저가만 참고하세요.<br />
+      6. 일정 옆 날씨(🌧/☀️/⛅)는 <b>해당 기간(출발월)의 평균 날씨</b>입니다.
     </div>
     <div class="toolbar-row">
       <label>연휴</label>
       <div id="gv-windows" style="display:flex;gap:6px;flex-wrap:wrap"></div>
       <label for="gv-sort" style="margin-left:12px">정렬</label>
       <select id="gv-sort">
-        <option value="ratio">할증률 낮은순</option>
+        <option value="deal">특가율 높은순</option>
         <option value="price">최저가순</option>
         <option value="eff">연차 효율순</option>
       </select>
@@ -347,7 +350,7 @@
             <th style="width:5%">순위</th>
             <th style="width:17%">목적지</th>
             <th style="width:11%">최저가</th>
-            <th style="width:13%">할증률(평시 대비)</th>
+            <th style="width:13%">특가율(통상가 대비)</th>
             <th style="width:27%">추천 일정</th>
             <th style="width:9%">직항/경유</th>
             <th style="width:7%">연차</th>
@@ -1039,19 +1042,28 @@
         return `<button class="chip${cur && w.id === cur.id ? ' active' : ''}" data-gvwin="${esc(w.id)}">${esc(dateTxt + (w.label || ''))}</button>`;
       }).join('');
     }
-    // 할증률 배지: ratio = 연휴 최저가 / 평시 기준가. 낮을수록 '연휴 프리미엄'이 적음.
-    function gvRatioBadge(cell) {
+    // 이 연휴에 신뢰할 만한 특가율이 있으면 그 값, 아니면 null (tier C/무데이터).
+    function gvDealVal(cell) {
+      return (cell && cell.tier !== 'C' && cell.deal_pct != null) ? cell.deal_pct : null;
+    }
+    // 특가 배지: deal_pct = (그 연휴 통상 시세 - 현재 최저가) / 통상 시세.
+    // 클수록 통상 시세보다 싼 표(프로모션/숨은 특가)가 많이 남아있다는 뜻 -> 초록.
+    function gvDealBadge(cell) {
       if (!cell) return '<span class="gv-badge gv-na">수집 대기</span>';
-      if (cell.ratio == null) {
-        return '<span class="gv-badge gv-na" title="평시(비연휴) 기준가가 아직 없습니다 — 하루 1회 자동 수집됩니다">기준가 수집 중</span>';
+      if (cell.tier === 'C') {
+        return `<span class="gv-badge gv-na" title="이 연휴의 통상 시세를 잡을 표본이 아직 부족합니다 (관측 ${cell.n_obs || 0}) — 왼쪽 최저가만 참고하세요">수집 중</span>`;
       }
-      const pct = (cell.ratio - 1) * 100;
-      const cls = pct <= 10 ? 'gv-r0' : pct <= 30 ? 'gv-r1' : pct <= 60 ? 'gv-r2' : 'gv-r3';
-      const txt = `평시 ${pct >= 0 ? '+' : ''}${pct.toFixed(0)}%`;
-      const dim = cell.tier === 'B' ? ' style="opacity:.6"' : '';
-      const title = `평시 기준가 ${fmt(cell.baseline)}원 · 표본 ${cell.n_baseline}` +
-        (cell.baseline_loose ? ' (박수 불일치 폴백)' : '') +
-        (cell.tier === 'B' ? ' · 표본 부족 — 참고용' : '');
+      const d = cell.deal_pct || 0;
+      const cls = d >= 12 ? 'gv-r0' : d >= 5 ? 'gv-r1' : 'gv-na';
+      const txt = d >= 5 ? `통상가 −${d.toFixed(0)}%` : '통상가 수준';
+      const dim = cell.tier === 'B' ? ' style="opacity:.65"' : '';
+      let title = `이 연휴 통상 시세 약 ${fmt(cell.typical)}원 · 현재 최저가 ${fmt(cell.min_price)}원`
+        + ` (통상가 대비 −${d.toFixed(0)}%) · 관측 ${cell.n_obs}건`;
+      if (cell.offpeak_ratio != null) {
+        const op = Math.round((cell.offpeak_ratio - 1) * 100);
+        title += `\n참고: 평시(비연휴) 대비 ${op >= 0 ? '+' : ''}${op}% (평시 약 ${fmt(cell.offpeak_baseline)}원)`;
+      }
+      if (cell.tier === 'B') title += '\n※ 표본이 적어 참고용입니다';
       return `<span class="gv-badge ${cls}"${dim} title="${esc(title)}">${esc(txt)}</span>`;
     }
     // 이 연휴에 데이터가 없는 노선의 사유 (막연한 '—' 대신 이유를 보여준다)
@@ -1076,7 +1088,7 @@
       }
       const cells = (state.matrix && state.matrix.cells && state.matrix.cells[w.id]) || {};
 
-      // 노선(o-d) 그룹별로 가장 유리한 모니터 칸 하나를 고른다 (티어 -> 할증률 -> 최저가).
+      // 노선(o-d) 그룹별로 가장 유리한 모니터 칸 하나를 고른다 (티어 -> 특가율 -> 최저가).
       const groupMap = new Map();
       for (const r of state.routesStatus) {
         if (!routePassesChip(r)) continue;
@@ -1092,8 +1104,9 @@
           const c = cells[rk(mon)];
           if (!c) continue;
           if (!best) { best = c; continue; }
-          const a = [tierRank(c.tier), c.ratio == null ? Infinity : c.ratio, c.min_price];
-          const b = [tierRank(best.tier), best.ratio == null ? Infinity : best.ratio, best.min_price];
+          // 티어 좋은 것 -> 특가율 큰 것 -> 최저가 싼 것 순으로 대표 칸 선택
+          const a = [tierRank(c.tier), -(gvDealVal(c) == null ? -1 : gvDealVal(c)), c.min_price];
+          const b = [tierRank(best.tier), -(gvDealVal(best) == null ? -1 : gvDealVal(best)), best.min_price];
           if (a[0] < b[0] || (a[0] === b[0] && (a[1] < b[1] || (a[1] === b[1] && a[2] < b[2])))) best = c;
         }
         rows.push({ route: g.route, monitors: g.monitors, cell: best });
@@ -1103,10 +1116,11 @@
         return;
       }
 
-      const ratioCmp = (a, b) => {
-        const ar = a.cell && a.cell.ratio != null ? a.cell.ratio : Infinity;
-        const br = b.cell && b.cell.ratio != null ? b.cell.ratio : Infinity;
-        if (ar !== br) return ar - br;
+      // 특가율 높은순: 통상 시세보다 많이 싼 표가 남은 여행지를 위로. 신뢰불가(수집 중)는 뒤로.
+      const dealCmp = (a, b) => {
+        const ad = gvDealVal(a.cell), bd = gvDealVal(b.cell);
+        const av = ad == null ? -Infinity : ad, bv = bd == null ? -Infinity : bd;
+        if (av !== bv) return bv - av;
         const ap = a.cell ? a.cell.min_price : Infinity;
         const bp = b.cell ? b.cell.min_price : Infinity;
         return ap - bp;
@@ -1114,7 +1128,7 @@
       const priceCmp = (a, b) => {
         const ap = a.cell ? a.cell.min_price : Infinity;
         const bp = b.cell ? b.cell.min_price : Infinity;
-        return (ap - bp) || ratioCmp(a, b);
+        return (ap - bp) || dealCmp(a, b);
       };
       // 연차 효율 = 최저가 / (연차 없이 얻는 여행일 수). 낮을수록 '공짜 하루'가 싸다.
       const gvEff = r => {
@@ -1125,7 +1139,7 @@
       };
       const effCmp = (a, b) => (gvEff(a) - gvEff(b)) || priceCmp(a, b);
       const sortKey = document.getElementById('gv-sort').value;
-      rows.sort(sortKey === 'price' ? priceCmp : sortKey === 'eff' ? effCmp : ratioCmp);
+      rows.sort(sortKey === 'price' ? priceCmp : sortKey === 'eff' ? effCmp : dealCmp);
 
       let rank = 0;
       tbody.innerHTML = rows.map(r => {
@@ -1145,7 +1159,7 @@
             <td class="gv-rank">${rank}</td>
             <td>${nameCell}</td>
             <td class="num">${fmt(r.cell.min_price)}</td>
-            <td>${gvRatioBadge(r.cell)}</td>
+            <td>${gvDealBadge(r.cell)}</td>
             <td class="period-cell">${period}<span class="cell-sub">${sched}</span>${climateBadge(r.route.destination, b.depart_date)}</td>
             <td>${stopsCell(b.stops)}</td>
             <td class="num">${b.leave_days}개</td>

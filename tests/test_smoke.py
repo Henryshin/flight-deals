@@ -86,25 +86,32 @@ def test_baseline_avoids_holidays():
             assert not near, f"평시 후보 {depart}~{return_} 가 연휴 {w['id']} 와 근접"
 
 
-def test_build_dedup_and_ratio():
+def test_build_matrix_deal():
+    """특가율 = 그 연휴 통상 시세(중앙값) 대비 현재 최저가가 얼마나 싼지."""
     from scripts.build_dashboard_data import build_matrix_cell
 
     w = {"id": "2026-09-24", "start": date(2026, 9, 23), "end": date(2026, 9, 28)}
     today = date(2026, 7, 23)
     route = {"origin": "ICN", "destination": "NRT"}
+    D1, D2 = "2026-07-21T01:00:00+00:00", "2026-07-22T01:00:00+00:00"
     mk = lambda dd, rd, price, hol, ts, stops="0": {
         "origin": "ICN", "destination": "NRT", "depart_date": dd, "return_date": rd,
         "price": price, "is_holiday_window": hol, "collected_at": ts,
         "dep_time": "", "arr_time": "", "stops": stops, "window_id": "2026-09-24" if hol else "",
     }
+    # 3개 날짜쌍 x 2일 관측 = 6건. 각 쌍의 최신(D2) 최저가 = 500/460/510k, 최저 460k.
     holiday_rows = [
-        mk("2026-09-23", "2026-09-26", 500000, True, "2026-07-22T01:00:00+00:00"),
-        mk("2026-09-24", "2026-09-27", 460000, True, "2026-07-22T01:00:00+00:00"),
+        mk("2026-09-23", "2026-09-26", 550000, True, D1),
+        mk("2026-09-23", "2026-09-26", 500000, True, D2),
+        mk("2026-09-24", "2026-09-27", 480000, True, D1),
+        mk("2026-09-24", "2026-09-27", 460000, True, D2),
+        mk("2026-09-25", "2026-09-28", 520000, True, D1),
+        mk("2026-09-25", "2026-09-28", 510000, True, D2),
     ]
     offpeak = [
-        mk("2026-08-25", "2026-08-28", 400000, False, "2026-07-22T02:00:00+00:00"),
-        mk("2026-10-20", "2026-10-23", 380000, False, "2026-07-22T02:00:00+00:00"),
-        mk("2026-11-03", "2026-11-06", 420000, False, "2026-07-22T02:00:00+00:00"),
+        mk("2026-08-25", "2026-08-28", 400000, False, D2),
+        mk("2026-10-20", "2026-10-23", 380000, False, D2),
+        mk("2026-11-03", "2026-11-06", 420000, False, D2),
     ]
     cell = build_matrix_cell(
         holiday_rows, offpeak, 1, w, route, today,
@@ -112,17 +119,18 @@ def test_build_dedup_and_ratio():
     )
     assert cell is not None
     assert cell["min_price"] == 460000
-    assert cell["baseline"] == 400000  # 중앙값
-    assert abs(cell["ratio"] - 1.15) < 0.001
-    assert cell["tier"] == "A"  # 기준가 3개 + 윈도우 날짜쌍 2개
-    assert cell["best"]["leave_days"] >= 0
+    assert cell["typical"] == 505000        # median([460,480,500,510,520,550]k)
+    assert abs(cell["deal_pct"] - 8.9) < 0.1  # (505-460)/505
+    assert cell["tier"] == "A"               # 관측 6건, 날짜쌍 3개
+    assert cell["offpeak_baseline"] == 400000  # 참고용 평시 중앙값
+    assert abs(cell["offpeak_ratio"] - 1.15) < 0.001
 
-    # 기준가가 없으면 tier C, ratio 없음
+    # 관측이 적으면(1건) tier C — 통상 시세 신뢰 불가
     cell_c = build_matrix_cell(
-        holiday_rows, [], 1, w, route, today,
+        [mk("2026-09-23", "2026-09-26", 500000, True, D2)], [], 1, w, route, today,
         today - timedelta(days=30), today - timedelta(days=60),
     )
-    assert cell_c["tier"] == "C" and cell_c["ratio"] is None
+    assert cell_c["tier"] == "C" and cell_c["min_price"] == 500000
 
 
 def test_group_routes_nights_variants():
