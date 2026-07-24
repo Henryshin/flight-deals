@@ -23,7 +23,7 @@ concurrency:
 jobs:
   collect:
     runs-on: ubuntu-latest
-    timeout-minutes: 210
+    timeout-minutes: 280
     steps:
       - uses: actions/checkout@v4
 
@@ -42,7 +42,7 @@ jobs:
           COLLECT_ONLY: ${{ github.event.inputs.only }}
           # 이 시간(분)을 넘기면 새 쿼리를 시작하지 않고 종료. 수집 순서가
           # stale-first 라 이번에 잘린 노선은 다음 런에서 먼저 수집된다.
-          TIME_BUDGET_MIN: "170"
+          TIME_BUDGET_MIN: "230"
 
       # 대시보드 JSON 빌드는 별도 워크플로(build.yml)가 data/** push 를 받아 수행.
       # 여기서 docs/data 를 같이 커밋하면 (수십 분 크롤 동안 먼저 들어온 커밋과)

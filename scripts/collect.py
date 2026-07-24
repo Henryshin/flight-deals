@@ -31,8 +31,9 @@ STATUS_FILE = ROOT / "data" / "collect_status.json"
 DEFAULT_TRIP_LENGTH_DAYS = 3
 
 # 노선당 연휴 날짜쌍 후보 상한. 윈도우 간 라운드로빈으로 뽑으므로 상한에 걸려도
-# 모든 연휴가 최소 몇 개씩은 커버된다. (38개 모니터 x 후보 12 = 런당 ~300 페이지로드)
-MAX_PAIRS_PER_ROUTE = int(os.environ.get("MAX_PAIRS_PER_ROUTE", "12"))
+# 모든 연휴가 최소 몇 개씩은 커버된다. 18 = 연휴 6개에 ~3쌍씩 -> 통상 시세(중앙값)를
+# 잡을 표본이 하루 만에 tier B, 이튿날 tier A 로 차오른다. (45 모니터 x ~18 = 런당 ~810 로드)
+MAX_PAIRS_PER_ROUTE = int(os.environ.get("MAX_PAIRS_PER_ROUTE", "18"))
 # 이 시간(분)을 넘기면 새 쿼리를 시작하지 않음. 4시간 크론에 맞춘 기본값.
 TIME_BUDGET_MIN = float(os.environ.get("TIME_BUDGET_MIN", "170"))
 # 평시(비연휴) 기준가 후보는 하루 1회만 수집 (연휴 가성비 지표의 분모).
