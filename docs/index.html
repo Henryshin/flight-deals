@@ -1105,7 +1105,6 @@
         return;
       }
       const allCells = (state.matrix && state.matrix.cells) || {};
-      const multiWindow = activeIds.length > 1; // 전체/다중 선택이면 행에 어느 연휴인지 표시
 
       // 노선(o-d) 그룹별로, 선택된 연휴들 x 모니터 조합 중 가장 유리한 칸 하나를 고른다.
       const groupMap = new Map();
@@ -1175,15 +1174,13 @@
         const b = r.cell.best;
         const period = `${fmtDateYY(b.depart_date, b.depart_weekday)} ~ ${fmtDateYY(b.return_date, b.return_weekday)}`;
         const sched = `${b.nights}박 ${b.days}일${tripStrip(b.depart_date, b.return_date)}`;
-        // 전체/다중 선택이면 이 특가가 어느 연휴 것인지 표시
-        const winTag = multiWindow && r.win ? `<span class="badge-hol">${esc(gvWindowLabel(r.win))}</span> ` : '';
         return `
           <tr>
             <td class="gv-rank">${rank}</td>
             <td>${nameCell}</td>
             <td class="num">${fmt(r.cell.min_price)}</td>
             <td>${gvDealBadge(r.cell)}</td>
-            <td class="period-cell">${winTag}${period}<span class="cell-sub">${sched}</span>${climateBadge(r.route.destination, b.depart_date)}</td>
+            <td class="period-cell">${period}<span class="cell-sub">${sched}</span>${climateBadge(r.route.destination, b.depart_date)}</td>
             <td>${stopsCell(b.stops, b.airline)}</td>
             <td class="num">${b.leave_days}개</td>
             <td><a href="${esc(b.booking_url)}" target="_blank" rel="noopener">예약 확인</a>
