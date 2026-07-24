@@ -59,6 +59,10 @@
     font-size: 16px; font-weight: 700; margin: 20px 0 0; color: #fff; background: var(--excel-green);
     padding: 5px 10px; border: 1px solid #1a5c38;
   }
+  h2.collapsible { cursor: pointer; user-select: none; }
+  h2.collapsible:hover { background: #1a5c38; }
+  h2.collapsible .collapse-caret { display: inline-block; font-size: 12px; width: 12px; }
+  h2.collapsible .collapse-hint { font-weight: 400; font-size: 12.5px; opacity: 0.8; }
 
   .tbl-wrap { overflow-x: auto; background: var(--sheet); border-bottom: 1px solid var(--grid); }
   table.sheet { width: 100%; border-collapse: collapse; background: var(--sheet); table-layout: fixed; }
@@ -366,44 +370,66 @@
       </table>
     </div>
 
-    <h2>변동 항목</h2>
-    <div class="note" style="margin-bottom:0">
-      <b>기준값</b> = 이 노선의 최근 30일 연휴 평균가. <b>변동율</b>은 현재값이 그보다 얼마나 싼지입니다(15% 이상 하락한 날짜만 표시).
-    </div>
-    <div class="toolbar-row">
-      <label for="deal-sort">정렬</label>
-      <select id="deal-sort">
-        <option value="discount">할인율순</option>
-        <option value="price">현재값 낮은순</option>
-        <option value="depart">출발일 빠른순</option>
-        <option value="leave">연차 적은순</option>
-      </select>
-      <label for="deal-max-price">최대 가격</label>
-      <input id="deal-max-price" type="number" min="0" step="10000" placeholder="원" style="width:100px" />
-      <label for="deal-max-leave">최대 연차</label>
-      <select id="deal-max-leave">
-        <option value="">제한없음</option>
-        <option value="0">0일</option>
-        <option value="1">1일</option>
-        <option value="2">2일</option>
-        <option value="3">3일</option>
-      </select>
-    </div>
+    <h2>모니터링 현황</h2>
     <div class="tbl-wrap">
       <table class="sheet wide">
         <thead>
           <tr>
-            <th style="width:16%">항목</th>
-            <th style="width:22%">기간</th>
-            <th style="width:17%">일정</th>
-            <th style="width:9%">직항/경유</th>
-            <th style="width:11%">현재값</th>
-            <th style="width:9%">기준값</th>
-            <th style="width:8%">변동율</th>
+            <th style="width:34px">★</th>
+            <th style="width:76px">상태</th>
+            <th style="width:190px">항목</th>
+            <th style="width:170px">최근 관측값</th>
+            <th style="width:140px">30일 최저/평균</th>
+            <th style="width:126px">추이</th>
+            <th style="width:92px">목표가</th>
+            <th style="width:92px">링크</th>
+            <th style="width:36px"></th>
           </tr>
         </thead>
-        <tbody id="deals"></tbody>
+        <tbody id="routes-status"></tbody>
       </table>
+    </div>
+
+    <h2 class="collapsible" id="deals-h2"><span class="collapse-caret">▶</span> 변동 항목 <span class="collapse-hint">(클릭해서 펼치기)</span></h2>
+    <div id="deals-body" hidden>
+      <div class="note" style="margin-bottom:0">
+        <b>기준값</b> = 이 노선의 최근 30일 연휴 평균가. <b>변동율</b>은 현재값이 그보다 얼마나 싼지입니다(15% 이상 하락한 날짜만 표시).
+      </div>
+      <div class="toolbar-row">
+        <label for="deal-sort">정렬</label>
+        <select id="deal-sort">
+          <option value="discount">할인율순</option>
+          <option value="price">현재값 낮은순</option>
+          <option value="depart">출발일 빠른순</option>
+          <option value="leave">연차 적은순</option>
+        </select>
+        <label for="deal-max-price">최대 가격</label>
+        <input id="deal-max-price" type="number" min="0" step="10000" placeholder="원" style="width:100px" />
+        <label for="deal-max-leave">최대 연차</label>
+        <select id="deal-max-leave">
+          <option value="">제한없음</option>
+          <option value="0">0일</option>
+          <option value="1">1일</option>
+          <option value="2">2일</option>
+          <option value="3">3일</option>
+        </select>
+      </div>
+      <div class="tbl-wrap">
+        <table class="sheet wide">
+          <thead>
+            <tr>
+              <th style="width:16%">항목</th>
+              <th style="width:22%">기간</th>
+              <th style="width:17%">일정</th>
+              <th style="width:9%">직항/경유</th>
+              <th style="width:11%">현재값</th>
+              <th style="width:9%">기준값</th>
+              <th style="width:8%">변동율</th>
+            </tr>
+          </thead>
+          <tbody id="deals"></tbody>
+        </table>
+      </div>
     </div>
 
     <h2>항목 등록</h2>
@@ -434,26 +460,6 @@
         <option value="null">상관없음</option>
       </select>
       <button id="btn-register">등록</button>
-    </div>
-
-    <h2>모니터링 현황</h2>
-    <div class="tbl-wrap">
-      <table class="sheet wide">
-        <thead>
-          <tr>
-            <th style="width:34px">★</th>
-            <th style="width:76px">상태</th>
-            <th style="width:190px">항목</th>
-            <th style="width:170px">최근 관측값</th>
-            <th style="width:140px">30일 최저/평균</th>
-            <th style="width:126px">추이</th>
-            <th style="width:92px">목표가</th>
-            <th style="width:92px">링크</th>
-            <th style="width:36px"></th>
-          </tr>
-        </thead>
-        <tbody id="routes-status"></tbody>
-      </table>
     </div>
   </div>
 
@@ -540,8 +546,19 @@
 
   <div id="toast-wrap"></div>
 
-  <script src="airports.js"></script>
-  <script src="destmeta.js"></script>
+  <script>
+    // airports.js / destmeta.js 는 정적 <script> 라 브라우저가 구버전을 캐시해,
+    // 새로 추가·수정한 목적지가 필터(특히 컨셉)에 안 뜨는 문제가 있었다
+    // (JSON 데이터는 ?t= 로 캐시버스트하지만 이 JS들은 안 했음).
+    // 여기서 캐시버스트로 최신을 강제 로드한다. document.write 는 최초 파싱 중
+    // 동기·순서 보장 로드라 아래 메인 스크립트가 window.AIRPORTS/DEST_META 를 그대로 본다.
+    // destmeta.js(작음)는 매 로드 최신, airports.js(약 560KB)는 하루 단위로만 갱신.
+    (function () {
+      var day = Math.floor(Date.now() / 86400000);
+      document.write('<script src="airports.js?v=' + day + '"><\/script>');
+      document.write('<script src="destmeta.js?t=' + Date.now() + '"><\/script>');
+    })();
+  </script>
   <script>
     // ===================== 상수 / 공통 헬퍼 =====================
     const cacheBust = `?t=${Date.now()}`;
@@ -2014,6 +2031,17 @@
         if (el.tagName === 'INPUT' && el.type === 'number') el.addEventListener('input', renderDeals);
       });
       document.getElementById('gv-sort').addEventListener('change', renderGvBoard);
+
+      // 변동 항목 접기/펼치기 (기본 접힘 — 길어서 스크롤 방해되는 것 방지)
+      document.getElementById('deals-h2').addEventListener('click', () => {
+        const body = document.getElementById('deals-body');
+        const caret = document.querySelector('#deals-h2 .collapse-caret');
+        const hint = document.querySelector('#deals-h2 .collapse-hint');
+        const willOpen = body.hidden;
+        body.hidden = !willOpen;
+        if (caret) caret.textContent = willOpen ? '▼' : '▶';
+        if (hint) hint.textContent = willOpen ? '(클릭해서 접기)' : '(클릭해서 펼치기)';
+      });
 
       document.getElementById('reg-label').addEventListener('input', () => { labelTouched = true; });
       document.getElementById('reg-country').addEventListener('input', () => { countryTouched = true; });
