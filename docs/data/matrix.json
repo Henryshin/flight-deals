@@ -83,27 +83,27 @@
         }
       },
       "ICN-KIX": {
-        "min_price": 313200,
-        "typical": 507100,
-        "deal_pct": 38.2,
+        "min_price": 333700,
+        "typical": 508274,
+        "deal_pct": 34.3,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 428550,
-        "offpeak_ratio": 0.731,
+        "offpeak_ratio": 0.779,
         "best": {
-          "depart_date": "2026-08-14",
+          "depart_date": "2026-08-15",
           "return_date": "2026-08-18",
-          "depart_weekday": "금",
+          "depart_weekday": "토",
           "return_weekday": "화",
-          "nights": 4,
-          "days": 5,
-          "leave_days": 2,
+          "nights": 3,
+          "days": 4,
+          "leave_days": 1,
           "stops": "0",
           "airline": "에어서울",
           "dep_time": "15:20",
           "arr_time": "17:00",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Osaka%20on%202026-08-14%20through%202026-08-18&hl=ko&curr=KRW"
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Osaka%20on%202026-08-15%20through%202026-08-18&hl=ko&curr=KRW"
         }
       },
       "ICN-DAD": {
@@ -173,8 +173,8 @@
           "leave_days": 3,
           "stops": "0",
           "airline": "대한항공",
-          "dep_time": "18:00",
-          "arr_time": "23:50",
+          "dep_time": "16:10",
+          "arr_time": "22:10",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Bali%20on%202026-08-14%20through%202026-08-19&hl=ko&curr=KRW"
         }
       },
@@ -203,38 +203,38 @@
         }
       },
       "ICN-PVG": {
-        "min_price": 432800,
-        "typical": 446100,
-        "deal_pct": 3.0,
+        "min_price": 449484,
+        "typical": 457000,
+        "deal_pct": 1.6,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 402134,
-        "offpeak_ratio": 1.076,
+        "offpeak_ratio": 1.118,
         "best": {
-          "depart_date": "2026-08-15",
-          "return_date": "2026-08-18",
-          "depart_weekday": "토",
-          "return_weekday": "화",
+          "depart_date": "2026-08-14",
+          "return_date": "2026-08-17",
+          "depart_weekday": "금",
+          "return_weekday": "월",
           "nights": 3,
           "days": 4,
           "leave_days": 1,
-          "stops": "1",
+          "stops": "0",
           "airline": "",
-          "dep_time": "23:40",
-          "arr_time": "09:40+1",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Shanghai%20on%202026-08-15%20through%202026-08-18&hl=ko&curr=KRW"
+          "dep_time": "16:55",
+          "arr_time": "18:00",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Shanghai%20on%202026-08-14%20through%202026-08-17&hl=ko&curr=KRW"
         }
       },
       "ICN-TPE": {
-        "min_price": 309400,
-        "typical": 323574,
-        "deal_pct": 4.4,
+        "min_price": 294608,
+        "typical": 322229,
+        "deal_pct": 8.6,
         "tier": "A",
         "n_obs": 8,
         "n_pairs": 3,
         "offpeak_baseline": 391500,
-        "offpeak_ratio": 0.79,
+        "offpeak_ratio": 0.753,
         "best": {
           "depart_date": "2026-08-14",
           "return_date": "2026-08-18",
@@ -251,14 +251,14 @@
         }
       },
       "ICN-KHH": {
-        "min_price": 428658,
+        "min_price": 428215,
         "typical": 451950,
-        "deal_pct": 5.2,
+        "deal_pct": 5.3,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 450939,
-        "offpeak_ratio": 0.951,
+        "offpeak_ratio": 0.95,
         "best": {
           "depart_date": "2026-08-15",
           "return_date": "2026-08-18",
@@ -299,14 +299,14 @@
         }
       },
       "ICN-GUM": {
-        "min_price": 300895,
-        "typical": 371368,
+        "min_price": 300655,
+        "typical": 371248,
         "deal_pct": 19.0,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 271004,
-        "offpeak_ratio": 1.11,
+        "offpeak_ratio": 1.109,
         "best": {
           "depart_date": "2026-08-15",
           "return_date": "2026-08-18",
@@ -323,14 +323,14 @@
         }
       },
       "ICN-SHI": {
-        "min_price": 631600,
-        "typical": 761600,
-        "deal_pct": 17.1,
+        "min_price": 661600,
+        "typical": 771600,
+        "deal_pct": 14.3,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 489100,
-        "offpeak_ratio": 1.291,
+        "offpeak_ratio": 1.353,
         "best": {
           "depart_date": "2026-08-14",
           "return_date": "2026-08-18",
@@ -347,8 +347,8 @@
         }
       },
       "ICN-KBV": {
-        "min_price": 755317,
-        "typical": 756078,
+        "min_price": 755665,
+        "typical": 756252,
         "deal_pct": 0.1,
         "tier": "C",
         "n_obs": 2,
@@ -371,14 +371,14 @@
         }
       },
       "ICN-ATH": {
-        "min_price": 1057167,
-        "typical": 1059200,
-        "deal_pct": 0.2,
+        "min_price": 1056515,
+        "typical": 1067508,
+        "deal_pct": 1.0,
         "tier": "B",
         "n_obs": 3,
         "n_pairs": 3,
         "offpeak_baseline": 1195200,
-        "offpeak_ratio": 0.885,
+        "offpeak_ratio": 0.884,
         "best": {
           "depart_date": "2026-08-13",
           "return_date": "2026-08-19",
@@ -444,8 +444,8 @@
       },
       "ICN-CTS": {
         "min_price": 647100,
-        "typical": 880300,
-        "deal_pct": 26.5,
+        "typical": 898900,
+        "deal_pct": 28.0,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
@@ -467,14 +467,14 @@
         }
       },
       "ICN-OKA": {
-        "min_price": 583304,
+        "min_price": 582508,
         "typical": 716518,
-        "deal_pct": 18.6,
+        "deal_pct": 18.7,
         "tier": "B",
         "n_obs": 4,
         "n_pairs": 1,
         "offpeak_baseline": 553400,
-        "offpeak_ratio": 1.054,
+        "offpeak_ratio": 1.053,
         "best": {
           "depart_date": "2026-08-14",
           "return_date": "2026-08-18",
@@ -491,14 +491,14 @@
         }
       },
       "ICN-NGO": {
-        "min_price": 340000,
+        "min_price": 344900,
         "typical": 370050,
-        "deal_pct": 8.1,
+        "deal_pct": 6.8,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 450410,
-        "offpeak_ratio": 0.755,
+        "offpeak_ratio": 0.766,
         "best": {
           "depart_date": "2026-08-14",
           "return_date": "2026-08-18",
@@ -508,21 +508,21 @@
           "days": 5,
           "leave_days": 2,
           "stops": "0",
-          "airline": "진에어",
-          "dep_time": "07:30",
-          "arr_time": "09:25",
+          "airline": "제주항공",
+          "dep_time": "09:30",
+          "arr_time": "11:30",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Nagoya%20on%202026-08-14%20through%202026-08-18&hl=ko&curr=KRW"
         }
       },
       "ICN-HKG": {
-        "min_price": 287331,
+        "min_price": 286954,
         "typical": 513726,
         "deal_pct": 44.1,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 376067,
-        "offpeak_ratio": 0.764,
+        "offpeak_ratio": 0.763,
         "best": {
           "depart_date": "2026-08-14",
           "return_date": "2026-08-18",
@@ -540,8 +540,8 @@
       },
       "ICN-MFM": {
         "min_price": 533900,
-        "typical": 664514,
-        "deal_pct": 19.7,
+        "typical": 664346,
+        "deal_pct": 19.6,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
@@ -564,8 +564,8 @@
       },
       "ICN-PEK": {
         "min_price": 403100,
-        "typical": 436150,
-        "deal_pct": 7.6,
+        "typical": 446100,
+        "deal_pct": 9.6,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
@@ -588,8 +588,8 @@
       },
       "ICN-TAO": {
         "min_price": 335500,
-        "typical": 521200,
-        "deal_pct": 35.6,
+        "typical": 524200,
+        "deal_pct": 36.0,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
@@ -636,8 +636,8 @@
       },
       "ICN-HKT": {
         "min_price": 498819,
-        "typical": 600528,
-        "deal_pct": 16.9,
+        "typical": 600758,
+        "deal_pct": 17.0,
         "tier": "A",
         "n_obs": 8,
         "n_pairs": 4,
@@ -659,14 +659,14 @@
         }
       },
       "ICN-CNX": {
-        "min_price": 567306,
+        "min_price": 567461,
         "typical": 591490,
         "deal_pct": 4.1,
         "tier": "B",
         "n_obs": 4,
         "n_pairs": 1,
         "offpeak_baseline": 548000,
-        "offpeak_ratio": 1.035,
+        "offpeak_ratio": 1.036,
         "best": {
           "depart_date": "2026-08-14",
           "return_date": "2026-08-18",
@@ -683,14 +683,14 @@
         }
       },
       "ICN-SGN": {
-        "min_price": 493081,
-        "typical": 535256,
-        "deal_pct": 7.9,
+        "min_price": 492273,
+        "typical": 512906,
+        "deal_pct": 4.0,
         "tier": "B",
         "n_obs": 4,
         "n_pairs": 1,
         "offpeak_baseline": 394996,
-        "offpeak_ratio": 1.248,
+        "offpeak_ratio": 1.246,
         "best": {
           "depart_date": "2026-08-14",
           "return_date": "2026-08-18",
@@ -707,14 +707,14 @@
         }
       },
       "ICN-HAN": {
-        "min_price": 412684,
-        "typical": 470877,
-        "deal_pct": 12.4,
+        "min_price": 412060,
+        "typical": 472872,
+        "deal_pct": 12.9,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 384900,
-        "offpeak_ratio": 1.072,
+        "offpeak_ratio": 1.071,
         "best": {
           "depart_date": "2026-08-14",
           "return_date": "2026-08-18",
@@ -779,14 +779,14 @@
         }
       },
       "ICN-MNL": {
-        "min_price": 498041,
-        "typical": 504820,
-        "deal_pct": 1.3,
+        "min_price": 497508,
+        "typical": 504554,
+        "deal_pct": 1.4,
         "tier": "B",
         "n_obs": 4,
         "n_pairs": 1,
         "offpeak_baseline": 377690,
-        "offpeak_ratio": 1.319,
+        "offpeak_ratio": 1.317,
         "best": {
           "depart_date": "2026-08-14",
           "return_date": "2026-08-18",
@@ -803,14 +803,14 @@
         }
       },
       "ICN-KUL": {
-        "min_price": 463294,
+        "min_price": 462823,
         "typical": 628807,
-        "deal_pct": 26.3,
+        "deal_pct": 26.4,
         "tier": "B",
         "n_obs": 4,
         "n_pairs": 1,
         "offpeak_baseline": 557956,
-        "offpeak_ratio": 0.83,
+        "offpeak_ratio": 0.829,
         "best": {
           "depart_date": "2026-08-14",
           "return_date": "2026-08-18",
@@ -827,14 +827,14 @@
         }
       },
       "ICN-BKI": {
-        "min_price": 474760,
+        "min_price": 474234,
         "typical": 513300,
-        "deal_pct": 7.5,
+        "deal_pct": 7.6,
         "tier": "A",
         "n_obs": 8,
         "n_pairs": 4,
         "offpeak_baseline": 455525,
-        "offpeak_ratio": 1.042,
+        "offpeak_ratio": 1.041,
         "best": {
           "depart_date": "2026-08-12",
           "return_date": "2026-08-18",
@@ -851,14 +851,14 @@
         }
       },
       "ICN-SIN": {
-        "min_price": 401990,
-        "typical": 454608,
-        "deal_pct": 11.6,
+        "min_price": 510129,
+        "typical": 507936,
+        "deal_pct": -0.4,
         "tier": "B",
         "n_obs": 4,
         "n_pairs": 1,
         "offpeak_baseline": 504707,
-        "offpeak_ratio": 0.796,
+        "offpeak_ratio": 1.011,
         "best": {
           "depart_date": "2026-08-14",
           "return_date": "2026-08-18",
@@ -867,10 +867,10 @@
           "nights": 4,
           "days": 5,
           "leave_days": 2,
-          "stops": "0",
-          "airline": "제주항공",
-          "dep_time": "18:10",
-          "arr_time": "23:40",
+          "stops": "1",
+          "airline": "비엣젯",
+          "dep_time": "21:15",
+          "arr_time": "10:15+1",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Singapore%20on%202026-08-14%20through%202026-08-18&hl=ko&curr=KRW"
         }
       },
@@ -899,14 +899,14 @@
         }
       },
       "ICN-ALA": {
-        "min_price": 960200,
-        "typical": 1013850,
-        "deal_pct": 5.3,
+        "min_price": 929400,
+        "typical": 985950,
+        "deal_pct": 5.7,
         "tier": "A",
         "n_obs": 8,
         "n_pairs": 4,
         "offpeak_baseline": 1066650,
-        "offpeak_ratio": 0.9,
+        "offpeak_ratio": 0.871,
         "best": {
           "depart_date": "2026-08-13",
           "return_date": "2026-08-18",
@@ -923,14 +923,14 @@
         }
       },
       "ICN-LHR": {
-        "min_price": 1135799,
-        "typical": 1459700,
-        "deal_pct": 22.2,
+        "min_price": 1013900,
+        "typical": 1457800,
+        "deal_pct": 30.4,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 1243050,
-        "offpeak_ratio": 0.914,
+        "offpeak_ratio": 0.816,
         "best": {
           "depart_date": "2026-08-13",
           "return_date": "2026-08-19",
@@ -940,9 +940,9 @@
           "days": 7,
           "leave_days": 4,
           "stops": "1",
-          "airline": "",
-          "dep_time": "15:15",
-          "arr_time": "20:00+1",
+          "airline": "중국남방항공",
+          "dep_time": "09:25",
+          "arr_time": "18:05",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20London,%20United%20Kingdom%20on%202026-08-13%20through%202026-08-19&hl=ko&curr=KRW"
         }
       },
@@ -971,14 +971,14 @@
         }
       },
       "ICN-BCN": {
-        "min_price": 1182300,
+        "min_price": 1132800,
         "typical": 1322000,
-        "deal_pct": 10.6,
+        "deal_pct": 14.3,
         "tier": "B",
         "n_obs": 5,
         "n_pairs": 3,
         "offpeak_baseline": 1544980,
-        "offpeak_ratio": 0.765,
+        "offpeak_ratio": 0.733,
         "best": {
           "depart_date": "2026-08-12",
           "return_date": "2026-08-18",
@@ -996,8 +996,8 @@
       },
       "ICN-PRG": {
         "min_price": 1191800,
-        "typical": 1276000,
-        "deal_pct": 6.6,
+        "typical": 1278900,
+        "deal_pct": 6.8,
         "tier": "B",
         "n_obs": 5,
         "n_pairs": 3,
@@ -1038,7 +1038,7 @@
           "stops": "1",
           "airline": "에미레이트항공",
           "dep_time": "22:45",
-          "arr_time": "12:55+1",
+          "arr_time": "13:00+1",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Vienna,%20Austria%20on%202026-08-12%20through%202026-08-18&hl=ko&curr=KRW"
         }
       },
@@ -1068,8 +1068,8 @@
       },
       "ICN-FRA": {
         "min_price": 1155600,
-        "typical": 1263300,
-        "deal_pct": 8.5,
+        "typical": 1299000,
+        "deal_pct": 11.0,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
@@ -1117,14 +1117,14 @@
     },
     "2026-09-24": {
       "ICN-NRT": {
-        "min_price": 458086,
+        "min_price": 457518,
         "typical": 685400,
         "deal_pct": 33.2,
         "tier": "A",
         "n_obs": 15,
         "n_pairs": 6,
         "offpeak_baseline": 342954,
-        "offpeak_ratio": 1.336,
+        "offpeak_ratio": 1.334,
         "best": {
           "depart_date": "2026-09-25",
           "return_date": "2026-09-28",
@@ -1141,9 +1141,9 @@
         }
       },
       "ICN-KIX": {
-        "min_price": 357595,
-        "typical": 655481,
-        "deal_pct": 45.4,
+        "min_price": 357408,
+        "typical": 655320,
+        "deal_pct": 45.5,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 6,
@@ -1165,14 +1165,14 @@
         }
       },
       "ICN-DAD": {
-        "min_price": 400452,
+        "min_price": 399785,
         "typical": 487700,
-        "deal_pct": 17.9,
+        "deal_pct": 18.0,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 6,
         "offpeak_baseline": 473155,
-        "offpeak_ratio": 0.846,
+        "offpeak_ratio": 0.845,
         "best": {
           "depart_date": "2026-09-25",
           "return_date": "2026-09-28",
@@ -1189,14 +1189,14 @@
         }
       },
       "ICN-DPS": {
-        "min_price": 652777,
+        "min_price": 652266,
         "typical": 987676,
-        "deal_pct": 33.9,
+        "deal_pct": 34.0,
         "tier": "B",
         "n_obs": 4,
         "n_pairs": 1,
         "offpeak_baseline": 734950,
-        "offpeak_ratio": 0.888,
+        "offpeak_ratio": 0.887,
         "best": {
           "depart_date": "2026-09-23",
           "return_date": "2026-09-28",
@@ -1237,7 +1237,7 @@
         }
       },
       "ICN-ULN": {
-        "min_price": 551899,
+        "min_price": 551904,
         "typical": 833400,
         "deal_pct": 33.8,
         "tier": "A",
@@ -1261,14 +1261,14 @@
         }
       },
       "ICN-PVG": {
-        "min_price": 482572,
+        "min_price": 482317,
         "typical": 587876,
-        "deal_pct": 17.9,
+        "deal_pct": 18.0,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 6,
         "offpeak_baseline": 402134,
-        "offpeak_ratio": 1.2,
+        "offpeak_ratio": 1.199,
         "best": {
           "depart_date": "2026-09-25",
           "return_date": "2026-09-28",
@@ -1285,14 +1285,14 @@
         }
       },
       "ICN-TPE": {
-        "min_price": 284981,
-        "typical": 450724,
+        "min_price": 284699,
+        "typical": 450537,
         "deal_pct": 36.8,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 6,
         "offpeak_baseline": 391500,
-        "offpeak_ratio": 0.728,
+        "offpeak_ratio": 0.727,
         "best": {
           "depart_date": "2026-09-25",
           "return_date": "2026-09-28",
@@ -1309,14 +1309,14 @@
         }
       },
       "ICN-KHH": {
-        "min_price": 384728,
+        "min_price": 384406,
         "typical": 470600,
-        "deal_pct": 18.2,
+        "deal_pct": 18.3,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 6,
         "offpeak_baseline": 450939,
-        "offpeak_ratio": 0.853,
+        "offpeak_ratio": 0.852,
         "best": {
           "depart_date": "2026-09-25",
           "return_date": "2026-09-28",
@@ -1477,14 +1477,14 @@
         }
       },
       "ICN-CTS": {
-        "min_price": 667100,
+        "min_price": 762100,
         "typical": 961550,
-        "deal_pct": 30.6,
+        "deal_pct": 20.7,
         "tier": "A",
         "n_obs": 14,
         "n_pairs": 6,
         "offpeak_baseline": 614000,
-        "offpeak_ratio": 1.086,
+        "offpeak_ratio": 1.241,
         "best": {
           "depart_date": "2026-09-25",
           "return_date": "2026-09-28",
@@ -1495,14 +1495,14 @@
           "leave_days": 1,
           "stops": "1",
           "airline": "전일본공수",
-          "dep_time": "12:40",
-          "arr_time": "08:30+1",
+          "dep_time": "19:55",
+          "arr_time": "07:50+1",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Sapporo%20on%202026-09-25%20through%202026-09-28&hl=ko&curr=KRW"
         }
       },
       "ICN-OKA": {
         "min_price": 803000,
-        "typical": 874741,
+        "typical": 874262,
         "deal_pct": 8.2,
         "tier": "A",
         "n_obs": 12,
@@ -1525,9 +1525,9 @@
         }
       },
       "ICN-NGO": {
-        "min_price": 507086,
+        "min_price": 507013,
         "typical": 656419,
-        "deal_pct": 22.7,
+        "deal_pct": 22.8,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 6,
@@ -1573,9 +1573,9 @@
         }
       },
       "ICN-MFM": {
-        "min_price": 793397,
+        "min_price": 792864,
         "typical": 863750,
-        "deal_pct": 8.1,
+        "deal_pct": 8.2,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 6,
@@ -1669,7 +1669,7 @@
         }
       },
       "ICN-HKT": {
-        "min_price": 510977,
+        "min_price": 511111,
         "typical": 629508,
         "deal_pct": 18.8,
         "tier": "B",
@@ -1717,14 +1717,14 @@
         }
       },
       "ICN-SGN": {
-        "min_price": 478988,
+        "min_price": 478378,
         "typical": 491100,
-        "deal_pct": 2.5,
+        "deal_pct": 2.6,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 394996,
-        "offpeak_ratio": 1.213,
+        "offpeak_ratio": 1.211,
         "best": {
           "depart_date": "2026-09-23",
           "return_date": "2026-09-27",
@@ -1741,14 +1741,14 @@
         }
       },
       "ICN-HAN": {
-        "min_price": 392211,
+        "min_price": 391499,
         "typical": 482900,
-        "deal_pct": 18.8,
+        "deal_pct": 18.9,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 6,
         "offpeak_baseline": 384900,
-        "offpeak_ratio": 1.019,
+        "offpeak_ratio": 1.017,
         "best": {
           "depart_date": "2026-09-25",
           "return_date": "2026-09-28",
@@ -1765,14 +1765,14 @@
         }
       },
       "ICN-CXR": {
-        "min_price": 701670,
-        "typical": 731018,
-        "deal_pct": 4.0,
+        "min_price": 700900,
+        "typical": 730632,
+        "deal_pct": 4.1,
         "tier": "B",
         "n_obs": 4,
         "n_pairs": 1,
         "offpeak_baseline": 410369,
-        "offpeak_ratio": 1.71,
+        "offpeak_ratio": 1.708,
         "best": {
           "depart_date": "2026-09-23",
           "return_date": "2026-09-28",
@@ -1838,8 +1838,8 @@
       },
       "ICN-KUL": {
         "min_price": 420475,
-        "typical": 511909,
-        "deal_pct": 17.9,
+        "typical": 520638,
+        "deal_pct": 19.2,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
@@ -1861,14 +1861,14 @@
         }
       },
       "ICN-BKI": {
-        "min_price": 752500,
+        "min_price": 742900,
         "typical": 796900,
-        "deal_pct": 5.6,
+        "deal_pct": 6.8,
         "tier": "B",
         "n_obs": 4,
         "n_pairs": 1,
         "offpeak_baseline": 455525,
-        "offpeak_ratio": 1.652,
+        "offpeak_ratio": 1.631,
         "best": {
           "depart_date": "2026-09-23",
           "return_date": "2026-09-28",
@@ -1909,14 +1909,14 @@
         }
       },
       "ICN-REP": {
-        "min_price": 704784,
-        "typical": 1008131,
-        "deal_pct": 30.1,
+        "min_price": 704405,
+        "typical": 788578,
+        "deal_pct": 10.7,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 504298,
-        "offpeak_ratio": 1.398,
+        "offpeak_ratio": 1.397,
         "best": {
           "depart_date": "2026-09-24",
           "return_date": "2026-09-28",
@@ -2029,14 +2029,14 @@
         }
       },
       "ICN-BCN": {
-        "min_price": 1386700,
-        "typical": 1945250,
-        "deal_pct": 28.7,
+        "min_price": 1498000,
+        "typical": 1933250,
+        "deal_pct": 22.5,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 1544980,
-        "offpeak_ratio": 0.898,
+        "offpeak_ratio": 0.97,
         "best": {
           "depart_date": "2026-09-23",
           "return_date": "2026-09-29",
@@ -2046,21 +2046,21 @@
           "days": 7,
           "leave_days": 3,
           "stops": "1",
-          "airline": "에어프랑스",
-          "dep_time": "11:40",
-          "arr_time": "22:45",
+          "airline": "카타르항공",
+          "dep_time": "01:20",
+          "arr_time": "14:40",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Barcelona,%20Spain%20on%202026-09-23%20through%202026-09-29&hl=ko&curr=KRW"
         }
       },
       "ICN-PRG": {
-        "min_price": 1307300,
+        "min_price": 1315000,
         "typical": 1676050,
-        "deal_pct": 22.0,
+        "deal_pct": 21.5,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 1655600,
-        "offpeak_ratio": 0.79,
+        "offpeak_ratio": 0.794,
         "best": {
           "depart_date": "2026-09-23",
           "return_date": "2026-09-29",
@@ -2077,62 +2077,14 @@
         }
       },
       "ICN-VIE": {
-        "min_price": 1311100,
-        "typical": 1366700,
-        "deal_pct": 4.1,
+        "min_price": 1323700,
+        "typical": 1399755,
+        "deal_pct": 5.4,
         "tier": "B",
         "n_obs": 4,
         "n_pairs": 3,
         "offpeak_baseline": 1147150,
-        "offpeak_ratio": 1.143,
-        "best": {
-          "depart_date": "2026-09-22",
-          "return_date": "2026-09-28",
-          "depart_weekday": "화",
-          "return_weekday": "월",
-          "nights": 6,
-          "days": 7,
-          "leave_days": 3,
-          "stops": "1",
-          "airline": "",
-          "dep_time": "16:55",
-          "arr_time": "05:35+1",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Vienna,%20Austria%20on%202026-09-22%20through%202026-09-28&hl=ko&curr=KRW"
-        }
-      },
-      "ICN-IST": {
-        "min_price": 1107442,
-        "typical": 1260271,
-        "deal_pct": 12.1,
-        "tier": "B",
-        "n_obs": 4,
-        "n_pairs": 2,
-        "offpeak_baseline": 1347000,
-        "offpeak_ratio": 0.822,
-        "best": {
-          "depart_date": "2026-09-22",
-          "return_date": "2026-09-28",
-          "depart_weekday": "화",
-          "return_weekday": "월",
-          "nights": 6,
-          "days": 7,
-          "leave_days": 3,
-          "stops": "1",
-          "airline": "몽골항공",
-          "dep_time": "00:05",
-          "arr_time": "11:25",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Istanbul,%20Turkey%20on%202026-09-22%20through%202026-09-28&hl=ko&curr=KRW"
-        }
-      },
-      "ICN-FRA": {
-        "min_price": 1318900,
-        "typical": 1487100,
-        "deal_pct": 11.3,
-        "tier": "A",
-        "n_obs": 6,
-        "n_pairs": 3,
-        "offpeak_baseline": 1269750,
-        "offpeak_ratio": 1.039,
+        "offpeak_ratio": 1.154,
         "best": {
           "depart_date": "2026-09-23",
           "return_date": "2026-09-29",
@@ -2142,9 +2094,57 @@
           "days": 7,
           "leave_days": 3,
           "stops": "1",
-          "airline": "에어프랑스",
-          "dep_time": "11:40",
-          "arr_time": "22:05",
+          "airline": "카타르항공",
+          "dep_time": "01:20",
+          "arr_time": "14:05",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Vienna,%20Austria%20on%202026-09-23%20through%202026-09-29&hl=ko&curr=KRW"
+        }
+      },
+      "ICN-IST": {
+        "min_price": 1106076,
+        "typical": 1449303,
+        "deal_pct": 23.7,
+        "tier": "B",
+        "n_obs": 4,
+        "n_pairs": 2,
+        "offpeak_baseline": 1347000,
+        "offpeak_ratio": 0.821,
+        "best": {
+          "depart_date": "2026-09-21",
+          "return_date": "2026-09-28",
+          "depart_weekday": "월",
+          "return_weekday": "월",
+          "nights": 7,
+          "days": 8,
+          "leave_days": 4,
+          "stops": "1",
+          "airline": "몽골항공",
+          "dep_time": "14:20",
+          "arr_time": "11:25+1",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Istanbul,%20Turkey%20on%202026-09-21%20through%202026-09-28&hl=ko&curr=KRW"
+        }
+      },
+      "ICN-FRA": {
+        "min_price": 1322300,
+        "typical": 1487100,
+        "deal_pct": 11.1,
+        "tier": "A",
+        "n_obs": 6,
+        "n_pairs": 3,
+        "offpeak_baseline": 1269750,
+        "offpeak_ratio": 1.041,
+        "best": {
+          "depart_date": "2026-09-23",
+          "return_date": "2026-09-29",
+          "depart_weekday": "수",
+          "return_weekday": "화",
+          "nights": 6,
+          "days": 7,
+          "leave_days": 3,
+          "stops": "1",
+          "airline": "카타르항공",
+          "dep_time": "01:20",
+          "arr_time": "14:35",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Frankfurt,%20Germany%20on%202026-09-23%20through%202026-09-29&hl=ko&curr=KRW"
         }
       },
@@ -2176,8 +2176,8 @@
     "2026-10-05": {
       "ICN-NRT": {
         "min_price": 390600,
-        "typical": 413214,
-        "deal_pct": 5.5,
+        "typical": 413012,
+        "deal_pct": 5.4,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
@@ -2199,14 +2199,14 @@
         }
       },
       "ICN-KIX": {
-        "min_price": 357493,
-        "typical": 556500,
-        "deal_pct": 35.8,
+        "min_price": 357191,
+        "typical": 569150,
+        "deal_pct": 37.2,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 428550,
-        "offpeak_ratio": 0.834,
+        "offpeak_ratio": 0.833,
         "best": {
           "depart_date": "2026-10-03",
           "return_date": "2026-10-06",
@@ -2223,14 +2223,14 @@
         }
       },
       "ICN-DAD": {
-        "min_price": 485401,
+        "min_price": 484734,
         "typical": 595254,
-        "deal_pct": 18.5,
+        "deal_pct": 18.6,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 473155,
-        "offpeak_ratio": 1.026,
+        "offpeak_ratio": 1.024,
         "best": {
           "depart_date": "2026-10-02",
           "return_date": "2026-10-06",
@@ -2247,7 +2247,7 @@
         }
       },
       "ICN-DPS": {
-        "min_price": 616244,
+        "min_price": 616158,
         "typical": 816400,
         "deal_pct": 24.5,
         "tier": "A",
@@ -2295,9 +2295,9 @@
         }
       },
       "ICN-ULN": {
-        "min_price": 552995,
+        "min_price": 553065,
         "typical": 715000,
-        "deal_pct": 22.7,
+        "deal_pct": 22.6,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
@@ -2320,8 +2320,8 @@
       },
       "ICN-PVG": {
         "min_price": 443700,
-        "typical": 472862,
-        "deal_pct": 6.2,
+        "typical": 472700,
+        "deal_pct": 6.1,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
@@ -2343,33 +2343,33 @@
         }
       },
       "ICN-TPE": {
-        "min_price": 298789,
+        "min_price": 293757,
         "typical": 421916,
-        "deal_pct": 29.2,
+        "deal_pct": 30.4,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 391500,
-        "offpeak_ratio": 0.763,
+        "offpeak_ratio": 0.75,
         "best": {
-          "depart_date": "2026-10-02",
+          "depart_date": "2026-10-03",
           "return_date": "2026-10-06",
-          "depart_weekday": "금",
+          "depart_weekday": "토",
           "return_weekday": "화",
-          "nights": 4,
-          "days": 5,
-          "leave_days": 2,
+          "nights": 3,
+          "days": 4,
+          "leave_days": 1,
           "stops": "0",
           "airline": "",
-          "dep_time": "00:30",
-          "arr_time": "02:15",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Taipei%20on%202026-10-02%20through%202026-10-06&hl=ko&curr=KRW"
+          "dep_time": "23:00",
+          "arr_time": "00:35+1",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Taipei%20on%202026-10-03%20through%202026-10-06&hl=ko&curr=KRW"
         }
       },
       "ICN-KHH": {
-        "min_price": 455175,
+        "min_price": 455029,
         "typical": 466600,
-        "deal_pct": 2.4,
+        "deal_pct": 2.5,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
@@ -2391,14 +2391,14 @@
         }
       },
       "ICN-PQC": {
-        "min_price": 376993,
-        "typical": 554948,
+        "min_price": 376437,
+        "typical": 554670,
         "deal_pct": 32.1,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 415642,
-        "offpeak_ratio": 0.907,
+        "offpeak_ratio": 0.906,
         "best": {
           "depart_date": "2026-10-02",
           "return_date": "2026-10-06",
@@ -2512,8 +2512,8 @@
       },
       "ICN-FUK": {
         "min_price": 434300,
-        "typical": 578069,
-        "deal_pct": 24.9,
+        "typical": 618300,
+        "deal_pct": 29.8,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
@@ -2536,8 +2536,8 @@
       },
       "ICN-CTS": {
         "min_price": 664100,
-        "typical": 775650,
-        "deal_pct": 14.4,
+        "typical": 757100,
+        "deal_pct": 12.3,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
@@ -2559,14 +2559,14 @@
         }
       },
       "ICN-OKA": {
-        "min_price": 659072,
-        "typical": 668000,
-        "deal_pct": 1.3,
+        "min_price": 658803,
+        "typical": 700556,
+        "deal_pct": 6.0,
         "tier": "B",
         "n_obs": 4,
         "n_pairs": 1,
         "offpeak_baseline": 553400,
-        "offpeak_ratio": 1.191,
+        "offpeak_ratio": 1.19,
         "best": {
           "depart_date": "2026-10-02",
           "return_date": "2026-10-06",
@@ -2584,7 +2584,7 @@
       },
       "ICN-NGO": {
         "min_price": 434758,
-        "typical": 512379,
+        "typical": 512276,
         "deal_pct": 15.1,
         "tier": "A",
         "n_obs": 6,
@@ -2607,14 +2607,14 @@
         }
       },
       "ICN-HKG": {
-        "min_price": 330151,
+        "min_price": 329732,
         "typical": 404538,
-        "deal_pct": 18.4,
+        "deal_pct": 18.5,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 376067,
-        "offpeak_ratio": 0.878,
+        "offpeak_ratio": 0.877,
         "best": {
           "depart_date": "2026-10-02",
           "return_date": "2026-10-05",
@@ -2631,27 +2631,27 @@
         }
       },
       "ICN-MFM": {
-        "min_price": 710900,
+        "min_price": 647900,
         "typical": 735000,
-        "deal_pct": 3.3,
+        "deal_pct": 11.9,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 622050,
-        "offpeak_ratio": 1.143,
+        "offpeak_ratio": 1.042,
         "best": {
-          "depart_date": "2026-10-03",
+          "depart_date": "2026-10-02",
           "return_date": "2026-10-06",
-          "depart_weekday": "토",
+          "depart_weekday": "금",
           "return_weekday": "화",
-          "nights": 3,
-          "days": 4,
-          "leave_days": 1,
+          "nights": 4,
+          "days": 5,
+          "leave_days": 2,
           "stops": "0",
           "airline": "제주항공",
           "dep_time": "09:50",
           "arr_time": "12:50",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Macau%20on%202026-10-03%20through%202026-10-06&hl=ko&curr=KRW"
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Macau%20on%202026-10-02%20through%202026-10-06&hl=ko&curr=KRW"
         }
       },
       "ICN-PEK": {
@@ -2728,8 +2728,8 @@
       },
       "ICN-HKT": {
         "min_price": 512900,
-        "typical": 670550,
-        "deal_pct": 23.5,
+        "typical": 671388,
+        "deal_pct": 23.6,
         "tier": "A",
         "n_obs": 8,
         "n_pairs": 4,
@@ -2775,14 +2775,14 @@
         }
       },
       "ICN-SGN": {
-        "min_price": 398256,
+        "min_price": 397789,
         "typical": 447958,
-        "deal_pct": 11.1,
+        "deal_pct": 11.2,
         "tier": "B",
         "n_obs": 4,
         "n_pairs": 1,
         "offpeak_baseline": 394996,
-        "offpeak_ratio": 1.008,
+        "offpeak_ratio": 1.007,
         "best": {
           "depart_date": "2026-10-02",
           "return_date": "2026-10-06",
@@ -2823,14 +2823,14 @@
         }
       },
       "ICN-CXR": {
-        "min_price": 422568,
+        "min_price": 421853,
         "typical": 502210,
-        "deal_pct": 15.9,
+        "deal_pct": 16.0,
         "tier": "A",
         "n_obs": 7,
         "n_pairs": 4,
         "offpeak_baseline": 410369,
-        "offpeak_ratio": 1.03,
+        "offpeak_ratio": 1.028,
         "best": {
           "depart_date": "2026-09-30",
           "return_date": "2026-10-06",
@@ -2847,14 +2847,14 @@
         }
       },
       "ICN-CEB": {
-        "min_price": 385781,
+        "min_price": 385408,
         "typical": 429450,
-        "deal_pct": 10.2,
+        "deal_pct": 10.3,
         "tier": "A",
         "n_obs": 8,
         "n_pairs": 4,
         "offpeak_baseline": 405269,
-        "offpeak_ratio": 0.952,
+        "offpeak_ratio": 0.951,
         "best": {
           "depart_date": "2026-10-01",
           "return_date": "2026-10-07",
@@ -2871,14 +2871,14 @@
         }
       },
       "ICN-MNL": {
-        "min_price": 401986,
+        "min_price": 401545,
         "typical": 441712,
-        "deal_pct": 9.0,
+        "deal_pct": 9.1,
         "tier": "B",
         "n_obs": 4,
         "n_pairs": 1,
         "offpeak_baseline": 377690,
-        "offpeak_ratio": 1.064,
+        "offpeak_ratio": 1.063,
         "best": {
           "depart_date": "2026-10-02",
           "return_date": "2026-10-06",
@@ -2895,14 +2895,14 @@
         }
       },
       "ICN-KUL": {
-        "min_price": 460332,
+        "min_price": 459911,
         "typical": 472616,
-        "deal_pct": 2.6,
+        "deal_pct": 2.7,
         "tier": "B",
         "n_obs": 4,
         "n_pairs": 1,
         "offpeak_baseline": 557956,
-        "offpeak_ratio": 0.825,
+        "offpeak_ratio": 0.824,
         "best": {
           "depart_date": "2026-10-02",
           "return_date": "2026-10-06",
@@ -2967,14 +2967,14 @@
         }
       },
       "ICN-REP": {
-        "min_price": 593371,
-        "typical": 594356,
+        "min_price": 592617,
+        "typical": 593978,
         "deal_pct": 0.2,
         "tier": "C",
         "n_obs": 2,
         "n_pairs": 1,
         "offpeak_baseline": 504298,
-        "offpeak_ratio": 1.177,
+        "offpeak_ratio": 1.175,
         "best": {
           "depart_date": "2026-10-02",
           "return_date": "2026-10-06",
@@ -3040,8 +3040,8 @@
       },
       "ICN-LHR": {
         "min_price": 1176800,
-        "typical": 1751250,
-        "deal_pct": 32.8,
+        "typical": 1726150,
+        "deal_pct": 31.8,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
@@ -3087,14 +3087,14 @@
         }
       },
       "ICN-BCN": {
-        "min_price": 1249100,
+        "min_price": 1246000,
         "typical": 1925450,
-        "deal_pct": 35.1,
+        "deal_pct": 35.3,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 1544980,
-        "offpeak_ratio": 0.808,
+        "offpeak_ratio": 0.806,
         "best": {
           "depart_date": "2026-10-01",
           "return_date": "2026-10-07",
@@ -3104,21 +3104,21 @@
           "days": 7,
           "leave_days": 4,
           "stops": "1",
-          "airline": "에어프랑스",
-          "dep_time": "11:40",
-          "arr_time": "09:00+1",
+          "airline": "KLM",
+          "dep_time": "22:25",
+          "arr_time": "14:30+1",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Barcelona,%20Spain%20on%202026-10-01%20through%202026-10-07&hl=ko&curr=KRW"
         }
       },
       "ICN-PRG": {
-        "min_price": 1144200,
+        "min_price": 1148200,
         "typical": 1753950,
-        "deal_pct": 34.8,
+        "deal_pct": 34.5,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 1655600,
-        "offpeak_ratio": 0.691,
+        "offpeak_ratio": 0.694,
         "best": {
           "depart_date": "2026-10-01",
           "return_date": "2026-10-07",
@@ -3128,9 +3128,9 @@
           "days": 7,
           "leave_days": 4,
           "stops": "1",
-          "airline": "에어프랑스",
-          "dep_time": "11:40",
-          "arr_time": "21:45",
+          "airline": "에티하드항공",
+          "dep_time": "01:35",
+          "arr_time": "07:05+1",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Prague,%20Czechia%20on%202026-10-01%20through%202026-10-07&hl=ko&curr=KRW"
         }
       },
@@ -3184,8 +3184,8 @@
       },
       "ICN-FRA": {
         "min_price": 1278500,
-        "typical": 1486050,
-        "deal_pct": 14.0,
+        "typical": 1497750,
+        "deal_pct": 14.6,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
@@ -3233,14 +3233,14 @@
     },
     "2026-10-09": {
       "ICN-NRT": {
-        "min_price": 403351,
-        "typical": 427248,
-        "deal_pct": 5.6,
+        "min_price": 402874,
+        "typical": 427066,
+        "deal_pct": 5.7,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 342954,
-        "offpeak_ratio": 1.176,
+        "offpeak_ratio": 1.175,
         "best": {
           "depart_date": "2026-10-08",
           "return_date": "2026-10-12",
@@ -3257,14 +3257,14 @@
         }
       },
       "ICN-KIX": {
-        "min_price": 387595,
+        "min_price": 387192,
         "typical": 583900,
-        "deal_pct": 33.6,
+        "deal_pct": 33.7,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 428550,
-        "offpeak_ratio": 0.904,
+        "offpeak_ratio": 0.903,
         "best": {
           "depart_date": "2026-10-08",
           "return_date": "2026-10-12",
@@ -3305,14 +3305,14 @@
         }
       },
       "ICN-DPS": {
-        "min_price": 534687,
-        "typical": 657538,
+        "min_price": 534255,
+        "typical": 657283,
         "deal_pct": 18.7,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 734950,
-        "offpeak_ratio": 0.728,
+        "offpeak_ratio": 0.727,
         "best": {
           "depart_date": "2026-10-08",
           "return_date": "2026-10-13",
@@ -3354,8 +3354,8 @@
       },
       "ICN-ULN": {
         "min_price": 546600,
-        "typical": 652300,
-        "deal_pct": 16.2,
+        "typical": 655000,
+        "deal_pct": 16.5,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
@@ -3377,8 +3377,8 @@
         }
       },
       "ICN-PVG": {
-        "min_price": 455767,
-        "typical": 600686,
+        "min_price": 455724,
+        "typical": 600614,
         "deal_pct": 24.1,
         "tier": "A",
         "n_obs": 12,
@@ -3401,14 +3401,14 @@
         }
       },
       "ICN-TPE": {
-        "min_price": 351112,
+        "min_price": 309757,
         "typical": 351112,
-        "deal_pct": 0.0,
+        "deal_pct": 11.8,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 391500,
-        "offpeak_ratio": 0.897,
+        "offpeak_ratio": 0.791,
         "best": {
           "depart_date": "2026-10-09",
           "return_date": "2026-10-12",
@@ -3425,14 +3425,14 @@
         }
       },
       "ICN-KHH": {
-        "min_price": 464347,
+        "min_price": 464081,
         "typical": 503895,
-        "deal_pct": 7.8,
+        "deal_pct": 7.9,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 450939,
-        "offpeak_ratio": 1.03,
+        "offpeak_ratio": 1.029,
         "best": {
           "depart_date": "2026-10-08",
           "return_date": "2026-10-12",
@@ -3449,14 +3449,14 @@
         }
       },
       "ICN-PQC": {
-        "min_price": 376993,
+        "min_price": 376437,
         "typical": 455502,
-        "deal_pct": 17.2,
+        "deal_pct": 17.4,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 415642,
-        "offpeak_ratio": 0.907,
+        "offpeak_ratio": 0.906,
         "best": {
           "depart_date": "2026-10-08",
           "return_date": "2026-10-12",
@@ -3570,8 +3570,8 @@
       },
       "ICN-CDG": {
         "min_price": 1012600,
-        "typical": 1363400,
-        "deal_pct": 25.7,
+        "typical": 1202300,
+        "deal_pct": 15.8,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
@@ -3689,14 +3689,14 @@
         }
       },
       "ICN-HKG": {
-        "min_price": 315151,
+        "min_price": 314732,
         "typical": 427038,
-        "deal_pct": 26.2,
+        "deal_pct": 26.3,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 376067,
-        "offpeak_ratio": 0.838,
+        "offpeak_ratio": 0.837,
         "best": {
           "depart_date": "2026-10-09",
           "return_date": "2026-10-12",
@@ -3737,7 +3737,7 @@
         }
       },
       "ICN-PEK": {
-        "min_price": 453850,
+        "min_price": 453667,
         "typical": 486500,
         "deal_pct": 6.7,
         "tier": "A",
@@ -3785,7 +3785,7 @@
         }
       },
       "ICN-BKK": {
-        "min_price": 490760,
+        "min_price": 490889,
         "typical": 734508,
         "deal_pct": 33.2,
         "tier": "B",
@@ -3810,7 +3810,7 @@
       },
       "ICN-HKT": {
         "min_price": 518819,
-        "typical": 613326,
+        "typical": 613414,
         "deal_pct": 15.4,
         "tier": "A",
         "n_obs": 6,
@@ -3857,14 +3857,14 @@
         }
       },
       "ICN-SGN": {
-        "min_price": 344611,
-        "typical": 421171,
-        "deal_pct": 18.2,
+        "min_price": 355891,
+        "typical": 426246,
+        "deal_pct": 16.5,
         "tier": "B",
         "n_obs": 4,
         "n_pairs": 1,
         "offpeak_baseline": 394996,
-        "offpeak_ratio": 0.872,
+        "offpeak_ratio": 0.901,
         "best": {
           "depart_date": "2026-10-08",
           "return_date": "2026-10-12",
@@ -3875,8 +3875,8 @@
           "leave_days": 2,
           "stops": "0",
           "airline": "비엣젯",
-          "dep_time": "21:15",
-          "arr_time": "00:30+1",
+          "dep_time": "11:40",
+          "arr_time": "14:55",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Ho%20Chi%20Minh%20City%20on%202026-10-08%20through%202026-10-12&hl=ko&curr=KRW"
         }
       },
@@ -3953,14 +3953,14 @@
         }
       },
       "ICN-MNL": {
-        "min_price": 402553,
+        "min_price": 402006,
         "typical": 427693,
-        "deal_pct": 5.9,
+        "deal_pct": 6.0,
         "tier": "B",
         "n_obs": 4,
         "n_pairs": 1,
         "offpeak_baseline": 377690,
-        "offpeak_ratio": 1.066,
+        "offpeak_ratio": 1.064,
         "best": {
           "depart_date": "2026-10-08",
           "return_date": "2026-10-12",
@@ -3977,14 +3977,14 @@
         }
       },
       "ICN-KUL": {
-        "min_price": 437512,
+        "min_price": 437091,
         "typical": 509324,
-        "deal_pct": 14.1,
+        "deal_pct": 14.2,
         "tier": "B",
         "n_obs": 4,
         "n_pairs": 1,
         "offpeak_baseline": 557956,
-        "offpeak_ratio": 0.784,
+        "offpeak_ratio": 0.783,
         "best": {
           "depart_date": "2026-10-08",
           "return_date": "2026-10-12",
@@ -4098,8 +4098,8 @@
       },
       "ICN-ALA": {
         "min_price": 1031100,
-        "typical": 1143779,
-        "deal_pct": 9.9,
+        "typical": 1143041,
+        "deal_pct": 9.8,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
@@ -4145,14 +4145,14 @@
         }
       },
       "ICN-FCO": {
-        "min_price": 951300,
+        "min_price": 1041500,
         "typical": 1523550,
-        "deal_pct": 37.6,
+        "deal_pct": 31.6,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 1500000,
-        "offpeak_ratio": 0.634,
+        "offpeak_ratio": 0.694,
         "best": {
           "depart_date": "2026-10-06",
           "return_date": "2026-10-12",
@@ -4169,14 +4169,14 @@
         }
       },
       "ICN-BCN": {
-        "min_price": 1062800,
+        "min_price": 1132300,
         "typical": 1746350,
-        "deal_pct": 39.1,
+        "deal_pct": 35.2,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 1544980,
-        "offpeak_ratio": 0.688,
+        "offpeak_ratio": 0.733,
         "best": {
           "depart_date": "2026-10-06",
           "return_date": "2026-10-12",
@@ -4218,8 +4218,8 @@
       },
       "ICN-VIE": {
         "min_price": 861400,
-        "typical": 1203814,
-        "deal_pct": 28.4,
+        "typical": 1083900,
+        "deal_pct": 20.5,
         "tier": "B",
         "n_obs": 3,
         "n_pairs": 3,
@@ -4290,8 +4290,8 @@
       },
       "ICN-ZRH": {
         "min_price": 1053800,
-        "typical": 1514400,
-        "deal_pct": 30.4,
+        "typical": 1516850,
+        "deal_pct": 30.5,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
@@ -4315,14 +4315,14 @@
     },
     "2026-12-25": {
       "ICN-NRT": {
-        "min_price": 489994,
-        "typical": 548618,
-        "deal_pct": 10.7,
+        "min_price": 489325,
+        "typical": 548320,
+        "deal_pct": 10.8,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 342954,
-        "offpeak_ratio": 1.429,
+        "offpeak_ratio": 1.427,
         "best": {
           "depart_date": "2026-12-24",
           "return_date": "2026-12-27",
@@ -4339,14 +4339,14 @@
         }
       },
       "ICN-KIX": {
-        "min_price": 560129,
+        "min_price": 559394,
         "typical": 687500,
-        "deal_pct": 18.5,
+        "deal_pct": 18.6,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 428550,
-        "offpeak_ratio": 1.307,
+        "offpeak_ratio": 1.305,
         "best": {
           "depart_date": "2026-12-24",
           "return_date": "2026-12-27",
@@ -4363,33 +4363,33 @@
         }
       },
       "ICN-DAD": {
-        "min_price": 628645,
-        "typical": 684998,
-        "deal_pct": 8.2,
+        "min_price": 568423,
+        "typical": 682591,
+        "deal_pct": 16.7,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 473155,
-        "offpeak_ratio": 1.329,
+        "offpeak_ratio": 1.201,
         "best": {
-          "depart_date": "2026-12-25",
-          "return_date": "2026-12-28",
-          "depart_weekday": "금",
-          "return_weekday": "월",
+          "depart_date": "2026-12-24",
+          "return_date": "2026-12-27",
+          "depart_weekday": "목",
+          "return_weekday": "일",
           "nights": 3,
           "days": 4,
           "leave_days": 1,
           "stops": "1",
           "airline": "필리핀항공",
           "dep_time": "20:30",
-          "arr_time": "13:10+1",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Da%20Nang%20International%20Airport%20on%202026-12-25%20through%202026-12-28&hl=ko&curr=KRW"
+          "arr_time": "13:25+1",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Da%20Nang%20International%20Airport%20on%202026-12-24%20through%202026-12-27&hl=ko&curr=KRW"
         }
       },
       "ICN-DPS": {
-        "min_price": 711461,
-        "typical": 867208,
-        "deal_pct": 18.0,
+        "min_price": 711643,
+        "typical": 867315,
+        "deal_pct": 17.9,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
@@ -4459,14 +4459,14 @@
         }
       },
       "ICN-PVG": {
-        "min_price": 388711,
+        "min_price": 388567,
         "typical": 491198,
         "deal_pct": 20.9,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 402134,
-        "offpeak_ratio": 0.967,
+        "offpeak_ratio": 0.966,
         "best": {
           "depart_date": "2026-12-24",
           "return_date": "2026-12-27",
@@ -4507,43 +4507,43 @@
         }
       },
       "ICN-KHH": {
-        "min_price": 513959,
+        "min_price": 513598,
         "typical": 723050,
-        "deal_pct": 28.9,
+        "deal_pct": 29.0,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 450939,
-        "offpeak_ratio": 1.14,
+        "offpeak_ratio": 1.139,
         "best": {
-          "depart_date": "2026-12-25",
+          "depart_date": "2026-12-24",
           "return_date": "2026-12-28",
-          "depart_weekday": "금",
+          "depart_weekday": "목",
           "return_weekday": "월",
-          "nights": 3,
-          "days": 4,
-          "leave_days": 1,
+          "nights": 4,
+          "days": 5,
+          "leave_days": 2,
           "stops": "0",
           "airline": "",
           "dep_time": "20:35",
           "arr_time": "22:40",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kaohsiung%20on%202026-12-25%20through%202026-12-28&hl=ko&curr=KRW"
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kaohsiung%20on%202026-12-24%20through%202026-12-28&hl=ko&curr=KRW"
         }
       },
       "ICN-PQC": {
-        "min_price": 749258,
-        "typical": 749994,
+        "min_price": 748999,
+        "typical": 749752,
         "deal_pct": 0.1,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 415642,
-        "offpeak_ratio": 1.803,
+        "offpeak_ratio": 1.802,
         "best": {
-          "depart_date": "2026-12-25",
-          "return_date": "2026-12-28",
-          "depart_weekday": "금",
-          "return_weekday": "월",
+          "depart_date": "2026-12-24",
+          "return_date": "2026-12-27",
+          "depart_weekday": "목",
+          "return_weekday": "일",
           "nights": 3,
           "days": 4,
           "leave_days": 1,
@@ -4551,7 +4551,7 @@
           "airline": "비엣젯",
           "dep_time": "05:00",
           "arr_time": "08:50",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Phu%20Quoc%20on%202026-12-25%20through%202026-12-28&hl=ko&curr=KRW"
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Phu%20Quoc%20on%202026-12-24%20through%202026-12-27&hl=ko&curr=KRW"
         }
       },
       "ICN-GUM": {
@@ -4603,14 +4603,14 @@
         }
       },
       "ICN-KBV": {
-        "min_price": 879690,
-        "typical": 888484,
-        "deal_pct": 1.0,
+        "min_price": 923630,
+        "typical": 927904,
+        "deal_pct": 0.5,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 776400,
-        "offpeak_ratio": 1.133,
+        "offpeak_ratio": 1.19,
         "best": {
           "depart_date": "2026-12-24",
           "return_date": "2026-12-27",
@@ -4622,19 +4622,19 @@
           "stops": "1",
           "airline": "에어아시아",
           "dep_time": "11:20",
-          "arr_time": "19:50",
+          "arr_time": "18:40",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Krabi%20on%202026-12-24%20through%202026-12-27&hl=ko&curr=KRW"
         }
       },
       "ICN-ATH": {
-        "min_price": 1115438,
+        "min_price": 1113671,
         "typical": 1119200,
-        "deal_pct": 0.3,
+        "deal_pct": 0.5,
         "tier": "B",
         "n_obs": 3,
         "n_pairs": 3,
         "offpeak_baseline": 1195200,
-        "offpeak_ratio": 0.933,
+        "offpeak_ratio": 0.932,
         "best": {
           "depart_date": "2026-12-24",
           "return_date": "2026-12-30",
@@ -4652,8 +4652,8 @@
       },
       "ICN-CDG": {
         "min_price": 1111700,
-        "typical": 1236700,
-        "deal_pct": 10.1,
+        "typical": 1168050,
+        "deal_pct": 4.8,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
@@ -4723,14 +4723,14 @@
         }
       },
       "ICN-OKA": {
-        "min_price": 732706,
-        "typical": 733988,
+        "min_price": 732329,
+        "typical": 733800,
         "deal_pct": 0.2,
         "tier": "B",
         "n_obs": 4,
         "n_pairs": 1,
         "offpeak_baseline": 553400,
-        "offpeak_ratio": 1.324,
+        "offpeak_ratio": 1.323,
         "best": {
           "depart_date": "2026-12-24",
           "return_date": "2026-12-28",
@@ -4868,7 +4868,7 @@
       },
       "ICN-BKK": {
         "min_price": 471100,
-        "typical": 585016,
+        "typical": 585006,
         "deal_pct": 19.5,
         "tier": "B",
         "n_obs": 4,
@@ -4964,7 +4964,7 @@
       },
       "ICN-HAN": {
         "min_price": 428000,
-        "typical": 545540,
+        "typical": 545144,
         "deal_pct": 21.5,
         "tier": "A",
         "n_obs": 12,
@@ -4987,14 +4987,14 @@
         }
       },
       "ICN-CXR": {
-        "min_price": 558321,
+        "min_price": 557288,
         "typical": 687900,
-        "deal_pct": 18.8,
+        "deal_pct": 19.0,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 410369,
-        "offpeak_ratio": 1.361,
+        "offpeak_ratio": 1.358,
         "best": {
           "depart_date": "2026-12-22",
           "return_date": "2026-12-28",
@@ -5011,14 +5011,14 @@
         }
       },
       "ICN-CEB": {
-        "min_price": 627283,
-        "typical": 681742,
+        "min_price": 626679,
+        "typical": 681440,
         "deal_pct": 8.0,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 405269,
-        "offpeak_ratio": 1.548,
+        "offpeak_ratio": 1.546,
         "best": {
           "depart_date": "2026-12-24",
           "return_date": "2026-12-29",
@@ -5035,14 +5035,14 @@
         }
       },
       "ICN-MNL": {
-        "min_price": 565309,
+        "min_price": 564777,
         "typical": 567069,
-        "deal_pct": 0.3,
+        "deal_pct": 0.4,
         "tier": "B",
         "n_obs": 3,
         "n_pairs": 1,
         "offpeak_baseline": 377690,
-        "offpeak_ratio": 1.497,
+        "offpeak_ratio": 1.495,
         "best": {
           "depart_date": "2026-12-24",
           "return_date": "2026-12-28",
@@ -5084,7 +5084,7 @@
       },
       "ICN-BKI": {
         "min_price": 598100,
-        "typical": 703143,
+        "typical": 703119,
         "deal_pct": 14.9,
         "tier": "A",
         "n_obs": 6,
@@ -5107,14 +5107,14 @@
         }
       },
       "ICN-SIN": {
-        "min_price": 467200,
-        "typical": 687700,
-        "deal_pct": 32.1,
+        "min_price": 458328,
+        "typical": 644264,
+        "deal_pct": 28.9,
         "tier": "B",
         "n_obs": 4,
         "n_pairs": 1,
         "offpeak_baseline": 504707,
-        "offpeak_ratio": 0.926,
+        "offpeak_ratio": 0.908,
         "best": {
           "depart_date": "2026-12-24",
           "return_date": "2026-12-28",
@@ -5203,14 +5203,14 @@
         }
       },
       "ICN-LHR": {
-        "min_price": 986156,
-        "typical": 1405642,
-        "deal_pct": 29.8,
+        "min_price": 984855,
+        "typical": 1404788,
+        "deal_pct": 29.9,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 1243050,
-        "offpeak_ratio": 0.793,
+        "offpeak_ratio": 0.792,
         "best": {
           "depart_date": "2026-12-24",
           "return_date": "2026-12-30",
@@ -5228,7 +5228,7 @@
       },
       "ICN-FCO": {
         "min_price": 1083600,
-        "typical": 1369050,
+        "typical": 1370750,
         "deal_pct": 20.9,
         "tier": "A",
         "n_obs": 6,
@@ -5275,14 +5275,14 @@
         }
       },
       "ICN-PRG": {
-        "min_price": 1117314,
-        "typical": 1695504,
+        "min_price": 1116001,
+        "typical": 1694564,
         "deal_pct": 34.1,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 1655600,
-        "offpeak_ratio": 0.675,
+        "offpeak_ratio": 0.674,
         "best": {
           "depart_date": "2026-12-24",
           "return_date": "2026-12-30",
@@ -5300,7 +5300,7 @@
       },
       "ICN-VIE": {
         "min_price": 1039800,
-        "typical": 1113828,
+        "typical": 1112990,
         "deal_pct": 6.6,
         "tier": "B",
         "n_obs": 4,
@@ -5397,14 +5397,14 @@
     },
     "2027-01-01": {
       "ICN-NRT": {
-        "min_price": 458800,
-        "typical": 480094,
-        "deal_pct": 4.4,
+        "min_price": 458360,
+        "typical": 479874,
+        "deal_pct": 4.5,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 342954,
-        "offpeak_ratio": 1.338,
+        "offpeak_ratio": 1.337,
         "best": {
           "depart_date": "2027-01-01",
           "return_date": "2027-01-04",
@@ -5421,7 +5421,7 @@
         }
       },
       "ICN-KIX": {
-        "min_price": 270810,
+        "min_price": 270705,
         "typical": 523646,
         "deal_pct": 48.3,
         "tier": "A",
@@ -5445,14 +5445,14 @@
         }
       },
       "ICN-DAD": {
-        "min_price": 520428,
-        "typical": 655970,
+        "min_price": 519846,
+        "typical": 655642,
         "deal_pct": 20.7,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 473155,
-        "offpeak_ratio": 1.1,
+        "offpeak_ratio": 1.099,
         "best": {
           "depart_date": "2027-01-01",
           "return_date": "2027-01-04",
@@ -5463,37 +5463,37 @@
           "leave_days": 1,
           "stops": "1",
           "airline": "필리핀항공",
-          "dep_time": "20:30",
-          "arr_time": "13:10+1",
+          "dep_time": "07:30",
+          "arr_time": "13:25",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Da%20Nang%20International%20Airport%20on%202027-01-01%20through%202027-01-04&hl=ko&curr=KRW"
         }
       },
       "ICN-DPS": {
-        "min_price": 677466,
-        "typical": 865752,
-        "deal_pct": 21.7,
+        "min_price": 677354,
+        "typical": 865664,
+        "deal_pct": 21.8,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 734950,
         "offpeak_ratio": 0.922,
         "best": {
-          "depart_date": "2026-12-29",
+          "depart_date": "2026-12-30",
           "return_date": "2027-01-04",
-          "depart_weekday": "화",
+          "depart_weekday": "수",
           "return_weekday": "월",
-          "nights": 6,
-          "days": 7,
-          "leave_days": 4,
+          "nights": 5,
+          "days": 6,
+          "leave_days": 3,
           "stops": "1",
           "airline": "비엣젯",
           "dep_time": "10:50",
           "arr_time": "12:55+1",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Bali%20on%202026-12-29%20through%202027-01-04&hl=ko&curr=KRW"
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Bali%20on%202026-12-30%20through%202027-01-04&hl=ko&curr=KRW"
         }
       },
       "ICN-DPS-d": {
-        "min_price": 1053772,
+        "min_price": 1053659,
         "typical": 1077000,
         "deal_pct": 2.2,
         "tier": "B",
@@ -5541,14 +5541,14 @@
         }
       },
       "ICN-PVG": {
-        "min_price": 342115,
-        "typical": 401246,
-        "deal_pct": 14.7,
+        "min_price": 341987,
+        "typical": 401216,
+        "deal_pct": 14.8,
         "tier": "A",
         "n_obs": 8,
         "n_pairs": 3,
         "offpeak_baseline": 402134,
-        "offpeak_ratio": 0.851,
+        "offpeak_ratio": 0.85,
         "best": {
           "depart_date": "2026-12-31",
           "return_date": "2027-01-03",
@@ -5589,38 +5589,38 @@
         }
       },
       "ICN-KHH": {
-        "min_price": 450247,
+        "min_price": 449933,
         "typical": 561446,
-        "deal_pct": 19.8,
+        "deal_pct": 19.9,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 450939,
         "offpeak_ratio": 0.998,
         "best": {
-          "depart_date": "2027-01-01",
+          "depart_date": "2026-12-31",
           "return_date": "2027-01-04",
-          "depart_weekday": "금",
+          "depart_weekday": "목",
           "return_weekday": "월",
-          "nights": 3,
-          "days": 4,
-          "leave_days": 1,
+          "nights": 4,
+          "days": 5,
+          "leave_days": 2,
           "stops": "0",
           "airline": "",
-          "dep_time": "10:50",
-          "arr_time": "13:05",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kaohsiung%20on%202027-01-01%20through%202027-01-04&hl=ko&curr=KRW"
+          "dep_time": "13:25",
+          "arr_time": "15:55",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kaohsiung%20on%202026-12-31%20through%202027-01-04&hl=ko&curr=KRW"
         }
       },
       "ICN-PQC": {
-        "min_price": 685057,
+        "min_price": 684453,
         "typical": 775900,
-        "deal_pct": 11.7,
+        "deal_pct": 11.8,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 415642,
-        "offpeak_ratio": 1.648,
+        "offpeak_ratio": 1.647,
         "best": {
           "depart_date": "2026-12-31",
           "return_date": "2027-01-04",
@@ -5637,14 +5637,14 @@
         }
       },
       "ICN-GUM": {
-        "min_price": 766435,
+        "min_price": 765895,
         "typical": 775100,
-        "deal_pct": 1.1,
+        "deal_pct": 1.2,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 271004,
-        "offpeak_ratio": 2.828,
+        "offpeak_ratio": 2.826,
         "best": {
           "depart_date": "2026-12-31",
           "return_date": "2027-01-03",
@@ -5686,7 +5686,7 @@
       },
       "ICN-KBV": {
         "min_price": 823862,
-        "typical": 869375,
+        "typical": 869123,
         "deal_pct": 5.2,
         "tier": "A",
         "n_obs": 6,
@@ -5710,8 +5710,8 @@
       },
       "ICN-ATH": {
         "min_price": 1066600,
-        "typical": 1114975,
-        "deal_pct": 4.3,
+        "typical": 1113671,
+        "deal_pct": 4.2,
         "tier": "B",
         "n_obs": 3,
         "n_pairs": 3,
@@ -5830,8 +5830,8 @@
       },
       "ICN-NGO": {
         "min_price": 306574,
-        "typical": 397429,
-        "deal_pct": 22.9,
+        "typical": 396896,
+        "deal_pct": 22.8,
         "tier": "A",
         "n_obs": 10,
         "n_pairs": 3,
@@ -5853,14 +5853,14 @@
         }
       },
       "ICN-HKG": {
-        "min_price": 390151,
+        "min_price": 389732,
         "typical": 422940,
-        "deal_pct": 7.8,
+        "deal_pct": 7.9,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 376067,
-        "offpeak_ratio": 1.037,
+        "offpeak_ratio": 1.036,
         "best": {
           "depart_date": "2027-01-01",
           "return_date": "2027-01-04",
@@ -5973,8 +5973,8 @@
         }
       },
       "ICN-HKT": {
-        "min_price": 812737,
-        "typical": 854914,
+        "min_price": 812910,
+        "typical": 855208,
         "deal_pct": 4.9,
         "tier": "A",
         "n_obs": 6,
@@ -6045,38 +6045,38 @@
         }
       },
       "ICN-HAN": {
-        "min_price": 400209,
-        "typical": 404948,
+        "min_price": 399755,
+        "typical": 404720,
         "deal_pct": 1.2,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 384900,
-        "offpeak_ratio": 1.04,
+        "offpeak_ratio": 1.039,
         "best": {
-          "depart_date": "2026-12-31",
-          "return_date": "2027-01-03",
-          "depart_weekday": "목",
-          "return_weekday": "일",
+          "depart_date": "2027-01-01",
+          "return_date": "2027-01-04",
+          "depart_weekday": "금",
+          "return_weekday": "월",
           "nights": 3,
           "days": 4,
           "leave_days": 1,
           "stops": "1",
           "airline": "",
-          "dep_time": "11:45",
-          "arr_time": "01:20+1",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Hanoi%20on%202026-12-31%20through%202027-01-03&hl=ko&curr=KRW"
+          "dep_time": "14:00",
+          "arr_time": "01:50+1",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Hanoi%20on%202027-01-01%20through%202027-01-04&hl=ko&curr=KRW"
         }
       },
       "ICN-CXR": {
-        "min_price": 682830,
+        "min_price": 682433,
         "typical": 755600,
-        "deal_pct": 9.6,
+        "deal_pct": 9.7,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 410369,
-        "offpeak_ratio": 1.664,
+        "offpeak_ratio": 1.663,
         "best": {
           "depart_date": "2026-12-31",
           "return_date": "2027-01-05",
@@ -6093,14 +6093,14 @@
         }
       },
       "ICN-CEB": {
-        "min_price": 549109,
-        "typical": 685800,
-        "deal_pct": 19.9,
+        "min_price": 548653,
+        "typical": 682200,
+        "deal_pct": 19.6,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
         "offpeak_baseline": 405269,
-        "offpeak_ratio": 1.355,
+        "offpeak_ratio": 1.354,
         "best": {
           "depart_date": "2026-12-31",
           "return_date": "2027-01-05",
@@ -6141,14 +6141,14 @@
         }
       },
       "ICN-KUL": {
-        "min_price": 588940,
+        "min_price": 588466,
         "typical": 683135,
-        "deal_pct": 13.8,
+        "deal_pct": 13.9,
         "tier": "B",
         "n_obs": 4,
         "n_pairs": 1,
         "offpeak_baseline": 557956,
-        "offpeak_ratio": 1.056,
+        "offpeak_ratio": 1.055,
         "best": {
           "depart_date": "2026-12-31",
           "return_date": "2027-01-04",
@@ -6262,8 +6262,8 @@
       },
       "ICN-ALA": {
         "min_price": 929400,
-        "typical": 974600,
-        "deal_pct": 4.6,
+        "typical": 981250,
+        "deal_pct": 5.3,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
@@ -6382,7 +6382,7 @@
       },
       "ICN-VIE": {
         "min_price": 911300,
-        "typical": 1048662,
+        "typical": 1048558,
         "deal_pct": 13.1,
         "tier": "B",
         "n_obs": 4,
@@ -6454,8 +6454,8 @@
       },
       "ICN-ZRH": {
         "min_price": 1035600,
-        "typical": 1045456,
-        "deal_pct": 0.9,
+        "typical": 1044227,
+        "deal_pct": 0.8,
         "tier": "B",
         "n_obs": 3,
         "n_pairs": 3,
