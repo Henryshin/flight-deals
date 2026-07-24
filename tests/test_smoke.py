@@ -32,10 +32,21 @@ def test_parse_itinerary():
 
     assert parse_itinerary("₩300,000 편도 특가") is None  # 왕복 아님
     assert parse_itinerary("왕복 일정 안내") is None  # 가격 없음
+    assert p["airline"] == "대한항공"
     via = parse_itinerary("오전 7:00 – 오후 11:20 경유 1회 총 ₩610,000 왕복")
     assert via["stops"] == 1
     unknown = parse_itinerary("총 ₩999,999 왕복")
     assert unknown["stops"] is None  # 직항/경유 문구 없으면 미상
+
+
+def test_extract_airline():
+    from collector.google_flights_crawler import extract_airline
+    assert extract_airline("오전 8:00 대한항공 직항 ₩487,681 왕복") == "대한항공"
+    assert extract_airline("... 티웨이 ... 왕복") == "티웨이항공"   # 별칭 -> 정식명
+    assert extract_airline("... ANA ... 왕복") == "전일본공수"
+    assert extract_airline("항공사 정보 없음") == ""
+    # 가는편(먼저 등장) 항공사를 택함
+    assert extract_airline("진에어 ... 제주항공 ...") == "진에어"
 
 
 def test_classify_no_results():

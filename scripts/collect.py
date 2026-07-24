@@ -44,10 +44,10 @@ BLOCKED_ABORT_STREAK = 5
 NEW_HEADER = [
     "origin", "destination", "depart_date", "return_date", "price",
     "is_holiday_window", "collected_at", "dep_time", "arr_time", "stops",
-    "window_id",
+    "window_id", "airline",
 ]
-# 과거 스키마들: 7열(초기) -> 10열(dep/arr/stops 추가) -> 11열(window_id 추가)
-LEGACY_HEADERS = [NEW_HEADER[:7], NEW_HEADER[:10]]
+# 과거 스키마들: 7열(초기) -> 10열(dep/arr/stops) -> 11열(window_id) -> 12열(airline)
+LEGACY_HEADERS = [NEW_HEADER[:7], NEW_HEADER[:10], NEW_HEADER[:11]]
 
 
 def build_date_candidates(min_nights=DEFAULT_TRIP_LENGTH_DAYS, max_pairs=None, today=None):
@@ -476,7 +476,7 @@ def main():
                             it["price"], int(is_holiday), collected_at,
                             it.get("dep_time", ""), it.get("arr_time", ""),
                             it.get("stops", ""),
-                            window_id,
+                            window_id, it.get("airline", ""),
                         ])
             except Exception as e:  # noqa: BLE001 - 한 노선의 예기치 못한 크래시(세션 재기동
                 # 실패 등)가 남은 노선 수집과 상태 기록 전체를 유실시키지 않도록 격리.

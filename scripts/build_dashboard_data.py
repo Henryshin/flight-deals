@@ -278,6 +278,7 @@ def build_matrix_cell(route_prices, offpeak_rows, max_stops, window, route,
             "days": nights + 1,
             "leave_days": count_leave_days(d1, d2),
             "stops": best.get("stops", ""),
+            "airline": best.get("airline", ""),
             "dep_time": best.get("dep_time", ""),
             "arr_time": best.get("arr_time", ""),
             "booking_url": build_booking_url(
@@ -307,8 +308,8 @@ def main():
     for row in prices:
         row["price"] = int(row["price"])
         row["is_holiday_window"] = bool(int(row["is_holiday_window"]))
-        # 구 스키마(7열/10열) 행은 이 키들이 없을 수 있음 -> 빈 문자열로 정규화.
-        for k in ("dep_time", "arr_time", "stops", "window_id"):
+        # 구 스키마 행은 이 키들이 없을 수 있음 -> 빈 문자열로 정규화.
+        for k in ("dep_time", "arr_time", "stops", "window_id", "airline"):
             row.setdefault(k, "")
             if row.get(k) is None:
                 row[k] = ""
@@ -381,6 +382,7 @@ def main():
             "dep_time": latest_row["dep_time"] if latest_row else "",
             "arr_time": latest_row["arr_time"] if latest_row else "",
             "stops": latest_row["stops"] if latest_row else "",
+            "airline": latest_row.get("airline", "") if latest_row else "",
             "prev_price": status_prev_price,
             "min_price_30d": min_price_30d,
             "avg_price_30d": avg_price_30d,
@@ -479,6 +481,7 @@ def main():
                     "dep_time": r.get("dep_time", ""),
                     "arr_time": r.get("arr_time", ""),
                     "stops": r.get("stops", ""),
+                    "airline": r.get("airline", ""),
                     "discount_pct": round(discount * 100, 1),
                     "is_holiday_window": r["is_holiday_window"],
                     "booking_url": build_booking_url(

@@ -28,6 +28,47 @@ TIME_PATTERN = re.compile(r"(오전|오후)\s*([0-9]{1,2}):([0-9]{2})(\+1)?")
 STOPS_NONSTOP = "직항"
 STOPS_PATTERN = re.compile(r"경유\s*([0-9]+)\s*회")
 
+# 결과 li 텍스트에서 항공사명을 뽑기 위한 사전. 등록 노선(한국 출발) 기준 주요 항공사.
+# 검색은 '텍스트에 이 이름이 있으면 매칭'이라 레이아웃 변경에 강하다.
+# 별칭(영문/약칭)은 CANON 으로 정식 한글명에 합친다.
+AIRLINES = [
+    "대한항공", "아시아나항공", "진에어", "제주항공", "티웨이항공", "티웨이",
+    "에어부산", "에어서울", "이스타항공", "에어프레미아", "에어로케이",
+    "일본항공", "전일본공수", "ANA", "JAL", "피치항공", "피치", "집에어",
+    "스타플라이어", "스카이마크",
+    "중국동방항공", "중국국제항공", "중국남방항공", "상하이항공", "하이난항공",
+    "캐세이퍼시픽", "캐세이", "홍콩항공", "그레이터베이항공", "중화항공",
+    "에바항공", "스타룩스항공", "스타룩스", "타이거에어",
+    "베트남항공", "비엣젯", "뱀부항공", "타이항공", "에어아시아",
+    "싱가포르항공", "스쿠트", "말레이시아항공", "바틱에어",
+    "필리핀항공", "세부퍼시픽", "가루다인도네시아",
+    "몽골항공", "미아트", "에어아스타나",
+    "에미레이트", "카타르항공", "에티하드", "터키항공", "루프트한자",
+    "에어프랑스", "KLM", "핀에어", "영국항공", "폴란드항공", "유나이티드항공",
+]
+AIRLINE_CANON = {
+    "티웨이": "티웨이항공", "ANA": "전일본공수", "JAL": "일본항공",
+    "피치": "피치항공", "캐세이": "캐세이퍼시픽", "스타룩스": "스타룩스항공",
+    "미아트": "몽골항공", "에미레이트": "에미레이트항공", "에티하드": "에티하드항공",
+}
+# 긴 이름을 먼저 찾도록 정렬 (예: '타이에어아시아' 안의 '에어아시아' 오매칭 완화).
+_AIRLINES_BY_LEN = sorted(set(AIRLINES), key=len, reverse=True)
+
+
+def extract_airline(li_text: str) -> str:
+    """li 텍스트에서 항공사명 하나(가장 먼저 등장하는 = 보통 가는편)를 뽑는다.
+
+    못 찾으면 빈 문자열. 순수 함수(단위테스트 가능).
+    """
+    best = None  # (등장위치, -이름길이, 이름)
+    for name in _AIRLINES_BY_LEN:
+        idx = li_text.find(name)
+        if idx >= 0 and (best is None or (idx, -len(name)) < best[:2]):
+            best = (idx, -len(name), name)
+    if best is None:
+        return ""
+    return AIRLINE_CANON.get(best[2], best[2])
+
 # 결과 목록의 각 항공편은 <li> 안에 "...₩487,681 | 왕복" 형태로 총액이 들어있음.
 # body 전체 텍스트를 긁으면 날짜별 가격 캘린더 위젯 등 다른 요소의 가격까지 섞여
 # 실제보다 훨씬 낮은 값을 최저가로 잘못 고르는 문제가 있어, 결과 리스트 항목만 대상으로 함.
@@ -124,7 +165,10 @@ def parse_itinerary(li_text: str):
         # 파싱 못한 항목이 nonstop 클래스로 오염되므로 '알 수 없음'으로 남긴다.
         stops = int(m.group(1)) if m else None
 
-    return {"price": price, "stops": stops, "dep_time": dep_time, "arr_time": arr_time}
+    return {
+        "price": price, "stops": stops, "dep_time": dep_time, "arr_time": arr_time,
+        "airline": extract_airline(li_text),
+    }
 
 
 def classify_no_results(page_url: str, body_text: str, li_count: int, saw_price: bool):
