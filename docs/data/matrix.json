@@ -83,7 +83,7 @@
         }
       },
       "ICN-KIX": {
-        "min_price": 333400,
+        "min_price": 333300,
         "typical": 508196,
         "deal_pct": 34.4,
         "tier": "A",
@@ -156,8 +156,8 @@
       },
       "ICN-DPS-d": {
         "min_price": 1398400,
-        "typical": 1412100,
-        "deal_pct": 1.0,
+        "typical": 1445550,
+        "deal_pct": 3.3,
         "tier": "A",
         "n_obs": 8,
         "n_pairs": 4,
@@ -180,8 +180,8 @@
       },
       "ICN-ULN": {
         "min_price": 942500,
-        "typical": 1254200,
-        "deal_pct": 24.9,
+        "typical": 1310200,
+        "deal_pct": 28.1,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
@@ -233,7 +233,7 @@
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
-        "offpeak_baseline": 370292,
+        "offpeak_baseline": 370228,
         "offpeak_ratio": 0.834,
         "best": {
           "depart_date": "2026-08-14",
@@ -305,7 +305,7 @@
         "tier": "A",
         "n_obs": 9,
         "n_pairs": 3,
-        "offpeak_baseline": 270243,
+        "offpeak_baseline": 270190,
         "offpeak_ratio": 1.204,
         "best": {
           "depart_date": "2026-08-15",
@@ -377,8 +377,8 @@
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
-        "offpeak_baseline": 1223400,
-        "offpeak_ratio": 0.853,
+        "offpeak_baseline": 1195200,
+        "offpeak_ratio": 0.873,
         "best": {
           "depart_date": "2026-08-14",
           "return_date": "2026-08-20",
@@ -425,8 +425,8 @@
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 454700,
-        "offpeak_ratio": 0.654,
+        "offpeak_baseline": 458850,
+        "offpeak_ratio": 0.649,
         "best": {
           "depart_date": "2026-08-14",
           "return_date": "2026-08-18",
@@ -497,8 +497,8 @@
         "tier": "A",
         "n_obs": 9,
         "n_pairs": 3,
-        "offpeak_baseline": 397643,
-        "offpeak_ratio": 0.928,
+        "offpeak_baseline": 398050,
+        "offpeak_ratio": 0.927,
         "best": {
           "depart_date": "2026-08-14",
           "return_date": "2026-08-18",
@@ -516,13 +516,13 @@
       },
       "ICN-HKG": {
         "min_price": 304705,
-        "typical": 491052,
-        "deal_pct": 37.9,
+        "typical": 498552,
+        "deal_pct": 38.9,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 374739,
-        "offpeak_ratio": 0.813,
+        "offpeak_baseline": 379302,
+        "offpeak_ratio": 0.803,
         "best": {
           "depart_date": "2026-08-14",
           "return_date": "2026-08-18",
@@ -545,8 +545,8 @@
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 621650,
-        "offpeak_ratio": 0.889,
+        "offpeak_baseline": 620600,
+        "offpeak_ratio": 0.891,
         "best": {
           "depart_date": "2026-08-14",
           "return_date": "2026-08-18",
@@ -683,14 +683,14 @@
         }
       },
       "ICN-SGN": {
-        "min_price": 530690,
-        "typical": 564495,
-        "deal_pct": 6.0,
+        "min_price": 500911,
+        "typical": 549606,
+        "deal_pct": 8.9,
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 394866,
-        "offpeak_ratio": 1.344,
+        "offpeak_baseline": 394889,
+        "offpeak_ratio": 1.268,
         "best": {
           "depart_date": "2026-08-14",
           "return_date": "2026-08-18",
@@ -707,27 +707,27 @@
         }
       },
       "ICN-HAN": {
-        "min_price": 412591,
+        "min_price": 451748,
         "typical": 482900,
-        "deal_pct": 14.6,
+        "deal_pct": 6.5,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
         "offpeak_baseline": 383750,
-        "offpeak_ratio": 1.075,
+        "offpeak_ratio": 1.177,
         "best": {
-          "depart_date": "2026-08-14",
-          "return_date": "2026-08-17",
-          "depart_weekday": "금",
-          "return_weekday": "월",
+          "depart_date": "2026-08-15",
+          "return_date": "2026-08-18",
+          "depart_weekday": "토",
+          "return_weekday": "화",
           "nights": 3,
           "days": 4,
           "leave_days": 1,
           "stops": "0",
           "airline": "비엣젯",
-          "dep_time": "11:05",
-          "arr_time": "13:35",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Hanoi%20on%202026-08-14%20through%202026-08-17&hl=ko&curr=KRW"
+          "dep_time": "06:25",
+          "arr_time": "08:55",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Hanoi%20on%202026-08-15%20through%202026-08-18&hl=ko&curr=KRW"
         }
       },
       "ICN-CXR": {
@@ -761,7 +761,7 @@
         "tier": "A",
         "n_obs": 16,
         "n_pairs": 4,
-        "offpeak_baseline": 404482,
+        "offpeak_baseline": 404550,
         "offpeak_ratio": 1.21,
         "best": {
           "depart_date": "2026-08-12",
@@ -785,7 +785,7 @@
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 375973,
+        "offpeak_baseline": 376016,
         "offpeak_ratio": 1.322,
         "best": {
           "depart_date": "2026-08-14",
@@ -809,7 +809,7 @@
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 556552,
+        "offpeak_baseline": 556586,
         "offpeak_ratio": 0.831,
         "best": {
           "depart_date": "2026-08-14",
@@ -828,12 +828,12 @@
       },
       "ICN-BKI": {
         "min_price": 483853,
-        "typical": 512200,
-        "deal_pct": 5.5,
+        "typical": 519700,
+        "deal_pct": 6.9,
         "tier": "A",
         "n_obs": 16,
         "n_pairs": 4,
-        "offpeak_baseline": 454744,
+        "offpeak_baseline": 454770,
         "offpeak_ratio": 1.064,
         "best": {
           "depart_date": "2026-08-12",
@@ -857,7 +857,7 @@
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 505225,
+        "offpeak_baseline": 505240,
         "offpeak_ratio": 1.009,
         "best": {
           "depart_date": "2026-08-14",
@@ -875,14 +875,14 @@
         }
       },
       "ICN-REP": {
-        "min_price": 486752,
-        "typical": 486752,
-        "deal_pct": 0.0,
+        "min_price": 515610,
+        "typical": 486783,
+        "deal_pct": -5.9,
         "tier": "B",
         "n_obs": 3,
         "n_pairs": 1,
-        "offpeak_baseline": 517024,
-        "offpeak_ratio": 0.941,
+        "offpeak_baseline": 517004,
+        "offpeak_ratio": 0.997,
         "best": {
           "depart_date": "2026-08-14",
           "return_date": "2026-08-18",
@@ -971,14 +971,14 @@
         }
       },
       "ICN-BCN": {
-        "min_price": 1142400,
+        "min_price": 1166600,
         "typical": 1318500,
-        "deal_pct": 13.4,
+        "deal_pct": 11.5,
         "tier": "A",
         "n_obs": 10,
         "n_pairs": 3,
         "offpeak_baseline": 1596576,
-        "offpeak_ratio": 0.716,
+        "offpeak_ratio": 0.731,
         "best": {
           "depart_date": "2026-08-12",
           "return_date": "2026-08-18",
@@ -1025,8 +1025,8 @@
         "tier": "A",
         "n_obs": 8,
         "n_pairs": 3,
-        "offpeak_baseline": 1148100,
-        "offpeak_ratio": 0.917,
+        "offpeak_baseline": 1127900,
+        "offpeak_ratio": 0.934,
         "best": {
           "depart_date": "2026-08-12",
           "return_date": "2026-08-18",
@@ -1097,7 +1097,7 @@
         "tier": "A",
         "n_obs": 10,
         "n_pairs": 3,
-        "offpeak_baseline": 1521700,
+        "offpeak_baseline": 1521350,
         "offpeak_ratio": 0.715,
         "best": {
           "depart_date": "2026-08-14",
@@ -1286,12 +1286,12 @@
       },
       "ICN-TPE": {
         "min_price": 284407,
-        "typical": 456492,
-        "deal_pct": 37.7,
+        "typical": 454515,
+        "deal_pct": 37.4,
         "tier": "A",
         "n_obs": 24,
         "n_pairs": 6,
-        "offpeak_baseline": 370292,
+        "offpeak_baseline": 370228,
         "offpeak_ratio": 0.768,
         "best": {
           "depart_date": "2026-09-25",
@@ -1363,7 +1363,7 @@
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 6,
-        "offpeak_baseline": 270243,
+        "offpeak_baseline": 270190,
         "offpeak_ratio": 1.995,
         "best": {
           "depart_date": "2026-09-25",
@@ -1411,8 +1411,8 @@
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
-        "offpeak_baseline": 1223400,
-        "offpeak_ratio": 1.143,
+        "offpeak_baseline": 1195200,
+        "offpeak_ratio": 1.17,
         "best": {
           "depart_date": "2026-09-22",
           "return_date": "2026-09-28",
@@ -1454,13 +1454,13 @@
       },
       "ICN-FUK": {
         "min_price": 353500,
-        "typical": 602000,
-        "deal_pct": 41.3,
+        "typical": 639500,
+        "deal_pct": 44.7,
         "tier": "A",
-        "n_obs": 22,
+        "n_obs": 23,
         "n_pairs": 6,
-        "offpeak_baseline": 454700,
-        "offpeak_ratio": 0.777,
+        "offpeak_baseline": 458850,
+        "offpeak_ratio": 0.77,
         "best": {
           "depart_date": "2026-09-25",
           "return_date": "2026-09-28",
@@ -1501,27 +1501,27 @@
         }
       },
       "ICN-OKA": {
-        "min_price": 738300,
-        "typical": 874296,
-        "deal_pct": 15.6,
+        "min_price": 801600,
+        "typical": 873478,
+        "deal_pct": 8.2,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
         "offpeak_baseline": 552300,
-        "offpeak_ratio": 1.337,
+        "offpeak_ratio": 1.451,
         "best": {
-          "depart_date": "2026-09-24",
+          "depart_date": "2026-09-23",
           "return_date": "2026-09-28",
-          "depart_weekday": "목",
+          "depart_weekday": "수",
           "return_weekday": "월",
-          "nights": 4,
-          "days": 5,
-          "leave_days": 1,
-          "stops": "1",
-          "airline": "전일본공수",
-          "dep_time": "12:40",
-          "arr_time": "21:55",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Okinawa%20on%202026-09-24%20through%202026-09-28&hl=ko&curr=KRW"
+          "nights": 5,
+          "days": 6,
+          "leave_days": 2,
+          "stops": "0",
+          "airline": "제주항공",
+          "dep_time": "13:15",
+          "arr_time": "15:45",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Okinawa%20on%202026-09-23%20through%202026-09-28&hl=ko&curr=KRW"
         }
       },
       "ICN-NGO": {
@@ -1531,8 +1531,8 @@
         "tier": "A",
         "n_obs": 24,
         "n_pairs": 6,
-        "offpeak_baseline": 397643,
-        "offpeak_ratio": 1.312,
+        "offpeak_baseline": 398050,
+        "offpeak_ratio": 1.311,
         "best": {
           "depart_date": "2026-09-25",
           "return_date": "2026-09-28",
@@ -1550,13 +1550,13 @@
       },
       "ICN-HKG": {
         "min_price": 316253,
-        "typical": 443880,
-        "deal_pct": 28.8,
+        "typical": 434550,
+        "deal_pct": 27.2,
         "tier": "A",
         "n_obs": 24,
         "n_pairs": 6,
-        "offpeak_baseline": 374739,
-        "offpeak_ratio": 0.844,
+        "offpeak_baseline": 379302,
+        "offpeak_ratio": 0.834,
         "best": {
           "depart_date": "2026-09-23",
           "return_date": "2026-09-28",
@@ -1579,8 +1579,8 @@
         "tier": "A",
         "n_obs": 24,
         "n_pairs": 6,
-        "offpeak_baseline": 621650,
-        "offpeak_ratio": 1.274,
+        "offpeak_baseline": 620600,
+        "offpeak_ratio": 1.276,
         "best": {
           "depart_date": "2026-09-25",
           "return_date": "2026-09-28",
@@ -1723,7 +1723,7 @@
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 394866,
+        "offpeak_baseline": 394889,
         "offpeak_ratio": 1.39,
         "best": {
           "depart_date": "2026-09-24",
@@ -1795,7 +1795,7 @@
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 404482,
+        "offpeak_baseline": 404550,
         "offpeak_ratio": 1.362,
         "best": {
           "depart_date": "2026-09-23",
@@ -1819,7 +1819,7 @@
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 375973,
+        "offpeak_baseline": 376016,
         "offpeak_ratio": 1.278,
         "best": {
           "depart_date": "2026-09-23",
@@ -1843,7 +1843,7 @@
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 556552,
+        "offpeak_baseline": 556586,
         "offpeak_ratio": 0.755,
         "best": {
           "depart_date": "2026-09-23",
@@ -1861,14 +1861,14 @@
         }
       },
       "ICN-BKI": {
-        "min_price": 742900,
+        "min_price": 696500,
         "typical": 796150,
-        "deal_pct": 6.7,
+        "deal_pct": 12.5,
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 454744,
-        "offpeak_ratio": 1.634,
+        "offpeak_baseline": 454770,
+        "offpeak_ratio": 1.532,
         "best": {
           "depart_date": "2026-09-23",
           "return_date": "2026-09-28",
@@ -1891,7 +1891,7 @@
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 505225,
+        "offpeak_baseline": 505240,
         "offpeak_ratio": 0.882,
         "best": {
           "depart_date": "2026-09-23",
@@ -1915,7 +1915,7 @@
         "tier": "A",
         "n_obs": 9,
         "n_pairs": 3,
-        "offpeak_baseline": 517024,
+        "offpeak_baseline": 517004,
         "offpeak_ratio": 1.474,
         "best": {
           "depart_date": "2026-09-24",
@@ -1933,9 +1933,9 @@
         }
       },
       "ICN-SPN": {
-        "min_price": 774400,
+        "min_price": 734400,
         "typical": 913300,
-        "deal_pct": 15.2,
+        "deal_pct": 19.6,
         "tier": "A",
         "n_obs": 9,
         "n_pairs": 3,
@@ -2005,19 +2005,19 @@
         }
       },
       "ICN-FCO": {
-        "min_price": 1322700,
+        "min_price": 1250500,
         "typical": 1520700,
-        "deal_pct": 13.0,
+        "deal_pct": 17.8,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 1497900,
-        "offpeak_ratio": 0.883,
+        "offpeak_ratio": 0.835,
         "best": {
-          "depart_date": "2026-09-22",
-          "return_date": "2026-09-28",
-          "depart_weekday": "화",
-          "return_weekday": "월",
+          "depart_date": "2026-09-23",
+          "return_date": "2026-09-29",
+          "depart_weekday": "수",
+          "return_weekday": "화",
           "nights": 6,
           "days": 7,
           "leave_days": 3,
@@ -2025,7 +2025,7 @@
           "airline": "카타르항공",
           "dep_time": "01:20",
           "arr_time": "14:15",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Rome,%20Italy%20on%202026-09-22%20through%202026-09-28&hl=ko&curr=KRW"
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Rome,%20Italy%20on%202026-09-23%20through%202026-09-29&hl=ko&curr=KRW"
         }
       },
       "ICN-BCN": {
@@ -2083,8 +2083,8 @@
         "tier": "A",
         "n_obs": 8,
         "n_pairs": 3,
-        "offpeak_baseline": 1148100,
-        "offpeak_ratio": 1.15,
+        "offpeak_baseline": 1127900,
+        "offpeak_ratio": 1.17,
         "best": {
           "depart_date": "2026-09-23",
           "return_date": "2026-09-29",
@@ -2155,7 +2155,7 @@
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
-        "offpeak_baseline": 1521700,
+        "offpeak_baseline": 1521350,
         "offpeak_ratio": 0.826,
         "best": {
           "depart_date": "2026-09-23",
@@ -2200,8 +2200,8 @@
       },
       "ICN-KIX": {
         "min_price": 368098,
-        "typical": 556250,
-        "deal_pct": 33.8,
+        "typical": 568900,
+        "deal_pct": 35.3,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
@@ -2349,7 +2349,7 @@
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 370292,
+        "offpeak_baseline": 370228,
         "offpeak_ratio": 0.793,
         "best": {
           "depart_date": "2026-10-03",
@@ -2392,8 +2392,8 @@
       },
       "ICN-PQC": {
         "min_price": 376162,
-        "typical": 543126,
-        "deal_pct": 30.7,
+        "typical": 554526,
+        "deal_pct": 32.2,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
@@ -2421,7 +2421,7 @@
         "tier": "A",
         "n_obs": 9,
         "n_pairs": 3,
-        "offpeak_baseline": 270243,
+        "offpeak_baseline": 270190,
         "offpeak_ratio": 2.032,
         "best": {
           "depart_date": "2026-10-03",
@@ -2469,8 +2469,8 @@
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
-        "offpeak_baseline": 1223400,
-        "offpeak_ratio": 1.023,
+        "offpeak_baseline": 1195200,
+        "offpeak_ratio": 1.047,
         "best": {
           "depart_date": "2026-10-01",
           "return_date": "2026-10-07",
@@ -2512,13 +2512,13 @@
       },
       "ICN-FUK": {
         "min_price": 433500,
-        "typical": 602600,
-        "deal_pct": 28.1,
+        "typical": 574350,
+        "deal_pct": 24.5,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 454700,
-        "offpeak_ratio": 0.953,
+        "offpeak_baseline": 458850,
+        "offpeak_ratio": 0.945,
         "best": {
           "depart_date": "2026-10-02",
           "return_date": "2026-10-06",
@@ -2584,13 +2584,13 @@
       },
       "ICN-NGO": {
         "min_price": 422579,
-        "typical": 494587,
+        "typical": 494579,
         "deal_pct": 14.6,
         "tier": "A",
         "n_obs": 9,
         "n_pairs": 3,
-        "offpeak_baseline": 397643,
-        "offpeak_ratio": 1.063,
+        "offpeak_baseline": 398050,
+        "offpeak_ratio": 1.062,
         "best": {
           "depart_date": "2026-10-02",
           "return_date": "2026-10-06",
@@ -2613,8 +2613,8 @@
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 374739,
-        "offpeak_ratio": 0.879,
+        "offpeak_baseline": 379302,
+        "offpeak_ratio": 0.869,
         "best": {
           "depart_date": "2026-10-02",
           "return_date": "2026-10-05",
@@ -2637,8 +2637,8 @@
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 621650,
-        "offpeak_ratio": 1.04,
+        "offpeak_baseline": 620600,
+        "offpeak_ratio": 1.042,
         "best": {
           "depart_date": "2026-10-02",
           "return_date": "2026-10-06",
@@ -2781,7 +2781,7 @@
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 394866,
+        "offpeak_baseline": 394889,
         "offpeak_ratio": 1.007,
         "best": {
           "depart_date": "2026-10-02",
@@ -2848,12 +2848,12 @@
       },
       "ICN-CEB": {
         "min_price": 384729,
-        "typical": 430814,
-        "deal_pct": 10.7,
+        "typical": 428900,
+        "deal_pct": 10.3,
         "tier": "A",
         "n_obs": 16,
         "n_pairs": 4,
-        "offpeak_baseline": 404482,
+        "offpeak_baseline": 404550,
         "offpeak_ratio": 0.951,
         "best": {
           "depart_date": "2026-10-01",
@@ -2877,7 +2877,7 @@
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 375973,
+        "offpeak_baseline": 376016,
         "offpeak_ratio": 1.066,
         "best": {
           "depart_date": "2026-10-02",
@@ -2895,14 +2895,14 @@
         }
       },
       "ICN-KUL": {
-        "min_price": 436769,
+        "min_price": 459589,
         "typical": 472616,
-        "deal_pct": 7.6,
+        "deal_pct": 2.8,
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 556552,
-        "offpeak_ratio": 0.785,
+        "offpeak_baseline": 556586,
+        "offpeak_ratio": 0.826,
         "best": {
           "depart_date": "2026-10-02",
           "return_date": "2026-10-06",
@@ -2911,10 +2911,10 @@
           "nights": 4,
           "days": 5,
           "leave_days": 2,
-          "stops": "1",
-          "airline": "비엣젯",
-          "dep_time": "11:40",
-          "arr_time": "12:35+1",
+          "stops": "0",
+          "airline": "",
+          "dep_time": "06:50",
+          "arr_time": "12:30",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kuala%20Lumpur%20on%202026-10-02%20through%202026-10-06&hl=ko&curr=KRW"
         }
       },
@@ -2925,7 +2925,7 @@
         "tier": "A",
         "n_obs": 16,
         "n_pairs": 4,
-        "offpeak_baseline": 454744,
+        "offpeak_baseline": 454770,
         "offpeak_ratio": 1.154,
         "best": {
           "depart_date": "2026-09-30",
@@ -2949,7 +2949,7 @@
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 505225,
+        "offpeak_baseline": 505240,
         "offpeak_ratio": 0.811,
         "best": {
           "depart_date": "2026-10-02",
@@ -2973,7 +2973,7 @@
         "tier": "B",
         "n_obs": 3,
         "n_pairs": 1,
-        "offpeak_baseline": 517024,
+        "offpeak_baseline": 517004,
         "offpeak_ratio": 1.146,
         "best": {
           "depart_date": "2026-10-02",
@@ -3141,8 +3141,8 @@
         "tier": "A",
         "n_obs": 10,
         "n_pairs": 3,
-        "offpeak_baseline": 1148100,
-        "offpeak_ratio": 1.066,
+        "offpeak_baseline": 1127900,
+        "offpeak_ratio": 1.085,
         "best": {
           "depart_date": "2026-09-30",
           "return_date": "2026-10-06",
@@ -3213,7 +3213,7 @@
         "tier": "A",
         "n_obs": 10,
         "n_pairs": 3,
-        "offpeak_baseline": 1521700,
+        "offpeak_baseline": 1521350,
         "offpeak_ratio": 0.78,
         "best": {
           "depart_date": "2026-10-01",
@@ -3407,7 +3407,7 @@
         "tier": "A",
         "n_obs": 11,
         "n_pairs": 3,
-        "offpeak_baseline": 370292,
+        "offpeak_baseline": 370228,
         "offpeak_ratio": 0.837,
         "best": {
           "depart_date": "2026-10-09",
@@ -3479,7 +3479,7 @@
         "tier": "A",
         "n_obs": 9,
         "n_pairs": 3,
-        "offpeak_baseline": 270243,
+        "offpeak_baseline": 270190,
         "offpeak_ratio": 1.635,
         "best": {
           "depart_date": "2026-10-09",
@@ -3546,13 +3546,13 @@
       },
       "ICN-ATH": {
         "min_price": 1214300,
-        "typical": 1214300,
-        "deal_pct": 0.0,
+        "typical": 1251020,
+        "deal_pct": 2.9,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
-        "offpeak_baseline": 1223400,
-        "offpeak_ratio": 0.993,
+        "offpeak_baseline": 1195200,
+        "offpeak_ratio": 1.016,
         "best": {
           "depart_date": "2026-10-07",
           "return_date": "2026-10-13",
@@ -3599,8 +3599,8 @@
         "tier": "A",
         "n_obs": 17,
         "n_pairs": 3,
-        "offpeak_baseline": 454700,
-        "offpeak_ratio": 0.813,
+        "offpeak_baseline": 458850,
+        "offpeak_ratio": 0.806,
         "best": {
           "depart_date": "2026-10-08",
           "return_date": "2026-10-12",
@@ -3671,8 +3671,8 @@
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
-        "offpeak_baseline": 397643,
-        "offpeak_ratio": 1.431,
+        "offpeak_baseline": 398050,
+        "offpeak_ratio": 1.43,
         "best": {
           "depart_date": "2026-10-08",
           "return_date": "2026-10-11",
@@ -3695,8 +3695,8 @@
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 374739,
-        "offpeak_ratio": 0.839,
+        "offpeak_baseline": 379302,
+        "offpeak_ratio": 0.829,
         "best": {
           "depart_date": "2026-10-09",
           "return_date": "2026-10-12",
@@ -3719,8 +3719,8 @@
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 621650,
-        "offpeak_ratio": 1.082,
+        "offpeak_baseline": 620600,
+        "offpeak_ratio": 1.084,
         "best": {
           "depart_date": "2026-10-08",
           "return_date": "2026-10-12",
@@ -3863,7 +3863,7 @@
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 394866,
+        "offpeak_baseline": 394889,
         "offpeak_ratio": 0.901,
         "best": {
           "depart_date": "2026-10-08",
@@ -3882,8 +3882,8 @@
       },
       "ICN-HAN": {
         "min_price": 394900,
-        "typical": 442254,
-        "deal_pct": 10.7,
+        "typical": 447746,
+        "deal_pct": 11.8,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
@@ -3935,7 +3935,7 @@
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
-        "offpeak_baseline": 404482,
+        "offpeak_baseline": 404550,
         "offpeak_ratio": 1.078,
         "best": {
           "depart_date": "2026-10-06",
@@ -3959,7 +3959,7 @@
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 375973,
+        "offpeak_baseline": 376016,
         "offpeak_ratio": 1.068,
         "best": {
           "depart_date": "2026-10-08",
@@ -3983,7 +3983,7 @@
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 556552,
+        "offpeak_baseline": 556586,
         "offpeak_ratio": 0.785,
         "best": {
           "depart_date": "2026-10-08",
@@ -4007,7 +4007,7 @@
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
-        "offpeak_baseline": 454744,
+        "offpeak_baseline": 454770,
         "offpeak_ratio": 1.033,
         "best": {
           "depart_date": "2026-10-06",
@@ -4031,7 +4031,7 @@
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 505225,
+        "offpeak_baseline": 505240,
         "offpeak_ratio": 0.89,
         "best": {
           "depart_date": "2026-10-08",
@@ -4055,7 +4055,7 @@
         "tier": "B",
         "n_obs": 3,
         "n_pairs": 1,
-        "offpeak_baseline": 517024,
+        "offpeak_baseline": 517004,
         "offpeak_ratio": 0.891,
         "best": {
           "depart_date": "2026-10-08",
@@ -4146,8 +4146,8 @@
       },
       "ICN-FCO": {
         "min_price": 907300,
-        "typical": 1553000,
-        "deal_pct": 41.6,
+        "typical": 1556650,
+        "deal_pct": 41.7,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
@@ -4218,13 +4218,13 @@
       },
       "ICN-VIE": {
         "min_price": 859700,
-        "typical": 1082200,
-        "deal_pct": 20.6,
+        "typical": 1110050,
+        "deal_pct": 22.6,
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
-        "offpeak_baseline": 1148100,
-        "offpeak_ratio": 0.749,
+        "offpeak_baseline": 1127900,
+        "offpeak_ratio": 0.762,
         "best": {
           "depart_date": "2026-10-06",
           "return_date": "2026-10-12",
@@ -4242,8 +4242,8 @@
       },
       "ICN-IST": {
         "min_price": 1048200,
-        "typical": 1321450,
-        "deal_pct": 20.7,
+        "typical": 1367050,
+        "deal_pct": 23.3,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
@@ -4295,8 +4295,8 @@
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
-        "offpeak_baseline": 1521700,
-        "offpeak_ratio": 0.69,
+        "offpeak_baseline": 1521350,
+        "offpeak_ratio": 0.691,
         "best": {
           "depart_date": "2026-10-06",
           "return_date": "2026-10-12",
@@ -4339,14 +4339,14 @@
         }
       },
       "ICN-KIX": {
-        "min_price": 496600,
+        "min_price": 496100,
         "typical": 686450,
         "deal_pct": 27.7,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
         "offpeak_baseline": 427950,
-        "offpeak_ratio": 1.16,
+        "offpeak_ratio": 1.159,
         "best": {
           "depart_date": "2026-12-25",
           "return_date": "2026-12-28",
@@ -4489,7 +4489,7 @@
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 370292,
+        "offpeak_baseline": 370228,
         "offpeak_ratio": 1.132,
         "best": {
           "depart_date": "2026-12-24",
@@ -4561,7 +4561,7 @@
         "tier": "A",
         "n_obs": 9,
         "n_pairs": 3,
-        "offpeak_baseline": 270243,
+        "offpeak_baseline": 270190,
         "offpeak_ratio": 2.702,
         "best": {
           "depart_date": "2026-12-24",
@@ -4603,14 +4603,14 @@
         }
       },
       "ICN-KBV": {
-        "min_price": 923630,
+        "min_price": 922872,
         "typical": 932179,
-        "deal_pct": 0.9,
+        "deal_pct": 1.0,
         "tier": "A",
         "n_obs": 9,
         "n_pairs": 3,
         "offpeak_baseline": 644985,
-        "offpeak_ratio": 1.432,
+        "offpeak_ratio": 1.431,
         "best": {
           "depart_date": "2026-12-24",
           "return_date": "2026-12-27",
@@ -4633,8 +4633,8 @@
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
-        "offpeak_baseline": 1223400,
-        "offpeak_ratio": 0.911,
+        "offpeak_baseline": 1195200,
+        "offpeak_ratio": 0.933,
         "best": {
           "depart_date": "2026-12-23",
           "return_date": "2026-12-29",
@@ -4676,13 +4676,13 @@
       },
       "ICN-FUK": {
         "min_price": 513000,
-        "typical": 626700,
-        "deal_pct": 18.1,
+        "typical": 636700,
+        "deal_pct": 19.4,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 454700,
-        "offpeak_ratio": 1.128,
+        "offpeak_baseline": 458850,
+        "offpeak_ratio": 1.118,
         "best": {
           "depart_date": "2026-12-24",
           "return_date": "2026-12-27",
@@ -4699,14 +4699,14 @@
         }
       },
       "ICN-CTS": {
-        "min_price": 700700,
+        "min_price": 725700,
         "typical": 874550,
-        "deal_pct": 19.9,
+        "deal_pct": 17.0,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
         "offpeak_baseline": 610700,
-        "offpeak_ratio": 1.147,
+        "offpeak_ratio": 1.188,
         "best": {
           "depart_date": "2026-12-24",
           "return_date": "2026-12-28",
@@ -4723,8 +4723,8 @@
         }
       },
       "ICN-OKA": {
-        "min_price": 731892,
-        "typical": 732596,
+        "min_price": 731877,
+        "typical": 732588,
         "deal_pct": 0.1,
         "tier": "B",
         "n_obs": 6,
@@ -4753,8 +4753,8 @@
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
-        "offpeak_baseline": 397643,
-        "offpeak_ratio": 1.181,
+        "offpeak_baseline": 398050,
+        "offpeak_ratio": 1.18,
         "best": {
           "depart_date": "2026-12-24",
           "return_date": "2026-12-28",
@@ -4777,8 +4777,8 @@
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 374739,
-        "offpeak_ratio": 1.161,
+        "offpeak_baseline": 379302,
+        "offpeak_ratio": 1.147,
         "best": {
           "depart_date": "2026-12-24",
           "return_date": "2026-12-27",
@@ -4801,8 +4801,8 @@
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 621650,
-        "offpeak_ratio": 1.266,
+        "offpeak_baseline": 620600,
+        "offpeak_ratio": 1.268,
         "best": {
           "depart_date": "2026-12-24",
           "return_date": "2026-12-27",
@@ -4945,7 +4945,7 @@
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 394866,
+        "offpeak_baseline": 394889,
         "offpeak_ratio": 1.256,
         "best": {
           "depart_date": "2026-12-24",
@@ -5012,12 +5012,12 @@
       },
       "ICN-CEB": {
         "min_price": 626899,
-        "typical": 648583,
-        "deal_pct": 3.3,
+        "typical": 677300,
+        "deal_pct": 7.4,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
-        "offpeak_baseline": 404482,
+        "offpeak_baseline": 404550,
         "offpeak_ratio": 1.55,
         "best": {
           "depart_date": "2026-12-24",
@@ -5041,7 +5041,7 @@
         "tier": "B",
         "n_obs": 5,
         "n_pairs": 1,
-        "offpeak_baseline": 375973,
+        "offpeak_baseline": 376016,
         "offpeak_ratio": 1.502,
         "best": {
           "depart_date": "2026-12-24",
@@ -5065,7 +5065,7 @@
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 556552,
+        "offpeak_baseline": 556586,
         "offpeak_ratio": 0.885,
         "best": {
           "depart_date": "2026-12-24",
@@ -5089,7 +5089,7 @@
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
-        "offpeak_baseline": 454744,
+        "offpeak_baseline": 454770,
         "offpeak_ratio": 1.311,
         "best": {
           "depart_date": "2026-12-22",
@@ -5113,7 +5113,7 @@
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 505225,
+        "offpeak_baseline": 505240,
         "offpeak_ratio": 0.906,
         "best": {
           "depart_date": "2026-12-24",
@@ -5137,7 +5137,7 @@
         "tier": "B",
         "n_obs": 3,
         "n_pairs": 1,
-        "offpeak_baseline": 517024,
+        "offpeak_baseline": 517004,
         "offpeak_ratio": 1.517,
         "best": {
           "depart_date": "2026-12-24",
@@ -5305,8 +5305,8 @@
         "tier": "A",
         "n_obs": 8,
         "n_pairs": 3,
-        "offpeak_baseline": 1148100,
-        "offpeak_ratio": 0.904,
+        "offpeak_baseline": 1127900,
+        "offpeak_ratio": 0.921,
         "best": {
           "depart_date": "2026-12-22",
           "return_date": "2026-12-28",
@@ -5347,27 +5347,27 @@
         }
       },
       "ICN-FRA": {
-        "min_price": 1131900,
-        "typical": 1203750,
-        "deal_pct": 6.0,
+        "min_price": 1171900,
+        "typical": 1222650,
+        "deal_pct": 4.2,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
         "offpeak_baseline": 1261500,
-        "offpeak_ratio": 0.897,
+        "offpeak_ratio": 0.929,
         "best": {
-          "depart_date": "2026-12-23",
-          "return_date": "2026-12-29",
-          "depart_weekday": "수",
-          "return_weekday": "화",
+          "depart_date": "2026-12-24",
+          "return_date": "2026-12-30",
+          "depart_weekday": "목",
+          "return_weekday": "수",
           "nights": 6,
           "days": 7,
           "leave_days": 4,
           "stops": "1",
           "airline": "에티하드항공",
-          "dep_time": "23:45",
-          "arr_time": "12:40+1",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Frankfurt,%20Germany%20on%202026-12-23%20through%202026-12-29&hl=ko&curr=KRW"
+          "dep_time": "17:50",
+          "arr_time": "06:10+1",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Frankfurt,%20Germany%20on%202026-12-24%20through%202026-12-30&hl=ko&curr=KRW"
         }
       },
       "ICN-ZRH": {
@@ -5377,7 +5377,7 @@
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
-        "offpeak_baseline": 1521700,
+        "offpeak_baseline": 1521350,
         "offpeak_ratio": 0.678,
         "best": {
           "depart_date": "2026-12-23",
@@ -5422,8 +5422,8 @@
       },
       "ICN-KIX": {
         "min_price": 278764,
-        "typical": 520446,
-        "deal_pct": 46.4,
+        "typical": 522896,
+        "deal_pct": 46.7,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
@@ -5571,7 +5571,7 @@
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 370292,
+        "offpeak_baseline": 370228,
         "offpeak_ratio": 0.793,
         "best": {
           "depart_date": "2026-12-31",
@@ -5643,7 +5643,7 @@
         "tier": "A",
         "n_obs": 9,
         "n_pairs": 3,
-        "offpeak_baseline": 270243,
+        "offpeak_baseline": 270190,
         "offpeak_ratio": 2.831,
         "best": {
           "depart_date": "2026-12-31",
@@ -5665,7 +5665,7 @@
         "typical": 1000700,
         "deal_pct": 22.0,
         "tier": "A",
-        "n_obs": 8,
+        "n_obs": 9,
         "n_pairs": 3,
         "offpeak_baseline": 488200,
         "offpeak_ratio": 1.599,
@@ -5715,8 +5715,8 @@
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
-        "offpeak_baseline": 1223400,
-        "offpeak_ratio": 0.869,
+        "offpeak_baseline": 1195200,
+        "offpeak_ratio": 0.89,
         "best": {
           "depart_date": "2026-12-30",
           "return_date": "2027-01-05",
@@ -5763,8 +5763,8 @@
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 454700,
-        "offpeak_ratio": 0.993,
+        "offpeak_baseline": 458850,
+        "offpeak_ratio": 0.984,
         "best": {
           "depart_date": "2027-01-01",
           "return_date": "2027-01-04",
@@ -5829,13 +5829,13 @@
         }
       },
       "ICN-NGO": {
-        "min_price": 306050,
-        "typical": 396146,
-        "deal_pct": 22.7,
+        "min_price": 306517,
+        "typical": 396139,
+        "deal_pct": 22.6,
         "tier": "A",
         "n_obs": 15,
         "n_pairs": 3,
-        "offpeak_baseline": 397643,
+        "offpeak_baseline": 398050,
         "offpeak_ratio": 0.77,
         "best": {
           "depart_date": "2026-12-31",
@@ -5859,8 +5859,8 @@
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 374739,
-        "offpeak_ratio": 1.039,
+        "offpeak_baseline": 379302,
+        "offpeak_ratio": 1.027,
         "best": {
           "depart_date": "2027-01-01",
           "return_date": "2027-01-04",
@@ -5883,8 +5883,8 @@
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 3,
-        "offpeak_baseline": 621650,
-        "offpeak_ratio": 1.054,
+        "offpeak_baseline": 620600,
+        "offpeak_ratio": 1.056,
         "best": {
           "depart_date": "2026-12-31",
           "return_date": "2027-01-03",
@@ -6027,7 +6027,7 @@
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 394866,
+        "offpeak_baseline": 394889,
         "offpeak_ratio": 1.063,
         "best": {
           "depart_date": "2026-12-31",
@@ -6094,12 +6094,12 @@
       },
       "ICN-CEB": {
         "min_price": 548819,
-        "typical": 678050,
-        "deal_pct": 19.1,
+        "typical": 681650,
+        "deal_pct": 19.5,
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
-        "offpeak_baseline": 404482,
+        "offpeak_baseline": 404550,
         "offpeak_ratio": 1.357,
         "best": {
           "depart_date": "2026-12-31",
@@ -6123,7 +6123,7 @@
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 375973,
+        "offpeak_baseline": 376016,
         "offpeak_ratio": 1.568,
         "best": {
           "depart_date": "2026-12-31",
@@ -6147,7 +6147,7 @@
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 556552,
+        "offpeak_baseline": 556586,
         "offpeak_ratio": 1.057,
         "best": {
           "depart_date": "2026-12-31",
@@ -6171,7 +6171,7 @@
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
-        "offpeak_baseline": 454744,
+        "offpeak_baseline": 454770,
         "offpeak_ratio": 1.466,
         "best": {
           "depart_date": "2026-12-31",
@@ -6195,7 +6195,7 @@
         "tier": "B",
         "n_obs": 6,
         "n_pairs": 1,
-        "offpeak_baseline": 505225,
+        "offpeak_baseline": 505240,
         "offpeak_ratio": 0.864,
         "best": {
           "depart_date": "2026-12-31",
@@ -6219,7 +6219,7 @@
         "tier": "B",
         "n_obs": 3,
         "n_pairs": 1,
-        "offpeak_baseline": 517024,
+        "offpeak_baseline": 517004,
         "offpeak_ratio": 1.277,
         "best": {
           "depart_date": "2026-12-31",
@@ -6387,8 +6387,8 @@
         "tier": "A",
         "n_obs": 8,
         "n_pairs": 3,
-        "offpeak_baseline": 1148100,
-        "offpeak_ratio": 0.792,
+        "offpeak_baseline": 1127900,
+        "offpeak_ratio": 0.806,
         "best": {
           "depart_date": "2026-12-30",
           "return_date": "2027-01-05",
@@ -6459,7 +6459,7 @@
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
-        "offpeak_baseline": 1521700,
+        "offpeak_baseline": 1521350,
         "offpeak_ratio": 0.678,
         "best": {
           "depart_date": "2026-12-30",
