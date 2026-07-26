@@ -10,6 +10,16 @@
 
   gtag('config', 'G-1NSTL7K368');
 </script>
+<!-- Simple visit counter (abacus.jasoncameron.dev) -->
+<script>
+  fetch('https://abacus.jasoncameron.dev/hit/excel-flights-xyz/site-visits')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var el = document.getElementById('visit-count');
+      if (el) el.textContent = d.value.toLocaleString();
+    })
+    .catch(function(){});
+</script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>프로젝트 스케줄 조정표_v4.33</title>
