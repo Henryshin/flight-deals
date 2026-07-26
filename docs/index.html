@@ -314,6 +314,7 @@
     <span class="rt-fresh" id="next-update" title="자동 수집은 4시간마다 실행됩니다"></span>
     <span class="rt-fresh" id="freshness"></span>
     <span class="rt-fresh" title="누적 페이지 조회수">조회 <span id="visit-count">—</span></span>
+    <span class="rt-fresh" id="live-count" hidden></span>
     <button class="rt-btn rt-right" id="btn-settings" title="GitHub 연결 설정">⚙️ 설정</button>
   </div>
   <div class="formula-bar">
@@ -610,6 +611,44 @@
       const s = e && e.status;
       if (s === 401) { openSettings('공유 암호를 입력하세요 (한 번만 저장하면 계속 사용됩니다)'); }
       else toast('요청 실패: ' + ((e && e.message) || '네트워크 오류'), 'err');
+    }
+
+    // ===================== 동시접속자 카운터 =====================
+    // 누적 조회수는 abacus 위젯(#visit-count)이 이미 표시하므로, 여기서는 "지금 몇 명이
+    // 보고 있는지"만 담당한다. Worker의 COUNTER_KV 바인딩(선택 기능)에 기대므로, 실패하면
+    // 위젯을 그냥 숨긴 채 조용히 포기한다(페이지의 다른 기능에는 영향 없음).
+    const LIVE_CLIENT_KEY = 'fd_live_client'; // 탭(세션)별 고유 id -> 동시접속자 집계용
+    const HEARTBEAT_MS = 45000;               // 서버 만료(120초)보다 충분히 짧은 갱신 주기
+    function getLiveClientId() {
+      try {
+        let id = sessionStorage.getItem(LIVE_CLIENT_KEY);
+        if (!id) {
+          id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+          sessionStorage.setItem(LIVE_CLIENT_KEY, id);
+        }
+        return id;
+      } catch (e) {
+        return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      }
+    }
+    function renderLiveCounter(concurrent) {
+      const el = document.getElementById('live-count');
+      if (!el) return;
+      if (concurrent == null) { el.hidden = true; return; }
+      el.innerHTML = `<span class="status-dot ok"></span>현재 ${fmt(concurrent)}명 접속 중`;
+      el.hidden = false;
+    }
+    async function initLiveCounter() {
+      if (!usingProxy()) return; // 프록시(Worker) 미연결이면 카운터도 표시하지 않음
+      const clientId = getLiveClientId();
+      async function beat() {
+        try {
+          const { concurrent } = await proxyCall('heartbeat', { clientId });
+          renderLiveCounter(concurrent);
+        } catch (e) { /* COUNTER_KV 미설정 등 실패는 무시, 다음 하트비트에서 재시도 */ }
+      }
+      beat();
+      setInterval(beat, HEARTBEAT_MS);
     }
     const FAVS_KEY = 'fd_favs';       // 내 목록(브라우저별): 담은 모니터 키 집합
     const VIEWMINE_KEY = 'fd_viewmine'; // 마지막으로 고른 뷰(내 목록/전체)를 기억
@@ -2181,6 +2220,7 @@
       renderMeta();
       setInterval(renderMeta, 60000);
       startCountdown();
+      initLiveCounter(); // 실패해도(Worker/COUNTER_KV 미설정 등) 조용히 무시, 페이지 동작엔 무영향
     }
 
     init();

@@ -13,6 +13,11 @@
  *
  * 배포 후 이 Worker 의 URL(예: https://flight-register.<계정>.workers.dev)을
  * docs/index.html 의 PROXY_URL 에 넣으면 페이지가 이 프록시를 통해 동작한다.
+ *
+ * 동시접속자 카운터(선택 기능, heartbeat 액션. 누적 조회수는 별도의 abacus 위젯이
+ * 담당하므로 이 Worker의 몫이 아님)를 쓰려면 KV 네임스페이스를 하나 만들어 아래
+ * 바인딩을 추가해야 한다 (자세한 단계는 cloudflare-worker/README.md 참고):
+ *   - COUNTER_KV : Workers KV 네임스페이스 바인딩 (등록/삭제와 무관, SHARE_PASS 불필요)
  */
 
 const REPO = "Henryshin/flight-deals";
@@ -28,6 +33,18 @@ export default {
 
     let body;
     try { body = await request.json(); } catch { return json({ error: "요청 형식 오류" }, 400, cors); }
+    const action = body.action;
+
+    // 동시접속자 카운터: 방문자 전원을 세야 하므로 아래 공유 암호 게이트보다 먼저
+    // 처리하고, GH_TOKEN 도 요구하지 않는다 (GitHub 쓰기와 무관한 별개 기능).
+    if (action === "heartbeat") {
+      if (!env.COUNTER_KV) return json({ error: "서버에 COUNTER_KV 가 설정되지 않았습니다." }, 500, cors);
+      try {
+        return json(await heartbeat(env, String(body.clientId || "")), 200, cors);
+      } catch (e) {
+        return json({ error: String((e && e.message) || e) }, (e && e.status) || 500, cors);
+      }
+    }
 
     // 공유 암호 게이트 (SHARE_PASS 가 설정된 경우에만)
     if (env.SHARE_PASS && String(body.pass || "") !== String(env.SHARE_PASS)) {
@@ -36,7 +53,6 @@ export default {
     if (!env.GH_TOKEN) return json({ error: "서버에 GH_TOKEN 이 설정되지 않았습니다." }, 500, cors);
 
     try {
-      const action = body.action;
       if (action === "add") return json(await addRoute(env, body.route), 200, cors);
       if (action === "remove") return json(await removeRoute(env, String(body.id || "")), 200, cors);
       if (action === "edit") return json(await editRoute(env, String(body.id || ""), body.min_nights, body.max_stops), 200, cors);
@@ -200,6 +216,29 @@ async function editRoute(env, id, minNightsRaw, maxStopsRaw) {
   }, `chore: update ${id} nights/stops (via proxy)`);
   if (!result.ok) throw fail("수정 실패");
   return { ok: true };
+}
+
+// ---------- 동시접속자 카운터 (Workers KV) ----------
+const PRESENCE_PREFIX = "presence:";
+const PRESENCE_TTL_SEC = 120; // 클라이언트 하트비트 주기(45~60초)보다 넉넉히 잡은 만료 시간
+const CLIENT_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
+async function heartbeat(env, clientId) {
+  if (!CLIENT_ID_RE.test(clientId)) throw fail("clientId 형식 오류", 400);
+  await env.COUNTER_KV.put(PRESENCE_PREFIX + clientId, "1", { expirationTtl: PRESENCE_TTL_SEC });
+  return { concurrent: await countPresence(env) };
+}
+
+// presence: 접두사 키 개수 = 최근 PRESENCE_TTL_SEC 초 안에 하트비트를 보낸 탭 수
+// (= 근사 동시접속자수). 만료된 키는 KV가 자동으로 지워주므로 별도 정리가 필요 없다.
+async function countPresence(env) {
+  let count = 0, cursor;
+  do {
+    const page = await env.COUNTER_KV.list({ prefix: PRESENCE_PREFIX, cursor });
+    count += page.keys.length;
+    cursor = page.list_complete ? undefined : page.cursor;
+  } while (cursor);
+  return count;
 }
 
 async function dispatchCollect(env, only) {

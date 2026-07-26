@@ -40,3 +40,19 @@
 - 공용 `routes.json` 하나를 모두가 공유합니다 → 소규모(친구·소모임)용입니다.
   대규모 공개에는 맞지 않습니다(수집이 구글 화면 크롤링이라 노선이 많아지면 한계).
 - 토큰이 노출되면(예: 실수로 커밋) 즉시 GitHub에서 폐기하고 새로 발급하세요.
+
+## (선택) 동시접속자 카운터
+
+대시보드 상단에 "지금 몇 명 접속 중"을 표시하려면 KV 네임스페이스를 하나 만들어
+이 Worker에 연결하세요. (약 2분, 코딩 없음) 누적 조회수는 이 Worker와 무관하게
+`docs/index.html`에 붙은 별도 위젯(abacus)이 표시합니다.
+
+1. Cloudflare 대시보드 → **Storage & Databases → KV** → **Create namespace**.
+   이름은 예: `flight-counter` → **Add**.
+2. Worker(`flight-register`) → **Settings → Bindings** → **Add binding → KV Namespace**.
+   - Variable name: **`COUNTER_KV`** (철자 그대로, 코드가 이 이름으로 찾습니다)
+   - KV namespace: 방금 만든 `flight-counter` 선택 → **Deploy**.
+
+바인딩이 없으면 카운터 위젯은 그냥 숨겨질 뿐, 등록/삭제 등 다른 기능에는 영향 없습니다.
+동시접속자 집계는 등록 프록시와 무관하게 방문자 전원에게 열려 있고(공유 암호 불필요),
+"최근 2분 안에 하트비트를 보낸 탭 수"의 근사치입니다.
