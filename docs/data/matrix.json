@@ -944,14 +944,14 @@
         }
       },
       "ICN-SIN": {
-        "min_price": 482491,
-        "typical": 507739,
-        "deal_pct": 5.0,
+        "min_price": 638000,
+        "typical": 532810,
+        "deal_pct": -19.7,
         "tier": "B",
-        "n_obs": 8,
+        "n_obs": 4,
         "n_pairs": 1,
-        "offpeak_baseline": 505240,
-        "offpeak_ratio": 0.955,
+        "offpeak_baseline": 561350,
+        "offpeak_ratio": 1.137,
         "best": {
           "depart_date": "2026-08-14",
           "return_date": "2026-08-18",
@@ -960,10 +960,10 @@
           "nights": 4,
           "days": 5,
           "leave_days": 2,
-          "stops": "1",
-          "airline": "비엣젯",
-          "dep_time": "21:15",
-          "arr_time": "10:15+1",
+          "stops": "0",
+          "airline": "",
+          "dep_time": "15:50",
+          "arr_time": "21:30",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Singapore%20on%202026-08-14%20through%202026-08-18&hl=ko&curr=KRW"
         }
       },
@@ -1205,6 +1205,30 @@
           "dep_time": "22:45",
           "arr_time": "20:05+1",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Zurich,%20Switzerland%20on%202026-08-12%20through%202026-08-18&hl=ko&curr=KRW"
+        }
+      },
+      "ICN-LIS": {
+        "min_price": 1576700,
+        "typical": 1726250,
+        "deal_pct": 8.7,
+        "tier": "C",
+        "n_obs": 2,
+        "n_pairs": 2,
+        "offpeak_baseline": null,
+        "offpeak_ratio": null,
+        "best": {
+          "depart_date": "2026-08-14",
+          "return_date": "2026-08-19",
+          "depart_weekday": "금",
+          "return_weekday": "수",
+          "nights": 5,
+          "days": 6,
+          "leave_days": 3,
+          "stops": "0",
+          "airline": "대한항공",
+          "dep_time": "12:45",
+          "arr_time": "20:15",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Lisbon%20on%202026-08-14%20through%202026-08-19&hl=ko&curr=KRW"
         }
       }
     },
@@ -1978,27 +2002,27 @@
         }
       },
       "ICN-SIN": {
-        "min_price": 445400,
-        "typical": 452336,
-        "deal_pct": 1.5,
+        "min_price": 458473,
+        "typical": 517411,
+        "deal_pct": 11.4,
         "tier": "A",
-        "n_obs": 24,
+        "n_obs": 12,
         "n_pairs": 3,
-        "offpeak_baseline": 505240,
-        "offpeak_ratio": 0.882,
+        "offpeak_baseline": 561350,
+        "offpeak_ratio": 0.817,
         "best": {
           "depart_date": "2026-09-23",
-          "return_date": "2026-09-27",
+          "return_date": "2026-09-28",
           "depart_weekday": "수",
-          "return_weekday": "일",
-          "nights": 4,
-          "days": 5,
-          "leave_days": 1,
-          "stops": "1",
+          "return_weekday": "월",
+          "nights": 5,
+          "days": 6,
+          "leave_days": 2,
+          "stops": "0",
           "airline": "",
-          "dep_time": "23:40",
-          "arr_time": "00:10",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Singapore%20on%202026-09-23%20through%202026-09-27&hl=ko&curr=KRW"
+          "dep_time": "11:30",
+          "arr_time": "17:00",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Singapore%20on%202026-09-23%20through%202026-09-28&hl=ko&curr=KRW"
         }
       },
       "ICN-REP": {
@@ -2263,6 +2287,30 @@
           "dep_time": "11:40",
           "arr_time": "22:25",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Zurich,%20Switzerland%20on%202026-09-23%20through%202026-09-29&hl=ko&curr=KRW"
+        }
+      },
+      "ICN-LIS": {
+        "min_price": 2626700,
+        "typical": 2626700,
+        "deal_pct": 0.0,
+        "tier": "C",
+        "n_obs": 1,
+        "n_pairs": 1,
+        "offpeak_baseline": null,
+        "offpeak_ratio": null,
+        "best": {
+          "depart_date": "2026-09-23",
+          "return_date": "2026-09-28",
+          "depart_weekday": "수",
+          "return_weekday": "월",
+          "nights": 5,
+          "days": 6,
+          "leave_days": 2,
+          "stops": "0",
+          "airline": "대한항공",
+          "dep_time": "12:45",
+          "arr_time": "20:15",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Lisbon%20on%202026-09-23%20through%202026-09-28&hl=ko&curr=KRW"
         }
       }
     },
@@ -3037,13 +3085,13 @@
       },
       "ICN-SIN": {
         "min_price": 409700,
-        "typical": 473301,
-        "deal_pct": 13.4,
+        "typical": 409700,
+        "deal_pct": 0.0,
         "tier": "B",
-        "n_obs": 8,
+        "n_obs": 4,
         "n_pairs": 1,
-        "offpeak_baseline": 505240,
-        "offpeak_ratio": 0.811,
+        "offpeak_baseline": 561350,
+        "offpeak_ratio": 0.73,
         "best": {
           "depart_date": "2026-10-02",
           "return_date": "2026-10-06",
@@ -3321,6 +3369,30 @@
           "dep_time": "01:20",
           "arr_time": "14:20",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Zurich,%20Switzerland%20on%202026-10-01%20through%202026-10-07&hl=ko&curr=KRW"
+        }
+      },
+      "ICN-LIS": {
+        "min_price": 2444800,
+        "typical": 2648250,
+        "deal_pct": 7.7,
+        "tier": "C",
+        "n_obs": 2,
+        "n_pairs": 2,
+        "offpeak_baseline": null,
+        "offpeak_ratio": null,
+        "best": {
+          "depart_date": "2026-09-30",
+          "return_date": "2026-10-06",
+          "depart_weekday": "수",
+          "return_weekday": "화",
+          "nights": 6,
+          "days": 7,
+          "leave_days": 4,
+          "stops": "0",
+          "airline": "대한항공",
+          "dep_time": "12:45",
+          "arr_time": "20:15",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Lisbon%20on%202026-09-30%20through%202026-10-06&hl=ko&curr=KRW"
         }
       }
     },
@@ -4119,13 +4191,13 @@
       },
       "ICN-SIN": {
         "min_price": 449700,
-        "typical": 478872,
-        "deal_pct": 6.1,
+        "typical": 449700,
+        "deal_pct": 0.0,
         "tier": "B",
-        "n_obs": 8,
+        "n_obs": 4,
         "n_pairs": 1,
-        "offpeak_baseline": 505240,
-        "offpeak_ratio": 0.89,
+        "offpeak_baseline": 561350,
+        "offpeak_ratio": 0.801,
         "best": {
           "depart_date": "2026-10-08",
           "return_date": "2026-10-12",
@@ -4403,6 +4475,30 @@
           "dep_time": "01:35",
           "arr_time": "13:20",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Zurich,%20Switzerland%20on%202026-10-06%20through%202026-10-12&hl=ko&curr=KRW"
+        }
+      },
+      "ICN-LIS": {
+        "min_price": 2426700,
+        "typical": 2426700,
+        "deal_pct": 0.0,
+        "tier": "C",
+        "n_obs": 1,
+        "n_pairs": 1,
+        "offpeak_baseline": null,
+        "offpeak_ratio": null,
+        "best": {
+          "depart_date": "2026-10-07",
+          "return_date": "2026-10-12",
+          "depart_weekday": "수",
+          "return_weekday": "월",
+          "nights": 5,
+          "days": 6,
+          "leave_days": 3,
+          "stops": "0",
+          "airline": "대한항공",
+          "dep_time": "12:45",
+          "arr_time": "20:15",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Lisbon%20on%202026-10-07%20through%202026-10-12&hl=ko&curr=KRW"
         }
       }
     },
@@ -5200,14 +5296,14 @@
         }
       },
       "ICN-SIN": {
-        "min_price": 457701,
-        "typical": 644086,
-        "deal_pct": 28.9,
+        "min_price": 821001,
+        "typical": 821001,
+        "deal_pct": 0.0,
         "tier": "B",
-        "n_obs": 8,
+        "n_obs": 4,
         "n_pairs": 1,
-        "offpeak_baseline": 505240,
-        "offpeak_ratio": 0.906,
+        "offpeak_baseline": 561350,
+        "offpeak_ratio": 1.463,
         "best": {
           "depart_date": "2026-12-24",
           "return_date": "2026-12-28",
@@ -5216,10 +5312,10 @@
           "nights": 4,
           "days": 5,
           "leave_days": 2,
-          "stops": "1",
+          "stops": "0",
           "airline": "",
-          "dep_time": "11:45",
-          "arr_time": "00:05+1",
+          "dep_time": "15:30",
+          "arr_time": "21:25",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Singapore%20on%202026-12-24%20through%202026-12-28&hl=ko&curr=KRW"
         }
       },
@@ -5485,6 +5581,30 @@
           "dep_time": "22:20",
           "arr_time": "12:25+1",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Zurich,%20Switzerland%20on%202026-12-23%20through%202026-12-29&hl=ko&curr=KRW"
+        }
+      },
+      "ICN-LIS": {
+        "min_price": 1626700,
+        "typical": 1626700,
+        "deal_pct": 0.0,
+        "tier": "C",
+        "n_obs": 1,
+        "n_pairs": 1,
+        "offpeak_baseline": null,
+        "offpeak_ratio": null,
+        "best": {
+          "depart_date": "2026-12-23",
+          "return_date": "2026-12-28",
+          "depart_weekday": "수",
+          "return_weekday": "월",
+          "nights": 5,
+          "days": 6,
+          "leave_days": 3,
+          "stops": "0",
+          "airline": "대한항공",
+          "dep_time": "13:00",
+          "arr_time": "19:35",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Lisbon%20on%202026-12-23%20through%202026-12-28&hl=ko&curr=KRW"
         }
       }
     },
@@ -6282,14 +6402,14 @@
         }
       },
       "ICN-SIN": {
-        "min_price": 436400,
-        "typical": 730100,
-        "deal_pct": 40.2,
+        "min_price": 1023000,
+        "typical": 1023000,
+        "deal_pct": 0.0,
         "tier": "B",
-        "n_obs": 8,
+        "n_obs": 4,
         "n_pairs": 1,
-        "offpeak_baseline": 505240,
-        "offpeak_ratio": 0.864,
+        "offpeak_baseline": 561350,
+        "offpeak_ratio": 1.822,
         "best": {
           "depart_date": "2026-12-31",
           "return_date": "2027-01-04",
@@ -6298,10 +6418,10 @@
           "nights": 4,
           "days": 5,
           "leave_days": 2,
-          "stops": "1",
+          "stops": "0",
           "airline": "",
-          "dep_time": "11:45",
-          "arr_time": "00:05+1",
+          "dep_time": "15:30",
+          "arr_time": "21:25",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Singapore%20on%202026-12-31%20through%202027-01-04&hl=ko&curr=KRW"
         }
       },
@@ -6567,6 +6687,30 @@
           "dep_time": "22:20",
           "arr_time": "12:25+1",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Zurich,%20Switzerland%20on%202026-12-30%20through%202027-01-05&hl=ko&curr=KRW"
+        }
+      },
+      "ICN-LIS": {
+        "min_price": 1626700,
+        "typical": 1626700,
+        "deal_pct": 0.0,
+        "tier": "C",
+        "n_obs": 1,
+        "n_pairs": 1,
+        "offpeak_baseline": null,
+        "offpeak_ratio": null,
+        "best": {
+          "depart_date": "2026-12-30",
+          "return_date": "2027-01-04",
+          "depart_weekday": "수",
+          "return_weekday": "월",
+          "nights": 5,
+          "days": 6,
+          "leave_days": 3,
+          "stops": "0",
+          "airline": "대한항공",
+          "dep_time": "13:00",
+          "arr_time": "19:35",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Lisbon%20on%202026-12-30%20through%202027-01-04&hl=ko&curr=KRW"
         }
       }
     },

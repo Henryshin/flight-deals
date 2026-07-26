@@ -377,8 +377,8 @@
     "flag": "🇸🇬",
     "origin_city": "Seoul",
     "destination_city": "Singapore",
-    "min_nights": 4,
-    "max_stops": 1
+    "min_nights": 2,
+    "max_stops": 0
   },
   {
     "origin": "ICN",
@@ -500,5 +500,17 @@
     "destination_city": "Zurich, Switzerland",
     "min_nights": 6,
     "max_stops": 1
+  },
+  {
+    "id": "ICN-LIS",
+    "origin": "ICN",
+    "destination": "LIS",
+    "max_stops": 0,
+    "min_nights": 5,
+    "label": "인천→리스본",
+    "country": "포르투갈",
+    "flag": "🇵🇹",
+    "origin_city": "Seoul",
+    "destination_city": "Lisbon"
   }
 ]
