@@ -2,8 +2,8 @@
 한국 공휴일 기반 연휴 구간 계산.
 
 공공데이터포털 API는 서비스키 발급이 필요해, 우선 정적 공휴일 목록으로 시작.
-주의: get_holiday_windows()가 기본 180일 앞까지 내다보므로, '다음 해' 목록은
-연말이 아니라 늦어도 전년도 6월(= 연말 - lookahead_days)까지 채워져 있어야 한다.
+주의: get_holiday_windows()가 기본 550일(약 18개월) 앞까지 내다보므로, '다음 해' 목록은
+연말이 아니라 늦어도 전전년도 6월(= 연말 - lookahead_days)까지 채워져 있어야 한다.
 음력 기반 공휴일(설날/부처님오신날/추석)과 대체공휴일도 반드시 포함할 것.
 """
 import sys
@@ -49,6 +49,8 @@ KOREAN_HOLIDAYS = {
     },
 }
 
+_warned_horizon_years = set()  # get_holiday_windows() 연도별 경고 1회 제한용
+
 
 def _all_holidays():
     dates = set()
@@ -63,7 +65,7 @@ def holiday_name(d: date) -> str:
     return KOREAN_HOLIDAYS.get(d.year, {}).get(d.isoformat(), "공휴일")
 
 
-def get_holiday_windows(bridge_days=1, lookahead_days=180):
+def get_holiday_windows(bridge_days=1, lookahead_days=550):
     """
     각 공휴일이 포함된 '연휴 구간'을 계산.
     주말과 이어지는 공휴일은 자동으로 묶고, 앞뒤로 bridge_days 만큼 여행일을 더 붙여준다.
@@ -76,7 +78,10 @@ def get_holiday_windows(bridge_days=1, lookahead_days=180):
     today = date.today()
     horizon = today + timedelta(days=lookahead_days)
     last_year = max(KOREAN_HOLIDAYS)
-    if horizon.year > last_year:
+    # collect.py는 노선마다 이 함수를 호출하므로, 프로세스당 연도별로 한 번만 경고한다
+    # (매 노선마다 같은 경고가 반복 출력되는 로그 스팸 방지).
+    if horizon.year > last_year and horizon.year not in _warned_horizon_years:
+        _warned_horizon_years.add(horizon.year)
         print(
             f"[holidays] 경고: 조회 구간이 {horizon}까지인데 KOREAN_HOLIDAYS는 "
             f"{last_year}년까지만 있습니다. {horizon.year}년 공휴일을 추가하세요.",

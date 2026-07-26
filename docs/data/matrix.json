@@ -54,6 +54,99 @@
       "holiday_dates": [
         "2027-01-01"
       ]
+    },
+    {
+      "id": "2027-02-08",
+      "label": "설날",
+      "start": "2027-02-05",
+      "end": "2027-02-10",
+      "holiday_dates": [
+        "2027-02-08",
+        "2027-02-09"
+      ]
+    },
+    {
+      "id": "2027-03-01",
+      "label": "삼일절",
+      "start": "2027-02-26",
+      "end": "2027-03-02",
+      "holiday_dates": [
+        "2027-03-01"
+      ]
+    },
+    {
+      "id": "2027-05-05",
+      "label": "어린이날",
+      "start": "2027-05-04",
+      "end": "2027-05-06",
+      "holiday_dates": [
+        "2027-05-05"
+      ]
+    },
+    {
+      "id": "2027-05-13",
+      "label": "부처님오신날",
+      "start": "2027-05-12",
+      "end": "2027-05-14",
+      "holiday_dates": [
+        "2027-05-13"
+      ]
+    },
+    {
+      "id": "2027-06-06",
+      "label": "현충일",
+      "start": "2027-06-04",
+      "end": "2027-06-07",
+      "holiday_dates": [
+        "2027-06-06"
+      ]
+    },
+    {
+      "id": "2027-08-16",
+      "label": "광복절",
+      "start": "2027-08-13",
+      "end": "2027-08-17",
+      "holiday_dates": [
+        "2027-08-16"
+      ]
+    },
+    {
+      "id": "2027-09-14",
+      "label": "추석",
+      "start": "2027-09-13",
+      "end": "2027-09-17",
+      "holiday_dates": [
+        "2027-09-14",
+        "2027-09-15",
+        "2027-09-16"
+      ]
+    },
+    {
+      "id": "2027-10-04",
+      "label": "개천절",
+      "start": "2027-10-01",
+      "end": "2027-10-05",
+      "holiday_dates": [
+        "2027-10-04"
+      ]
+    },
+    {
+      "id": "2027-10-11",
+      "label": "한글날",
+      "start": "2027-10-08",
+      "end": "2027-10-12",
+      "holiday_dates": [
+        "2027-10-11"
+      ]
+    },
+    {
+      "id": "2027-12-27",
+      "label": "성탄절",
+      "start": "2027-12-24",
+      "end": "2027-12-28",
+      "holiday_dates": [
+        "2027-12-27"
+      ]
     }
   ],
   "cells": {
@@ -851,14 +944,14 @@
         }
       },
       "ICN-SIN": {
-        "min_price": 482491,
-        "typical": 507739,
-        "deal_pct": 5.0,
+        "min_price": 638000,
+        "typical": 532810,
+        "deal_pct": -19.7,
         "tier": "B",
-        "n_obs": 8,
+        "n_obs": 4,
         "n_pairs": 1,
-        "offpeak_baseline": 505240,
-        "offpeak_ratio": 0.955,
+        "offpeak_baseline": 561350,
+        "offpeak_ratio": 1.137,
         "best": {
           "depart_date": "2026-08-14",
           "return_date": "2026-08-18",
@@ -867,10 +960,10 @@
           "nights": 4,
           "days": 5,
           "leave_days": 2,
-          "stops": "1",
-          "airline": "비엣젯",
-          "dep_time": "21:15",
-          "arr_time": "10:15+1",
+          "stops": "0",
+          "airline": "",
+          "dep_time": "15:50",
+          "arr_time": "21:30",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Singapore%20on%202026-08-14%20through%202026-08-18&hl=ko&curr=KRW"
         }
       },
@@ -1909,27 +2002,27 @@
         }
       },
       "ICN-SIN": {
-        "min_price": 445400,
-        "typical": 452336,
-        "deal_pct": 1.5,
+        "min_price": 458473,
+        "typical": 517411,
+        "deal_pct": 11.4,
         "tier": "A",
-        "n_obs": 24,
+        "n_obs": 12,
         "n_pairs": 3,
-        "offpeak_baseline": 505240,
-        "offpeak_ratio": 0.882,
+        "offpeak_baseline": 561350,
+        "offpeak_ratio": 0.817,
         "best": {
           "depart_date": "2026-09-23",
-          "return_date": "2026-09-27",
+          "return_date": "2026-09-28",
           "depart_weekday": "수",
-          "return_weekday": "일",
-          "nights": 4,
-          "days": 5,
-          "leave_days": 1,
-          "stops": "1",
+          "return_weekday": "월",
+          "nights": 5,
+          "days": 6,
+          "leave_days": 2,
+          "stops": "0",
           "airline": "",
-          "dep_time": "23:40",
-          "arr_time": "00:10",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Singapore%20on%202026-09-23%20through%202026-09-27&hl=ko&curr=KRW"
+          "dep_time": "11:30",
+          "arr_time": "17:00",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Singapore%20on%202026-09-23%20through%202026-09-28&hl=ko&curr=KRW"
         }
       },
       "ICN-REP": {
@@ -2992,13 +3085,13 @@
       },
       "ICN-SIN": {
         "min_price": 409700,
-        "typical": 473301,
-        "deal_pct": 13.4,
+        "typical": 409700,
+        "deal_pct": 0.0,
         "tier": "B",
-        "n_obs": 8,
+        "n_obs": 4,
         "n_pairs": 1,
-        "offpeak_baseline": 505240,
-        "offpeak_ratio": 0.811,
+        "offpeak_baseline": 561350,
+        "offpeak_ratio": 0.73,
         "best": {
           "depart_date": "2026-10-02",
           "return_date": "2026-10-06",
@@ -4098,13 +4191,13 @@
       },
       "ICN-SIN": {
         "min_price": 449700,
-        "typical": 478872,
-        "deal_pct": 6.1,
+        "typical": 449700,
+        "deal_pct": 0.0,
         "tier": "B",
-        "n_obs": 8,
+        "n_obs": 4,
         "n_pairs": 1,
-        "offpeak_baseline": 505240,
-        "offpeak_ratio": 0.89,
+        "offpeak_baseline": 561350,
+        "offpeak_ratio": 0.801,
         "best": {
           "depart_date": "2026-10-08",
           "return_date": "2026-10-12",
@@ -5203,14 +5296,14 @@
         }
       },
       "ICN-SIN": {
-        "min_price": 457701,
-        "typical": 644086,
-        "deal_pct": 28.9,
+        "min_price": 821001,
+        "typical": 821001,
+        "deal_pct": 0.0,
         "tier": "B",
-        "n_obs": 8,
+        "n_obs": 4,
         "n_pairs": 1,
-        "offpeak_baseline": 505240,
-        "offpeak_ratio": 0.906,
+        "offpeak_baseline": 561350,
+        "offpeak_ratio": 1.463,
         "best": {
           "depart_date": "2026-12-24",
           "return_date": "2026-12-28",
@@ -5219,10 +5312,10 @@
           "nights": 4,
           "days": 5,
           "leave_days": 2,
-          "stops": "1",
+          "stops": "0",
           "airline": "",
-          "dep_time": "11:45",
-          "arr_time": "00:05+1",
+          "dep_time": "15:30",
+          "arr_time": "21:25",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Singapore%20on%202026-12-24%20through%202026-12-28&hl=ko&curr=KRW"
         }
       },
@@ -6309,14 +6402,14 @@
         }
       },
       "ICN-SIN": {
-        "min_price": 436400,
-        "typical": 730100,
-        "deal_pct": 40.2,
+        "min_price": 1023000,
+        "typical": 1023000,
+        "deal_pct": 0.0,
         "tier": "B",
-        "n_obs": 8,
+        "n_obs": 4,
         "n_pairs": 1,
-        "offpeak_baseline": 505240,
-        "offpeak_ratio": 0.864,
+        "offpeak_baseline": 561350,
+        "offpeak_ratio": 1.822,
         "best": {
           "depart_date": "2026-12-31",
           "return_date": "2027-01-04",
@@ -6325,10 +6418,10 @@
           "nights": 4,
           "days": 5,
           "leave_days": 2,
-          "stops": "1",
+          "stops": "0",
           "airline": "",
-          "dep_time": "11:45",
-          "arr_time": "00:05+1",
+          "dep_time": "15:30",
+          "arr_time": "21:25",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Singapore%20on%202026-12-31%20through%202027-01-04&hl=ko&curr=KRW"
         }
       },
@@ -6620,6 +6713,16 @@
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Lisbon%20on%202026-12-30%20through%202027-01-04&hl=ko&curr=KRW"
         }
       }
-    }
+    },
+    "2027-02-08": {},
+    "2027-03-01": {},
+    "2027-05-05": {},
+    "2027-05-13": {},
+    "2027-06-06": {},
+    "2027-08-16": {},
+    "2027-09-14": {},
+    "2027-10-04": {},
+    "2027-10-11": {},
+    "2027-12-27": {}
   }
 }
