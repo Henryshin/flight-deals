@@ -286,7 +286,9 @@
   /* 메모(간단 채팅) — 실시간 채팅방 느낌의 표 형태 */
   .chat-live-badge { font-weight: 400; font-size: 12.5px; opacity: 0.85; margin-left: 2px; }
   .chat-viewport { position: relative; }
-  .chat-tbl-wrap { max-height: 300px; overflow-y: auto; border: 1px solid var(--grid); background: var(--sheet); }
+  /* height(고정) — max-height만 쓰면 메시지가 적을 때 박스가 내용만큼 줄어들어
+     바로 아래 떠 있는 점프 버튼이 마지막 메시지 위에 겹쳐 보이는 문제가 있었다. */
+  .chat-tbl-wrap { height: 300px; overflow-y: auto; border: 1px solid var(--grid); background: var(--sheet); }
   table.chat-tbl { width: 100%; border-collapse: collapse; table-layout: fixed; }
   table.chat-tbl th, table.chat-tbl td {
     border: 1px solid var(--grid); padding: 4px 8px; font-size: 14.5px; text-align: left;
@@ -2329,7 +2331,12 @@
       });
       document.getElementById('btn-chat-send').addEventListener('click', chatSendMessage);
       document.getElementById('chat-text').addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); chatSendMessage(); }
+        // 한글 등 조합형 입력(IME) 중에 조합을 확정하는 Enter까지 전송으로 처리되면
+        // 엔터를 두 번 눌러야 실제로 전송되는 문제가 생긴다. isComposing/keyCode 229는
+        // "아직 조합 중"이라는 뜻이라 이때는 무시하고, 조합이 끝난 진짜 Enter에만 반응한다.
+        if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
+        e.preventDefault();
+        chatSendMessage();
       });
       document.getElementById('chat-jump').addEventListener('click', jumpToChatBottom);
 
