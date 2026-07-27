@@ -15,9 +15,11 @@
  * docs/index.html 의 PROXY_URL 에 넣으면 페이지가 이 프록시를 통해 동작한다.
  *
  * 동시접속자 카운터(선택 기능, heartbeat 액션. 누적 조회수는 별도의 abacus 위젯이
- * 담당하므로 이 Worker의 몫이 아님)를 쓰려면 KV 네임스페이스를 하나 만들어 아래
- * 바인딩을 추가해야 한다 (자세한 단계는 cloudflare-worker/README.md 참고):
- *   - COUNTER_KV : Workers KV 네임스페이스 바인딩 (등록/삭제와 무관, SHARE_PASS 불필요)
+ * 담당하므로 이 Worker의 몫이 아님)와 메모(간단 채팅, chat_poll/chat_send 액션)를
+ * 쓰려면 KV 네임스페이스를 하나 만들어 아래 바인딩을 추가해야 한다
+ * (자세한 단계는 cloudflare-worker/README.md 참고):
+ *   - COUNTER_KV : Workers KV 네임스페이스 바인딩 (등록/삭제와 무관, SHARE_PASS 불필요.
+ *                  동시접속자 카운터와 메모가 같은 바인딩을 공유한다)
  */
 
 const REPO = "Henryshin/flight-deals";
@@ -41,6 +43,18 @@ export default {
       if (!env.COUNTER_KV) return json({ error: "서버에 COUNTER_KV 가 설정되지 않았습니다." }, 500, cors);
       try {
         return json(await heartbeat(env, String(body.clientId || "")), 200, cors);
+      } catch (e) {
+        return json({ error: String((e && e.message) || e) }, (e && e.status) || 500, cors);
+      }
+    }
+
+    // 메모(간단 채팅): 동시접속자 카운터와 마찬가지로 누구나 읽고 쓸 수 있어야 하므로
+    // 공유 암호 게이트/GH_TOKEN 앞에서 처리한다 (GitHub 쓰기와 무관한 별개 기능).
+    if (action === "chat_poll" || action === "chat_send") {
+      if (!env.COUNTER_KV) return json({ error: "서버에 COUNTER_KV 가 설정되지 않았습니다." }, 500, cors);
+      try {
+        if (action === "chat_poll") return json(await chatPoll(env), 200, cors);
+        return json(await chatSend(env, String(body.clientId || ""), body.name, body.text), 200, cors);
       } catch (e) {
         return json({ error: String((e && e.message) || e) }, (e && e.status) || 500, cors);
       }
@@ -239,6 +253,52 @@ async function countPresence(env) {
     cursor = page.list_complete ? undefined : page.cursor;
   } while (cursor);
   return count;
+}
+
+// ---------- 메모(간단 채팅, Workers KV 폴링 방식) ----------
+// 진짜 실시간(Durable Objects/WebSocket)은 아니고, 클라이언트가 주기적으로
+// chat_poll을 호출해 최근 메시지를 다시 받아오는 방식이다. KV는 최종 일관성이라
+// 동시에 여러 명이 보내면 드물게 유실될 수 있지만, 소규모 사용에는 충분하다.
+const CHAT_KEY = "chat:messages";
+const CHAT_MAX = 200;             // KV에 보관하는 최대 메시지 수(오래된 것부터 삭제)
+const CHAT_POLL_LIMIT = 50;       // 한 번의 poll로 내려주는 최근 메시지 수
+const CHAT_TEXT_MAX = 300;
+const CHAT_NAME_MAX = 20;
+const CHAT_MIN_INTERVAL_MS = 3000; // 같은 clientId의 최소 전송 간격(도배 방지)
+
+async function readChatList(env) {
+  const raw = await env.COUNTER_KV.get(CHAT_KEY);
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) { return []; }
+}
+
+async function chatPoll(env) {
+  const list = await readChatList(env);
+  return { messages: list.slice(-CHAT_POLL_LIMIT) };
+}
+
+async function chatSend(env, clientId, name, text) {
+  if (!CLIENT_ID_RE.test(clientId)) throw fail("clientId 형식 오류", 400);
+  const cleanText = String(text || "").trim().slice(0, CHAT_TEXT_MAX);
+  if (!cleanText) throw fail("내용을 입력하세요.", 400);
+  const cleanName = String(name || "").trim().slice(0, CHAT_NAME_MAX) || "익명";
+
+  const rateKey = "chat:rate:" + clientId;
+  const last = await env.COUNTER_KV.get(rateKey);
+  const now = Date.now();
+  if (last && now - Number(last) < CHAT_MIN_INTERVAL_MS) {
+    throw fail("너무 빠르게 전송했습니다. 잠시 후 다시 시도하세요.", 429);
+  }
+  await env.COUNTER_KV.put(rateKey, String(now), { expirationTtl: 60 });
+
+  const list = await readChatList(env);
+  list.push({ id: now + "-" + Math.random().toString(36).slice(2, 8), t: now, name: cleanName, text: cleanText });
+  await env.COUNTER_KV.put(CHAT_KEY, JSON.stringify(list.slice(-CHAT_MAX)));
+
+  return { ok: true };
 }
 
 async function dispatchCollect(env, only) {
