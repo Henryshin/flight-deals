@@ -409,6 +409,13 @@
       <div class="calendar" id="calendar"></div>
     </div>
 
+    <div class="note" style="margin-bottom:0; line-height:1.7">
+      <b>📖 사용 메뉴얼</b><br />
+      1. <b>특가율</b> = 시세 대비 얼마나 싼지 나타내는 지표. 통상 연휴 기간이라 가격이 비싸지만, 이를 모르고 있는 해외 항공사 혹은 프로모션 중인 항공사가 단 한개라도 있을 경우 나타나는 가격.<br />
+      2. 연휴기간에 연차 끼워써야하는 직장인들을 위해 만든 사이트로, 다른날짜 검색이 필요한 경우에는 스카이스캐너 이용 권고.<br />
+      3. 일정 옆 날씨(🌧/☀️/⛅)는 해당 기간의 평균 날씨
+    </div>
+
     <div class="chip-bar">
       <span class="chip-cap">필터</span>
       <div class="chip-groups">
@@ -457,12 +464,6 @@
     </div>
 
     <h2>연휴 특가 보드</h2>
-    <div class="note" style="margin-bottom:0; line-height:1.7">
-      <b>📖 사용 메뉴얼</b><br />
-      1. <b>특가율</b> = 시세 대비 얼마나 싼지 나타내는 지표. 통상 연휴 기간이라 가격이 비싸지만, 이를 모르고 있는 해외 항공사 혹은 프로모션 중인 항공사가 단 한개라도 있을 경우 나타나는 가격.<br />
-      2. 연휴기간에 연차 끼워써야하는 직장인들을 위해 만든 사이트로, 다른날짜 검색이 필요한 경우에는 스카이스캐너 이용 권고.<br />
-      3. 일정 옆 날씨(🌧/☀️/⛅)는 해당 기간의 평균 날씨
-    </div>
     <div class="chip-bar">
       <span class="chip-cap">연휴</span>
       <div class="chip-groups" id="gv-windows"></div>
@@ -491,24 +492,26 @@
       </table>
     </div>
 
-    <h2>모니터링 현황</h2>
-    <div class="tbl-wrap">
-      <table class="sheet wide">
-        <thead>
-          <tr>
-            <th style="width:34px">★</th>
-            <th style="width:76px">상태</th>
-            <th style="width:190px">항목</th>
-            <th style="width:170px">최근 관측값</th>
-            <th style="width:140px">30일 최저/평균</th>
-            <th style="width:126px">추이</th>
-            <th style="width:92px">목표가</th>
-            <th style="width:92px">링크</th>
-            <th style="width:36px"></th>
-          </tr>
-        </thead>
-        <tbody id="routes-status"></tbody>
-      </table>
+    <h2 class="collapsible" id="status-h2"><span class="collapse-caret">▶</span> 모니터링 현황 <span class="collapse-hint">(클릭해서 펼치기)</span></h2>
+    <div id="status-body" hidden>
+      <div class="tbl-wrap">
+        <table class="sheet wide">
+          <thead>
+            <tr>
+              <th style="width:34px">★</th>
+              <th style="width:76px">상태</th>
+              <th style="width:190px">항목</th>
+              <th style="width:170px">최근 관측값</th>
+              <th style="width:140px">30일 최저/평균</th>
+              <th style="width:126px">추이</th>
+              <th style="width:92px">목표가</th>
+              <th style="width:92px">링크</th>
+              <th style="width:36px"></th>
+            </tr>
+          </thead>
+          <tbody id="routes-status"></tbody>
+        </table>
+      </div>
     </div>
 
     <h2 class="collapsible" id="deals-h2"><span class="collapse-caret">▶</span> 변동 항목 <span class="collapse-hint">(클릭해서 펼치기)</span></h2>
@@ -2424,6 +2427,19 @@
       out.className = ok ? 'ok' : 'fail';
     }
 
+    // h2.collapsible + hidden 바디 하나를 접기/펼치기 토글로 연결 (기본 접힘인 섹션 공용).
+    function wireSimpleToggle(h2Id, bodyId) {
+      document.getElementById(h2Id).addEventListener('click', () => {
+        const body = document.getElementById(bodyId);
+        const caret = document.querySelector(`#${h2Id} .collapse-caret`);
+        const hint = document.querySelector(`#${h2Id} .collapse-hint`);
+        const willOpen = body.hidden;
+        body.hidden = !willOpen;
+        if (caret) caret.textContent = willOpen ? '▼' : '▶';
+        if (hint) hint.textContent = willOpen ? '(클릭해서 접기)' : '(클릭해서 펼치기)';
+      });
+    }
+
     // ===================== 이벤트 연결 / 초기화 =====================
     function wireEvents() {
       document.getElementById('btn-register').addEventListener('click', registerRoute);
@@ -2455,16 +2471,9 @@
       });
       document.getElementById('gv-sort').addEventListener('change', renderGvBoard);
 
-      // 변동 항목 접기/펼치기 (기본 접힘 — 길어서 스크롤 방해되는 것 방지)
-      document.getElementById('deals-h2').addEventListener('click', () => {
-        const body = document.getElementById('deals-body');
-        const caret = document.querySelector('#deals-h2 .collapse-caret');
-        const hint = document.querySelector('#deals-h2 .collapse-hint');
-        const willOpen = body.hidden;
-        body.hidden = !willOpen;
-        if (caret) caret.textContent = willOpen ? '▼' : '▶';
-        if (hint) hint.textContent = willOpen ? '(클릭해서 접기)' : '(클릭해서 펼치기)';
-      });
+      // 모니터링 현황/변동 항목 접기/펼치기 (기본 접힘 — 길어서 스크롤 방해되는 것 방지)
+      wireSimpleToggle('status-h2', 'status-body');
+      wireSimpleToggle('deals-h2', 'deals-body');
 
       // 실시간 채팅 접기/펼치기 — 펼쳐져 있을 때만 폴링 (숨겨진 동안 불필요한 요청 방지)
       // 드래그로 창을 옮긴 직후의 click은 무시(안 그러면 옮길 때마다 접혀버림).
