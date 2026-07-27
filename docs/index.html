@@ -283,16 +283,30 @@
   #test-result.fail { color: #b3261e; font-weight: 700; }
   #confirm-msg { white-space: pre-line; }
 
-  /* 메모(간단 채팅) */
-  .chat-list {
-    max-height: 260px; overflow-y: auto; background: var(--sheet); border: 1px solid var(--grid);
-    border-bottom: none; padding: 4px 8px;
+  /* 메모(간단 채팅) — 실시간 채팅방 느낌의 표 형태 */
+  .chat-live-badge { font-weight: 400; font-size: 12.5px; opacity: 0.85; margin-left: 2px; }
+  .chat-viewport { position: relative; }
+  .chat-tbl-wrap { max-height: 300px; overflow-y: auto; border: 1px solid var(--grid); background: var(--sheet); }
+  table.chat-tbl { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  table.chat-tbl th, table.chat-tbl td {
+    border: 1px solid var(--grid); padding: 4px 8px; font-size: 14.5px; text-align: left;
+    overflow: hidden; text-overflow: ellipsis;
   }
-  .chat-msg { padding: 4px 2px; border-bottom: 1px dashed var(--grid); font-size: 15px; line-height: 1.5; word-break: break-word; }
-  .chat-msg:last-child { border-bottom: none; }
-  .chat-msg .chat-meta { color: var(--muted); font-size: 13px; margin-right: 6px; }
-  .chat-msg .chat-name { font-weight: 700; color: #14532d; margin-right: 4px; }
-  .chat-empty { color: var(--muted); text-align: center; padding: 16px; font-style: italic; font-size: 15px; }
+  table.chat-tbl th { background: #eaf3ee; color: #14532d; font-weight: 700; position: sticky; top: 0; z-index: 1; }
+  table.chat-tbl tbody tr:nth-child(even) td { background: #f8faf9; }
+  table.chat-tbl tbody tr:hover td { background: var(--sel); }
+  table.chat-tbl td.chat-seq { color: var(--muted); font-family: Consolas, monospace; text-align: center; }
+  table.chat-tbl td.chat-name { font-weight: 700; color: #14532d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  table.chat-tbl td.chat-text { white-space: normal; word-break: break-word; }
+  table.chat-tbl .chat-mention { color: #0b5cab; font-weight: 700; }
+  table.chat-tbl td.chat-time { color: var(--muted); font-family: Consolas, monospace; white-space: nowrap; text-align: right; }
+  .chat-jump-btn {
+    position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%);
+    font-size: 13.5px; padding: 3px 12px; border-radius: 12px; border: 1px solid #1a5c38;
+    background: var(--excel-green); color: #fff; cursor: pointer; font-family: inherit;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.28);
+  }
+  .chat-jump-btn:hover { background: #1a5c38; }
 
   /* toast */
   #toast-wrap { position: fixed; right: 16px; bottom: 16px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
@@ -499,14 +513,29 @@
     </div>
 
     <div id="chat-section" hidden>
-      <h2 class="collapsible" id="chat-h2"><span class="collapse-caret">▶</span> 메모 <span class="collapse-hint">(클릭해서 펼치기)</span></h2>
+      <h2 class="collapsible" id="chat-h2"><span class="collapse-caret">▶</span> 메모 <span class="chat-live-badge" id="chat-live-count"></span> <span class="collapse-hint">(클릭해서 펼치기)</span></h2>
       <div id="chat-body" hidden>
         <div class="note" style="margin-bottom:0">이 시트를 보는 사람들과 짧은 메모를 남길 수 있습니다. 최근 <b>50개</b>까지 보이고, 5초마다 자동으로 갱신됩니다.</div>
-        <div class="chat-list" id="chat-list"></div>
+        <div class="chat-viewport">
+          <div class="chat-tbl-wrap" id="chat-scroll">
+            <table class="chat-tbl">
+              <thead>
+                <tr>
+                  <th style="width:8%">#</th>
+                  <th style="width:18%">닉네임</th>
+                  <th style="width:60%">메시지</th>
+                  <th style="width:14%">시간</th>
+                </tr>
+              </thead>
+              <tbody id="chat-list"></tbody>
+            </table>
+          </div>
+          <button id="chat-jump" class="chat-jump-btn" hidden>새 메모 ↓</button>
+        </div>
         <div class="toolbar-row">
           <input id="chat-name" placeholder="닉네임" style="width:110px" maxlength="20" />
-          <input id="chat-text" placeholder="메모 입력 후 Enter" style="flex:1; min-width:220px" maxlength="300" />
-          <button id="btn-chat-send">등록</button>
+          <input id="chat-text" placeholder="메모 입력 후 Enter (@닉네임으로 태그 가능)" style="flex:1; min-width:220px" maxlength="300" />
+          <button id="btn-chat-send">전송</button>
         </div>
       </div>
     </div>
@@ -663,10 +692,12 @@
     }
     function renderLiveCounter(concurrent) {
       const el = document.getElementById('live-count');
-      if (!el) return;
-      if (concurrent == null) { el.hidden = true; return; }
-      el.innerHTML = `<span class="status-dot ok"></span>현재 ${fmt(concurrent)}명 접속 중`;
-      el.hidden = false;
+      if (el) {
+        if (concurrent == null) { el.hidden = true; }
+        else { el.innerHTML = `<span class="status-dot ok"></span>현재 ${fmt(concurrent)}명 접속 중`; el.hidden = false; }
+      }
+      const chatEl = document.getElementById('chat-live-count');
+      if (chatEl) chatEl.textContent = concurrent == null ? '' : `⚡ ${fmt(concurrent)}명`;
     }
     async function initLiveCounter() {
       if (!usingProxy()) return; // 프록시(Worker) 미연결이면 카운터도 표시하지 않음
@@ -701,31 +732,63 @@
     }
     function getChatName() { try { return localStorage.getItem(CHAT_NAME_KEY) || ''; } catch (e) { return ''; } }
     function setChatName(v) { try { localStorage.setItem(CHAT_NAME_KEY, v); } catch (e) {} }
-    function renderChatList(messages) {
-      const el = document.getElementById('chat-list');
-      if (!el) return;
-      el.dataset.loaded = '1';
+    // 메시지 안의 "@닉네임" 언급을 강조 표시 (esc() 처리된 텍스트 위에서만 치환하므로 안전)
+    function highlightMentions(escapedText) {
+      return escapedText.replace(/@([^\s@]{1,20})/g, '<b class="chat-mention">@$1</b>');
+    }
+    let chatLastSeq = 0; // 마지막으로 그린 메시지의 seq -> 새 메모 유무 판단
+    function jumpToChatBottom() {
+      const scrollBox = document.getElementById('chat-scroll');
+      const jumpBtn = document.getElementById('chat-jump');
+      if (scrollBox) scrollBox.scrollTop = scrollBox.scrollHeight;
+      if (jumpBtn) jumpBtn.hidden = true;
+    }
+    function updateChatView(messages) {
+      const tbody = document.getElementById('chat-list');
+      const scrollBox = document.getElementById('chat-scroll');
+      const jumpBtn = document.getElementById('chat-jump');
+      if (!tbody || !scrollBox) return;
+      tbody.dataset.loaded = '1';
+
       if (!messages || !messages.length) {
-        el.innerHTML = '<div class="chat-empty">아직 메모가 없습니다. 첫 메모를 남겨보세요.</div>';
+        tbody.innerHTML = emptyRow(4, '아직 메모가 없습니다. 첫 메모를 남겨보세요.');
+        chatLastSeq = 0;
+        if (jumpBtn) jumpBtn.hidden = true;
         return;
       }
-      const wasAtBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 4;
-      el.innerHTML = messages.map(m => {
+
+      const maxSeq = messages[messages.length - 1].seq || 0;
+      if (maxSeq === chatLastSeq) return; // 새 메모 없음 -> 다시 그리지 않고 스크롤 위치 유지
+
+      const wasAtBottom = scrollBox.scrollTop + scrollBox.clientHeight >= scrollBox.scrollHeight - 4;
+      const prevScrollTop = scrollBox.scrollTop;
+      const isFirstRender = chatLastSeq === 0;
+
+      tbody.innerHTML = messages.map(m => {
         const d = new Date(m.t);
         const time = pad(d.getHours()) + ':' + pad(d.getMinutes());
-        return `<div class="chat-msg"><span class="chat-meta">${time}</span><span class="chat-name">${esc(m.name)}</span>${esc(m.text)}</div>`;
+        return `<tr><td class="chat-seq">${m.seq}</td><td class="chat-name">${esc(m.name)}</td>` +
+          `<td class="chat-text">${highlightMentions(esc(m.text))}</td><td class="chat-time">${time}</td></tr>`;
       }).join('');
-      if (wasAtBottom) el.scrollTop = el.scrollHeight;
+      chatLastSeq = maxSeq;
+
+      if (isFirstRender || wasAtBottom) {
+        scrollBox.scrollTop = scrollBox.scrollHeight;
+        if (jumpBtn) jumpBtn.hidden = true;
+      } else {
+        scrollBox.scrollTop = prevScrollTop; // 위로 스크롤해서 보던 중이면 위치 유지
+        if (jumpBtn) jumpBtn.hidden = false;
+      }
     }
     async function chatPollOnce() {
       try {
         const { messages } = await proxyCall('chat_poll', {});
-        renderChatList(messages);
+        updateChatView(messages);
       } catch (e) {
         // 첫 로딩부터 실패한 경우(예: COUNTER_KV 미설정)에만 안내 문구 표시,
         // 이미 목록을 보여준 뒤의 일시적 실패는 화면을 그대로 유지한다.
-        const el = document.getElementById('chat-list');
-        if (el && !el.dataset.loaded) el.innerHTML = '<div class="chat-empty">메모를 불러오지 못했습니다. 잠시 후 자동으로 다시 시도합니다.</div>';
+        const tbody = document.getElementById('chat-list');
+        if (tbody && !tbody.dataset.loaded) tbody.innerHTML = emptyRow(4, '메모를 불러오지 못했습니다. 잠시 후 자동으로 다시 시도합니다.');
       }
     }
     function startChatPolling() {
@@ -2268,6 +2331,7 @@
       document.getElementById('chat-text').addEventListener('keydown', e => {
         if (e.key === 'Enter') { e.preventDefault(); chatSendMessage(); }
       });
+      document.getElementById('chat-jump').addEventListener('click', jumpToChatBottom);
 
       document.getElementById('reg-label').addEventListener('input', () => { labelTouched = true; });
       document.getElementById('reg-country').addEventListener('input', () => { countryTouched = true; });

@@ -260,6 +260,7 @@ async function countPresence(env) {
 // chat_poll을 호출해 최근 메시지를 다시 받아오는 방식이다. KV는 최종 일관성이라
 // 동시에 여러 명이 보내면 드물게 유실될 수 있지만, 소규모 사용에는 충분하다.
 const CHAT_KEY = "chat:messages";
+const CHAT_SEQ_KEY = "chat:seq";  // 채팅방 UI의 번호(#) 열용 단조 증가 카운터
 const CHAT_MAX = 200;             // KV에 보관하는 최대 메시지 수(오래된 것부터 삭제)
 const CHAT_POLL_LIMIT = 50;       // 한 번의 poll로 내려주는 최근 메시지 수
 const CHAT_TEXT_MAX = 300;
@@ -294,8 +295,14 @@ async function chatSend(env, clientId, name, text) {
   }
   await env.COUNTER_KV.put(rateKey, String(now), { expirationTtl: 60 });
 
+  // seq: 채팅방 UI의 번호(#) 열. 동시 전송 시 드물게 KV 최종 일관성으로 두 메시지가
+  // 같은 seq를 받을 수 있지만, 그냥 표시용 번호라 실제 데이터 유실은 아니다.
+  const seqRaw = await env.COUNTER_KV.get(CHAT_SEQ_KEY);
+  const seq = (parseInt(seqRaw, 10) || 0) + 1;
+  await env.COUNTER_KV.put(CHAT_SEQ_KEY, String(seq));
+
   const list = await readChatList(env);
-  list.push({ id: now + "-" + Math.random().toString(36).slice(2, 8), t: now, name: cleanName, text: cleanText });
+  list.push({ seq, t: now, name: cleanName, text: cleanText });
   await env.COUNTER_KV.put(CHAT_KEY, JSON.stringify(list.slice(-CHAT_MAX)));
 
   return { ok: true };
