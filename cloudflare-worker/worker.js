@@ -15,11 +15,11 @@
  * docs/index.html 의 PROXY_URL 에 넣으면 페이지가 이 프록시를 통해 동작한다.
  *
  * 동시접속자 카운터(선택 기능, heartbeat 액션. 누적 조회수는 별도의 abacus 위젯이
- * 담당하므로 이 Worker의 몫이 아님)와 메모(간단 채팅, chat_poll/chat_send 액션)를
+ * 담당하므로 이 Worker의 몫이 아님)와 실시간 채팅(chat_poll/chat_send 액션)을
  * 쓰려면 KV 네임스페이스를 하나 만들어 아래 바인딩을 추가해야 한다
  * (자세한 단계는 cloudflare-worker/README.md 참고):
  *   - COUNTER_KV : Workers KV 네임스페이스 바인딩 (등록/삭제와 무관, SHARE_PASS 불필요.
- *                  동시접속자 카운터와 메모가 같은 바인딩을 공유한다)
+ *                  동시접속자 카운터와 실시간 채팅이 같은 바인딩을 공유한다)
  */
 
 const REPO = "Henryshin/flight-deals";
@@ -48,7 +48,7 @@ export default {
       }
     }
 
-    // 메모(간단 채팅): 동시접속자 카운터와 마찬가지로 누구나 읽고 쓸 수 있어야 하므로
+    // 실시간 채팅: 동시접속자 카운터와 마찬가지로 누구나 읽고 쓸 수 있어야 하므로
     // 공유 암호 게이트/GH_TOKEN 앞에서 처리한다 (GitHub 쓰기와 무관한 별개 기능).
     if (action === "chat_poll" || action === "chat_send") {
       if (!env.COUNTER_KV) return json({ error: "서버에 COUNTER_KV 가 설정되지 않았습니다." }, 500, cors);
@@ -255,32 +255,62 @@ async function countPresence(env) {
   return count;
 }
 
-// ---------- 메모(간단 채팅, Workers KV 폴링 방식) ----------
+// ---------- 실시간 채팅 (Workers KV 폴링 방식) ----------
 // 진짜 실시간(Durable Objects/WebSocket)은 아니고, 클라이언트가 주기적으로
 // chat_poll을 호출해 최근 메시지를 다시 받아오는 방식이다. KV는 최종 일관성이라
 // 동시에 여러 명이 보내면 드물게 유실될 수 있지만, 소규모 사용에는 충분하다.
 const CHAT_KEY = "chat:messages";
-const CHAT_SEQ_KEY = "chat:seq";  // 새 메모 유무 판단용 단조 증가 카운터
+const CHAT_SEQ_KEY = "chat:seq";  // 새 채팅 유무 판단용 단조 증가 카운터
 const CHAT_MAX = 200;             // KV에 보관하는 최대 메시지 수(오래된 것부터 삭제)
 const CHAT_POLL_LIMIT = 50;       // 한 번의 poll로 내려주는 최근 메시지 수
 const CHAT_TEXT_MAX = 300;
 const CHAT_MIN_INTERVAL_MS = 3000; // 같은 clientId의 최소 전송 간격(도배 방지)
-const CHAT_NAME_PREFIX = "여행자_";
+// 닉네임 = 형용사 2~3개 + 캐릭터 + 직급 (예: "현명한 용감한 루팡 대리")
+const CHAT_ADJECTIVES = [
+  "현명한", "게으른", "성실한", "용감한", "은밀한", "당당한", "느긋한", "예리한",
+  "수상한", "화려한", "조용한", "치밀한", "위대한", "냉철한", "여유로운", "진지한",
+  "엉뚱한", "불타는", "전설의", "피곤한",
+];
+const CHAT_PERSONAS = [
+  "루팡", "월급루팡", "칼퇴요정", "프로불참러", "연차요정", "야근전사", "점심요정",
+  "커피귀신", "휴가사냥꾼", "보고서장인", "엑셀요정", "반차프로", "월급도둑",
+  "사무실귀신", "직장인",
+];
+const CHAT_RANKS = ["사원", "주임", "대리", "과장", "차장", "부장", "팀장", "이사", "상무"];
 // IP를 그대로 노출하지 않으려 고정 문자열을 섞어 해시한다(완전한 익명화는 아니고,
 // 닉네임만 봐서는 IP를 바로 못 알아보게 하는 정도의 가벼운 방지).
-const CHAT_NAME_PEPPER = "flight-deals-chat-v1";
+const CHAT_NAME_PEPPER = "flight-deals-chat-v2";
 
 function getClientIp(request) {
   return request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For") || "0.0.0.0";
 }
 
-// 같은 IP는 항상 같은 닉네임을 받도록(=자동 배정 + 유지) IP를 결정적으로 해시한다.
-// 로그인이나 별도 저장 없이도 "IP당 고정 닉네임"이 자연히 보장된다.
+// bytes 중 앞에서부터 골라 arr에서 서로 다른 count개 항목을 뽑는다 (형용사 중복 방지).
+function pickDistinct(arr, bytes, count) {
+  const used = new Set();
+  const picks = [];
+  for (let i = 0; picks.length < count && i < bytes.length; i++) {
+    let idx = bytes[i] % arr.length;
+    let guard = 0;
+    while (used.has(idx) && guard < arr.length) { idx = (idx + 1) % arr.length; guard++; }
+    used.add(idx);
+    picks.push(arr[idx]);
+  }
+  return picks;
+}
+
+// 같은 IP는 항상 같은 닉네임을 받도록(=자동 배정 + 유지) IP를 결정적으로 해시해서
+// "형용사 2~3개 + 캐릭터 + 직급"을 조합한다. 로그인이나 별도 저장 없이도
+// "IP당 고정 닉네임"이 자연히 보장된다.
 async function deriveChatName(request) {
   const ip = getClientIp(request);
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(CHAT_NAME_PEPPER + ip));
-  const hex = [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, "0")).join("");
-  return CHAT_NAME_PREFIX + hex.slice(0, 4);
+  const bytes = [...new Uint8Array(digest)];
+  const adjCount = 2 + (bytes[0] % 2); // 2 또는 3개
+  const adjectives = pickDistinct(CHAT_ADJECTIVES, bytes.slice(1), adjCount);
+  const persona = CHAT_PERSONAS[bytes[10] % CHAT_PERSONAS.length];
+  const rank = CHAT_RANKS[bytes[11] % CHAT_RANKS.length];
+  return [...adjectives, persona, rank].join(" ");
 }
 
 async function readChatList(env) {
@@ -314,7 +344,7 @@ async function chatSend(env, request, clientId, text) {
   // (스푸핑 불가, 별도 저장 없이도 항상 같은 값 -> 자동 배정 + 유지 둘 다 만족).
   const cleanName = await deriveChatName(request);
 
-  // seq: 새 메모 유무를 클라이언트가 판단하는 데 쓰는 단조 증가 번호. 동시 전송 시
+  // seq: 새 채팅 유무를 클라이언트가 판단하는 데 쓰는 단조 증가 번호. 동시 전송 시
   // 드물게 KV 최종 일관성으로 두 메시지가 같은 seq를 받을 수 있지만 표시용일 뿐이라 무해하다.
   const seqRaw = await env.COUNTER_KV.get(CHAT_SEQ_KEY);
   const seq = (parseInt(seqRaw, 10) || 0) + 1;

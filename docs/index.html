@@ -216,6 +216,15 @@
   .ac-item b { color: #14532d; font-family: Consolas, monospace; }
   .ac-sub { color: var(--muted); }
 
+  /* 필터 + 실시간 채팅을 한 행에 나란히 배치 */
+  .filter-chat-row { display: flex; align-items: flex-start; gap: 14px; margin: 16px 0 0; }
+  .filter-chat-row .chip-bar { flex: 1 1 auto; min-width: 0; margin: 0; }
+  .filter-chat-row #chat-section { flex: 0 0 380px; }
+  @media (max-width: 1000px) {
+    .filter-chat-row { flex-direction: column; }
+    .filter-chat-row #chat-section { flex-basis: auto; width: 100%; }
+  }
+
   /* filter chips */
   .chip-bar { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; margin: 16px 0 0; background: #fafafa; border: 1px solid var(--grid); padding: 8px 10px; }
   .chip-bar .chip-cap { color: var(--muted); font-size: 15px; padding-top: 3px; }
@@ -283,15 +292,21 @@
   #test-result.fail { color: #b3261e; font-weight: 700; }
   #confirm-msg { white-space: pre-line; }
 
-  /* 메모(간단 채팅) — 카카오톡처럼 세로로 얇은 말풍선형 채팅창 */
+  /* 실시간 채팅 — 카카오톡처럼 세로로 얇은 말풍선형 채팅창, 필터와 한 행에 나란히 배치 */
   .chat-live-badge { font-weight: 400; font-size: 12.5px; opacity: 0.85; margin-left: 2px; }
   .chat-panel {
-    max-width: 380px; display: flex; flex-direction: column;
+    width: 100%; display: flex; flex-direction: column;
     border: 1px solid var(--grid); border-top: none; background: var(--sheet);
   }
   .chat-msgs-wrap { position: relative; }
   .chat-msgs {
     height: 380px; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 8px;
+    /* 아주 얇은 가로세로선으로 엑셀 셀 눈금처럼 보이게 */
+    background-color: var(--sheet);
+    background-image:
+      linear-gradient(to right, var(--grid) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+    background-size: 22px 21px;
   }
   .chat-empty-msg { margin: auto; color: var(--muted); text-align: center; padding: 16px; font-style: italic; font-size: 14.5px; }
   .chat-bubble { max-width: 82%; align-self: flex-start; }
@@ -381,43 +396,45 @@
       <div class="calendar" id="calendar"></div>
     </div>
 
-    <div class="chip-bar">
-      <span class="chip-cap">필터</span>
-      <div class="chip-groups">
-        <div class="chip-line">
-          <span class="chip-sub">국가</span>
-          <div id="chip-country"></div>
-        </div>
-        <div class="chip-line" id="chip-region-line" hidden>
-          <span class="chip-sub">지역</span>
-          <div id="chip-region"></div>
-        </div>
-        <div class="chip-line" id="chip-concept-line">
-          <span class="chip-sub">컨셉</span>
-          <div id="chip-concept"></div>
-        </div>
-        <div class="chip-line" id="chip-stops-line">
-          <span class="chip-sub">직항/경유</span>
-          <div id="chip-stops"></div>
+    <div class="filter-chat-row">
+      <div class="chip-bar">
+        <span class="chip-cap">필터</span>
+        <div class="chip-groups">
+          <div class="chip-line">
+            <span class="chip-sub">국가</span>
+            <div id="chip-country"></div>
+          </div>
+          <div class="chip-line" id="chip-region-line" hidden>
+            <span class="chip-sub">지역</span>
+            <div id="chip-region"></div>
+          </div>
+          <div class="chip-line" id="chip-concept-line">
+            <span class="chip-sub">컨셉</span>
+            <div id="chip-concept"></div>
+          </div>
+          <div class="chip-line" id="chip-stops-line">
+            <span class="chip-sub">직항/경유</span>
+            <div id="chip-stops"></div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div id="chat-section" hidden>
-      <h2 class="collapsible" id="chat-h2"><span class="collapse-caret">▼</span> 메모 <span class="chat-live-badge" id="chat-live-count"></span> <span class="collapse-hint">(클릭해서 접기)</span></h2>
-      <div id="chat-body">
-        <div class="note" style="margin-bottom:0">이 시트를 보는 사람들과 짧은 메모를 남길 수 있습니다. 닉네임은 접속 위치별로 자동 배정되어 계속 유지됩니다.</div>
-        <div class="chat-panel">
-          <div class="chat-msgs-wrap">
-            <div class="chat-msgs" id="chat-scroll">
-              <div id="chat-list"></div>
+      <div id="chat-section" hidden>
+        <h2 class="collapsible" id="chat-h2"><span class="collapse-caret">▼</span> 실시간 채팅 <span class="chat-live-badge" id="chat-live-count"></span> <span class="collapse-hint">(클릭해서 접기)</span></h2>
+        <div id="chat-body">
+          <div class="note" style="margin-bottom:0">이 시트를 보는 사람들과 실시간으로 대화할 수 있습니다. 닉네임은 접속 위치별로 자동 배정되어 계속 유지됩니다.</div>
+          <div class="chat-panel">
+            <div class="chat-msgs-wrap">
+              <div class="chat-msgs" id="chat-scroll">
+                <div id="chat-list"></div>
+              </div>
+              <button id="chat-jump" class="chat-jump-btn" hidden>새 채팅 ↓</button>
             </div>
-            <button id="chat-jump" class="chat-jump-btn" hidden>새 메모 ↓</button>
-          </div>
-          <div class="chat-my-name" id="chat-my-name"></div>
-          <div class="chat-input-row">
-            <input id="chat-text" placeholder="메모 입력 후 Enter" maxlength="300" />
-            <button id="btn-chat-send">전송</button>
+            <div class="chat-my-name" id="chat-my-name"></div>
+            <div class="chat-input-row">
+              <input id="chat-text" placeholder="채팅 입력 후 Enter" maxlength="300" />
+              <button id="btn-chat-send">전송</button>
+            </div>
           </div>
         </div>
       </div>
@@ -721,8 +738,8 @@
       setInterval(beat, HEARTBEAT_MS);
     }
 
-    // ===================== 메모(간단 채팅) =====================
-    // 진짜 실시간(WebSocket)이 아니라 몇 초 간격 폴링이라, 다른 탭에서 쓴 메모가
+    // ===================== 실시간 채팅 =====================
+    // 진짜 실시간(WebSocket)이 아니라 몇 초 간격 폴링이라, 다른 탭에서 쓴 채팅이
     // 살짝(최대 CHAT_POLL_MS) 늦게 보일 수 있다. Worker의 COUNTER_KV(동시접속자
     // 카운터와 공유)에 기대므로, 실패하면 섹션 자체를 숨긴 채 조용히 포기한다.
     const CHAT_CLIENT_KEY = 'fd_chat_client'; // 브라우저별 고유 id -> 도배 방지(속도 제한)용
@@ -743,7 +760,7 @@
     function highlightMentions(escapedText) {
       return escapedText.replace(/@([^\s@]{1,20})/g, '<b class="chat-mention">@$1</b>');
     }
-    let chatLastSeq = 0; // 마지막으로 그린 메시지의 seq -> 새 메모 유무 판단
+    let chatLastSeq = 0; // 마지막으로 그린 메시지의 seq -> 새 채팅 유무 판단
     function jumpToChatBottom() {
       const scrollBox = document.getElementById('chat-scroll');
       const jumpBtn = document.getElementById('chat-jump');
@@ -764,14 +781,14 @@
       }
 
       if (!messages || !messages.length) {
-        listEl.innerHTML = '<div class="chat-empty-msg">아직 메모가 없습니다. 첫 메모를 남겨보세요.</div>';
+        listEl.innerHTML = '<div class="chat-empty-msg">아직 채팅이 없습니다. 첫 메시지를 남겨보세요.</div>';
         chatLastSeq = 0;
         if (jumpBtn) jumpBtn.hidden = true;
         return;
       }
 
       const maxSeq = messages[messages.length - 1].seq || 0;
-      if (maxSeq === chatLastSeq) return; // 새 메모 없음 -> 다시 그리지 않고 스크롤 위치 유지
+      if (maxSeq === chatLastSeq) return; // 새 채팅 없음 -> 다시 그리지 않고 스크롤 위치 유지
 
       const wasAtBottom = scrollBox.scrollTop + scrollBox.clientHeight >= scrollBox.scrollHeight - 4;
       const prevScrollTop = scrollBox.scrollTop;
@@ -804,7 +821,7 @@
         // 첫 로딩부터 실패한 경우(예: COUNTER_KV 미설정)에만 안내 문구 표시,
         // 이미 목록을 보여준 뒤의 일시적 실패는 화면을 그대로 유지한다.
         const listEl = document.getElementById('chat-list');
-        if (listEl && !listEl.dataset.loaded) listEl.innerHTML = '<div class="chat-empty-msg">메모를 불러오지 못했습니다. 잠시 후 자동으로 다시 시도합니다.</div>';
+        if (listEl && !listEl.dataset.loaded) listEl.innerHTML = '<div class="chat-empty-msg">채팅을 불러오지 못했습니다. 잠시 후 자동으로 다시 시도합니다.</div>';
       }
     }
     function startChatPolling() {
@@ -828,7 +845,7 @@
       } catch (e) {
         textEl.value = text; // 실패 시 입력 내용 복구
         if (e && e.status === 429) toast('너무 빠르게 보냈습니다. 잠시 후 다시 시도하세요.', 'err');
-        else toast('메모 전송 실패: ' + ((e && e.message) || '네트워크 오류'), 'err');
+        else toast('채팅 전송 실패: ' + ((e && e.message) || '네트워크 오류'), 'err');
       }
     }
     function initChat() {
@@ -2330,7 +2347,7 @@
         if (hint) hint.textContent = willOpen ? '(클릭해서 접기)' : '(클릭해서 펼치기)';
       });
 
-      // 메모 접기/펼치기 — 펼쳐져 있을 때만 폴링 (숨겨진 동안 불필요한 요청 방지)
+      // 실시간 채팅 접기/펼치기 — 펼쳐져 있을 때만 폴링 (숨겨진 동안 불필요한 요청 방지)
       document.getElementById('chat-h2').addEventListener('click', () => {
         const body = document.getElementById('chat-body');
         const caret = document.querySelector('#chat-h2 .collapse-caret');
