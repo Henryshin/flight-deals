@@ -287,8 +287,11 @@
   /* 실시간 채팅 — 카카오톡처럼 얇은 말풍선형 채팅창. #chat-section 자체를
      "창 안의 창"처럼 절대 위치로 띄워 제목표시줄(#chat-h2)을 드래그해 옮길 수
      있게 한다. position:fixed가 아니라 absolute라 페이지 스크롤에 같이 따라간다. */
+  /* height는 CSS 고정값이 아니라 JS(펼침 690px / 접힘 auto)로 조절한다.
+     고정 height였다면 접었을 때도 박스가 그대로 남아 빈 그림자(잔여 실루엣)가
+     제목표시줄 아래에 남는 문제가 있었다. */
   #chat-section {
-    position: absolute; width: 380px; height: 460px; z-index: 80;
+    position: absolute; width: 380px; z-index: 80;
     display: flex; flex-direction: column;
     box-shadow: 0 6px 22px rgba(0,0,0,0.3);
   }
@@ -332,6 +335,12 @@
   }
   .chat-jump-btn:hover { background: #1a5c38; }
   .chat-my-name { font-size: 12.5px; color: var(--muted); padding: 5px 10px 0; }
+  .chat-note { position: relative; padding-right: 26px; }
+  .chat-note-close {
+    position: absolute; top: 2px; right: 4px; background: none; border: none; cursor: pointer;
+    color: #6b5c1f; opacity: 0.6; font-size: 13px; padding: 2px 4px; font-family: inherit; line-height: 1;
+  }
+  .chat-note-close:hover { opacity: 1; }
   /* 카카오톡처럼: 대화 내용(위, 스크롤) + 입력창(항상 아래 고정) */
   .chat-input-row { display: flex; gap: 6px; padding: 8px; border-top: 1px solid var(--grid); background: #fafafa; }
   .chat-input-row input {
@@ -427,7 +436,10 @@
     <div id="chat-section" hidden>
       <h2 class="collapsible" id="chat-h2"><span class="collapse-caret">▼</span> 실시간 채팅 <span class="chat-live-badge" id="chat-live-count"></span> <span class="collapse-hint">(클릭해서 접기 · 끌어서 이동)</span></h2>
       <div id="chat-body">
-        <div class="note" style="margin-bottom:0">이 시트를 보는 사람들과 실시간으로 대화할 수 있습니다. 닉네임은 접속 위치별로 자동 배정되어 계속 유지됩니다.</div>
+        <div class="note chat-note" id="chat-note" style="margin-bottom:0">
+          이 시트를 보는 사람들과 실시간으로 대화할 수 있습니다. 닉네임은 접속 위치별로 자동 배정되어 계속 유지됩니다.
+          <button id="chat-note-close" class="chat-note-close" title="다시 보지 않기">✕</button>
+        </div>
         <div class="chat-panel">
           <div class="chat-msgs-wrap">
             <div class="chat-msgs" id="chat-scroll">
@@ -856,7 +868,21 @@
     // position:absolute라 페이지 스크롤에 같이 따라가며, 제목표시줄(#chat-h2)을
     // 누른 채 끌면 위치가 바뀐다. 위치는 브라우저별로 기억(localStorage)된다.
     const CHAT_POS_KEY = 'fd_chat_pos';
+    const CHAT_EXPANDED_HEIGHT = 690; // 카카오톡 창처럼 세로로 넉넉하게(기존 460px의 1.5배)
     let chatJustDragged = false; // 드래그 직후의 click으로 접힘/펼침이 토글되지 않도록
+    // 접었을 때 height를 그대로 두면 제목표시줄 아래에 빈 박스(그림자)가 남으므로
+    // 펼침/접힘에 따라 height를 직접 껐다 켠다(펼침=고정값, 접힘=auto로 제목줄만 남김).
+    function setChatExpanded(open) {
+      const section = document.getElementById('chat-section');
+      const body = document.getElementById('chat-body');
+      const caret = document.querySelector('#chat-h2 .collapse-caret');
+      const hint = document.querySelector('#chat-h2 .collapse-hint');
+      body.hidden = !open;
+      section.style.height = open ? CHAT_EXPANDED_HEIGHT + 'px' : '';
+      if (caret) caret.textContent = open ? '▼' : '▶';
+      if (hint) hint.textContent = open ? '(클릭해서 접기 · 끌어서 이동)' : '(클릭해서 펼치기 · 끌어서 이동)';
+      if (open) startChatPolling(); else stopChatPolling();
+    }
 
     function defaultChatPos() {
       const filterBar = document.querySelector('.chip-bar');
@@ -927,13 +953,25 @@
       handle.addEventListener('mousedown', onDown);
       handle.addEventListener('touchstart', onDown, { passive: true });
     }
+    const CHAT_NOTE_DISMISSED_KEY = 'fd_chat_note_dismissed';
+    function wireChatNoteClose() {
+      const note = document.getElementById('chat-note');
+      let dismissed = false;
+      try { dismissed = localStorage.getItem(CHAT_NOTE_DISMISSED_KEY) === '1'; } catch (e) {}
+      if (dismissed) note.hidden = true;
+      document.getElementById('chat-note-close').addEventListener('click', () => {
+        note.hidden = true;
+        try { localStorage.setItem(CHAT_NOTE_DISMISSED_KEY, '1'); } catch (e) {}
+      });
+    }
     function initChat() {
       const section = document.getElementById('chat-section');
       if (!usingProxy()) { section.hidden = true; return; } // 프록시 미연결이면 섹션 자체를 숨김
       section.hidden = false;
       placeChatWindow();
       wireChatDrag();
-      startChatPolling(); // 기본으로 펼쳐진 상태라 바로 폴링 시작
+      wireChatNoteClose();
+      setChatExpanded(true); // 기본으로 펼쳐진 상태 (height 지정 + 폴링 시작)
     }
 
     const FAVS_KEY = 'fd_favs';       // 내 목록(브라우저별): 담은 모니터 키 집합
@@ -2432,14 +2470,7 @@
       // 드래그로 창을 옮긴 직후의 click은 무시(안 그러면 옮길 때마다 접혀버림).
       document.getElementById('chat-h2').addEventListener('click', () => {
         if (chatJustDragged) { chatJustDragged = false; return; }
-        const body = document.getElementById('chat-body');
-        const caret = document.querySelector('#chat-h2 .collapse-caret');
-        const hint = document.querySelector('#chat-h2 .collapse-hint');
-        const willOpen = body.hidden;
-        body.hidden = !willOpen;
-        if (caret) caret.textContent = willOpen ? '▼' : '▶';
-        if (hint) hint.textContent = willOpen ? '(클릭해서 접기 · 끌어서 이동)' : '(클릭해서 펼치기 · 끌어서 이동)';
-        if (willOpen) startChatPolling(); else stopChatPolling();
+        setChatExpanded(document.getElementById('chat-body').hidden);
       });
       document.getElementById('btn-chat-send').addEventListener('click', chatSendMessage);
       document.getElementById('chat-text').addEventListener('keydown', e => {

@@ -265,7 +265,7 @@ const CHAT_MAX = 200;             // KV에 보관하는 최대 메시지 수(오
 const CHAT_POLL_LIMIT = 50;       // 한 번의 poll로 내려주는 최근 메시지 수
 const CHAT_TEXT_MAX = 300;
 const CHAT_MIN_INTERVAL_MS = 3000; // 같은 clientId의 최소 전송 간격(도배 방지)
-// 닉네임 = 형용사 2~3개 + 캐릭터 + 직급 (예: "현명한 용감한 루팡 대리")
+// 닉네임 = 형용사 2개 + 캐릭터 + 직급 (예: "현명한 용감한 루팡 대리")
 const CHAT_ADJECTIVES = [
   "현명한", "게으른", "성실한", "용감한", "은밀한", "당당한", "느긋한", "예리한",
   "수상한", "화려한", "조용한", "치밀한", "위대한", "냉철한", "여유로운", "진지한",
@@ -300,14 +300,13 @@ function pickDistinct(arr, bytes, count) {
 }
 
 // 같은 IP는 항상 같은 닉네임을 받도록(=자동 배정 + 유지) IP를 결정적으로 해시해서
-// "형용사 2~3개 + 캐릭터 + 직급"을 조합한다. 로그인이나 별도 저장 없이도
+// "형용사 2개 + 캐릭터 + 직급"을 조합한다. 로그인이나 별도 저장 없이도
 // "IP당 고정 닉네임"이 자연히 보장된다.
 async function deriveChatName(request) {
   const ip = getClientIp(request);
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(CHAT_NAME_PEPPER + ip));
   const bytes = [...new Uint8Array(digest)];
-  const adjCount = 2 + (bytes[0] % 2); // 2 또는 3개
-  const adjectives = pickDistinct(CHAT_ADJECTIVES, bytes.slice(1), adjCount);
+  const adjectives = pickDistinct(CHAT_ADJECTIVES, bytes, 2);
   const persona = CHAT_PERSONAS[bytes[10] % CHAT_PERSONAS.length];
   const rank = CHAT_RANKS[bytes[11] % CHAT_RANKS.length];
   return [...adjectives, persona, rank].join(" ");
