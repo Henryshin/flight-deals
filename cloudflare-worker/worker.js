@@ -53,8 +53,8 @@ export default {
     if (action === "chat_poll" || action === "chat_send") {
       if (!env.COUNTER_KV) return json({ error: "서버에 COUNTER_KV 가 설정되지 않았습니다." }, 500, cors);
       try {
-        if (action === "chat_poll") return json(await chatPoll(env), 200, cors);
-        return json(await chatSend(env, String(body.clientId || ""), body.name, body.text), 200, cors);
+        if (action === "chat_poll") return json(await chatPoll(env, request), 200, cors);
+        return json(await chatSend(env, request, String(body.clientId || ""), body.text), 200, cors);
       } catch (e) {
         return json({ error: String((e && e.message) || e) }, (e && e.status) || 500, cors);
       }
@@ -260,12 +260,28 @@ async function countPresence(env) {
 // chat_poll을 호출해 최근 메시지를 다시 받아오는 방식이다. KV는 최종 일관성이라
 // 동시에 여러 명이 보내면 드물게 유실될 수 있지만, 소규모 사용에는 충분하다.
 const CHAT_KEY = "chat:messages";
-const CHAT_SEQ_KEY = "chat:seq";  // 채팅방 UI의 번호(#) 열용 단조 증가 카운터
+const CHAT_SEQ_KEY = "chat:seq";  // 새 메모 유무 판단용 단조 증가 카운터
 const CHAT_MAX = 200;             // KV에 보관하는 최대 메시지 수(오래된 것부터 삭제)
 const CHAT_POLL_LIMIT = 50;       // 한 번의 poll로 내려주는 최근 메시지 수
 const CHAT_TEXT_MAX = 300;
-const CHAT_NAME_MAX = 20;
 const CHAT_MIN_INTERVAL_MS = 3000; // 같은 clientId의 최소 전송 간격(도배 방지)
+const CHAT_NAME_PREFIX = "여행자_";
+// IP를 그대로 노출하지 않으려 고정 문자열을 섞어 해시한다(완전한 익명화는 아니고,
+// 닉네임만 봐서는 IP를 바로 못 알아보게 하는 정도의 가벼운 방지).
+const CHAT_NAME_PEPPER = "flight-deals-chat-v1";
+
+function getClientIp(request) {
+  return request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For") || "0.0.0.0";
+}
+
+// 같은 IP는 항상 같은 닉네임을 받도록(=자동 배정 + 유지) IP를 결정적으로 해시한다.
+// 로그인이나 별도 저장 없이도 "IP당 고정 닉네임"이 자연히 보장된다.
+async function deriveChatName(request) {
+  const ip = getClientIp(request);
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(CHAT_NAME_PEPPER + ip));
+  const hex = [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, "0")).join("");
+  return CHAT_NAME_PREFIX + hex.slice(0, 4);
+}
 
 async function readChatList(env) {
   const raw = await env.COUNTER_KV.get(CHAT_KEY);
@@ -276,16 +292,15 @@ async function readChatList(env) {
   } catch (e) { return []; }
 }
 
-async function chatPoll(env) {
+async function chatPoll(env, request) {
   const list = await readChatList(env);
-  return { messages: list.slice(-CHAT_POLL_LIMIT) };
+  return { messages: list.slice(-CHAT_POLL_LIMIT), you: await deriveChatName(request) };
 }
 
-async function chatSend(env, clientId, name, text) {
+async function chatSend(env, request, clientId, text) {
   if (!CLIENT_ID_RE.test(clientId)) throw fail("clientId 형식 오류", 400);
   const cleanText = String(text || "").trim().slice(0, CHAT_TEXT_MAX);
   if (!cleanText) throw fail("내용을 입력하세요.", 400);
-  const cleanName = String(name || "").trim().slice(0, CHAT_NAME_MAX) || "익명";
 
   const rateKey = "chat:rate:" + clientId;
   const last = await env.COUNTER_KV.get(rateKey);
@@ -295,8 +310,12 @@ async function chatSend(env, clientId, name, text) {
   }
   await env.COUNTER_KV.put(rateKey, String(now), { expirationTtl: 60 });
 
-  // seq: 채팅방 UI의 번호(#) 열. 동시 전송 시 드물게 KV 최종 일관성으로 두 메시지가
-  // 같은 seq를 받을 수 있지만, 그냥 표시용 번호라 실제 데이터 유실은 아니다.
+  // 닉네임은 클라이언트가 정하는 게 아니라 접속 IP로부터 서버가 매번 다시 계산한다
+  // (스푸핑 불가, 별도 저장 없이도 항상 같은 값 -> 자동 배정 + 유지 둘 다 만족).
+  const cleanName = await deriveChatName(request);
+
+  // seq: 새 메모 유무를 클라이언트가 판단하는 데 쓰는 단조 증가 번호. 동시 전송 시
+  // 드물게 KV 최종 일관성으로 두 메시지가 같은 seq를 받을 수 있지만 표시용일 뿐이라 무해하다.
   const seqRaw = await env.COUNTER_KV.get(CHAT_SEQ_KEY);
   const seq = (parseInt(seqRaw, 10) || 0) + 1;
   await env.COUNTER_KV.put(CHAT_SEQ_KEY, String(seq));
