@@ -4,7 +4,9 @@ docs/data/deals.json, routes_status.json, history.json, matrix.json 등을 생�
 (GitHub Pages가 읽는 정적 파일).
 
 지표 구분:
-- deals.json: '이 노선의 최근 연휴 시세 평균' 대비 하락(변동성 신호). 노선 내부 비교용.
+- deals.json: '같은 연휴 윈도우 + 같은 박수(nights)'로 묶은 최근 시세 평균 대비 하락
+  (변동성 신호). 서로 다른 연휴(예: 추석 vs 신정)를 섞지 않아, 특정 연휴만의
+  일시적 하락을 그 연휴 자체의 최근 시세와 비교한다.
 - matrix.json: 연휴 윈도우별 '그 연휴의 통상 시세 대비 현재 최저가 특가율'.
   통상 시세보다 싼 표(프로모션/숨은 특가)가 남아있는 곳을 찾는 지표 (연휴 특가 보드의 데이터).
 """
@@ -188,6 +190,19 @@ def _row_in_window(row, window, known_window_ids):
     return d1 <= window["end"] and d2 >= window["start"]
 
 
+def _window_id_for_row(row, windows, known_window_ids):
+    """행이 속한 연휴 윈도우 id (deals.json 기준값을 윈도우 단위로 나누기 위함).
+
+    _row_in_window과 동일한 기준(window_id 우선, 없거나 유효하지 않으면 날짜 겹침
+    폴백)으로 판정하되, 여기서는 어느 윈도우인지가 필요하므로 순회하며 첫 일치를
+    반환한다. 해당하는 윈도우가 없으면 None(그 행은 윈도우별 기준값 계산에서 제외).
+    """
+    for w in windows:
+        if _row_in_window(row, w, known_window_ids):
+            return w["id"]
+    return None
+
+
 def _latest_min(obs):
     """관측 목록에서 '가장 최근 시각' 클러스터의 최저가 행.
 
@@ -288,6 +303,98 @@ def build_matrix_cell(route_prices, offpeak_rows, max_stops, window, route,
             ),
         },
     }
+
+
+def build_route_deals(route_prices, recent, max_stops, route, today, lookback_start,
+                       windows, known_window_ids):
+    """이 모니터의 '변동 항목'(deals.json) 목록: 날짜쌍별 현재값이 기준값보다
+    DEAL_THRESHOLD 이상 싼 경우만 골라낸다.
+
+    기준값은 '같은 연휴 윈도우 + 같은 박수(nights) + stops 클래스'로 묶은 최근
+    관측가 평균이다.
+    - 박수가 다르면 가격대가 크게 달라 하나의 평균으로 비교하면 짧은 일정이
+      항상 싸 보이는 착시가 생기므로, 박수별로 기준값을 분리한다.
+    - 연휴 윈도우가 다르면(예: 추석 vs 신정) 그 연휴만의 시세 수준이 다른데, 섞어서
+      평균 내면 다른 연휴의 저렴한 관측치가 기준값을 끌어내려 정작 이 연휴의 진짜
+      하락이 하락처럼 안 보일 수 있으므로, 윈도우별로도 기준값을 분리한다.
+    """
+    if len(recent) < MIN_HISTORY_POINTS:
+        return []
+
+    recent_by_window_nights = defaultdict(list)
+    for r in recent:
+        wid = _window_id_for_row(r, windows, known_window_ids)
+        if wid is None:
+            continue  # 어느 윈도우에도 안 걸치면(이례적) 윈도우 기준값 계산에서 제외
+        recent_by_window_nights[(wid, _row_nights(r))].append(r)
+
+    def avg_for_window_nights(wid, n):
+        grp = recent_by_window_nights.get((wid, n), [])
+        if len(grp) < MIN_HISTORY_POINTS:
+            return None  # 같은 연휴+박수 표본이 부족하면 특가 판정 보류(가짜 특가 방지)
+        base = baseline_rows(grp, max_stops)  # 같은 박수 안에서 stops 클래스 우선(부족 시 폴백)
+        return sum(x["price"] for x in base) / len(base)
+
+    # 날짜쌍별 관측치: 최신 관측치와 그 직전(더 이른 collected_at) 관측치.
+    # 현재값/직전값 선택도 stops 클래스로 제한(부족하면 전체 폴백).
+    by_date = defaultdict(list)
+    for r in route_prices:
+        by_date[(r["depart_date"], r["return_date"])].append(r)
+
+    out = []
+    for (depart_date, return_date), all_obs in by_date.items():
+        # 이미 지나간 출발일은 특가로 노출하지 않음 (CSV는 append-only라 과거 행이 계속 남음)
+        if date.fromisoformat(depart_date) < today:
+            continue
+        # 현재값은 반드시 노선의 stops 클래스 안에서 고른다(전체 폴백 금지).
+        # 클래스에 해당 날짜쌍 관측치가 하나도 없으면 이 날짜쌍은 건너뛴다.
+        obs = current_rows(all_obs, max_stops)
+        if not obs:
+            continue
+        r = _latest_min(obs)
+        # 최신 관측치가 30일 기준 구간보다 오래됐으면 '현재값'으로 쓸 수 없음
+        if datetime.fromisoformat(r["collected_at"]).date() < lookback_start:
+            continue
+        d1 = date.fromisoformat(depart_date)
+        d2 = date.fromisoformat(return_date)
+        nights = (d2 - d1).days
+        # 이 날짜쌍이 속한 연휴 윈도우를 찾아, 그 윈도우 안에서만 기준값을 비교한다.
+        wid = _window_id_for_row(r, windows, known_window_ids)
+        if wid is None:
+            continue  # 어느 연휴에도 안 걸치면(이례적) 기준값을 만들 수 없음
+        # 같은 연휴+박수 기준값이 없으면(표본 부족) 이 날짜쌍은 특가 판정 보류
+        avg_price = avg_for_window_nights(wid, nights)
+        if avg_price is None:
+            continue
+        earlier = [o for o in obs if o["collected_at"] < r["collected_at"]]
+        prev_price = _latest_min(earlier)["price"] if earlier else None
+        discount = (avg_price - r["price"]) / avg_price
+        if discount >= DEAL_THRESHOLD:
+            out.append({
+                "route": route,
+                "depart_date": depart_date,
+                "return_date": return_date,
+                "depart_weekday": WEEKDAY_KO[d1.weekday()],
+                "return_weekday": WEEKDAY_KO[d2.weekday()],
+                "nights": nights,
+                "days": nights + 1,
+                "leave_days": count_leave_days(d1, d2),
+                "current_price": r["price"],
+                "prev_price": prev_price,
+                "avg_price": round(avg_price),
+                "dep_time": r.get("dep_time", ""),
+                "arr_time": r.get("arr_time", ""),
+                "stops": r.get("stops", ""),
+                "airline": r.get("airline", ""),
+                "discount_pct": round(discount * 100, 1),
+                "is_holiday_window": r["is_holiday_window"],
+                "booking_url": build_booking_url(
+                    route["origin"], route["destination"], d1, d2,
+                    origin_city=route.get("origin_city"),
+                    dest_city=route.get("destination_city"),
+                ),
+            })
+    return out
 
 
 def main():
@@ -421,77 +528,10 @@ def main():
             if cell:
                 matrix_cells[w["id"]][mid] = cell
 
-        if len(recent) < MIN_HISTORY_POINTS:
-            continue
-
-        # 동일 기준: 같은 박수(nights) + stops 클래스끼리 평균가를 낸다.
-        # 박수가 다르면 가격대가 크게 달라 하나의 평균으로 비교하면 짧은 일정이
-        # 항상 싸 보이는 착시가 생기므로, 박수별로 기준값을 분리한다.
-        recent_by_nights = defaultdict(list)
-        for r in recent:
-            recent_by_nights[_row_nights(r)].append(r)
-
-        def avg_for_nights(n):
-            grp = recent_by_nights.get(n, [])
-            if len(grp) < MIN_HISTORY_POINTS:
-                return None  # 같은 박수 표본이 부족하면 특가 판정 보류(가짜 특가 방지)
-            base = baseline_rows(grp, max_stops)  # 같은 박수 안에서 stops 클래스 우선(부족 시 폴백)
-            return sum(x["price"] for x in base) / len(base)
-
-        # 날짜쌍별 관측치: 최신 관측치와 그 직전(더 이른 collected_at) 관측치.
-        # 현재값/직전값 선택도 stops 클래스로 제한(부족하면 전체 폴백).
-        by_date = defaultdict(list)
-        for r in route_prices:
-            by_date[(r["depart_date"], r["return_date"])].append(r)
-
-        for (depart_date, return_date), all_obs in by_date.items():
-            # 이미 지나간 출발일은 특가로 노출하지 않음 (CSV는 append-only라 과거 행이 계속 남음)
-            if date.fromisoformat(depart_date) < today:
-                continue
-            # 현재값은 반드시 노선의 stops 클래스 안에서 고른다(전체 폴백 금지).
-            # 클래스에 해당 날짜쌍 관측치가 하나도 없으면 이 날짜쌍은 건너뛴다.
-            obs = current_rows(all_obs, max_stops)
-            if not obs:
-                continue
-            r = _latest_min(obs)
-            # 최신 관측치가 30일 기준 구간보다 오래됐으면 '현재값'으로 쓸 수 없음
-            if datetime.fromisoformat(r["collected_at"]).date() < lookback_start:
-                continue
-            d1 = date.fromisoformat(depart_date)
-            d2 = date.fromisoformat(return_date)
-            nights = (d2 - d1).days
-            # 같은 박수 기준값이 없으면(표본 부족) 이 날짜쌍은 특가 판정 보류
-            avg_price = avg_for_nights(nights)
-            if avg_price is None:
-                continue
-            earlier = [o for o in obs if o["collected_at"] < r["collected_at"]]
-            prev_price = _latest_min(earlier)["price"] if earlier else None
-            discount = (avg_price - r["price"]) / avg_price
-            if discount >= DEAL_THRESHOLD:
-                deals.append({
-                    "route": route,
-                    "depart_date": depart_date,
-                    "return_date": return_date,
-                    "depart_weekday": WEEKDAY_KO[d1.weekday()],
-                    "return_weekday": WEEKDAY_KO[d2.weekday()],
-                    "nights": nights,
-                    "days": nights + 1,
-                    "leave_days": count_leave_days(d1, d2),
-                    "current_price": r["price"],
-                    "prev_price": prev_price,
-                    "avg_price": round(avg_price),
-                    "dep_time": r.get("dep_time", ""),
-                    "arr_time": r.get("arr_time", ""),
-                    "stops": r.get("stops", ""),
-                    "airline": r.get("airline", ""),
-                    "discount_pct": round(discount * 100, 1),
-                    "is_holiday_window": r["is_holiday_window"],
-                    "booking_url": build_booking_url(
-                        route["origin"], route["destination"], d1, d2,
-                        origin_city=route.get("origin_city"),
-                        dest_city=route.get("destination_city"),
-                    ),
-                })
+        deals.extend(build_route_deals(
+            route_prices, recent, max_stops, route, today, lookback_start,
+            windows, known_window_ids,
+        ))
 
     # 노선별로 묶어서 보여줄 수 있도록 노선 -> 할인율 내림차순으로 정렬
     deals.sort(key=lambda d: (d["route"]["origin"], d["route"]["destination"], -d["discount_pct"]))

@@ -144,6 +144,57 @@ def test_build_matrix_deal():
     assert cell_c["tier"] == "C" and cell_c["min_price"] == 500000
 
 
+def test_deal_baseline_excludes_other_windows():
+    """deals.json 기준값은 같은 연휴 윈도우끼리만 평균 내야 한다.
+
+    다른(더 저렴한) 연휴의 관측치가 섞여 들어가 기준값을 끌어내리면, 정작 이
+    연휴 안에서의 진짜 하락(17.7%)이 가짜로 희석되어(옛 로직대로면 4.6%로 계산돼
+    15% 임계값 미달) 특가로 안 잡히는 회귀를 방지한다.
+    """
+    from scripts.build_dashboard_data import build_route_deals
+
+    today = date(2026, 7, 23)
+    lookback_start = today - timedelta(days=30)
+    w_chuseok = {"id": "2026-09-24", "start": date(2026, 9, 23), "end": date(2026, 9, 28)}
+    w_newyear = {"id": "2027-01-01", "start": date(2026, 12, 31), "end": date(2027, 1, 3)}
+    windows = [w_chuseok, w_newyear]
+    known_window_ids = frozenset(w["id"] for w in windows)
+    route = {"origin": "ICN", "destination": "NRT"}
+    max_stops = 1
+    D1, D2 = "2026-07-21T01:00:00+00:00", "2026-07-22T01:00:00+00:00"
+
+    mk = lambda dd, rd, price, wid, ts: {
+        "origin": "ICN", "destination": "NRT", "depart_date": dd, "return_date": rd,
+        "price": price, "is_holiday_window": True, "collected_at": ts,
+        "dep_time": "", "arr_time": "", "stops": "0", "window_id": wid,
+    }
+
+    rows = [
+        # 추석(훨씬 저렴한 연휴) - 같은 3박이지만 다른 윈도우 -> 신정 기준값에 섞이면 안 됨
+        mk("2026-09-23", "2026-09-26", 500000, "2026-09-24", D1),
+        mk("2026-09-24", "2026-09-27", 480000, "2026-09-24", D1),
+        mk("2026-09-25", "2026-09-28", 520000, "2026-09-24", D1),
+        # 신정 - 3박, 통상 시세 ~80만원
+        mk("2026-12-31", "2027-01-03", 820000, "2027-01-01", D1),
+        mk("2027-01-01", "2027-01-04", 800000, "2027-01-01", D1),
+        mk("2027-01-02", "2027-01-05", 780000, "2027-01-01", D1),
+        # 신정, 진짜 특가 후보: 90만원 -> 65만원으로 하락(17.7%, 임계값 15% 충족)
+        mk("2027-01-03", "2027-01-06", 900000, "2027-01-01", D1),
+        mk("2027-01-03", "2027-01-06", 650000, "2027-01-01", D2),
+    ]
+    deals = build_route_deals(
+        rows, rows, max_stops, route, today, lookback_start, windows, known_window_ids,
+    )
+    assert len(deals) == 1, f"특가 1건이어야 하는데 {len(deals)}건: {deals}"
+    d = deals[0]
+    assert (d["depart_date"], d["return_date"]) == ("2027-01-03", "2027-01-06")
+    assert d["current_price"] == 650000
+    # 신정 안의 5개 관측치 평균(79만원)이어야 한다. 추석까지 섞이면 68만 1250원으로
+    # 끌어내려져(하락률이 4.6%로 계산돼) 특가 판정에서 빠졌을 것이다.
+    assert d["avg_price"] == 790000, f"기준값이 다른 연휴와 섞인 것으로 보임: {d['avg_price']}"
+    assert abs(d["discount_pct"] - 17.7) < 0.1
+
+
 def test_group_routes_nights_variants():
     """같은 (o,d)에 박수가 다른 모니터가 있으면 값별 후보가 모두 크롤되어야 한다."""
     routes = [
