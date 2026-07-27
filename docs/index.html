@@ -126,6 +126,13 @@
   .tstrip-day.hol { background: #e5484d; }
   .tstrip-day.wknd { background: #6aa3e0; }
   .tstrip-day.wd { background: #d4d8dc; }
+  /* 연차 스트립 + 날씨 배지를 한 줄에 (각자 block/flex라도 이 flex 행의 아이템이 됨) */
+  .gv-strip-row { display: flex; align-items: center; gap: 6px; margin-top: 3px; flex-wrap: wrap; }
+  .gv-strip-row .tstrip { margin-top: 0; }
+  .gv-strip-row .cell-sub { display: inline; }
+  /* 최저가 클릭 시 예약 페이지로 이동 */
+  .price-link { color: inherit; text-decoration: none; border-bottom: 1px dashed var(--muted); }
+  .price-link:hover { color: #0b5cab; border-bottom-color: #0b5cab; }
 
   .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; }
   .status-dot.ok { background: #217346; }
@@ -215,7 +222,7 @@
   .chip-groups { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
   .chip-line { display: flex; align-items: flex-start; gap: 8px; }
   .chip-line .chip-sub { color: var(--muted); font-size: 15px; padding-top: 3px; min-width: 28px; flex-shrink: 0; }
-  #chip-region, #chip-concept { display: flex; flex-wrap: wrap; gap: 6px; }
+  #chip-region, #chip-concept, #chip-stops { display: flex; flex-wrap: wrap; gap: 6px; }
   /* 국가 칩은 대륙별로, 연휴 칩은 연도별로 행을 나눈다 */
   #chip-country, #gv-windows { display: flex; flex-direction: column; gap: 5px; }
   .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -347,6 +354,10 @@
           <span class="chip-sub">컨셉</span>
           <div id="chip-concept"></div>
         </div>
+        <div class="chip-line" id="chip-stops-line">
+          <span class="chip-sub">직항/경유</span>
+          <div id="chip-stops"></div>
+        </div>
       </div>
     </div>
 
@@ -374,13 +385,11 @@
         <thead>
           <tr>
             <th style="width:5%">순위</th>
-            <th style="width:17%">목적지</th>
-            <th style="width:11%">최저가</th>
-            <th style="width:13%">특가율(통상가 대비)</th>
-            <th style="width:27%">추천 일정</th>
-            <th style="width:9%">직항/경유</th>
-            <th style="width:7%">연차</th>
-            <th style="width:8%">링크</th>
+            <th style="width:18%">목적지</th>
+            <th style="width:12%">최저가</th>
+            <th style="width:14%">특가율(통상가 대비)</th>
+            <th style="width:36%">추천 일정</th>
+            <th style="width:15%">직항/경유</th>
           </tr>
         </thead>
         <tbody id="gv-board"></tbody>
@@ -665,6 +674,7 @@
       selCountries: new Set(), // 1차 필터: 선택된 국가들 (다중선택)
       selCities: new Set(),    // 2차 필터: 선택된 지역(도착 도시)들 (다중선택, 선택 국가에 종속)
       selConcepts: new Set(),  // 컨셉 필터: 휴양/도시/대자연 및 조합 (다중선택, OR)
+      selStops: new Set(),     // 직항/경유 필터: 'direct'/'via' (다중선택, OR. 비어있으면 = 전체)
       // 내 목록을 담아본 적 있으면(또는 지난번 '내 목록' 뷰였으면) 내 목록으로 시작.
       favOnly: (function () {
         try {
@@ -991,9 +1001,11 @@
       } catch (e) { return fallback; }
     }
 
-    // ===================== 필터 칩 (국가 → 지역 + 컨셉) =====================
+    // ===================== 필터 칩 (국가 → 지역 + 컨셉 + 직항/경유) =====================
     // 컨셉 필터 옵션: 단일 태그와 조합. 조합 칩은 두 태그를 모두 가진 목적지만 통과.
     const CONCEPT_OPTIONS = ['휴양', '도시', '대자연', '휴양+도시', '휴양+대자연', '도시+대자연'];
+    // 직항/경유 필터 옵션: 모니터의 max_stops 정책 기준(0=직항 전용, 그 외=경유 허용).
+    const STOPS_OPTIONS = [{ value: 'direct', label: '직항' }, { value: 'via', label: '경유' }];
     // 국가 -> 대륙 그룹(필터 국가 칩을 행으로 나누는 기준). 미등록 국가는 '그외'.
     const COUNTRY_REGION = {
       일본: '동아시아', 중국: '동아시아', 대만: '동아시아', 홍콩: '동아시아', 마카오: '동아시아',
@@ -1002,11 +1014,17 @@
       캄보디아: '동남기타아시아', 몽골: '동남기타아시아', 카자흐스탄: '동남기타아시아',
       그리스: '유럽', 프랑스: '유럽', 영국: '유럽', 이탈리아: '유럽', 스페인: '유럽',
       체코: '유럽', 오스트리아: '유럽', 튀르키예: '유럽', 독일: '유럽', 스위스: '유럽',
+      포르투갈: '유럽',
+      미국: '미주', 캐나다: '미주',
     };
     function countryRegion(country) { return COUNTRY_REGION[country] || '그외'; }
     function destConcepts(iata) {
       const meta = (window.DEST_META || {})[iata];
       return new Set((meta && meta.concepts) || []);
+    }
+    // 모니터의 직항/경유 정책 분류: max_stops===0 이면 직항 전용, 그 외(1/2/상관없음)는 경유 허용.
+    function routeStopsClass(routeLike) {
+      return routeLike.max_stops === 0 ? 'direct' : 'via';
     }
     function routePassesChip(routeLike) {
       if (state.favOnly && !getFavs().has(rk(routeLike))) return false;
@@ -1023,6 +1041,8 @@
         }
         if (!ok) return false;
       }
+      // 직항/경유: 선택된 게 없으면 전체 통과.
+      if (state.selStops.size && !state.selStops.has(routeStopsClass(routeLike))) return false;
       return true;
     }
 
@@ -1048,14 +1068,15 @@
         const c = r.country || '기타';
         if (!countries.has(c)) countries.set(c, r.flag || (findAirport(r.destination) || {}).flag || '');
       }
-      const noSel = state.selCountries.size === 0 && state.selCities.size === 0 && state.selConcepts.size === 0;
+      const noSel = state.selCountries.size === 0 && state.selCities.size === 0 &&
+        state.selConcepts.size === 0 && state.selStops.size === 0;
       // 전체/★내목록 은 최상단 행, 그 아래 대륙별로 국가 칩을 행으로 나눈다(라벨 없음).
       let html = `<div class="chip-row">${chip('all', '', '전체', noSel)}${chip('fav', '', '★ 내 목록', state.favOnly)}</div>`;
-      const buckets = { 동아시아: [], 동남기타아시아: [], 유럽: [], 그외: [] };
+      const buckets = { 동아시아: [], 동남기타아시아: [], 유럽: [], 미주: [], 그외: [] };
       for (const [c, flag] of countries) {
         buckets[countryRegion(c)].push(chip('country', c, c, state.selCountries.has(c)));
       }
-      for (const key of ['동아시아', '동남기타아시아', '유럽', '그외']) {
+      for (const key of ['동아시아', '동남기타아시아', '유럽', '미주', '그외']) {
         if (buckets[key].length) html += `<div class="chip-row">${buckets[key].join('')}</div>`;
       }
       document.getElementById('chip-country').innerHTML = html;
@@ -1063,6 +1084,11 @@
       // ── 컨셉 (국가와 독립적인 별도 축) ──
       document.getElementById('chip-concept').innerHTML = CONCEPT_OPTIONS
         .map(opt => chip('concept', opt, opt, state.selConcepts.has(opt)))
+        .join('');
+
+      // ── 직항/경유 (국가와 독립적인 별도 축) ──
+      document.getElementById('chip-stops').innerHTML = STOPS_OPTIONS
+        .map(opt => chip('stops', opt.value, opt.label, state.selStops.has(opt.value)))
         .join('');
 
       // ── 2차: 지역(도착 도시) — 선택된 국가들의 도시만 노출 ──
@@ -1094,6 +1120,7 @@
         state.selCountries.clear();
         state.selCities.clear();
         state.selConcepts.clear();
+        state.selStops.clear();
       } else if (type === 'country') {
         if (state.selCountries.has(value)) state.selCountries.delete(value);
         else state.selCountries.add(value);
@@ -1104,6 +1131,9 @@
       } else if (type === 'concept') {
         if (state.selConcepts.has(value)) state.selConcepts.delete(value);
         else state.selConcepts.add(value);
+      } else if (type === 'stops') {
+        if (state.selStops.has(value)) state.selStops.delete(value);
+        else state.selStops.add(value);
       }
       renderChips();
       renderGvBoard();
@@ -1200,7 +1230,7 @@
       renderGvWindows();
       const activeIds = gvActiveWindowIds();
       if (!activeIds.length) {
-        tbody.innerHTML = emptyRow(8, '연휴 정보가 없습니다. 다음 수집 후 다시 확인하세요.');
+        tbody.innerHTML = emptyRow(6, '연휴 정보가 없습니다. 다음 수집 후 다시 확인하세요.');
         return;
       }
       const allCells = (state.matrix && state.matrix.cells) || {};
@@ -1231,7 +1261,7 @@
         rows.push({ route: g.route, monitors: g.monitors, cell: best, win: bestWin });
       }
       if (!rows.length) {
-        tbody.innerHTML = emptyRow(8, '조건에 맞는 노선이 없습니다. 필터를 조정해 보세요.');
+        tbody.innerHTML = emptyRow(6, '조건에 맞는 노선이 없습니다. 필터를 조정해 보세요.');
         return;
       }
 
@@ -1267,23 +1297,21 @@
         const nameCell = `${esc(label)}<span class="cell-sub">${esc(r.route.origin)}→${esc(r.route.destination)}</span>`;
         if (!r.cell) {
           return `<tr><td class="gv-rank">—</td><td>${nameCell}</td>` +
-            `<td colspan="6" class="gv-reason">${esc(gvEmptyReason(r.monitors))}</td></tr>`;
+            `<td colspan="4" class="gv-reason">${esc(gvEmptyReason(r.monitors))}</td></tr>`;
         }
         rank++;
         const b = r.cell.best;
         const period = `${fmtDateYY(b.depart_date, b.depart_weekday)} ~ ${fmtDateYY(b.return_date, b.return_weekday)}`;
-        const sched = `${b.nights}박 ${b.days}일${tripStrip(b.depart_date, b.return_date)}`;
+        const scheduleLine = `${period} · ${b.nights}박 ${b.days}일 (연차 ${b.leave_days}개 소모)`;
+        const stripRow = `<span class="gv-strip-row">${tripStrip(b.depart_date, b.return_date)}${climateBadge(r.route.destination, b.depart_date)}</span>`;
         return `
           <tr>
             <td class="gv-rank">${rank}</td>
             <td>${nameCell}</td>
-            <td class="num">${fmt(r.cell.min_price)}</td>
+            <td class="num"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동">${fmt(r.cell.min_price)}</a></td>
             <td>${gvDealBadge(r.cell)}</td>
-            <td class="period-cell">${period}<span class="cell-sub">${sched}</span>${climateBadge(r.route.destination, b.depart_date)}</td>
+            <td class="period-cell">${scheduleLine}${stripRow}</td>
             <td>${stopsCell(b.stops, b.airline)}</td>
-            <td class="num">${b.leave_days}개</td>
-            <td><a href="${esc(b.booking_url)}" target="_blank" rel="noopener">예약 확인</a>
-              <button class="copy-btn" data-copy="${esc(b.booking_url)}" title="예약 링크 복사">📋</button></td>
           </tr>
         `;
       }).join('');
