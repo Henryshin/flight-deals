@@ -76,4 +76,4 @@ python scripts/build_dashboard_data.py
 
 - 구글 플라이트 화면 크롤링이므로 사이트 구조가 바뀌면 `collector/google_flights_crawler.py`의 파싱 로직을 갱신해야 함
 - GitHub Actions 무료 크레딧은 public 저장소 기준 무제한이지만, 실제 실행 간격은 GitHub의 스케줄 지연으로 정확히 4시간이 아닐 수 있음
-- 가격 이력은 `data/prices.csv`에 계속 쌓이므로, 데이터가 많아지면 저장소 용량/커밋 히스토리가 늘어남 (주기적으로 오래된 데이터 정리 고려)
+- 가격 이력은 `data/prices.csv`에 쌓이지만, 매 수집 직후 `scripts/prune_prices.py`가 계산에 안 쓰이는 90일 초과분(`PRUNE_RETENTION_DAYS`)을 자동으로 잘라내 무한정 커지지 않음

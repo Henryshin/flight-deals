@@ -243,6 +243,52 @@ def test_window_id_stable_during_window():
     assert w["label"] == "추석"
 
 
+def test_prune_prices_removes_only_old_rows():
+    """가지치기: PRUNE_RETENTION_DAYS보다 오래된 관측치만 지우고, 최근 행은 그대로 둔다."""
+    import csv
+    import tempfile
+
+    from scripts import prune_prices
+
+    today = date(2026, 7, 27)
+    old_day = (today - timedelta(days=prune_prices.PRUNE_RETENTION_DAYS + 5)).isoformat()
+    recent_day = (today - timedelta(days=5)).isoformat()
+    fieldnames = [
+        "origin", "destination", "depart_date", "return_date", "price",
+        "is_holiday_window", "collected_at", "dep_time", "arr_time", "stops",
+        "window_id", "airline",
+    ]
+    mk = lambda day, price: {
+        "origin": "ICN", "destination": "NRT", "depart_date": "2026-09-23", "return_date": "2026-09-26",
+        "price": price, "is_holiday_window": "1", "collected_at": f"{day}T01:00:00+00:00",
+        "dep_time": "", "arr_time": "", "stops": "0", "window_id": "2026-09-24", "airline": "",
+    }
+    rows = [mk(old_day, "500000"), mk(recent_day, "480000")]
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False, newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+        tmp_path = Path(f.name)
+
+    orig_file = prune_prices.PRICES_FILE
+    prune_prices.PRICES_FILE = tmp_path
+    try:
+        # dry-run은 오래된 행이 있어도 파일을 바꾸지 않아야 한다
+        prune_prices.prune(dry_run=True, today=today)
+        with open(tmp_path, encoding="utf-8", newline="") as f:
+            assert len(list(csv.DictReader(f))) == 2, "dry-run인데 파일이 바뀜"
+
+        prune_prices.prune(today=today)
+        with open(tmp_path, encoding="utf-8", newline="") as f:
+            kept = list(csv.DictReader(f))
+        assert len(kept) == 1, f"오래된 행만 제거되고 1행 남아야 하는데 {len(kept)}행: {kept}"
+        assert kept[0]["price"] == "480000"
+    finally:
+        prune_prices.PRICES_FILE = orig_file
+        tmp_path.unlink(missing_ok=True)
+
+
 def test_destmeta_covers_all_destinations():
     """routes.json 의 모든 목적지가 destmeta.js 에 등록되어 있어야 한다 (컨셉 필터/기후 배지)."""
     import json

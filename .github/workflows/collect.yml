@@ -44,6 +44,14 @@ jobs:
           # stale-first 라 이번에 잘린 노선은 다음 런에서 먼저 수집된다.
           TIME_BUDGET_MIN: "230"
 
+      # prices.csv 는 merge=union 이라(.gitattributes) 가지치기(삭제)를 별도 워크플로/
+      # 스케줄로 돌리면, 동시에 도는 다른 커밋이 union 병합 때 방금 지운 행을 되살릴
+      # 수 있다. 그래서 매 수집 잡의 커밋 직전, 여기서만 실행해 별도 동시쓰기 자체를
+      # 없앤다. 커밋 없이 그냥 두면 무한정 커지므로 collect.py 성공 여부와 무관하게 실행.
+      - name: Prune old price history
+        if: always()
+        run: python scripts/prune_prices.py
+
       # 대시보드 JSON 빌드는 별도 워크플로(build.yml)가 data/** push 를 받아 수행.
       # 여기서 docs/data 를 같이 커밋하면 (수십 분 크롤 동안 먼저 들어온 커밋과)
       # 생성 파일 rebase 충돌로 이번 수집분 전체가 유실되는 문제가 있었다.
