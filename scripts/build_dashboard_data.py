@@ -367,10 +367,12 @@ def main():
         avg_price_30d = round(sum(r["price"] for r in recent_base) / len(recent_base)) if recent_base else None
 
         # 직항 전용(max_stops==0) 모니터인데 직항 관측치가 한 번도 안 잡힌 경우.
-        # 수집은 build 전에 돌므로, 이 조건은 '수집을 시도했으나 직항편이 없다'를 의미한다
-        # (신규 등록 직후 낙관적 항목은 프론트에서 no_direct 없이 '대기'로 표시).
-        no_direct = max_stops == 0 and sample_count == 0
+        # last_attempt_at이 있을 때만(=실제로 이 노선을 수집 시도한 적이 있을 때만)
+        # '직항 없음'으로 판단한다. 그렇지 않으면 신규 등록 직후(아직 한 번도 수집이
+        # 안 돈) 노선이 실제로는 직항이 있는데도 '직항 없음 -> 경유 허용으로 바꾸세요'로
+        # 오판정되어 사용자를 오도한다.
         cs = collect_status.get(f"{route['origin']}-{route['destination']}") or {}
+        no_direct = max_stops == 0 and sample_count == 0 and bool(cs.get("last_attempt_at"))
         routes_status.append({
             **route,
             "sample_count": sample_count,
