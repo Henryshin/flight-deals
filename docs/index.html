@@ -91,8 +91,12 @@
     overflow: hidden; text-overflow: ellipsis;
   }
   table.sheet th { background: #eaf3ee; color: #14532d; font-weight: 700; }
-  /* 행 배경은 '직계' 행에만 (자식 결합자). 펼침 패널 안의 중첩 표까지 물들지 않도록. */
-  table.sheet > tbody > tr:nth-child(even) > td { background: #f8faf9; }
+  /* 행 배경은 '직계' 행에만 (자식 결합자). 펼침 패널 안의 중첩 표까지 물들지 않도록.
+     .dest-sheet(여행지별 연휴 보드)는 펼침 행이 중간에 끼어들어 nth-child 줄무늬가 어긋나므로
+     제외하고, 대신 렌더링할 때 .zebra 클래스를 직접 붙인다. */
+  table.sheet:not(.dest-sheet) > tbody > tr:nth-child(even) > td { background: #f8faf9; }
+  table.sheet > tbody > tr.zebra > td { background: #f8faf9; }
+  table.sheet > tbody > tr.zebra:hover > td { background: var(--sel); }
   table.sheet > tbody > tr:hover > td { background: var(--sel); }
   table.sheet > tbody > tr.target-hit > td { background: #fff3c4; }
   table.sheet > tbody > tr.target-hit:hover > td { background: #ffeda8; }
@@ -156,6 +160,9 @@
     width: 72px; font-family: Consolas, monospace; font-size: 15px; text-align: right;
     border: 1px solid transparent; background: transparent; padding: 2px 4px; border-radius: 2px; color: var(--text);
   }
+  /* 여행지별 연휴 보드의 목표가 칸은 열 폭이 좁아질 수 있어(고정 레이아웃) 칸에 맞춰 줄어들게 한다.
+     펼침 패널 안의 목표가 입력(모니터별)은 표 칸이 아니라 글줄이므로 기본 폭 유지. */
+  tr[data-dest-row] > td > .target-input { width: 100%; max-width: 76px; box-sizing: border-box; }
   .target-input:hover { border-color: var(--grid); background: #fff; }
   .target-input:focus { border-color: var(--excel-green); background: #fff; outline: none; }
 
@@ -258,6 +265,9 @@
   .dest-toggle:hover { color: var(--excel-green); }
   .dest-caret { display: inline-block; width: 11px; color: var(--excel-green); font-size: 11px; }
   table.sheet > tbody > tr.dest-open > td { background: #eef6f1; }
+  /* 목표가 도달(노랑)은 펼침(연녹)보다 우선 — 펼쳤다고 도달 표시가 사라지면 안 된다 */
+  table.sheet > tbody > tr.dest-open.target-hit > td { background: #fff3c4; }
+  table.sheet > tbody > tr.dest-open.target-hit:hover > td { background: #ffeda8; }
   table.sheet > tbody > tr.dest-detail-row > td,
   table.sheet > tbody > tr.dest-detail-row:hover > td { background: #fbfdfc; padding: 0; }
   .dest-detail { padding: 8px 10px 10px 26px; border-left: 3px solid var(--excel-green); }
@@ -271,13 +281,18 @@
   table.dest-tbl > tbody > tr > td { background: #fff; }
   table.dest-tbl > tbody > tr.is-min > td { background: #f4fbf6; }
   table.dest-tbl > tbody > tr:hover > td { background: var(--sel); }
-  table.dest-tbl .win-name { font-weight: 700; color: #14532d; }
+  .win-name { font-weight: 700; color: #14532d; }
   .badge-min { display: inline-block; background: var(--excel-green); color: #fff; font-size: 13px; padding: 0 5px; border-radius: 2px; margin-left: 4px; }
   /* 연휴 간 가격 비교 막대 (그 여행지 안에서 최고가 대비 상대 길이) */
   .pbar { display: block; height: 9px; background: #eef1f3; border: 1px solid var(--grid); border-radius: 2px; overflow: hidden; }
   .pbar > i { display: block; height: 100%; background: #9fc6ae; }
   .pbar.is-min > i { background: var(--excel-green); }
   .dest-detail-foot { color: var(--muted); font-size: 14px; font-style: italic; margin-top: 6px; }
+  .dest-detail-head .head-spark svg.spark { display: inline-block; vertical-align: middle; }
+  /* 두 보드가 함께 쓰는 연휴 칩 필터의 현재 상태 표시 */
+  .win-filter { color: var(--muted); font-size: 14.5px; display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .win-filter b { color: #14532d; }
+  .chip-cap-note { display: block; font-size: 13px; opacity: .75; }
 
   /* excel-style dialog */
   .modal-backdrop {
@@ -495,8 +510,9 @@
     </div>
 
     <h2>연휴 특가 보드</h2>
+    <!-- 연휴 칩은 아래 '여행지별 연휴 보드'에도 함께 걸린다 (state.gvWindows 공유) -->
     <div class="chip-bar">
-      <span class="chip-cap">연휴</span>
+      <span class="chip-cap">연휴<span class="chip-cap-note">두 보드 공통</span></span>
       <div class="chip-groups" id="gv-windows"></div>
     </div>
     <div class="toolbar-row">
@@ -528,6 +544,7 @@
       <div class="note" style="margin-bottom:0">
         여행지를 <b>클릭</b>하면 그 아래로 <b>연휴별 최저가</b>가 싼 순서대로 펼쳐집니다. "이 여행지는 어느 연휴에 가야 싼가"를 보는 보드입니다.
         (위 <b>연휴 특가 보드</b>는 반대로 "이 연휴엔 어디가 싼가"를 봅니다.)
+        열 구성은 특가 보드와 같고, 위 <b>연휴 칩 필터</b>도 이 보드에 함께 적용됩니다.
       </div>
       <div class="toolbar-row">
         <label for="dest-sort">정렬</label>
@@ -538,20 +555,23 @@
         </select>
         <button id="btn-dest-expand" type="button">전체 펼치기</button>
         <button id="btn-dest-collapse" type="button">전체 접기</button>
+        <span id="dest-win-filter" class="win-filter"></span>
       </div>
       <div class="tbl-wrap">
-        <table class="sheet wide">
+        <!-- 열 구성은 위 '연휴 특가 보드'와 동일한 순서/의미로 맞춘다
+             (★=순위 자리, 여행지=목적지, 최저가·특가율·추천 일정·직항/경유는 그대로).
+             맨 뒤 목표가/✕ 만 이 보드 전용(모니터 관리) 열. -->
+        <table class="sheet wide dest-sheet">
           <thead>
             <tr>
-              <th style="width:34px">★</th>
-              <th style="width:210px">여행지</th>
-              <th style="width:80px">상태</th>
-              <th style="width:180px">가장 싼 연휴</th>
-              <th style="width:104px">최저가</th>
-              <th style="width:134px">특가율(통상가 대비)</th>
-              <th style="width:126px">추이</th>
-              <th style="width:92px">목표가</th>
-              <th style="width:36px"></th>
+              <th style="width:4%">★</th>
+              <th style="width:18%">여행지</th>
+              <th style="width:10%">최저가</th>
+              <th style="width:13%">특가율(통상가 대비)</th>
+              <th style="width:31%">추천 일정 (가장 싼 연휴)</th>
+              <th style="width:12%">직항/경유</th>
+              <th style="width:10%">목표가</th>
+              <th style="width:2%"></th>
             </tr>
           </thead>
           <tbody id="dest-board"></tbody>
@@ -1612,17 +1632,28 @@
       }
       return { cell: best, win: bestWin };
     }
-    // 이 여행지의 연휴별 대표 칸: [{win, label, cell}, ...] (데이터 있는 연휴만)
+    // 이 여행지의 연휴별 대표 칸: [{win, label, cell}, ...]
+    // (연휴 칩으로 고른 연휴 중, 데이터가 있는 것만. 칩 선택이 비어 있으면 전체 연휴)
     function destWindowCells(monitors) {
       const allCells = (state.matrix && state.matrix.cells) || {};
+      const active = new Set(gvActiveWindowIds());
       const out = [];
       for (const w of gvWindows()) {
-        let best = null;
+        if (!active.has(w.id)) continue;
+        let best = null, bestMon = null;
         for (const mon of monitors) {
           const c = (allCells[w.id] || {})[rk(mon)];
-          if (c && cellBetter(c, best)) best = c;
+          if (!c) continue;
+          // 이 보드의 축은 '최저가'라, 같은 연휴 안에서 모니터끼리는 '싼 칸'이 대표다.
+          // (특가 보드의 cellBetter 는 티어 우선이라 여기 쓰면 더 비싼 칸이 최저가로 표시될 수 있음.
+          //  값이 같을 때만 티어/특가율로 가른다.)
+          if (!best || c.min_price < best.min_price
+              || (c.min_price === best.min_price && cellBetter(c, best))) {
+            best = c;
+            bestMon = rk(mon);
+          }
         }
-        if (best) out.push({ win: w.id, label: gvWindowLabel(w.id), cell: best });
+        if (best) out.push({ win: w.id, label: gvWindowLabel(w.id), cell: best, mon: bestMon });
       }
       return out;
     }
@@ -1853,19 +1884,29 @@
         r.collect_status_detail || '',
       ].filter(Boolean).join(' · ');
     }
-    // 이 모니터가 예약 가능한 최저가 (연휴 전체 통틀어). 칸이 없으면 최근 관측값으로 폴백.
+    // 이 모니터가 예약 가능한 최저가 (연휴 칩으로 고른 연휴 통틀어).
+    // 고른 연휴에 칸이 없으면 null — 필터 밖 연휴 가격으로 '목표가 도달'이 뜨면 안 되므로,
+    // 최근 관측값 폴백은 이 모니터에 매트릭스 데이터가 아예 없을 때만 쓴다.
     function monitorBestPrice(mon) {
       const allCells = (state.matrix && state.matrix.cells) || {};
-      let best = null;
+      const active = new Set(gvActiveWindowIds());
+      let best = null, sawAny = false;
       for (const wid of Object.keys(allCells)) {
         const c = allCells[wid][rk(mon)];
-        if (c && (best == null || c.min_price < best)) best = c.min_price;
+        if (!c) continue;
+        sawAny = true;
+        if (active.has(wid) && (best == null || c.min_price < best)) best = c.min_price;
       }
-      return best != null ? best : mon.latest_price;
+      if (best != null) return best;
+      return sawAny ? null : mon.latest_price;
     }
     // 여행지(노선) 그룹 하나 -> 화면에 필요한 값 묶음
     function destGroupInfo(g) {
-      const wins = destWindowCells(g.items).sort((a, b) => a.cell.min_price - b.cell.min_price);
+      // 싼 순. 값이 같으면 티어/특가율이 나은 칸을 앞으로 (같은 값인데 '수집 중'인 칸이
+      // 대표가 되어 특가율이 안 보이는 일을 막는다).
+      const wins = destWindowCells(g.items).sort((a, b) =>
+        (a.cell.min_price - b.cell.min_price)
+        || (cellBetter(a.cell, b.cell) ? -1 : cellBetter(b.cell, a.cell) ? 1 : 0));
       const targets = getTargets();
       const reached = g.items.some(m => {
         const t = targets[rk(m)];
@@ -1879,14 +1920,13 @@
         const s = monitorStatus(m);
         if (!st || rank[s.dot] < rank[st.dot]) st = s;
       }
-      // 스파크라인은 표본이 가장 많은 모니터의 이력을 대표로 사용
-      const sparkMon = g.items.reduce((a, b) => (b.sample_count > a.sample_count ? b : a), g.items[0]);
       return {
         wins,
         best: wins.length ? wins[0] : null,   // 가장 싼 연휴 (정렬 첫 칸)
         status: st || { dot: 'none', text: '대기' },
-        samples: g.items.reduce((n, m) => n + (m.sample_count || 0), 0),
-        sparkKey: rk(sparkMon),
+        // 같은 노선의 모니터들은 표본이 서로 포함 관계(직항 모니터 ⊂ 경유 허용 모니터)라
+        // 더하면 중복 계산된다. 가장 큰 모집단 = 이 여행지의 실제 관측 수.
+        samples: g.items.reduce((n, m) => Math.max(n, m.sample_count || 0), 0),
         reached,
       };
     }
@@ -1912,12 +1952,15 @@
         const manage = solo ? '' :
           ` · <input class="target-input" data-target-key="${esc(key)}" value="${targets[key] != null ? targets[key] : ''}" placeholder="목표가" inputmode="numeric" title="목표가 (원) — 입력 후 Enter" />` +
           ` <button class="x-btn" data-del="${esc(key)}" title="이 모니터 삭제">✕</button>`;
+        // 추이(스파크라인)는 요약 행에서 뺐으므로(열 구성을 특가 보드와 맞추느라) 여기에 둔다.
+        const spark = (state.history[key] || []).length
+          ? ` <span class="head-spark" title="수집일별 최저가 추이">${sparklineSVG(state.history[key])}</span>` : '';
         return `<div><button class="policy-edit" data-edit="${esc(key)}" title="박수/경유 수정">${esc(routePolicyLabel(m))} ✎</button>` +
-          ` · 표본 ${m.sample_count} · ${latest}${range30}${seen}${link}${manage}</div>`;
+          ` · 표본 ${m.sample_count} · ${latest}${range30}${seen}${link}${spark}${manage}</div>`;
       }).join('');
 
       if (!info.wins.length) {
-        return `<tr class="dest-detail-row" data-dest-detail="${esc(routeGroupKey(g.route))}"><td colspan="9">` +
+        return `<tr class="dest-detail-row" data-dest-detail="${esc(routeGroupKey(g.route))}"><td colspan="8">` +
           `<div class="dest-detail"><div class="dest-detail-head">${heads}</div>` +
           `<div class="dest-detail-foot">${esc(gvEmptyReason(g.items))}</div></div></td></tr>`;
       }
@@ -1942,22 +1985,26 @@
           </tr>`;
       }).join('');
 
-      const missing = gvWindows().length - info.wins.length;
+      // 남은 연휴 = (칩으로 고른 연휴) - (데이터가 있어 위에 나열된 연휴)
+      const filtered = state.gvWindows.size > 0;
+      const missing = gvActiveWindowIds().length - info.wins.length;
       const foot = missing > 0
-        ? `<div class="dest-detail-foot">그 외 ${missing}개 연휴는 아직 수집 전입니다 — 다음 자동 수집에서 채워집니다.</div>`
+        ? `<div class="dest-detail-foot">${filtered ? '고른 연휴 중' : '그 외'} ${missing}개 연휴는 아직 수집 전입니다 — 다음 자동 수집에서 채워집니다.</div>`
         : '';
-      return `<tr class="dest-detail-row" data-dest-detail="${esc(routeGroupKey(g.route))}"><td colspan="9">
+      return `<tr class="dest-detail-row" data-dest-detail="${esc(routeGroupKey(g.route))}"><td colspan="8">
         <div class="dest-detail">
           <div class="dest-detail-head">${heads}</div>
           <table class="dest-tbl">
             <thead>
+              <!-- 폭은 바깥 표(★+여행지 / 최저가 / 특가율 / 추천 일정 / 직항·경유 / 목표가+✕)와
+                   같은 비율로 맞춰, 펼친 표가 같은 격자의 연장처럼 읽히게 한다. -->
               <tr>
-                <th style="width:15%">연휴</th>
-                <th style="width:11%">최저가</th>
-                <th style="width:14%">특가율</th>
-                <th style="width:36%">추천 일정</th>
-                <th style="width:14%">직항/경유</th>
-                <th style="width:10%">연휴 간 비교</th>
+                <th style="width:22%">연휴</th>
+                <th style="width:10%">최저가</th>
+                <th style="width:13%">특가율</th>
+                <th style="width:34%">추천 일정</th>
+                <th style="width:12%">직항/경유</th>
+                <th style="width:9%">연휴 간 비교</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -1967,17 +2014,32 @@
       </td></tr>`;
     }
 
+    // 위 연휴 칩으로 고른 연휴를 이 보드에서도 쓰므로, 무엇이 걸려 있는지 여기에도 알려준다
+    // (칩은 화면 위쪽에 있어 아래 보드만 보고 있으면 왜 연휴가 줄었는지 알 수 없음).
+    function renderDestWinFilter() {
+      const el = document.getElementById('dest-win-filter');
+      if (!el) return;
+      if (!state.gvWindows.size) {
+        el.innerHTML = '<span title="위 연휴 칩에서 연휴를 고르면 이 보드도 함께 좁혀집니다">연휴: 전체</span>';
+        return;
+      }
+      const names = gvActiveWindowIds().map(id => gvWindowLabel(id)).filter(Boolean);
+      el.innerHTML = `연휴 필터: <b>${esc(names.join(', '))}</b>` +
+        ' <button class="chip" data-gvwin="__all__" title="연휴 필터 해제 (두 보드 모두 전체 연휴로)">전체로</button>';
+    }
+
     function renderDestBoard() {
+      renderDestWinFilter();
       const tbody = document.getElementById('dest-board');
       if (!state.routesStatus.length) {
-        tbody.innerHTML = emptyRow(9, "등록된 항목이 없습니다. 아래 '항목 등록'에서 추가하세요.");
+        tbody.innerHTML = emptyRow(8, "등록된 항목이 없습니다. 아래 '항목 등록'에서 추가하세요.");
         return;
       }
       const favs = getFavs();
       const targets = getTargets();
       const list = state.routesStatus.filter(r => routePassesChip(r));
       if (!list.length) {
-        tbody.innerHTML = emptyRow(9, state.favOnly ? '내 목록이 비었습니다. ★를 눌러 담거나 "전체 노선"에서 골라 담으세요.' : '조건에 맞는 항목이 없습니다.');
+        tbody.innerHTML = emptyRow(8, state.favOnly ? '내 목록이 비었습니다. ★를 눌러 담거나 "전체 노선"에서 골라 담으세요.' : '조건에 맞는 항목이 없습니다.');
         return;
       }
       // 여행지(origin-destination) 단위로 묶는다. 같은 노선의 직항/경유 모니터는 한 행.
@@ -1991,13 +2053,12 @@
       groups.forEach(g => { g.info = destGroupInfo(g); });
 
       const bestPrice = g => (g.info.best ? g.info.best.cell.min_price : Infinity);
+      // 정렬 기준은 반드시 '그 행에 실제로 보이는 값'이어야 한다. 특가율 칸은 대표 연휴
+      // (= 가장 싼 연휴)의 배지를 그리므로, 다른 연휴의 더 높은 특가율로 줄을 세우면
+      // 화면상 순서가 뒤죽박죽으로 보인다. 특가 보드의 dealCmp 와 같은 방식.
       const bestDeal = g => {
-        let v = null;
-        for (const w of g.info.wins) {
-          const d = gvDealVal(w.cell);
-          if (d != null && (v == null || d > v)) v = d;
-        }
-        return v == null ? -Infinity : v;
+        const d = g.info.best ? gvDealVal(g.info.best.cell) : null;
+        return d == null ? -Infinity : d;
       };
       const destName = g => g.route.label || (g.route.origin + ' → ' + g.route.destination);
       const cmpMap = {
@@ -2010,7 +2071,7 @@
       const faved = g => g.items.some(m => favs.has(rk(m)));
       groups.sort((a, b) => (faved(b) ? 1 : 0) - (faved(a) ? 1 : 0) || cmp(a, b));
 
-      tbody.innerHTML = groups.map(g => {
+      tbody.innerHTML = groups.map((g, gi) => {
         const gk = routeGroupKey(g.route);
         const info = g.info;
         const solo = g.items.length === 1;
@@ -2020,46 +2081,51 @@
         const open = state.expandedDests.has(gk);
         const target = solo ? targets[rk(g.items[0])] : null;
 
-        const sub = `${esc(g.route.origin)}→${esc(g.route.destination)} · 표본 ${info.samples}`
+        // 여행지 칸: 이름(펼치기 버튼) + 상태/노선/표본 + 수집 정책(✎).
+        // 상태는 별도 열 대신 여기 점+글자로 넣어, 나머지 열을 특가 보드와 같게 맞춘다.
+        const statusInline = `<span class="status-dot ${info.status.dot}"></span>${esc(info.status.text)}`;
+        const sub = `${statusInline} · ${esc(g.route.origin)}→${esc(g.route.destination)} · 표본 ${info.samples}`
           + (solo ? '' : ` · 모니터 ${g.items.length}개`);
         const nameCell = `<button class="dest-toggle" data-dest="${esc(gk)}" title="연휴별 시세 펼치기/접기">` +
           `<span class="dest-caret">${open ? '▼' : '▶'}</span> ${esc(label)}</button>` +
-          `<span class="cell-sub">${sub}</span>` +
+          `<span class="cell-sub" title="${esc(g.items.map(statusTitle).join(' / '))}">${sub}</span>` +
           (solo ? `<button class="policy-edit" data-edit="${esc(rk(g.items[0]))}" title="박수/경유 수정">${esc(routePolicyLabel(g.items[0]))} ✎</button>` : '');
-
-        let winCell, priceCell, dealCell;
-        if (info.best) {
-          const b = info.best.cell.best;
-          winCell = `<span class="win-name">${esc(info.best.label)}</span>` +
-            `<span class="cell-sub">${fmtDateYY(b.depart_date, b.depart_weekday)} ~ ${fmtDateYY(b.return_date, b.return_weekday)} · ${b.nights}박 ${b.days}일 · 연차 ${b.leave_days}개</span>`;
-          priceCell = `<a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동">${fmt(info.best.cell.min_price)}</a>`
-            + (info.reached ? '<span class="badge-hit">목표가 도달 🎯</span>' : '');
-          dealCell = gvDealBadge(info.best.cell);
-        } else {
-          winCell = `<span class="gv-reason">${esc(gvEmptyReason(g.items))}</span>`;
-          priceCell = '<span class="spark-none">—</span>';
-          dealCell = gvDealBadge(null);
-        }
 
         const targetCell = solo
           ? `<input class="target-input" data-target-key="${esc(rk(g.items[0]))}" value="${target != null ? target : ''}" placeholder="입력" inputmode="numeric" title="목표가 (원) — 입력 후 Enter" />`
-          : '<span class="cell-sub" title="모니터별로 다릅니다 — 펼쳐서 설정하세요">펼쳐서 설정</span>';
+          : '<span class="cell-sub" title="모니터별로 다릅니다 — 펼쳐서 설정하세요">펼쳐서</span>';
         const delCell = solo
           ? `<button class="x-btn" data-del="${esc(rk(g.items[0]))}" title="항목 삭제">✕</button>`
           : '';
-
-        const row = `
-          <tr data-dest-row="${esc(gk)}" class="${open ? 'dest-open' : ''}${info.reached ? ' target-hit' : ''}">
+        // 줄무늬는 여행지 순번으로 직접 매긴다 (펼침 행이 끼어들어도 어긋나지 않도록)
+        const cls = [gi % 2 === 1 ? 'zebra' : '', open ? 'dest-open' : '', info.reached ? 'target-hit' : '']
+          .filter(Boolean).join(' ');
+        const rowTag = `<tr data-dest-row="${esc(gk)}" class="${cls}">`;
+        const head = `${rowTag}
             <td style="text-align:center"><button class="fav-btn${fav ? ' on' : ''}" data-fav="${esc(favKeys.join('|'))}" title="내 목록에 담기/빼기">★</button></td>
-            <td title="${esc(label)}">${nameCell}</td>
-            <td title="${esc(g.items.map(statusTitle).join(' / '))}"><span class="status-dot ${info.status.dot}"></span>${esc(info.status.text)}</td>
-            <td>${winCell}</td>
-            <td class="num">${priceCell}</td>
-            <td>${dealCell}</td>
-            <td>${sparklineSVG(state.history[info.sparkKey])}</td>
+            <td title="${esc(label)}">${nameCell}</td>`;
+        const tail = `
             <td class="num">${targetCell}</td>
             <td style="text-align:center">${delCell}</td>
           </tr>`;
+
+        // 데이터가 없으면 특가 보드처럼 '이유' 한 칸으로 합쳐서 보여준다.
+        if (!info.best) {
+          return head + `<td colspan="4" class="gv-reason">${esc(gvEmptyReason(g.items))}</td>` + tail
+            + (open ? destDetailRowHtml(g, info) : '');
+        }
+
+        // 아래 네 칸(최저가 · 특가율 · 추천 일정 · 직항/경유)은 연휴 특가 보드와 같은 구성.
+        // 다만 여기서는 '어느 연휴가 가장 싼가'가 핵심이라 일정 앞에 연휴 이름을 붙인다.
+        const b = info.best.cell.best;
+        const period = `${fmtDateYY(b.depart_date, b.depart_weekday)} ~ ${fmtDateYY(b.return_date, b.return_weekday)}`;
+        const scheduleLine = `<span class="win-name">${esc(info.best.label)}</span> · ${period} · ${b.nights}박 ${b.days}일 (연차 ${b.leave_days}개 소모)`;
+        const stripRow = `<span class="gv-strip-row">${tripStrip(b.depart_date, b.return_date)}${climateBadge(g.route.destination, b.depart_date)}</span>`;
+        const row = head + `
+            <td class="num"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동">${fmt(info.best.cell.min_price)}</a>${info.reached ? '<span class="badge-hit">목표가 도달 🎯</span>' : ''}</td>
+            <td>${gvDealBadge(info.best.cell)}</td>
+            <td class="period-cell">${scheduleLine}${stripRow}</td>
+            <td>${stopsCell(b.stops, b.airline)}</td>` + tail;
         return row + (open ? destDetailRowHtml(g, info) : '');
       }).join('');
     }
@@ -2780,7 +2846,9 @@
           if (id === '__all__') state.gvWindows.clear();               // 전체 = 선택 비움
           else if (state.gvWindows.has(id)) state.gvWindows.delete(id); // 토글 해제
           else state.gvWindows.add(id);                                 // 토글 선택
+          // 연휴 칩은 두 보드 공통 필터 — 아래 여행지별 보드도 함께 다시 그린다.
           renderGvBoard();
+          renderDestBoard();
           return;
         }
         const favBtn = e.target.closest('[data-fav]');
