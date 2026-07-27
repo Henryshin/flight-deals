@@ -216,18 +216,6 @@
   .ac-item b { color: #14532d; font-family: Consolas, monospace; }
   .ac-sub { color: var(--muted); }
 
-  /* 제목+달력+필터(왼쪽 컬럼)와 실시간 채팅(오른쪽)을 한 행에 배치.
-     align-items: stretch(기본값)로 채팅창 높이가 왼쪽 컬럼 전체 높이에 맞춰져
-     필터 아래에 남는 빈 공간 없이 꽉 채운다. */
-  .main-chat-row { display: flex; gap: 14px; }
-  .main-col { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
-  .main-col .topbar { margin-bottom: 0; }
-  .main-col .chip-bar { margin: 0; }
-  #chat-section { flex: 0 0 380px; display: flex; flex-direction: column; min-height: 480px; }
-  @media (max-width: 1000px) {
-    .main-chat-row { flex-direction: column; }
-    #chat-section { flex-basis: auto; width: 100%; height: 480px; }
-  }
 
   /* filter chips */
   .chip-bar { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; margin: 16px 0 0; background: #fafafa; border: 1px solid var(--grid); padding: 8px 10px; }
@@ -296,9 +284,18 @@
   #test-result.fail { color: #b3261e; font-weight: 700; }
   #confirm-msg { white-space: pre-line; }
 
-  /* 실시간 채팅 — 카카오톡처럼 얇은 말풍선형 채팅창. 높이는 고정값이 아니라
-     #chat-body -> .chat-panel -> .chat-msgs-wrap 로 flex:1을 이어받아, 왼쪽
-     (제목+달력+필터) 컬럼 전체 높이에 맞춰 늘어난다. */
+  /* 실시간 채팅 — 카카오톡처럼 얇은 말풍선형 채팅창. #chat-section 자체를
+     "창 안의 창"처럼 절대 위치로 띄워 제목표시줄(#chat-h2)을 드래그해 옮길 수
+     있게 한다. position:fixed가 아니라 absolute라 페이지 스크롤에 같이 따라간다. */
+  #chat-section {
+    position: absolute; width: 380px; height: 460px; z-index: 80;
+    display: flex; flex-direction: column;
+    box-shadow: 0 6px 22px rgba(0,0,0,0.3);
+  }
+  @media (max-width: 460px) {
+    #chat-section { width: calc(100vw - 24px); }
+  }
+  #chat-h2 { margin: 0; cursor: move; }
   .chat-live-badge { font-weight: 400; font-size: 12.5px; opacity: 0.85; margin-left: 2px; }
   #chat-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
   .chat-panel {
@@ -313,7 +310,7 @@
     background-image:
       linear-gradient(to right, var(--grid) 1px, transparent 1px),
       linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
-    background-size: 64px 20px;
+    background-size: 128px 40px;
   }
   .chat-empty-msg { margin: auto; color: var(--muted); text-align: center; padding: 16px; font-style: italic; font-size: 14.5px; }
   .chat-bubble { max-width: 82%; align-self: flex-start; }
@@ -395,55 +392,53 @@
   </div>
 
   <div class="sheet-wrap">
-    <div class="main-chat-row">
-      <div class="main-col">
-        <div class="topbar">
-          <div>
-            <h1>프로젝트 스케줄 조정표_v4.33</h1>
-            <div class="sub">연차 아껴서 휴가가자!</div>
-          </div>
-          <div class="calendar" id="calendar"></div>
-        </div>
+    <div class="topbar">
+      <div>
+        <h1>프로젝트 스케줄 조정표_v4.33</h1>
+        <div class="sub">연차 아껴서 휴가가자!</div>
+      </div>
+      <div class="calendar" id="calendar"></div>
+    </div>
 
-        <div class="chip-bar">
-          <span class="chip-cap">필터</span>
-          <div class="chip-groups">
-            <div class="chip-line">
-              <span class="chip-sub">국가</span>
-              <div id="chip-country"></div>
-            </div>
-            <div class="chip-line" id="chip-region-line" hidden>
-              <span class="chip-sub">지역</span>
-              <div id="chip-region"></div>
-            </div>
-            <div class="chip-line" id="chip-concept-line">
-              <span class="chip-sub">컨셉</span>
-              <div id="chip-concept"></div>
-            </div>
-            <div class="chip-line" id="chip-stops-line">
-              <span class="chip-sub">직항/경유</span>
-              <div id="chip-stops"></div>
-            </div>
-          </div>
+    <div class="chip-bar">
+      <span class="chip-cap">필터</span>
+      <div class="chip-groups">
+        <div class="chip-line">
+          <span class="chip-sub">국가</span>
+          <div id="chip-country"></div>
+        </div>
+        <div class="chip-line" id="chip-region-line" hidden>
+          <span class="chip-sub">지역</span>
+          <div id="chip-region"></div>
+        </div>
+        <div class="chip-line" id="chip-concept-line">
+          <span class="chip-sub">컨셉</span>
+          <div id="chip-concept"></div>
+        </div>
+        <div class="chip-line" id="chip-stops-line">
+          <span class="chip-sub">직항/경유</span>
+          <div id="chip-stops"></div>
         </div>
       </div>
+    </div>
 
-      <div id="chat-section" hidden>
-        <h2 class="collapsible" id="chat-h2"><span class="collapse-caret">▼</span> 실시간 채팅 <span class="chat-live-badge" id="chat-live-count"></span> <span class="collapse-hint">(클릭해서 접기)</span></h2>
-        <div id="chat-body">
-          <div class="note" style="margin-bottom:0">이 시트를 보는 사람들과 실시간으로 대화할 수 있습니다. 닉네임은 접속 위치별로 자동 배정되어 계속 유지됩니다.</div>
-          <div class="chat-panel">
-            <div class="chat-msgs-wrap">
-              <div class="chat-msgs" id="chat-scroll">
-                <div id="chat-list"></div>
-              </div>
-              <button id="chat-jump" class="chat-jump-btn" hidden>새 채팅 ↓</button>
+    <!-- 실시간 채팅: 별도 창처럼 떠 있는(드래그 가능) 패널. position:absolute라
+         페이지와 함께 스크롤되며(고정 아님), 제목표시줄(#chat-h2)을 끌어 옮길 수 있다. -->
+    <div id="chat-section" hidden>
+      <h2 class="collapsible" id="chat-h2"><span class="collapse-caret">▼</span> 실시간 채팅 <span class="chat-live-badge" id="chat-live-count"></span> <span class="collapse-hint">(클릭해서 접기 · 끌어서 이동)</span></h2>
+      <div id="chat-body">
+        <div class="note" style="margin-bottom:0">이 시트를 보는 사람들과 실시간으로 대화할 수 있습니다. 닉네임은 접속 위치별로 자동 배정되어 계속 유지됩니다.</div>
+        <div class="chat-panel">
+          <div class="chat-msgs-wrap">
+            <div class="chat-msgs" id="chat-scroll">
+              <div id="chat-list"></div>
             </div>
-            <div class="chat-my-name" id="chat-my-name"></div>
-            <div class="chat-input-row">
-              <input id="chat-text" placeholder="채팅 입력 후 Enter" maxlength="300" />
-              <button id="btn-chat-send">전송</button>
-            </div>
+            <button id="chat-jump" class="chat-jump-btn" hidden>새 채팅 ↓</button>
+          </div>
+          <div class="chat-my-name" id="chat-my-name"></div>
+          <div class="chat-input-row">
+            <input id="chat-text" placeholder="채팅 입력 후 Enter" maxlength="300" />
+            <button id="btn-chat-send">전송</button>
           </div>
         </div>
       </div>
@@ -857,10 +852,87 @@
         else toast('채팅 전송 실패: ' + ((e && e.message) || '네트워크 오류'), 'err');
       }
     }
+    // ---- 채팅창 드래그(창 안의 창처럼 옮기기) ----
+    // position:absolute라 페이지 스크롤에 같이 따라가며, 제목표시줄(#chat-h2)을
+    // 누른 채 끌면 위치가 바뀐다. 위치는 브라우저별로 기억(localStorage)된다.
+    const CHAT_POS_KEY = 'fd_chat_pos';
+    let chatJustDragged = false; // 드래그 직후의 click으로 접힘/펼침이 토글되지 않도록
+
+    function defaultChatPos() {
+      const filterBar = document.querySelector('.chip-bar');
+      const section = document.getElementById('chat-section');
+      const width = (section && section.offsetWidth) || 380;
+      if (!filterBar) return { top: 140, left: Math.max(16, window.innerWidth - width - 24) };
+      const rect = filterBar.getBoundingClientRect();
+      const top = Math.round(rect.top + window.scrollY);
+      const maxLeft = document.documentElement.clientWidth - width - 16;
+      let left = Math.round(rect.right + window.scrollX + 14);
+      if (left > maxLeft) left = Math.max(16, maxLeft);
+      return { top, left };
+    }
+    function saveChatPos(top, left) {
+      try { localStorage.setItem(CHAT_POS_KEY, JSON.stringify({ top, left })); } catch (e) {}
+    }
+    function loadChatPos() {
+      try { return JSON.parse(localStorage.getItem(CHAT_POS_KEY) || 'null'); } catch (e) { return null; }
+    }
+    function placeChatWindow() {
+      const section = document.getElementById('chat-section');
+      const pos = loadChatPos() || defaultChatPos();
+      section.style.top = pos.top + 'px';
+      section.style.left = pos.left + 'px';
+    }
+    function wireChatDrag() {
+      const section = document.getElementById('chat-section');
+      const handle = document.getElementById('chat-h2');
+      let startX = 0, startY = 0, startTop = 0, startLeft = 0, dragging = false, moved = false;
+
+      function pointOf(e) { return e.touches ? e.touches[0] : e; }
+      function onMove(e) {
+        const p = pointOf(e);
+        const dx = p.clientX - startX;
+        const dy = p.clientY - startY;
+        if (!moved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) moved = true;
+        if (!moved) return;
+        e.preventDefault();
+        const top = Math.max(4, startTop + dy);
+        const left = Math.max(4, Math.min(window.innerWidth - 40, startLeft + dx));
+        section.style.top = top + 'px';
+        section.style.left = left + 'px';
+      }
+      function onUp() {
+        dragging = false;
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        document.removeEventListener('touchmove', onMove);
+        document.removeEventListener('touchend', onUp);
+        if (moved) {
+          chatJustDragged = true;
+          const rect = section.getBoundingClientRect();
+          saveChatPos(Math.round(rect.top + window.scrollY), Math.round(rect.left + window.scrollX));
+        }
+      }
+      function onDown(e) {
+        const p = pointOf(e);
+        dragging = true; moved = false;
+        startX = p.clientX; startY = p.clientY;
+        const rect = section.getBoundingClientRect();
+        startTop = rect.top + window.scrollY;
+        startLeft = rect.left + window.scrollX;
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onUp);
+      }
+      handle.addEventListener('mousedown', onDown);
+      handle.addEventListener('touchstart', onDown, { passive: true });
+    }
     function initChat() {
       const section = document.getElementById('chat-section');
       if (!usingProxy()) { section.hidden = true; return; } // 프록시 미연결이면 섹션 자체를 숨김
       section.hidden = false;
+      placeChatWindow();
+      wireChatDrag();
       startChatPolling(); // 기본으로 펼쳐진 상태라 바로 폴링 시작
     }
 
@@ -2357,14 +2429,16 @@
       });
 
       // 실시간 채팅 접기/펼치기 — 펼쳐져 있을 때만 폴링 (숨겨진 동안 불필요한 요청 방지)
+      // 드래그로 창을 옮긴 직후의 click은 무시(안 그러면 옮길 때마다 접혀버림).
       document.getElementById('chat-h2').addEventListener('click', () => {
+        if (chatJustDragged) { chatJustDragged = false; return; }
         const body = document.getElementById('chat-body');
         const caret = document.querySelector('#chat-h2 .collapse-caret');
         const hint = document.querySelector('#chat-h2 .collapse-hint');
         const willOpen = body.hidden;
         body.hidden = !willOpen;
         if (caret) caret.textContent = willOpen ? '▼' : '▶';
-        if (hint) hint.textContent = willOpen ? '(클릭해서 접기)' : '(클릭해서 펼치기)';
+        if (hint) hint.textContent = willOpen ? '(클릭해서 접기 · 끌어서 이동)' : '(클릭해서 펼치기 · 끌어서 이동)';
         if (willOpen) startChatPolling(); else stopChatPolling();
       });
       document.getElementById('btn-chat-send').addEventListener('click', chatSendMessage);
