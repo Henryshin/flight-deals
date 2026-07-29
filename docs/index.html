@@ -537,6 +537,7 @@
       <select id="gv-sort">
         <option value="deal">특가율 높은순</option>
         <option value="price">최저가순</option>
+        <option value="net">실질비용순 (휴일가치 반영)</option>
         <option value="eff">연차 효율순</option>
       </select>
     </div>
@@ -568,6 +569,7 @@
         <select id="dest-sort">
           <option value="price">최저가순</option>
           <option value="deal">특가율 높은순</option>
+          <option value="net">실질비용순 (휴일가치 반영)</option>
           <option value="name">이름순</option>
         </select>
         <button id="btn-dest-expand" type="button">전체 펼치기</button>
@@ -1775,8 +1777,17 @@
         return freeDays > 0 ? b.price / freeDays : Infinity;
       };
       const effCmp = (a, b) => (gvEff(a) - gvEff(b)) || priceCmp(a, b);
+      // 실질비용 = 추천 일정의 (가격 - 휴일가치 x 덤휴일). '휴일 가치' 슬라이더를 움직이면
+      // 이 정렬만 눈에 보이게 순위가 바뀐다 (다른 정렬은 슬라이더와 무관한 고정 지표라
+      // 값을 바꿔도 목록 순서는 그대로 — 추천 일정 칸의 문구만 바뀐다).
+      const gvNetCost = r => (r.cell ? effCost(pickPair(r.cell)) : Infinity);
+      const netCmp = (a, b) => (gvNetCost(a) - gvNetCost(b)) || priceCmp(a, b);
       const sortKey = document.getElementById('gv-sort').value;
-      rows.sort(sortKey === 'price' ? priceCmp : sortKey === 'eff' ? effCmp : dealCmp);
+      const sortFn = sortKey === 'price' ? priceCmp
+        : sortKey === 'eff' ? effCmp
+        : sortKey === 'net' ? netCmp
+        : dealCmp;
+      rows.sort(sortFn);
 
       let rank = 0;
       tbody.innerHTML = rows.map(r => {
@@ -2136,9 +2147,12 @@
         return d == null ? -Infinity : d;
       };
       const destName = g => g.route.label || (g.route.origin + ' → ' + g.route.destination);
+      // 실질비용 = 이 여행지의 대표(최저) 연휴에서, 추천 일정의 (가격 - 휴일가치 x 덤휴일).
+      const netCost = g => (g.info.best ? effCost(pickPair(g.info.best.cell)) : Infinity);
       const cmpMap = {
         price: (a, b) => bestPrice(a) - bestPrice(b),
         deal: (a, b) => (bestDeal(b) - bestDeal(a)) || (bestPrice(a) - bestPrice(b)),
+        net: (a, b) => (netCost(a) - netCost(b)) || bestPrice(a) - bestPrice(b),
         name: (a, b) => destName(a).localeCompare(destName(b), 'ko'),
       };
       const sortEl = document.getElementById('dest-sort');
@@ -2873,11 +2887,15 @@
       document.getElementById('gv-sort').addEventListener('change', renderGvBoard);
       document.getElementById('dest-sort').addEventListener('change', renderDestBoard);
 
-      // 휴일 하루 가치 입력 -> 두 보드의 추천 일정을 실질 비용 기준으로 즉시 재계산
+      // 휴일 하루 가치 입력 -> 두 보드의 추천 일정을 실질 비용 기준으로 즉시 재계산.
+      // '특가율순'/'최저가순' 등 다른 정렬은 이 값과 무관한 고정 지표라 슬라이더를
+      // 움직여도 목록 순서가 그대로다(추천 일정 칸의 문구만 바뀜) — 그러면 이 입력이
+      // 뭘 하는지 알기 어려우므로, 값을 바꾸면 정렬을 '실질비용순'으로 같이 돌려
+      // 순위가 실제로 재배열되는 걸 바로 보여준다.
       const dayValueEl = document.getElementById('day-value');
       const dayValueHint = () => {
         document.getElementById('day-value-hint').textContent =
-          state.dayValue > 0 ? '· 비싸도 연휴가 길게 이어지면 추천' : '· 0 = 항상 최저가 일정';
+          state.dayValue > 0 ? '· 비싸도 연휴가 길게 이어지면 추천 (정렬을 실질비용순으로 전환)' : '· 0 = 항상 최저가 일정';
       };
       dayValueEl.value = state.dayValue;
       dayValueHint();
@@ -2886,6 +2904,9 @@
         state.dayValue = isNaN(v) || v < 0 ? 0 : v;
         try { localStorage.setItem(DAY_VALUE_KEY, String(state.dayValue)); } catch (e) {}
         dayValueHint();
+        const gvSortEl = document.getElementById('gv-sort');
+        const destSortEl = document.getElementById('dest-sort');
+        if (state.dayValue > 0) { gvSortEl.value = 'net'; destSortEl.value = 'net'; }
         renderGvBoard();
         renderDestBoard();
       });
