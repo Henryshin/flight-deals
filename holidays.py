@@ -60,6 +60,44 @@ def _all_holidays():
     return dates
 
 
+_HOLIDAY_SET = None  # is_day_off 용 캐시 (날짜쌍마다 set 재생성 방지)
+
+
+def is_day_off(d: date) -> bool:
+    """주말 또는 공휴일 (= 연차 없이 쉬는 날)."""
+    global _HOLIDAY_SET
+    if _HOLIDAY_SET is None:
+        _HOLIDAY_SET = _all_holidays()
+    return d.weekday() >= 5 or d in _HOLIDAY_SET
+
+
+def count_leave_days(depart: date, return_: date) -> int:
+    """여행 기간 중 평일이면서 공휴일이 아닌 날 수 (= 연차를 써야 하는 날 수)."""
+    n = 0
+    d = depart
+    while d <= return_:
+        if not is_day_off(d):
+            n += 1
+        d += timedelta(days=1)
+    return n
+
+
+def count_block_days(depart: date, return_: date) -> int:
+    """이 여행을 가면 생기는 '연속 휴무 구간'의 총 길이 (일수).
+
+    여행일 전체 + 출발 전/귀국 후에 자연히 붙는 주말·공휴일까지 포함.
+    예: 목금 공휴일에 월(출발)~일(귀국) 7일 여행이면 앞주 토·일이 붙어 9일.
+    같은 연차라도 이 값이 클수록 경제적인 일정이다 (대시보드 비용-편익 계산의 편익 축).
+    """
+    start = depart
+    while is_day_off(start - timedelta(days=1)):
+        start -= timedelta(days=1)
+    end = return_
+    while is_day_off(end + timedelta(days=1)):
+        end += timedelta(days=1)
+    return (end - start).days + 1
+
+
 def holiday_name(d: date) -> str:
     """해당 날짜 공휴일의 이름 (대체공휴일은 원 공휴일 이름). 미등록이면 '공휴일'."""
     return KOREAN_HOLIDAYS.get(d.year, {}).get(d.isoformat(), "공휴일")

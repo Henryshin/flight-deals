@@ -21,7 +21,9 @@ from statistics import median
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from collector.google_flights_crawler import build_booking_url
-from holidays import KOREAN_HOLIDAYS, get_holiday_windows
+from holidays import (
+    KOREAN_HOLIDAYS, count_block_days, count_leave_days, get_holiday_windows,
+)
 
 ROOT = Path(__file__).parent.parent
 ROUTES_FILE = ROOT / "data" / "routes.json"
@@ -41,16 +43,9 @@ TIER_A_MIN_WINDOW = 2
 WEEKDAY_KO = ["월", "화", "수", "목", "금", "토", "일"]
 HOLIDAY_DATES = {date.fromisoformat(d) for days in KOREAN_HOLIDAYS.values() for d in days}
 
-
-def count_leave_days(depart: date, return_: date) -> int:
-    """여행 기간 중 평일이면서 공휴일이 아닌 날 수 (= 연차를 써야 하는 날 수)."""
-    n = 0
-    d = depart
-    while d <= return_:
-        if d.weekday() < 5 and d not in HOLIDAY_DATES:
-            n += 1
-        d += timedelta(days=1)
-    return n
+# 셀당 내보내는 일정 후보(파레토 프런티어) 상한. 어느 '휴일 하루 가치'에서도 최적 일정은
+# 프런티어 위에만 있으므로 소수만 실어도 충분하다 (matrix.json 크기 억제).
+MAX_PAIRS_PER_CELL = 5
 
 
 def _day(row):
@@ -203,6 +198,60 @@ def _window_id_for_row(row, windows, known_window_ids):
     return None
 
 
+def _pair_entry(row, route):
+    """관측 행 하나 -> 프론트가 일정 하나를 그리는 데 필요한 값 묶음.
+
+    leave/block/bonus 는 비용-편익 계산의 재료: 실질 비용 = 가격 - 휴일가치 x bonus.
+    """
+    d1 = date.fromisoformat(row["depart_date"])
+    d2 = date.fromisoformat(row["return_date"])
+    nights = (d2 - d1).days
+    leave = count_leave_days(d1, d2)
+    block = count_block_days(d1, d2)
+    return {
+        "price": row["price"],
+        "depart_date": row["depart_date"],
+        "return_date": row["return_date"],
+        "depart_weekday": WEEKDAY_KO[d1.weekday()],
+        "return_weekday": WEEKDAY_KO[d2.weekday()],
+        "nights": nights,
+        "days": nights + 1,
+        "leave_days": leave,
+        "block_days": block,
+        "bonus_days": block - leave,
+        "stops": row.get("stops", ""),
+        "airline": row.get("airline", ""),
+        "dep_time": row.get("dep_time", ""),
+        "arr_time": row.get("arr_time", ""),
+        "booking_url": build_booking_url(
+            route["origin"], route["destination"], d1, d2,
+            origin_city=route.get("origin_city"),
+            dest_city=route.get("destination_city"),
+        ),
+    }
+
+
+def _pareto_pairs(rows, route):
+    """날짜쌍별 현재 최저가 행들 -> (가격↑, 덤 휴일↑) 파레토 프런티어.
+
+    가격 오름차순으로 훑으며 '덤 휴일이 지금까지 최대보다 큰' 일정만 남긴다.
+    첫 항목은 항상 전체 최저가(= 셀의 min_price 와 동일한 일정). 더 비싼 일정은
+    덤 휴일이 더 많을 때만 실려, 프론트의 실질 비용 계산(가격 - 가치 x 덤)이
+    어떤 가치값에서도 이 목록 안에서 최적을 찾을 수 있다.
+    """
+    entries = [_pair_entry(r, route) for r in rows]
+    entries.sort(key=lambda e: (e["price"], -e["bonus_days"], e["nights"]))
+    out, best_bonus = [], None
+    for e in entries:
+        if best_bonus is not None and e["bonus_days"] <= best_bonus:
+            continue
+        out.append(e)
+        best_bonus = e["bonus_days"]
+        if len(out) >= MAX_PAIRS_PER_CELL:
+            break
+    return out
+
+
 def _latest_min(obs):
     """관측 목록에서 '가장 최근 시각' 클러스터의 최저가 행.
 
@@ -273,8 +322,9 @@ def build_matrix_cell(route_prices, offpeak_rows, max_stops, window, route,
     offpeak_baseline = round(median(r["price"] for r in base)) if base else None
     offpeak_ratio = round(window_min / offpeak_baseline, 3) if offpeak_baseline else None
 
-    d1 = date.fromisoformat(best["depart_date"])
-    d2 = date.fromisoformat(best["return_date"])
+    # 일정 후보 프런티어: [0] = 최저가 일정, 이후는 '더 비싸지만 덤 휴일이 더 많은' 일정.
+    # 프론트가 '휴일 하루 가치' 설정에 따라 이 중에서 실질 비용 최소 일정을 고른다.
+    pairs = _pareto_pairs(current_by_pair.values(), route)
     return {
         "min_price": window_min,
         "typical": typical,
@@ -284,24 +334,9 @@ def build_matrix_cell(route_prices, offpeak_rows, max_stops, window, route,
         "n_pairs": n_pairs,
         "offpeak_baseline": offpeak_baseline,
         "offpeak_ratio": offpeak_ratio,
-        "best": {
-            "depart_date": best["depart_date"],
-            "return_date": best["return_date"],
-            "depart_weekday": WEEKDAY_KO[d1.weekday()],
-            "return_weekday": WEEKDAY_KO[d2.weekday()],
-            "nights": nights,
-            "days": nights + 1,
-            "leave_days": count_leave_days(d1, d2),
-            "stops": best.get("stops", ""),
-            "airline": best.get("airline", ""),
-            "dep_time": best.get("dep_time", ""),
-            "arr_time": best.get("arr_time", ""),
-            "booking_url": build_booking_url(
-                route["origin"], route["destination"], d1, d2,
-                origin_city=route.get("origin_city"),
-                dest_city=route.get("destination_city"),
-            ),
-        },
+        "pairs": pairs,
+        # 구 프론트/외부 소비자 호환용: 최저가 일정 (= pairs[0]와 동일)
+        "best": pairs[0],
     }
 
 
@@ -379,6 +414,7 @@ def build_route_deals(route_prices, recent, max_stops, route, today, lookback_st
                 "nights": nights,
                 "days": nights + 1,
                 "leave_days": count_leave_days(d1, d2),
+                "block_days": count_block_days(d1, d2),
                 "current_price": r["price"],
                 "prev_price": prev_price,
                 "avg_price": round(avg_price),
