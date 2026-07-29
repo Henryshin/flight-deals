@@ -237,6 +237,14 @@
   #chip-country, #gv-windows { display: flex; flex-direction: column; gap: 5px; }
   .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
   #chip-region-line { border-top: 1px dashed var(--grid); padding-top: 6px; }
+  .day-value-wrap { display: flex; align-items: center; gap: 4px; font-size: 15px; flex-wrap: wrap; }
+  #day-value {
+    width: 48px; font-family: Consolas, monospace; font-size: 15px; text-align: right;
+    border: 1px solid var(--grid); background: #fff; padding: 2px 4px; border-radius: 2px; color: var(--text);
+  }
+  #day-value:focus { border-color: var(--excel-green); outline: none; }
+  .day-value-wrap .cell-sub { display: inline; }
+  .eff-note .price-link { font-size: inherit; }
   .chip {
     font-family: inherit; font-size: 15px; padding: 2px 9px; cursor: pointer;
     border: 1px solid var(--grid); border-radius: 2px; background: #fff; color: var(--text);
@@ -460,7 +468,8 @@
       1. <b>특가율</b> = 시세 대비 얼마나 싼지 나타내는 지표. 통상 연휴 기간이라 가격이 비싸지만, 이를 모르고 있는 해외 항공사 혹은 프로모션 중인 항공사가 단 한개라도 있을 경우 나타나는 가격.<br />
       2. 연휴기간에 연차 끼워써야하는 직장인들을 위해 만든 사이트로, 다른날짜 검색이 필요한 경우에는 스카이스캐너 이용 권고.<br />
       3. 일정 옆 날씨(🌧/☀️/⛅)는 해당 기간의 평균 날씨<br />
-      4. 보드는 두 가지 — <b>연휴 특가 보드</b>는 "이 연휴엔 어디가 싼가", <b>여행지별 연휴 보드</b>는 "이 여행지는 어느 연휴에 가야 싼가"를 봅니다.
+      4. 보드는 두 가지 — <b>연휴 특가 보드</b>는 "이 연휴엔 어디가 싼가", <b>여행지별 연휴 보드</b>는 "이 여행지는 어느 연휴에 가야 싼가"를 봅니다.<br />
+      5. 필터의 <b>휴일 가치</b>(하루 = n만원)를 설정하면, 조금 비싸도 주말·공휴일이 길게 이어지는 일정(예: 목금 연휴에 앞주말까지 9일 연속)을 실질 비용으로 비교해 추천합니다.
     </div>
 
     <div class="chip-bar">
@@ -481,6 +490,13 @@
         <div class="chip-line" id="chip-stops-line">
           <span class="chip-sub">직항/경유</span>
           <div id="chip-stops"></div>
+        </div>
+        <div class="chip-line" id="day-value-line">
+          <span class="chip-sub">휴일 가치</span>
+          <div class="day-value-wrap" title="휴일 하루를 얼마의 가치로 볼지 정하면, 조금 비싸도 주말·공휴일이 더 길게 이어지는 일정을 추천합니다. 실질 비용 = 가격 − 가치 × 덤 휴일(연차 없이 쉬는 날). 0이면 무조건 최저가 일정.">
+            하루 <input id="day-value" type="number" min="0" step="1" inputmode="numeric" /> 만원
+            <span class="cell-sub" id="day-value-hint"></span>
+          </div>
         </div>
       </div>
     </div>
@@ -1047,6 +1063,8 @@
     const VIEWMINE_KEY = 'fd_viewmine'; // 마지막으로 고른 뷰(내 목록/전체)를 기억
     const TARGETS_KEY = 'fd_targets';
     const PENDING_KEY = 'fd_pending';
+    const DAY_VALUE_KEY = 'fd_day_value'; // 휴일 하루 가치 (만원, 비용-편익 계산용)
+    const DAY_VALUE_DEFAULT = 10;
     const EMPTY_DEALS_MSG = "데이터 초기화 후 재수집 중입니다. 다음 자동 수집(최대 4시간) 또는 '지금 수집 실행'으로 갱신하세요.";
     const NO_DEALS_MSG = '현재 기준(30일 평균 대비 15% 이상 하락)을 충족하는 항목이 없습니다. 다음 수집에서 다시 계산됩니다.';
 
@@ -1063,6 +1081,13 @@
       selCities: new Set(),    // 2차 필터: 선택된 지역(도착 도시)들 (다중선택, 선택 국가에 종속)
       selConcepts: new Set(),  // 컨셉 필터: 휴양/도시/대자연 및 조합 (다중선택, OR)
       selStops: new Set(),     // 직항/경유 필터: 'direct'/'via' (다중선택, OR. 비어있으면 = 전체)
+      // 휴일 하루의 가치(만원). 추천 일정 = (가격 - 가치 x 덤휴일) 최소인 일정.
+      dayValue: (function () {
+        try {
+          const v = parseInt(localStorage.getItem(DAY_VALUE_KEY), 10);
+          return isNaN(v) || v < 0 ? DAY_VALUE_DEFAULT : v;
+        } catch (e) { return DAY_VALUE_DEFAULT; }
+      })(),
       // 내 목록을 담아본 적 있으면(또는 지난번 '내 목록' 뷰였으면) 내 목록으로 시작.
       favOnly: (function () {
         try {
@@ -1577,6 +1602,43 @@
       }
       el.innerHTML = html;
     }
+    // ===================== 휴일 하루 가치 (비용-편익) =====================
+    // 셀의 pairs 는 (가격↑, 덤휴일↑) 파레토 프런티어: [0]=최저가 일정, 이후는 더 비싸지만
+    // 연속 휴무가 더 긴 일정. '휴일 하루 가치'(state.dayValue, 만원)로 실질 비용을 계산해
+    // 추천 일정을 고른다. 실질 비용 = 가격 - 가치 x 덤휴일(연속휴무 - 연차).
+    function dayValueWon() { return (state.dayValue || 0) * 10000; }
+    function cellPairs(cell) {
+      if (Array.isArray(cell.pairs) && cell.pairs.length) return cell.pairs;
+      // 구버전 matrix.json (pairs 없음): 최저가 일정 하나로 폴백
+      return cell.best ? [{ ...cell.best, price: cell.min_price }] : [];
+    }
+    function effCost(p) { return p.price - dayValueWon() * (p.bonus_days || 0); }
+    function pickPair(cell) {
+      const ps = cellPairs(cell);
+      let best = ps[0] || null;
+      for (const p of ps) if (effCost(p) < effCost(best)) best = p;
+      return best;
+    }
+    // 일정 요약 텍스트: block_days 를 아는 신형 데이터면 연차 효율까지 같이 보여준다.
+    function schedText(b) {
+      return b.block_days != null
+        ? `${b.nights}박 ${b.days}일 (연차 ${b.leave_days}개 → 연속 ${b.block_days}일 휴무)`
+        : `${b.nights}박 ${b.days}일 (연차 ${b.leave_days}개 소모)`;
+    }
+    // 추천 일정이 최저가 일정과 다르면(더 비싸지만 실질 비용이 낮음) 가격 차이와
+    // 늘어나는 휴일을 병기해 트레이드오프를 보여준다.
+    function pairPriceNote(cell, b) {
+      if (!b || b.price == null || b.price <= cell.min_price) return '';
+      const p0 = cellPairs(cell)[0] || {};
+      const diff = b.price - cell.min_price;
+      const dBonus = (b.bonus_days || 0) - (p0.bonus_days || 0);
+      const title = `최저가 일정(${fmt(cell.min_price)}원)보다 ${fmt(diff)}원 비싸지만 덤 휴일이 ${dBonus}일 더 많아, `
+        + `휴일 하루 ${fmt(dayValueWon())}원 기준 실질 부담이 더 낮은 일정입니다`;
+      const priceHtml = b.booking_url
+        ? `<a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener">${fmt(b.price)}원</a>`
+        : `${fmt(b.price)}원`;
+      return ` <span class="cell-sub eff-note" title="${esc(title)}">${priceHtml} (+${fmt(diff)} · 휴일 +${dBonus}일)</span>`;
+    }
     // 이 연휴에 신뢰할 만한 특가율이 있으면 그 값, 아니면 null (tier C/무데이터).
     function gvDealVal(cell) {
       return (cell && cell.tier !== 'C' && cell.deal_pct != null) ? cell.deal_pct : null;
@@ -1705,12 +1767,12 @@
         const bp = b.cell ? b.cell.min_price : Infinity;
         return (ap - bp) || dealCmp(a, b);
       };
-      // 연차 효율 = 최저가 / (연차 없이 얻는 여행일 수). 낮을수록 '공짜 하루'가 싸다.
+      // 연차 효율 = 추천 일정 가격 / (연차 없이 얻는 휴일 수). 낮을수록 '공짜 하루'가 싸다.
       const gvEff = r => {
-        const b = r.cell && r.cell.best;
+        const b = r.cell && pickPair(r.cell);
         if (!b) return Infinity;
-        const freeDays = b.days - b.leave_days;
-        return freeDays > 0 ? r.cell.min_price / freeDays : Infinity;
+        const freeDays = b.bonus_days != null ? b.bonus_days : b.days - b.leave_days;
+        return freeDays > 0 ? b.price / freeDays : Infinity;
       };
       const effCmp = (a, b) => (gvEff(a) - gvEff(b)) || priceCmp(a, b);
       const sortKey = document.getElementById('gv-sort').value;
@@ -1726,15 +1788,15 @@
             `<td colspan="4" class="gv-reason">${esc(gvEmptyReason(r.monitors))}</td></tr>`;
         }
         rank++;
-        const b = r.cell.best;
+        const b = pickPair(r.cell);
         const period = `${fmtDateYY(b.depart_date, b.depart_weekday)} ~ ${fmtDateYY(b.return_date, b.return_weekday)}`;
-        const scheduleLine = `${period} · ${b.nights}박 ${b.days}일 (연차 ${b.leave_days}개 소모)`;
+        const scheduleLine = `${period} · ${schedText(b)}${pairPriceNote(r.cell, b)}`;
         const stripRow = `<span class="gv-strip-row">${tripStrip(b.depart_date, b.return_date)}${climateBadge(r.route.destination, b.depart_date)}</span>`;
         return `
           <tr>
             <td class="gv-rank">${rank}</td>
             <td>${nameCell}</td>
-            <td class="num"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동">${fmt(r.cell.min_price)}</a></td>
+            <td class="num"><a class="price-link" href="${esc((cellPairs(r.cell)[0] || b).booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(r.cell.min_price)}</a></td>
             <td>${gvDealBadge(r.cell)}</td>
             <td class="period-cell">${scheduleLine}${stripRow}</td>
             <td>${stopsCell(b.stops, b.airline)}</td>
@@ -1821,7 +1883,7 @@
             <td><a href="${esc(d.booking_url)}" target="_blank" rel="noopener">${esc(label)}</a>
               <button class="copy-btn" data-copy="${esc(d.booking_url)}" title="예약 링크 복사">📋</button></td>
             <td class="period-cell">${fmtDateYY(d.depart_date, d.depart_weekday)}${depHourStr} ~ ${fmtDateYY(d.return_date, d.return_weekday)}${d.is_holiday_window ? ' <span class="badge-hol">연휴</span>' : ''}</td>
-            <td>${d.nights}박 ${d.days}일 · 연차 ${d.leave_days}개${tripStrip(d.depart_date, d.return_date)}${climateBadge(d.route.destination, d.depart_date)}</td>
+            <td>${d.nights}박 ${d.days}일 · 연차 ${d.leave_days}개${d.block_days != null ? ` → 연속 ${d.block_days}일` : ''}${tripStrip(d.depart_date, d.return_date)}${climateBadge(d.route.destination, d.depart_date)}</td>
             <td>${stopsCell(d.stops, d.airline)}</td>
             <td class="num">${fmt(d.current_price)} ${trendHtml(d.current_price, d.prev_price, false)}</td>
             <td class="num">${fmt(d.avg_price)}</td>
@@ -1973,10 +2035,10 @@
 
       const maxPrice = info.wins.reduce((mx, w) => Math.max(mx, w.cell.min_price), 0) || 1;
       const rows = info.wins.map((w, i) => {
-        const b = w.cell.best;
+        const b = pickPair(w.cell);
         const isMin = i === 0;
         const period = `${fmtDateYY(b.depart_date, b.depart_weekday)} ~ ${fmtDateYY(b.return_date, b.return_weekday)}`;
-        const sched = `${period} · ${b.nights}박 ${b.days}일 (연차 ${b.leave_days}개 소모)`;
+        const sched = `${period} · ${schedText(b)}${pairPriceNote(w.cell, b)}`;
         const strip = `<span class="gv-strip-row">${tripStrip(b.depart_date, b.return_date)}${climateBadge(g.route.destination, b.depart_date)}</span>`;
         const pct = Math.max(4, Math.round(w.cell.min_price / maxPrice * 100));
         const barTitle = isMin ? '이 여행지에서 가장 싼 연휴' : `가장 싼 연휴보다 ${fmt(w.cell.min_price - info.wins[0].cell.min_price)}원 비쌈`;
@@ -1990,7 +2052,7 @@
         return `
           <tr${isMin ? ' class="is-min"' : ''}>
             <td class="win-name">${esc(w.label)}${isMin ? '<span class="badge-min">최저</span>' : ''}</td>
-            <td class="num"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동">${fmt(w.cell.min_price)}</a></td>
+            <td class="num"><a class="price-link" href="${esc((cellPairs(w.cell)[0] || b).booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(w.cell.min_price)}</a></td>
             <td>${gvDealBadge(w.cell)}</td>
             <td class="period-cell">${sched}${strip}</td>
             <td>${stopsCell(b.stops, b.airline)}${altHtml}</td>
@@ -2130,12 +2192,12 @@
 
         // 아래 네 칸(최저가 · 특가율 · 추천 일정 · 직항/경유)은 연휴 특가 보드와 같은 구성.
         // 다만 여기서는 '어느 연휴가 가장 싼가'가 핵심이라 일정 앞에 연휴 이름을 붙인다.
-        const b = info.best.cell.best;
+        const b = pickPair(info.best.cell);
         const period = `${fmtDateYY(b.depart_date, b.depart_weekday)} ~ ${fmtDateYY(b.return_date, b.return_weekday)}`;
-        const scheduleLine = `<span class="win-name">${esc(info.best.label)}</span> · ${period} · ${b.nights}박 ${b.days}일 (연차 ${b.leave_days}개 소모)`;
+        const scheduleLine = `<span class="win-name">${esc(info.best.label)}</span> · ${period} · ${schedText(b)}${pairPriceNote(info.best.cell, b)}`;
         const stripRow = `<span class="gv-strip-row">${tripStrip(b.depart_date, b.return_date)}${climateBadge(g.route.destination, b.depart_date)}</span>`;
         const row = head + `
-            <td class="num"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동">${fmt(info.best.cell.min_price)}</a>${info.reached ? '<span class="badge-hit">목표가 도달 🎯</span>' : ''}</td>
+            <td class="num"><a class="price-link" href="${esc((cellPairs(info.best.cell)[0] || b).booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(info.best.cell.min_price)}</a>${info.reached ? '<span class="badge-hit">목표가 도달 🎯</span>' : ''}</td>
             <td>${gvDealBadge(info.best.cell)}</td>
             <td class="period-cell">${scheduleLine}${stripRow}</td>
             <td>${stopsCell(b.stops, b.airline)}</td>` + tail;
@@ -2810,6 +2872,23 @@
       });
       document.getElementById('gv-sort').addEventListener('change', renderGvBoard);
       document.getElementById('dest-sort').addEventListener('change', renderDestBoard);
+
+      // 휴일 하루 가치 입력 -> 두 보드의 추천 일정을 실질 비용 기준으로 즉시 재계산
+      const dayValueEl = document.getElementById('day-value');
+      const dayValueHint = () => {
+        document.getElementById('day-value-hint').textContent =
+          state.dayValue > 0 ? '· 비싸도 연휴가 길게 이어지면 추천' : '· 0 = 항상 최저가 일정';
+      };
+      dayValueEl.value = state.dayValue;
+      dayValueHint();
+      dayValueEl.addEventListener('input', () => {
+        const v = parseInt(dayValueEl.value, 10);
+        state.dayValue = isNaN(v) || v < 0 ? 0 : v;
+        try { localStorage.setItem(DAY_VALUE_KEY, String(state.dayValue)); } catch (e) {}
+        dayValueHint();
+        renderGvBoard();
+        renderDestBoard();
+      });
       document.getElementById('btn-dest-expand').addEventListener('click', () => setAllDestExpanded(true));
       document.getElementById('btn-dest-collapse').addEventListener('click', () => setAllDestExpanded(false));
 

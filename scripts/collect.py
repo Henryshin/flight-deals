@@ -22,7 +22,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from collector.google_flights_crawler import CrawlerSessionError, PriceCrawlerSession
-from holidays import date_range_candidates, get_holiday_windows
+from holidays import (
+    count_block_days, count_leave_days, date_range_candidates, get_holiday_windows,
+)
 
 ROOT = Path(__file__).parent.parent
 ROUTES_FILE = ROOT / "data" / "routes.json"
@@ -40,6 +42,11 @@ TIME_BUDGET_MIN = float(os.environ.get("TIME_BUDGET_MIN", "170"))
 BASELINE_REFRESH_HOURS = 20
 # 연속 이 횟수만큼 차단/동의 페이지가 나오면 런을 조기 중단 (예산 낭비 방지).
 BLOCKED_ABORT_STREAK = 5
+# 주말 경계 앵커 후보: 연휴 구간 밖으로 이만큼(일)까지 출발/귀국을 밀어, 인접 주말을
+# 연속 휴무로 붙이는 일정을 탐색한다 (6일 = 어느 요일이든 직전/직후 주말에 닿는 거리).
+EDGE_EXTEND_DAYS = 6
+# 윈도우당 앵커 후보 상한 (기본 후보와 교대로 끼워 넣으므로 크게 잡을 필요 없음)
+EDGE_PAIRS_PER_WINDOW = 4
 
 NEW_HEADER = [
     "origin", "destination", "depart_date", "return_date", "price",
@@ -50,37 +57,106 @@ NEW_HEADER = [
 LEGACY_HEADERS = [NEW_HEADER[:7], NEW_HEADER[:10], NEW_HEADER[:11]]
 
 
-def build_date_candidates(min_nights=DEFAULT_TRIP_LENGTH_DAYS, max_pairs=None, today=None):
-    """해당 노선의 (출발, 귀국, 연휴여부, 연휴id) 후보 생성.
+def _base_window_pairs(window, min_nights, today):
+    """연휴 구간 '안'의 기본 후보 (최저가 탐색 축).
 
     - 연휴 구간이 min_nights 이상이면: 구간 안에서 min_nights..구간길이 박수 전부.
     - 연휴 구간이 min_nights 보다 짧으면(장거리 노선 등): 연휴 전체를 '포함'하는
       min_nights..min_nights+2 박 일정을 생성. (기존엔 '구간 안에 들어가는' 일정만
       만들어 min_nights=6 노선은 후보 0개 -> 영영 수집되지 않는 버그가 있었다.
       연차를 붙여 연휴를 늘려 쓰는 실제 사용 패턴과도 이 쪽이 맞다.)
-    - 윈도우 간 라운드로빈으로 max_pairs 개까지만 (가까운 연휴 우선, 짧은 일정 우선).
+    """
+    window_len = (window["end"] - window["start"]).days
+    pairs = []
+    if window_len >= min_nights:
+        for length in range(min_nights, window_len + 1):
+            for depart, return_ in date_range_candidates(window, length):
+                if depart > today:
+                    pairs.append((depart, return_))
+    else:
+        for length in range(min_nights, min_nights + 3):
+            cur = window["end"] - timedelta(days=length)  # 귀국일이 구간 끝 이후가 되도록
+            while cur <= window["start"]:                 # 출발일이 구간 시작 이전이 되도록
+                if cur > today:
+                    pairs.append((cur, cur + timedelta(days=length)))
+                cur += timedelta(days=1)
+    return pairs
+
+
+def _edge_anchored_pairs(window, min_nights, today, base_pairs):
+    """주말 경계 앵커 후보 (연속 휴무 탐색 축, 비용-편익 계산의 재료).
+
+    출발/귀국을 연휴 구간 밖 EDGE_EXTEND_DAYS 일까지 밀어 인접 주말을 연속 휴무로
+    붙이는 일정을 찾는다. 가격은 크롤링해 봐야 알 수 있으므로, 여기서는 날짜 구조만으로
+    판단 가능한 조건으로 거른다:
+    - 연차 소모는 기본 후보 최대치 +2 이하. (여유분 +2 는 '목금토일 연휴에 월~일로 잡아
+      앞주말을 붙이기'(+1), '성탄절~신정처럼 이웃한 연휴를 연차로 잇는 브릿지'(+2) 같은
+      실제 패턴이 기본 후보보다 연차를 더 쓰기 때문. 상한이 없으면 긴 일정일수록 주말이
+      더 껴서 덤 휴일이 무한정 늘어난다.)
+    - 덤 휴일(연속휴무 - 연차)이 기본 후보의 최대치보다 커야 함 (구조적 이득이 없으면
+      크롤 예산 낭비)
+    - 실제 공휴일을 하루 이상 포함 (연휴 낀 일정이라는 사이트 전제 유지)
+    """
+    stats = [(count_leave_days(d, r), count_block_days(d, r)) for d, r in base_pairs]
+    if not stats:
+        return []
+    leave_cap = max(lv for lv, _ in stats) + 2
+    base_best_bonus = max(blk - lv for lv, blk in stats)
+    holiday_dates = window.get("holiday_dates") or []
+    span_end = window["end"] + timedelta(days=EDGE_EXTEND_DAYS)
+    base_set = set(base_pairs)
+    cands = []
+    d = window["start"] - timedelta(days=EDGE_EXTEND_DAYS)
+    while d <= window["end"]:
+        if d > today:
+            for nights in range(min_nights, (span_end - d).days + 1):
+                r = d + timedelta(days=nights)
+                if (d, r) in base_set:
+                    continue
+                if holiday_dates:
+                    if not any(d <= h <= r for h in holiday_dates):
+                        continue
+                elif not (d <= window["end"] and r >= window["start"]):
+                    continue  # holiday_dates 없는 비정상 윈도우면 구간 겹침으로 폴백
+                lv = count_leave_days(d, r)
+                if lv > leave_cap:
+                    continue
+                bonus = count_block_days(d, r) - lv
+                if bonus <= base_best_bonus:
+                    continue
+                cands.append((bonus, lv, nights, d, r))
+        d += timedelta(days=1)
+    # 덤 휴일 큰 순 -> 연차 적게 쓰는 순 -> 짧은 일정 순
+    cands.sort(key=lambda c: (-c[0], c[1], c[2]))
+    return [(d, r) for _, _, _, d, r in cands[:EDGE_PAIRS_PER_WINDOW]]
+
+
+def build_date_candidates(min_nights=DEFAULT_TRIP_LENGTH_DAYS, max_pairs=None, today=None):
+    """해당 노선의 (출발, 귀국, 연휴여부, 연휴id) 후보 생성.
+
+    - 윈도우마다 기본 후보(구간 안, 최저가 탐색)와 앵커 후보(인접 주말 연결, 연속
+      휴무 탐색)를 교대로 끼워 넣는다.
+    - 윈도우 간 라운드로빈으로 max_pairs 개까지만 (가까운 연휴 우선).
+    - 후보 총수가 상한을 넘으므로, 날짜 기반 회전으로 매일 시작점을 돌려 뒷순위
+      후보도 며칠에 걸쳐 전부 순환 수집되게 한다 (안 그러면 상한 밖 후보는 영영
+      크롤되지 않는다; 하루 안의 여러 런은 같은 후보를 다시 긁어 가격을 갱신).
     """
     if max_pairs is None:
         max_pairs = MAX_PAIRS_PER_ROUTE
     today = today or date.today()
     per_window = []
     for w in sorted(get_holiday_windows(), key=lambda w: w["start"]):
-        window_len = (w["end"] - w["start"]).days
+        base = _base_window_pairs(w, min_nights, today)
+        anchored = _edge_anchored_pairs(w, min_nights, today, base)
         pairs = []
-        if window_len >= min_nights:
-            for length in range(min_nights, window_len + 1):
-                for depart, return_ in date_range_candidates(w, length):
-                    if depart > today:
-                        pairs.append((depart, return_))
-        else:
-            for length in range(min_nights, min_nights + 3):
-                cur = w["end"] - timedelta(days=length)  # 귀국일이 구간 끝 이후가 되도록
-                while cur <= w["start"]:                 # 출발일이 구간 시작 이전이 되도록
-                    if cur > today:
-                        pairs.append((cur, cur + timedelta(days=length)))
-                    cur += timedelta(days=1)
+        for i in range(max(len(base), len(anchored))):
+            if i < len(base):
+                pairs.append(base[i])
+            if i < len(anchored):
+                pairs.append(anchored[i])
         if pairs:
-            per_window.append((w["id"], pairs))
+            rot = today.toordinal() % len(pairs)
+            per_window.append((w["id"], pairs[rot:] + pairs[:rot]))
 
     candidates, seen = [], set()
     idx = 0
