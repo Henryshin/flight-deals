@@ -106,6 +106,7 @@
   td.pct.up { color: #b3261e; font-weight: 700; }
   .empty-row td { color: var(--muted); text-align: center; padding: 18px; font-style: italic; }
   .cell-sub { display: block; color: var(--muted); font-size: 14px; font-family: Calibri, "맑은 고딕", Arial, sans-serif; }
+  .alt-opt { margin-top: 3px; white-space: nowrap; }
   .policy-edit { display: inline-block; margin-top: 1px; padding: 0; border: none; background: none; cursor: pointer; color: #0b5cab; font-size: 14px; font-family: Calibri, "맑은 고딕", Arial, sans-serif; }
   .policy-edit:hover { text-decoration: underline; }
 
@@ -1640,20 +1641,25 @@
       const out = [];
       for (const w of gvWindows()) {
         if (!active.has(w.id)) continue;
-        let best = null, bestMon = null;
+        const found = [];
         for (const mon of monitors) {
           const c = (allCells[w.id] || {})[rk(mon)];
-          if (!c) continue;
-          // 이 보드의 축은 '최저가'라, 같은 연휴 안에서 모니터끼리는 '싼 칸'이 대표다.
-          // (특가 보드의 cellBetter 는 티어 우선이라 여기 쓰면 더 비싼 칸이 최저가로 표시될 수 있음.
-          //  값이 같을 때만 티어/특가율로 가른다.)
-          if (!best || c.min_price < best.min_price
-              || (c.min_price === best.min_price && cellBetter(c, best))) {
-            best = c;
-            bestMon = rk(mon);
-          }
+          if (c) found.push({ cell: c, mon: rk(mon) });
         }
-        if (best) out.push({ win: w.id, label: gvWindowLabel(w.id), cell: best, mon: bestMon });
+        if (!found.length) continue;
+        // 이 보드의 축은 '최저가'라, 같은 연휴 안에서 모니터끼리는 '싼 칸'이 대표다.
+        // (특가 보드의 cellBetter 는 티어 우선이라 여기 쓰면 더 비싼 칸이 최저가로 표시될 수 있음.
+        //  값이 같을 때만 티어/특가율로 가른다.)
+        found.sort((a, b) => (a.cell.min_price - b.cell.min_price)
+          || (cellBetter(a.cell, b.cell) ? -1 : cellBetter(b.cell, a.cell) ? 1 : 0));
+        const best = found[0];
+        // 모니터가 여럿(예: 경유 허용 + 직항 전용)인 노선은 대표(최저) 칸 뒤에 남는 칸들을
+        // 'alts'로 들고 있는다 — 직항이 항상 더 비싸서 대표로 못 뽑히더라도 화면에서
+        // 사라지지 않고 보조 옵션으로 보이게 하기 위함.
+        out.push({
+          win: w.id, label: gvWindowLabel(w.id), cell: best.cell, mon: best.mon,
+          alts: found.slice(1),
+        });
       }
       return out;
     }
@@ -1974,13 +1980,20 @@
         const strip = `<span class="gv-strip-row">${tripStrip(b.depart_date, b.return_date)}${climateBadge(g.route.destination, b.depart_date)}</span>`;
         const pct = Math.max(4, Math.round(w.cell.min_price / maxPrice * 100));
         const barTitle = isMin ? '이 여행지에서 가장 싼 연휴' : `가장 싼 연휴보다 ${fmt(w.cell.min_price - info.wins[0].cell.min_price)}원 비쌈`;
+        // 모니터가 여럿인 노선(예: 경유 허용 + 직항 전용)은 대표(최저) 칸 옆에 남는 모니터의
+        // 칸도 작게 보여준다 — 직항이 경유보다 비싸 대표로 못 뽑혀도 화면에서 사라지지 않게.
+        const altHtml = (w.alts || []).map(a => {
+          const ab = a.cell.best;
+          return `<div class="cell-sub alt-opt" title="같은 연휴, 다른 모니터 옵션">` +
+            `${stopsCell(ab.stops, ab.airline)} <a class="price-link" href="${esc(ab.booking_url)}" target="_blank" rel="noopener">${fmt(a.cell.min_price)}원</a></div>`;
+        }).join('');
         return `
           <tr${isMin ? ' class="is-min"' : ''}>
             <td class="win-name">${esc(w.label)}${isMin ? '<span class="badge-min">최저</span>' : ''}</td>
             <td class="num"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동">${fmt(w.cell.min_price)}</a></td>
             <td>${gvDealBadge(w.cell)}</td>
             <td class="period-cell">${sched}${strip}</td>
-            <td>${stopsCell(b.stops, b.airline)}</td>
+            <td>${stopsCell(b.stops, b.airline)}${altHtml}</td>
             <td title="${esc(barTitle)}"><span class="pbar${isMin ? ' is-min' : ''}"><i style="width:${pct}%"></i></span></td>
           </tr>`;
       }).join('');
