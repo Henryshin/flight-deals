@@ -469,7 +469,7 @@
       2. 연휴기간에 연차 끼워써야하는 직장인들을 위해 만든 사이트로, 다른날짜 검색이 필요한 경우에는 스카이스캐너 이용 권고.<br />
       3. 일정 옆 날씨(🌧/☀️/⛅)는 해당 기간의 평균 날씨<br />
       4. 보드는 두 가지 — <b>연휴 특가 보드</b>는 "이 연휴엔 어디가 싼가", <b>여행지별 연휴 보드</b>는 "이 여행지는 어느 연휴에 가야 싼가"를 봅니다.<br />
-      5. 필터의 <b>휴일 가치</b>(하루 = n만원)를 설정하면, 조금 비싸도 주말·공휴일이 길게 이어지는 일정(예: 목금 연휴에 앞주말까지 9일 연속)을 실질 비용으로 비교해 추천합니다.
+      5. 필터의 <b>휴일 가치</b>(하루 = n만원)를 설정하면, 조금 비싸도 여행 기간 안에 주말·공휴일이 더 많이 들어오는 일정(예: 목금 연휴에 출발을 앞당겨 앞주말도 여행지에서 보내기)을 실질 비용으로 비교해 추천합니다.
     </div>
 
     <div class="chip-bar">
@@ -1606,8 +1606,10 @@
     }
     // ===================== 휴일 하루 가치 (비용-편익) =====================
     // 셀의 pairs 는 (가격↑, 덤휴일↑) 파레토 프런티어: [0]=최저가 일정, 이후는 더 비싸지만
-    // 연속 휴무가 더 긴 일정. '휴일 하루 가치'(state.dayValue, 만원)로 실질 비용을 계산해
-    // 추천 일정을 고른다. 실질 비용 = 가격 - 가치 x 덤휴일(연속휴무 - 연차).
+    // 여행 기간 안에 연차 없이 얻는 날(덤휴일)이 더 많은 일정. 여행 기간 밖(출발 전/귀국
+    // 후)에 집에서 보내는 주말은 세지 않는다 — 실제로 여행지에 있어야 '덤'이다.
+    // '휴일 하루 가치'(state.dayValue, 만원)로 실질 비용을 계산해 추천 일정을 고른다.
+    // 실질 비용 = 가격 - 가치 x 덤휴일(여행일 - 연차).
     function dayValueWon() { return (state.dayValue || 0) * 10000; }
     function cellPairs(cell) {
       if (Array.isArray(cell.pairs) && cell.pairs.length) return cell.pairs;
@@ -1621,11 +1623,10 @@
       for (const p of ps) if (effCost(p) < effCost(best)) best = p;
       return best;
     }
-    // 일정 요약 텍스트: block_days 를 아는 신형 데이터면 연차 효율까지 같이 보여준다.
+    // 일정 요약 텍스트. 총 여행일수는 'N박 M일'에 이미 담겨 있으므로 따로 안 적는다
+    // (덤 휴일 수는 최저가 일정과 다른 추천이 있을 때 recommendedAltNote 쪽에서만 언급).
     function schedText(b) {
-      return b.block_days != null
-        ? `${b.nights}박 ${b.days}일 (연차 ${b.leave_days}개 → 연속 ${b.block_days}일 휴무)`
-        : `${b.nights}박 ${b.days}일 (연차 ${b.leave_days}개 소모)`;
+      return `${b.nights}박 ${b.days}일 (연차 ${b.leave_days}개 소모)`;
     }
     // 이 칸의 대표 일정 = 항상 최저가 일정 (가격 칸과 날짜가 서로 다른 조합을 가리키는
     // 일이 없도록 고정). 휴일 가치 반영 추천이 이것과 다르면 아래 recommendedAltNote 가
@@ -1903,7 +1904,7 @@
             <td><a href="${esc(d.booking_url)}" target="_blank" rel="noopener">${esc(label)}</a>
               <button class="copy-btn" data-copy="${esc(d.booking_url)}" title="예약 링크 복사">📋</button></td>
             <td class="period-cell">${fmtDateYY(d.depart_date, d.depart_weekday)}${depHourStr} ~ ${fmtDateYY(d.return_date, d.return_weekday)}${d.is_holiday_window ? ' <span class="badge-hol">연휴</span>' : ''}</td>
-            <td>${d.nights}박 ${d.days}일 · 연차 ${d.leave_days}개${d.block_days != null ? ` → 연속 ${d.block_days}일` : ''}${tripStrip(d.depart_date, d.return_date)}${climateBadge(d.route.destination, d.depart_date)}</td>
+            <td>${d.nights}박 ${d.days}일 · 연차 ${d.leave_days}개${tripStrip(d.depart_date, d.return_date)}${climateBadge(d.route.destination, d.depart_date)}</td>
             <td>${stopsCell(d.stops, d.airline)}</td>
             <td class="num">${fmt(d.current_price)} ${trendHtml(d.current_price, d.prev_price, false)}</td>
             <td class="num">${fmt(d.avg_price)}</td>

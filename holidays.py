@@ -82,20 +82,16 @@ def count_leave_days(depart: date, return_: date) -> int:
     return n
 
 
-def count_block_days(depart: date, return_: date) -> int:
-    """이 여행을 가면 생기는 '연속 휴무 구간'의 총 길이 (일수).
+def count_free_days(depart: date, return_: date) -> int:
+    """여행 기간 [depart, return_] '안'에서 연차 없이 얻는 날 수 (주말·공휴일).
 
-    여행일 전체 + 출발 전/귀국 후에 자연히 붙는 주말·공휴일까지 포함.
-    예: 목금 공휴일에 월(출발)~일(귀국) 7일 여행이면 앞주 토·일이 붙어 9일.
-    같은 연차라도 이 값이 클수록 경제적인 일정이다 (대시보드 비용-편익 계산의 편익 축).
+    반드시 실제 여행 기간 안에서만 센다. 출발 전/귀국 후에 인접한 주말은 여행지에
+    있는 날이 아니라 그냥 집에서 보내는 날이라 '덤'이 아니다 — 몇 박 며칠짜리
+    여행이든 그 기간 밖의 휴무는 이 여행과 무관하게 원래 쉬는 날이다.
+    같은 연차 소모로 이 값이 클수록(=여행일 중 연차 아닌 날이 많을수록) 경제적인
+    일정이다 (대시보드 비용-편익 계산의 편익 축).
     """
-    start = depart
-    while is_day_off(start - timedelta(days=1)):
-        start -= timedelta(days=1)
-    end = return_
-    while is_day_off(end + timedelta(days=1)):
-        end += timedelta(days=1)
-    return (end - start).days + 1
+    return (return_ - depart).days + 1 - count_leave_days(depart, return_)
 
 
 def holiday_name(d: date) -> str:

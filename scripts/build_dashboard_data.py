@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from collector.google_flights_crawler import build_booking_url
 from holidays import (
-    KOREAN_HOLIDAYS, count_block_days, count_leave_days, get_holiday_windows,
+    KOREAN_HOLIDAYS, count_free_days, count_leave_days, get_holiday_windows,
 )
 
 ROOT = Path(__file__).parent.parent
@@ -201,13 +201,14 @@ def _window_id_for_row(row, windows, known_window_ids):
 def _pair_entry(row, route):
     """관측 행 하나 -> 프론트가 일정 하나를 그리는 데 필요한 값 묶음.
 
-    leave/block/bonus 는 비용-편익 계산의 재료: 실질 비용 = 가격 - 휴일가치 x bonus.
+    leave/bonus 는 비용-편익 계산의 재료: 실질 비용 = 가격 - 휴일가치 x bonus.
+    bonus(덤 휴일)는 반드시 이 여행 기간 [depart, return] '안'에서만 센다 — 출발
+    전/귀국 후에 집에서 보내는 인접 주말은 이 여행과 무관하므로 세지 않는다.
     """
     d1 = date.fromisoformat(row["depart_date"])
     d2 = date.fromisoformat(row["return_date"])
     nights = (d2 - d1).days
     leave = count_leave_days(d1, d2)
-    block = count_block_days(d1, d2)
     return {
         "price": row["price"],
         "depart_date": row["depart_date"],
@@ -217,8 +218,7 @@ def _pair_entry(row, route):
         "nights": nights,
         "days": nights + 1,
         "leave_days": leave,
-        "block_days": block,
-        "bonus_days": block - leave,
+        "bonus_days": count_free_days(d1, d2),
         "stops": row.get("stops", ""),
         "airline": row.get("airline", ""),
         "dep_time": row.get("dep_time", ""),
@@ -414,7 +414,6 @@ def build_route_deals(route_prices, recent, max_stops, route, today, lookback_st
                 "nights": nights,
                 "days": nights + 1,
                 "leave_days": count_leave_days(d1, d2),
-                "block_days": count_block_days(d1, d2),
                 "current_price": r["price"],
                 "prev_price": prev_price,
                 "avg_price": round(avg_price),

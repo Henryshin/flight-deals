@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from collector.google_flights_crawler import CrawlerSessionError, PriceCrawlerSession
 from holidays import (
-    count_block_days, count_leave_days, date_range_candidates, get_holiday_windows,
+    count_free_days, count_leave_days, date_range_candidates, get_holiday_windows,
 )
 
 ROOT = Path(__file__).parent.parent
@@ -42,8 +42,8 @@ TIME_BUDGET_MIN = float(os.environ.get("TIME_BUDGET_MIN", "170"))
 BASELINE_REFRESH_HOURS = 20
 # 연속 이 횟수만큼 차단/동의 페이지가 나오면 런을 조기 중단 (예산 낭비 방지).
 BLOCKED_ABORT_STREAK = 5
-# 주말 경계 앵커 후보: 연휴 구간 밖으로 이만큼(일)까지 출발/귀국을 밀어, 인접 주말을
-# 연속 휴무로 붙이는 일정을 탐색한다 (6일 = 어느 요일이든 직전/직후 주말에 닿는 거리).
+# 주말 경계 앵커 후보: 연휴 구간 밖으로 이만큼(일)까지 출발/귀국을 밀어, 인접 주말이
+# 여행 기간 '안'에 들어오는 일정을 탐색한다 (6일 = 어느 요일이든 직전/직후 주말에 닿는 거리).
 EDGE_EXTEND_DAYS = 6
 # 윈도우당 앵커 후보 상한 (기본 후보와 교대로 끼워 넣으므로 크게 잡을 필요 없음)
 EDGE_PAIRS_PER_WINDOW = 4
@@ -84,24 +84,25 @@ def _base_window_pairs(window, min_nights, today):
 
 
 def _edge_anchored_pairs(window, min_nights, today, base_pairs):
-    """주말 경계 앵커 후보 (연속 휴무 탐색 축, 비용-편익 계산의 재료).
+    """주말 경계 앵커 후보 (여행 기간 안 비연차 날 늘리기 탐색 축, 비용-편익 계산의 재료).
 
-    출발/귀국을 연휴 구간 밖 EDGE_EXTEND_DAYS 일까지 밀어 인접 주말을 연속 휴무로
-    붙이는 일정을 찾는다. 가격은 크롤링해 봐야 알 수 있으므로, 여기서는 날짜 구조만으로
-    판단 가능한 조건으로 거른다:
+    출발/귀국을 연휴 구간 밖 EDGE_EXTEND_DAYS 일까지 밀어, 여행 기간 '안'에 인접 주말이
+    더 들어오는 일정을 찾는다. 여행 기간 밖에 붙는 주말(출발 전/귀국 후 집에서 보내는
+    날)은 세지 않는다 — 실제로 그 날 여행지에 있어야 '덤'이다. 가격은 크롤링해 봐야
+    알 수 있으므로, 여기서는 날짜 구조만으로 판단 가능한 조건으로 거른다:
     - 연차 소모는 기본 후보 최대치 +2 이하. (여유분 +2 는 '목금토일 연휴에 월~일로 잡아
-      앞주말을 붙이기'(+1), '성탄절~신정처럼 이웃한 연휴를 연차로 잇는 브릿지'(+2) 같은
-      실제 패턴이 기본 후보보다 연차를 더 쓰기 때문. 상한이 없으면 긴 일정일수록 주말이
-      더 껴서 덤 휴일이 무한정 늘어난다.)
-    - 덤 휴일(연속휴무 - 연차)이 기본 후보의 최대치보다 커야 함 (구조적 이득이 없으면
-      크롤 예산 낭비)
+      앞주말을 여행 기간 안으로 끌어오기'(+1), '성탄절~신정처럼 이웃한 연휴를 연차로
+      잇는 브릿지'(+2) 같은 실제 패턴이 기본 후보보다 연차를 더 쓰기 때문. 상한이 없으면
+      긴 일정일수록 주말이 더 껴서 덤 휴일이 무한정 늘어난다.)
+    - 덤 휴일(여행 기간 안의 비연차 날 수)이 기본 후보의 최대치보다 커야 함 (구조적
+      이득이 없으면 크롤 예산 낭비)
     - 실제 공휴일을 하루 이상 포함 (연휴 낀 일정이라는 사이트 전제 유지)
     """
-    stats = [(count_leave_days(d, r), count_block_days(d, r)) for d, r in base_pairs]
+    stats = [(count_leave_days(d, r), count_free_days(d, r)) for d, r in base_pairs]
     if not stats:
         return []
     leave_cap = max(lv for lv, _ in stats) + 2
-    base_best_bonus = max(blk - lv for lv, blk in stats)
+    base_best_bonus = max(fd for _, fd in stats)
     holiday_dates = window.get("holiday_dates") or []
     span_end = window["end"] + timedelta(days=EDGE_EXTEND_DAYS)
     base_set = set(base_pairs)
@@ -121,7 +122,7 @@ def _edge_anchored_pairs(window, min_nights, today, base_pairs):
                 lv = count_leave_days(d, r)
                 if lv > leave_cap:
                     continue
-                bonus = count_block_days(d, r) - lv
+                bonus = count_free_days(d, r)
                 if bonus <= base_best_bonus:
                     continue
                 cands.append((bonus, lv, nights, d, r))
@@ -134,8 +135,8 @@ def _edge_anchored_pairs(window, min_nights, today, base_pairs):
 def build_date_candidates(min_nights=DEFAULT_TRIP_LENGTH_DAYS, max_pairs=None, today=None):
     """해당 노선의 (출발, 귀국, 연휴여부, 연휴id) 후보 생성.
 
-    - 윈도우마다 기본 후보(구간 안, 최저가 탐색)와 앵커 후보(인접 주말 연결, 연속
-      휴무 탐색)를 교대로 끼워 넣는다.
+    - 윈도우마다 기본 후보(구간 안, 최저가 탐색)와 앵커 후보(인접 주말을 여행 기간
+      안으로 끌어와 비연차 날을 늘리는 탐색)를 교대로 끼워 넣는다.
     - 윈도우 간 라운드로빈으로 max_pairs 개까지만 (가까운 연휴 우선).
     - 후보 총수가 상한을 넘으므로, 날짜 기반 회전으로 매일 시작점을 돌려 뒷순위
       후보도 며칠에 걸쳐 전부 순환 수집되게 한다 (안 그러면 상한 밖 후보는 영영
