@@ -90,10 +90,11 @@ def _edge_anchored_pairs(window, min_nights, today, base_pairs):
     더 들어오는 일정을 찾는다. 여행 기간 밖에 붙는 주말(출발 전/귀국 후 집에서 보내는
     날)은 세지 않는다 — 실제로 그 날 여행지에 있어야 '덤'이다. 가격은 크롤링해 봐야
     알 수 있으므로, 여기서는 날짜 구조만으로 판단 가능한 조건으로 거른다:
-    - 연차 소모는 기본 후보 최대치 +2 이하. (여유분 +2 는 '목금토일 연휴에 월~일로 잡아
+    - 연차 소모는 기본 후보 최대치 +3 이하. (여유분 +3 은 '목금토일 연휴에 월~일로 잡아
       앞주말을 여행 기간 안으로 끌어오기'(+1), '성탄절~신정처럼 이웃한 연휴를 연차로
-      잇는 브릿지'(+2) 같은 실제 패턴이 기본 후보보다 연차를 더 쓰기 때문. 상한이 없으면
-      긴 일정일수록 주말이 더 껴서 덤 휴일이 무한정 늘어난다.)
+      잇는 브릿지'(+2), '주말을 두 번 걸치는 10박 안팎의 긴 일정'(+3) 같은 실제 패턴이
+      기본 후보보다 연차를 더 쓰기 때문. 상한이 없으면 긴 일정일수록 주말이 더 껴서
+      덤 휴일이 무한정 늘어난다.)
     - 덤 휴일(여행 기간 안의 비연차 날 수)이 기본 후보의 최대치보다 커야 함 (구조적
       이득이 없으면 크롤 예산 낭비)
     - 실제 공휴일을 하루 이상 포함 (연휴 낀 일정이라는 사이트 전제 유지)
@@ -101,7 +102,7 @@ def _edge_anchored_pairs(window, min_nights, today, base_pairs):
     stats = [(count_leave_days(d, r), count_free_days(d, r)) for d, r in base_pairs]
     if not stats:
         return []
-    leave_cap = max(lv for lv, _ in stats) + 2
+    leave_cap = max(lv for lv, _ in stats) + 3
     base_best_bonus = max(fd for _, fd in stats)
     holiday_dates = window.get("holiday_dates") or []
     span_end = window["end"] + timedelta(days=EDGE_EXTEND_DAYS)
@@ -127,9 +128,15 @@ def _edge_anchored_pairs(window, min_nights, today, base_pairs):
                     continue
                 cands.append((bonus, lv, nights, d, r))
         d += timedelta(days=1)
-    # 덤 휴일 큰 순 -> 연차 적게 쓰는 순 -> 짧은 일정 순
+    # 덤 휴일 큰 순 -> 연차 적게 쓰는 순 -> 짧은 일정 순으로 골라 상위 몇 개만 채택.
     cands.sort(key=lambda c: (-c[0], c[1], c[2]))
-    return [(d, r) for _, _, _, d, r in cands[:EDGE_PAIRS_PER_WINDOW]]
+    top = cands[:EDGE_PAIRS_PER_WINDOW]
+    # 채택한 후보는 긴 일정(며칠 더 늘려 잡는 브릿지)이 먼저 오도록 다시 정렬한다.
+    # build_date_candidates 의 날짜 회전은 이 리스트의 앞쪽일수록 자주(며칠 안에)
+    # 크롤 순번이 돌아오므로, 순서를 안 바꾸면(짧은 일정 우선) 가장 긴 일정은 한
+    # 주기(최대 EDGE_PAIRS_PER_WINDOW+기본후보 수 일) 끝에나 크롤돼 체감 대기가 길다.
+    top.sort(key=lambda c: -c[2])
+    return [(d, r) for _, _, _, d, r in top]
 
 
 def build_date_candidates(min_nights=DEFAULT_TRIP_LENGTH_DAYS, max_pairs=None, today=None):
