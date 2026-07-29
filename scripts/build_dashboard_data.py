@@ -45,7 +45,7 @@ HOLIDAY_DATES = {date.fromisoformat(d) for days in KOREAN_HOLIDAYS.values() for 
 
 # 셀당 내보내는 일정 후보(파레토 프런티어) 상한. 어느 '휴일 하루 가치'에서도 최적 일정은
 # 프런티어 위에만 있으므로 소수만 실어도 충분하다 (matrix.json 크기 억제).
-MAX_PAIRS_PER_CELL = 5
+MAX_PAIRS_PER_CELL = 6
 
 
 def _day(row):
