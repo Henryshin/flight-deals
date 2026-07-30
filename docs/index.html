@@ -244,6 +244,31 @@
   }
   #max-leave { width: 60px; }  /* placeholder '무제한' 이 들어갈 폭 */
   #day-value:focus, #max-leave:focus { border-color: var(--excel-green); outline: none; }
+  /* 적용 버튼: 확정 전(pending)에는 초록으로 채워 '눌러야 반영된다'를 드러낸다. */
+  .apply-btn {
+    font-family: inherit; font-size: 14px; padding: 2px 10px; cursor: pointer; margin-left: 2px;
+    border: 1px solid var(--grid); background: #fff; color: var(--text); border-radius: 2px;
+  }
+  .apply-btn:hover { border-color: var(--excel-green); color: #14532d; }
+  .apply-btn.pending {
+    background: var(--excel-green); border-color: var(--excel-green); color: #fff; font-weight: 700;
+  }
+  /* 반영 결과 박스: 필터 줄 바로 아래에 붙어 '전체 데이터에 먹혔다'를 숫자로 알린다. */
+  #apply-box {
+    /* 드래그 가능한 채팅 창(z-index 80)이 오른쪽을 덮어 닫기 ✕ 를 못 누르는 일이 없도록
+       폭을 제한하고 그보다 위에 둔다. 잠깐 떴다 사라지는 알림이라 위에 와도 무해하다. */
+    position: relative; z-index: 90; max-width: 560px;
+    margin-top: 2px; padding: 7px 30px 7px 11px; background: #eef6f1;
+    border: 1px solid #c3ddce; border-left: 4px solid var(--excel-green); font-size: 14.5px;
+    display: flex; flex-direction: column; gap: 2px; animation: toast-in .2s ease;
+  }
+  #apply-box .apply-ok { font-weight: 700; color: #14532d; }
+  #apply-box .apply-detail { color: var(--text); line-height: 1.5; }
+  #apply-box .apply-x {
+    position: absolute; top: 4px; right: 6px; border: none; background: none; cursor: pointer;
+    color: var(--muted); font-size: 14px; padding: 2px 4px;
+  }
+  #apply-box .apply-x:hover { color: #b3261e; }
   .day-value-wrap .cell-sub { display: inline; }
   .eff-note .price-link { font-size: inherit; }
   .chip {
@@ -499,6 +524,7 @@
           <span class="chip-sub">휴일 가치</span>
           <div class="day-value-wrap" title="휴일 하루를 얼마의 가치로 볼지 정하면, 조금 비싸도 여행 기간 안에 주말·공휴일이 더 많이 들어오는 일정·연휴를 추천합니다. 실질 비용 = 가격 − 가치 × 덤 휴일(여행일 − 연차). 0이면 무조건 최저가 일정.">
             하루 <input id="day-value" type="number" min="0" step="1" inputmode="numeric" /> 만원
+            <button type="button" class="apply-btn" id="day-value-apply" title="이 값으로 두 보드의 추천을 다시 계산합니다 (Enter 로도 적용)">적용</button>
             <span class="cell-sub" id="day-value-hint"></span>
           </div>
         </div>
@@ -506,9 +532,11 @@
           <span class="chip-sub">연차 상한</span>
           <div class="day-value-wrap" title="이 여행 하나에 쓸 연차의 상한. 실질비용 공식은 덤 휴일만 편익으로 보므로 상한이 없으면 '연차 9개 쓰는 14박'처럼 연차를 태우는 일정이 추천으로 올라옵니다. 비워 두면 무제한.">
             최대 <input id="max-leave" type="number" min="0" step="1" inputmode="numeric" placeholder="무제한" /> 개
+            <button type="button" class="apply-btn" id="max-leave-apply" title="이 값으로 두 보드의 추천을 다시 계산합니다 (Enter 로도 적용)">적용</button>
             <span class="cell-sub" id="max-leave-hint"></span>
           </div>
         </div>
+        <div id="apply-box" hidden></div>
       </div>
     </div>
 
@@ -2927,6 +2955,123 @@
       out.className = ok ? 'ok' : 'fail';
     }
 
+    // ===== 휴일 가치 / 연차 상한: 입력 -> '적용' 확정 -> 반영 결과 박스 =====
+    function parseDayValueInput(raw) {
+      const v = parseInt(raw, 10);
+      return isNaN(v) || v < 0 ? 0 : v;
+    }
+    function parseMaxLeaveInput(raw) {
+      const s = String(raw == null ? '' : raw).trim();
+      if (s === '') return null;                 // 비움 = 무제한
+      const v = parseInt(s, 10);
+      return isNaN(v) || v < 0 ? null : v;
+    }
+    // 지금 설정으로 각 여행지에 어떤 연휴/일정이 추천되는지 지문을 뜬다.
+    // 적용 전후로 이 지문을 비교해 '몇 개 여행지의 추천이 실제로 바뀌었는지' 센다.
+    function recommendationSnapshot() {
+      const ids = gvActiveWindowIds();
+      const cells = (state.matrix && state.matrix.cells) || {};
+      const groups = new Map();
+      for (const r of state.routesStatus) {
+        if (!routePassesChip(r)) continue;
+        const gk = routeGroupKey(r);
+        if (!groups.has(gk)) groups.set(gk, []);
+        groups.get(gk).push(r);
+      }
+      const snap = {};
+      for (const [gk, mons] of groups) {
+        const pick = pickBestCell(mons, ids, cells);
+        if (!pick.cell) continue;
+        const p = pickPair(pick.cell) || primaryPair(pick.cell);
+        snap[gk] = p ? `${pick.win}|${p.depart_date}|${p.return_date}` : String(pick.win);
+      }
+      return snap;
+    }
+    function snapshotDiffCount(a, b) {
+      let n = 0;
+      for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) if (a[k] !== b[k]) n++;
+      return n;
+    }
+    let applyBoxTimer = null;
+    function showApplyBox(changedLabel, changed, total) {
+      const box = document.getElementById('apply-box');
+      if (!box) return;
+      const settings = `휴일 가치 <b>하루 ${fmt(state.dayValue)}만원</b> · 연차 상한 <b>${state.maxLeave == null ? '무제한' : state.maxLeave + '개'}</b>`;
+      const effect = changed > 0
+        ? `전체 <b>${total}개</b> 여행지 중 <b>${changed}개</b>의 추천 연휴·일정이 바뀌었습니다.`
+        : `추천 결과는 이전과 같습니다 (바뀐 여행지 0개). 값을 더 크게/작게 바꾸면 달라집니다.`;
+      box.innerHTML = `<span class="apply-ok">✓ ${esc(changedLabel)} 반영 완료</span>`
+        + `<span class="apply-detail">${settings}<br />${effect}</span>`
+        + `<button type="button" class="apply-x" id="apply-box-x" title="닫기">✕</button>`;
+      box.hidden = false;
+      document.getElementById('apply-box-x').addEventListener('click', () => { box.hidden = true; });
+      if (applyBoxTimer) clearTimeout(applyBoxTimer);
+      applyBoxTimer = setTimeout(() => { box.hidden = true; }, 9000);
+    }
+    function wireSettingApply() {
+      const dvEl = document.getElementById('day-value');
+      const mlEl = document.getElementById('max-leave');
+      const dvBtn = document.getElementById('day-value-apply');
+      const mlBtn = document.getElementById('max-leave-apply');
+
+      const renderHints = () => {
+        // 입력값이 아직 확정되지 않았으면(대기) 버튼을 강조해 '눌러야 반영된다'를 알린다.
+        const dvPending = parseDayValueInput(dvEl.value) !== state.dayValue;
+        const mlPending = parseMaxLeaveInput(mlEl.value) !== state.maxLeave;
+        dvBtn.classList.toggle('pending', dvPending);
+        mlBtn.classList.toggle('pending', mlPending);
+        document.getElementById('day-value-hint').textContent = dvPending
+          ? '· 적용 버튼을 눌러야 반영됩니다'
+          : (state.dayValue > 0 ? `· 적용됨 — 비싸도 휴일이 많이 끼는 연휴·일정을 추천` : '· 적용됨 — 0이라 항상 최저가 일정');
+        document.getElementById('max-leave-hint').textContent = mlPending
+          ? '· 적용 버튼을 눌러야 반영됩니다'
+          : (state.maxLeave == null
+            ? '· 적용됨 — 무제한 (연차 많이 쓰는 긴 일정도 추천될 수 있음)'
+            : `· 적용됨 — 연차 ${state.maxLeave}개 이내 일정만 추천`);
+      };
+
+      const apply = (which) => {
+        const before = recommendationSnapshot();
+        const total = Object.keys(before).length;
+        if (which === 'dayValue') {
+          state.dayValue = parseDayValueInput(dvEl.value);
+          dvEl.value = state.dayValue;                       // 잘못된 입력 정규화
+          try { localStorage.setItem(DAY_VALUE_KEY, String(state.dayValue)); } catch (e) {}
+          // 값이 순위에 드러나도록 정렬도 실질비용순으로 돌려준다 (0이면 건드리지 않음).
+          if (state.dayValue > 0) {
+            document.getElementById('gv-sort').value = 'net';
+            document.getElementById('dest-sort').value = 'net';
+          }
+        } else {
+          state.maxLeave = parseMaxLeaveInput(mlEl.value);
+          mlEl.value = state.maxLeave == null ? '' : state.maxLeave;
+          try { localStorage.setItem(MAX_LEAVE_KEY, state.maxLeave == null ? '' : String(state.maxLeave)); } catch (e) {}
+        }
+        renderGvBoard();
+        renderDestBoard();
+        renderHints();
+        const after = recommendationSnapshot();
+        showApplyBox(which === 'dayValue' ? '휴일 가치' : '연차 상한',
+          snapshotDiffCount(before, after), total);
+      };
+
+      dvEl.value = state.dayValue;
+      mlEl.value = state.maxLeave == null ? '' : state.maxLeave;
+      renderHints();
+      dvEl.addEventListener('input', renderHints);
+      mlEl.addEventListener('input', renderHints);
+      dvBtn.addEventListener('click', () => apply('dayValue'));
+      mlBtn.addEventListener('click', () => apply('maxLeave'));
+      // Enter 로도 확정 (IME 조합 중 Enter는 무시)
+      const onEnter = (el, which) => el.addEventListener('keydown', e => {
+        if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
+        e.preventDefault();
+        apply(which);
+      });
+      onEnter(dvEl, 'dayValue');
+      onEnter(mlEl, 'maxLeave');
+    }
+
     // h2.collapsible + hidden 바디 하나를 접기/펼치기 토글로 연결 (기본 접힘인 섹션 공용).
     // 섹션 접기/펼치기. defaultOpen 은 첫 방문 기본값이고, 이후에는 이 브라우저에
     // 저장된 마지막 상태를 따른다.
@@ -2982,48 +3127,10 @@
       document.getElementById('gv-sort').addEventListener('change', renderGvBoard);
       document.getElementById('dest-sort').addEventListener('change', renderDestBoard);
 
-      // 휴일 하루 가치 입력 -> 두 보드의 추천 일정을 실질 비용 기준으로 즉시 재계산.
-      // '특가율순'/'최저가순' 등 다른 정렬은 이 값과 무관한 고정 지표라 슬라이더를
-      // 움직여도 목록 순서가 그대로다(추천 일정 칸의 문구만 바뀜) — 그러면 이 입력이
-      // 뭘 하는지 알기 어려우므로, 값을 바꾸면 정렬을 '실질비용순'으로 같이 돌려
-      // 순위가 실제로 재배열되는 걸 바로 보여준다.
-      const dayValueEl = document.getElementById('day-value');
-      const dayValueHint = () => {
-        document.getElementById('day-value-hint').textContent =
-          state.dayValue > 0 ? '· 비싸도 연휴가 길게 이어지면 추천 (정렬을 실질비용순으로 전환)' : '· 0 = 항상 최저가 일정';
-      };
-      dayValueEl.value = state.dayValue;
-      dayValueHint();
-      dayValueEl.addEventListener('input', () => {
-        const v = parseInt(dayValueEl.value, 10);
-        state.dayValue = isNaN(v) || v < 0 ? 0 : v;
-        try { localStorage.setItem(DAY_VALUE_KEY, String(state.dayValue)); } catch (e) {}
-        dayValueHint();
-        const gvSortEl = document.getElementById('gv-sort');
-        const destSortEl = document.getElementById('dest-sort');
-        if (state.dayValue > 0) { gvSortEl.value = 'net'; destSortEl.value = 'net'; }
-        renderGvBoard();
-        renderDestBoard();
-      });
-
-      // 연차 상한 입력 -> 상한을 넘는 일정은 추천 후보에서 제외 (빈칸 = 무제한).
-      const maxLeaveEl = document.getElementById('max-leave');
-      const maxLeaveHint = () => {
-        document.getElementById('max-leave-hint').textContent =
-          state.maxLeave == null ? '· 무제한 (연차 많이 쓰는 긴 일정도 추천될 수 있음)'
-            : `· 연차 ${state.maxLeave}개 이내 일정만 추천`;
-      };
-      maxLeaveEl.value = state.maxLeave == null ? '' : state.maxLeave;
-      maxLeaveHint();
-      maxLeaveEl.addEventListener('input', () => {
-        const raw = String(maxLeaveEl.value).trim();
-        const v = parseInt(raw, 10);
-        state.maxLeave = raw === '' || isNaN(v) || v < 0 ? null : v;
-        try { localStorage.setItem(MAX_LEAVE_KEY, state.maxLeave == null ? '' : String(state.maxLeave)); } catch (e) {}
-        maxLeaveHint();
-        renderGvBoard();
-        renderDestBoard();
-      });
+      // 휴일 가치 / 연차 상한: 입력 즉시 반영하지 않고 '적용' 버튼(또는 Enter)으로 확정한다.
+      // 즉시 반영하던 방식은 표가 조용히 바뀌어 '내 숫자가 전체 데이터에 먹혔는지' 알 수
+      // 없었다. 확정하면 몇 개 여행지의 추천이 실제로 바뀌었는지 숫자로 알려 준다.
+      wireSettingApply();
       document.getElementById('btn-dest-expand').addEventListener('click', () => setAllDestExpanded(true));
       document.getElementById('btn-dest-collapse').addEventListener('click', () => setAllDestExpanded(false));
 
