@@ -238,11 +238,12 @@
   .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
   #chip-region-line { border-top: 1px dashed var(--grid); padding-top: 6px; }
   .day-value-wrap { display: flex; align-items: center; gap: 4px; font-size: 15px; flex-wrap: wrap; }
-  #day-value {
+  #day-value, #max-leave {
     width: 48px; font-family: Consolas, monospace; font-size: 15px; text-align: right;
     border: 1px solid var(--grid); background: #fff; padding: 2px 4px; border-radius: 2px; color: var(--text);
   }
-  #day-value:focus { border-color: var(--excel-green); outline: none; }
+  #max-leave { width: 60px; }  /* placeholder '무제한' 이 들어갈 폭 */
+  #day-value:focus, #max-leave:focus { border-color: var(--excel-green); outline: none; }
   .day-value-wrap .cell-sub { display: inline; }
   .eff-note .price-link { font-size: inherit; }
   .chip {
@@ -292,6 +293,8 @@
   table.dest-tbl > tbody > tr:hover > td { background: var(--sel); }
   .win-name { font-weight: 700; color: #14532d; }
   .badge-min { display: inline-block; background: var(--excel-green); color: #fff; font-size: 13px; padding: 0 5px; border-radius: 2px; margin-left: 4px; }
+  /* 실질 최적(휴일 가치 반영)은 최저가 배지와 구분되게 파란 계열 */
+  .badge-net { background: #0b5cab; }
   /* 연휴 간 가격 비교 막대 (그 여행지 안에서 최고가 대비 상대 길이) */
   .pbar { display: block; height: 9px; background: #eef1f3; border: 1px solid var(--grid); border-radius: 2px; overflow: hidden; }
   .pbar > i { display: block; height: 100%; background: #9fc6ae; }
@@ -469,7 +472,8 @@
       2. 연휴기간에 연차 끼워써야하는 직장인들을 위해 만든 사이트로, 다른날짜 검색이 필요한 경우에는 스카이스캐너 이용 권고.<br />
       3. 일정 옆 날씨(🌧/☀️/⛅)는 해당 기간의 평균 날씨<br />
       4. 보드는 두 가지 — <b>연휴 특가 보드</b>는 "이 연휴엔 어디가 싼가", <b>여행지별 연휴 보드</b>는 "이 여행지는 어느 연휴에 가야 싼가"를 봅니다.<br />
-      5. 필터의 <b>휴일 가치</b>(하루 = n만원)를 설정하면, 조금 비싸도 여행 기간 안에 주말·공휴일이 더 많이 들어오는 일정(예: 목금 연휴에 출발을 앞당겨 앞주말도 여행지에서 보내기)을 실질 비용으로 비교해 추천합니다.
+      5. 필터의 <b>휴일 가치</b>(하루 = n만원)를 설정하면, 조금 비싸도 여행 기간 안에 주말·공휴일이 더 많이 들어오는 일정(예: 목금 연휴에 출발을 앞당겨 앞주말도 여행지에서 보내기)을 <b>실질 비용</b>(= 가격 − 가치 × 덤 휴일)으로 비교해 추천합니다. 어느 <b>연휴</b>를 갈지도 이 기준으로 다시 고릅니다.<br />
+      6. <b>연차 상한</b>은 이 여행 하나에 쓸 연차의 한도입니다. 실질 비용은 덤 휴일만 편익으로 보므로 한도가 없으면 연차를 많이 태우는 긴 일정이 추천으로 올라옵니다 — 상한 안에서만 추천하고, 상한을 넘는 일정만 남으면 ⚠ 로 알려줍니다.
     </div>
 
     <div class="chip-bar">
@@ -493,9 +497,16 @@
         </div>
         <div class="chip-line" id="day-value-line">
           <span class="chip-sub">휴일 가치</span>
-          <div class="day-value-wrap" title="휴일 하루를 얼마의 가치로 볼지 정하면, 조금 비싸도 주말·공휴일이 더 길게 이어지는 일정을 추천합니다. 실질 비용 = 가격 − 가치 × 덤 휴일(연차 없이 쉬는 날). 0이면 무조건 최저가 일정.">
+          <div class="day-value-wrap" title="휴일 하루를 얼마의 가치로 볼지 정하면, 조금 비싸도 여행 기간 안에 주말·공휴일이 더 많이 들어오는 일정·연휴를 추천합니다. 실질 비용 = 가격 − 가치 × 덤 휴일(여행일 − 연차). 0이면 무조건 최저가 일정.">
             하루 <input id="day-value" type="number" min="0" step="1" inputmode="numeric" /> 만원
             <span class="cell-sub" id="day-value-hint"></span>
+          </div>
+        </div>
+        <div class="chip-line" id="max-leave-line">
+          <span class="chip-sub">연차 상한</span>
+          <div class="day-value-wrap" title="이 여행 하나에 쓸 연차의 상한. 실질비용 공식은 덤 휴일만 편익으로 보므로 상한이 없으면 '연차 9개 쓰는 14박'처럼 연차를 태우는 일정이 추천으로 올라옵니다. 비워 두면 무제한.">
+            최대 <input id="max-leave" type="number" min="0" step="1" inputmode="numeric" placeholder="무제한" /> 개
+            <span class="cell-sub" id="max-leave-hint"></span>
           </div>
         </div>
       </div>
@@ -587,7 +598,7 @@
               <th style="width:18%">여행지</th>
               <th style="width:10%">최저가</th>
               <th style="width:13%">특가율(통상가 대비)</th>
-              <th style="width:31%">추천 일정 (가장 싼 연휴)</th>
+              <th style="width:31%" id="dest-sched-th">추천 일정</th>
               <th style="width:12%">직항/경유</th>
               <th style="width:10%">목표가</th>
               <th style="width:2%"></th>
@@ -1067,6 +1078,11 @@
     const PENDING_KEY = 'fd_pending';
     const DAY_VALUE_KEY = 'fd_day_value'; // 휴일 하루 가치 (만원, 비용-편익 계산용)
     const DAY_VALUE_DEFAULT = 10;
+    // 이 여행 하나에 쓸 연차 상한. 덤 휴일만 편익으로 보는 실질비용 공식은 연차 소모에
+    // 페널티가 없어서, 상한이 없으면 '연차 9개 쓰는 14박'처럼 연차를 태우는 일정이
+    // 추천으로 올라온다. 이 사이트의 전제(연차 아껴 쓰기)를 지키는 예산 제약.
+    const MAX_LEAVE_KEY = 'fd_max_leave';
+    const MAX_LEAVE_DEFAULT = 5;
     const EMPTY_DEALS_MSG = "데이터 초기화 후 재수집 중입니다. 다음 자동 수집(최대 4시간) 또는 '지금 수집 실행'으로 갱신하세요.";
     const NO_DEALS_MSG = '현재 기준(30일 평균 대비 15% 이상 하락)을 충족하는 항목이 없습니다. 다음 수집에서 다시 계산됩니다.';
 
@@ -1089,6 +1105,15 @@
           const v = parseInt(localStorage.getItem(DAY_VALUE_KEY), 10);
           return isNaN(v) || v < 0 ? DAY_VALUE_DEFAULT : v;
         } catch (e) { return DAY_VALUE_DEFAULT; }
+      })(),
+      // 이 여행에 쓸 연차 상한(개). null = 무제한(입력칸 비움).
+      maxLeave: (function () {
+        try {
+          const raw = localStorage.getItem(MAX_LEAVE_KEY);
+          if (raw === '') return null;           // 사용자가 비워 둔 = 무제한
+          const v = parseInt(raw, 10);
+          return isNaN(v) || v < 0 ? MAX_LEAVE_DEFAULT : v;
+        } catch (e) { return MAX_LEAVE_DEFAULT; }
       })(),
       // 내 목록을 담아본 적 있으면(또는 지난번 '내 목록' 뷰였으면) 내 목록으로 시작.
       favOnly: (function () {
@@ -1617,11 +1642,28 @@
       return cell.best ? [{ ...cell.best, price: cell.min_price }] : [];
     }
     function effCost(p) { return p.price - dayValueWon() * (p.bonus_days || 0); }
-    function pickPair(cell) {
+    function leaveCap() { return state.maxLeave == null ? Infinity : state.maxLeave; }
+    // 연차 상한을 만족하는 후보만. 상한을 넘겨 하나도 없으면 빈 배열(추천 없음)을 돌려주고,
+    // 최저가 칸(primaryPair)은 그대로 유지한다 — 최저가는 cell.min_price 와 묶여 있어
+    // 여기서 바꾸면 특가율/정렬 기준까지 어긋난다.
+    function eligiblePairs(cell) {
       const ps = cellPairs(cell);
-      let best = ps[0] || null;
+      const cap = leaveCap();
+      if (cap === Infinity) return ps;
+      return ps.filter(p => (p.leave_days || 0) <= cap);
+    }
+    function pickPair(cell) {
+      const ps = eligiblePairs(cell);
+      if (!ps.length) return null;
+      let best = ps[0];
       for (const p of ps) if (effCost(p) < effCost(best)) best = p;
       return best;
+    }
+    // 이 칸의 실질비용 (연차 상한 안에서 고른 추천 일정 기준). 상한 안에 후보가 없으면
+    // 뒤로 밀리도록 Infinity.
+    function cellNetCost(cell) {
+      const p = pickPair(cell);
+      return p ? effCost(p) : Infinity;
     }
     // 일정 요약 텍스트. 총 여행일수는 'N박 M일'에 이미 담겨 있으므로 따로 안 적는다
     // (덤 휴일 수는 최저가 일정과 다른 추천이 있을 때 recommendedAltNote 쪽에서만 언급).
@@ -1640,16 +1682,31 @@
     function recommendedAltNote(cell) {
       const min = primaryPair(cell);
       const rec = pickPair(cell);
+      // 최저가 일정 자체가 연차 상한을 넘고, 상한 안에 대안도 없으면 그 사실을 알린다
+      // (상한 안에서 갈 수 없는 일정을 아무 표시 없이 추천처럼 두지 않도록).
+      if (min && !rec) {
+        return `<div class="cell-sub eff-note" title="이 연휴에서 찾은 일정은 모두 설정한 연차 상한(${leaveCap()}개)을 넘습니다 — 상한을 늘리면 후보가 보입니다">⚠ 연차 ${min.leave_days}개 필요 (상한 ${leaveCap()}개 초과)</div>`;
+      }
       if (!min || !rec || rec === min || rec.depart_date === min.depart_date && rec.return_date === min.return_date) return '';
       const diff = rec.price - min.price;
       const dBonus = (rec.bonus_days || 0) - (min.bonus_days || 0);
+      const dLeave = (rec.leave_days || 0) - (min.leave_days || 0);
       const period = `${fmtDateYY(rec.depart_date, rec.depart_weekday)} ~ ${fmtDateYY(rec.return_date, rec.return_weekday)}`;
-      const title = `최저가 일정(${fmt(min.price)}원, ${min.depart_date}~${min.return_date})보다 ${fmt(diff)}원 비싸지만 `
-        + `덤 휴일이 ${dBonus}일 더 많아, 휴일 하루 ${fmt(dayValueWon())}원 기준 실질 부담이 더 낮은 일정입니다`;
+      // 최저가가 연차 상한에 걸려 밀린 경우와, 순수하게 실질비용이 더 낮은 경우를 구분해 설명.
+      const capped = (min.leave_days || 0) > leaveCap();
+      const title = capped
+        ? `최저가 일정(${fmt(min.price)}원)은 연차 ${min.leave_days}개가 필요해 상한(${leaveCap()}개)을 넘습니다. `
+          + `연차 ${rec.leave_days}개로 갈 수 있는 일정 중 실질 부담이 가장 낮은 것입니다`
+        : `최저가 일정(${fmt(min.price)}원, ${min.depart_date}~${min.return_date})보다 ${fmt(diff)}원 비싸지만 `
+          + `덤 휴일이 ${dBonus}일 더 많아, 휴일 하루 ${fmt(dayValueWon())}원 기준 실질 부담이 더 낮은 일정입니다`
+          + (dLeave > 0 ? ` (연차는 ${dLeave}개 더 씁니다)` : '');
       const priceHtml = rec.booking_url
         ? `<a class="price-link" href="${esc(rec.booking_url)}" target="_blank" rel="noopener">${fmt(rec.price)}원</a>`
         : `${fmt(rec.price)}원`;
-      return `<div class="cell-sub eff-note" title="${esc(title)}">💡 대신 추천: ${esc(period)} · ${schedText(rec)} · ${priceHtml} (+${fmt(diff)} · 휴일 +${dBonus}일)</div>`;
+      const delta = capped
+        ? `연차 ${min.leave_days}→${rec.leave_days}개`
+        : `+${fmt(diff)} · 휴일 +${dBonus}일${dLeave > 0 ? ` · 연차 +${dLeave}개` : ''}`;
+      return `<div class="cell-sub eff-note" title="${esc(title)}">💡 대신 추천: ${esc(period)} · ${schedText(rec)} · ${priceHtml} (${delta})</div>`;
     }
     // 이 연휴에 신뢰할 만한 특가율이 있으면 그 값, 아니면 null (tier C/무데이터).
     function gvDealVal(cell) {
@@ -1695,6 +1752,19 @@
       const b = [gvTierRank(best.tier), -(gvDealVal(best) == null ? -1 : gvDealVal(best)), best.min_price];
       return a[0] < b[0] || (a[0] === b[0] && (a[1] < b[1] || (a[1] === b[1] && a[2] < b[2])));
     }
+    // 대표 칸(= 어느 연휴를 보여줄지) 선택. 휴일 가치가 0이면 기존 기준(티어→특가율→가격)
+    // 그대로. 0보다 크면 티어는 그대로 앞세우고(표본 부족한 '수집 중' 칸이 대표가 되는 것
+    // 방지) 같은 티어 안에서 실질비용이 낮은 칸을 고른다 — 슬라이더가 '이 연휴 안의 날짜'
+    // 뿐 아니라 '어느 연휴가 이득인지'까지 바꾸도록.
+    function cellBetterForBoard(c, best) {
+      if (!best) return true;
+      if (!dayValueWon()) return cellBetter(c, best);
+      const at = gvTierRank(c.tier), bt = gvTierRank(best.tier);
+      if (at !== bt) return at < bt;
+      const an = cellNetCost(c), bn = cellNetCost(best);
+      if (an !== bn) return an < bn;
+      return cellBetter(c, best);
+    }
     // 여러 모니터(직항/경유) x 여러 연휴 중 가장 유리한 칸 하나 -> {cell, win}
     function pickBestCell(monitors, windowIds, allCells) {
       const cells = allCells || (state.matrix && state.matrix.cells) || {};
@@ -1702,7 +1772,7 @@
       for (const mon of monitors) {
         for (const wid of windowIds) {
           const c = (cells[wid] || {})[rk(mon)];
-          if (c && cellBetter(c, best)) { best = c; bestWin = wid; }
+          if (c && cellBetterForBoard(c, best)) { best = c; bestWin = wid; }
         }
       }
       return { cell: best, win: bestWin };
@@ -1790,7 +1860,7 @@
       // 실질비용 = 추천 일정의 (가격 - 휴일가치 x 덤휴일). '휴일 가치' 슬라이더를 움직이면
       // 이 정렬만 눈에 보이게 순위가 바뀐다 (다른 정렬은 슬라이더와 무관한 고정 지표라
       // 값을 바꿔도 목록 순서는 그대로 — 추천 일정 칸의 문구만 바뀐다).
-      const gvNetCost = r => (r.cell ? effCost(pickPair(r.cell)) : Infinity);
+      const gvNetCost = r => (r.cell ? cellNetCost(r.cell) : Infinity);
       const netCmp = (a, b) => (gvNetCost(a) - gvNetCost(b)) || priceCmp(a, b);
       const sortKey = document.getElementById('gv-sort').value;
       const sortFn = sortKey === 'price' ? priceCmp
@@ -1991,10 +2061,12 @@
     }
     // 여행지(노선) 그룹 하나 -> 화면에 필요한 값 묶음
     function destGroupInfo(g) {
-      // 싼 순. 값이 같으면 티어/특가율이 나은 칸을 앞으로 (같은 값인데 '수집 중'인 칸이
-      // 대표가 되어 특가율이 안 보이는 일을 막는다).
+      // 휴일 가치가 0이면 '싼 순'(값이 같으면 티어/특가율이 나은 칸을 앞으로 — 같은 값인데
+      // '수집 중'인 칸이 대표가 되어 특가율이 안 보이는 일을 막는다).
+      // 0보다 크면 '실질비용 싼 순' — 어느 연휴가 이득인지까지 슬라이더에 반영한다.
       const wins = destWindowCells(g.items).sort((a, b) =>
-        (a.cell.min_price - b.cell.min_price)
+        (dayValueWon() ? (cellNetCost(a.cell) - cellNetCost(b.cell)) : 0)
+        || (a.cell.min_price - b.cell.min_price)
         || (cellBetter(a.cell, b.cell) ? -1 : cellBetter(b.cell, a.cell) ? 1 : 0));
       const targets = getTargets();
       const reached = g.items.some(m => {
@@ -2011,7 +2083,7 @@
       }
       return {
         wins,
-        best: wins.length ? wins[0] : null,   // 가장 싼 연휴 (정렬 첫 칸)
+        best: wins.length ? wins[0] : null,   // 대표 연휴 (정렬 첫 칸: 최저가 또는 실질 최적)
         status: st || { dot: 'none', text: '대기' },
         // 같은 노선의 모니터들은 표본이 서로 포함 관계(직항 모니터 ⊂ 경유 허용 모니터)라
         // 더하면 중복 계산된다. 가장 큰 모집단 = 이 여행지의 실제 관측 수.
@@ -2055,14 +2127,22 @@
       }
 
       const maxPrice = info.wins.reduce((mx, w) => Math.max(mx, w.cell.min_price), 0) || 1;
+      // 정렬 기준이 실질비용일 수도 있으므로(휴일 가치 > 0), '가장 싼 연휴'는 순서와 별개로
+      // 실제 최저가를 다시 구해서 비교 문구/막대에 쓴다.
+      const minPrice = info.wins.reduce((mn, w) => Math.min(mn, w.cell.min_price), Infinity);
+      const byNet = !!dayValueWon();
       const rows = info.wins.map((w, i) => {
         const b = primaryPair(w.cell);
-        const isMin = i === 0;
+        const isTop = i === 0;                              // 정렬상 대표(최저가 또는 실질 최적)
+        const isCheapest = w.cell.min_price === minPrice;    // 실제 최저가 연휴
         const period = `${fmtDateYY(b.depart_date, b.depart_weekday)} ~ ${fmtDateYY(b.return_date, b.return_weekday)}`;
         const sched = `${period} · ${schedText(b)}${recommendedAltNote(w.cell)}`;
         const strip = `<span class="gv-strip-row">${tripStrip(b.depart_date, b.return_date)}${climateBadge(g.route.destination, b.depart_date)}</span>`;
         const pct = Math.max(4, Math.round(w.cell.min_price / maxPrice * 100));
-        const barTitle = isMin ? '이 여행지에서 가장 싼 연휴' : `가장 싼 연휴보다 ${fmt(w.cell.min_price - info.wins[0].cell.min_price)}원 비쌈`;
+        const barTitle = isCheapest ? '이 여행지에서 가장 싼 연휴' : `가장 싼 연휴보다 ${fmt(w.cell.min_price - minPrice)}원 비쌈`;
+        // 배지: 휴일 가치가 켜져 있으면 '실질 최적'과 '최저가'를 구분해 각각 표시한다.
+        const badges = (byNet && isTop && !isCheapest ? '<span class="badge-min badge-net" title="휴일 가치를 반영한 실질비용이 가장 낮은 연휴">실질 최적</span>' : '')
+          + (isCheapest ? '<span class="badge-min">최저</span>' : '');
         // 모니터가 여럿인 노선(예: 경유 허용 + 직항 전용)은 대표(최저) 칸 옆에 남는 모니터의
         // 칸도 작게 보여준다 — 직항이 경유보다 비싸 대표로 못 뽑혀도 화면에서 사라지지 않게.
         const altHtml = (w.alts || []).map(a => {
@@ -2071,13 +2151,13 @@
             `${stopsCell(ab.stops, ab.airline)} <a class="price-link" href="${esc(ab.booking_url)}" target="_blank" rel="noopener">${fmt(a.cell.min_price)}원</a></div>`;
         }).join('');
         return `
-          <tr${isMin ? ' class="is-min"' : ''}>
-            <td class="win-name">${esc(w.label)}${isMin ? '<span class="badge-min">최저</span>' : ''}</td>
+          <tr${isTop ? ' class="is-min"' : ''}>
+            <td class="win-name">${esc(w.label)}${badges}</td>
             <td class="num"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(w.cell.min_price)}</a></td>
             <td>${gvDealBadge(w.cell)}</td>
             <td class="period-cell">${sched}${strip}</td>
             <td>${stopsCell(b.stops, b.airline)}${altHtml}</td>
-            <td title="${esc(barTitle)}"><span class="pbar${isMin ? ' is-min' : ''}"><i style="width:${pct}%"></i></span></td>
+            <td title="${esc(barTitle)}"><span class="pbar${isCheapest ? ' is-min' : ''}"><i style="width:${pct}%"></i></span></td>
           </tr>`;
       }).join('');
 
@@ -2126,6 +2206,11 @@
 
     function renderDestBoard() {
       renderDestWinFilter();
+      // 대표 연휴를 무엇으로 고르는지가 휴일 가치에 따라 달라지므로 헤더에도 밝혀 준다.
+      const schedTh = document.getElementById('dest-sched-th');
+      if (schedTh) {
+        schedTh.textContent = dayValueWon() ? '추천 일정 (실질비용 최적 연휴)' : '추천 일정 (가장 싼 연휴)';
+      }
       const tbody = document.getElementById('dest-board');
       if (!state.routesStatus.length) {
         tbody.innerHTML = emptyRow(8, "등록된 항목이 없습니다. 아래 '항목 등록'에서 추가하세요.");
@@ -2158,7 +2243,7 @@
       };
       const destName = g => g.route.label || (g.route.origin + ' → ' + g.route.destination);
       // 실질비용 = 이 여행지의 대표(최저) 연휴에서, 추천 일정의 (가격 - 휴일가치 x 덤휴일).
-      const netCost = g => (g.info.best ? effCost(pickPair(g.info.best.cell)) : Infinity);
+      const netCost = g => (g.info.best ? cellNetCost(g.info.best.cell) : Infinity);
       const cmpMap = {
         price: (a, b) => bestPrice(a) - bestPrice(b),
         deal: (a, b) => (bestDeal(b) - bestDeal(a)) || (bestPrice(a) - bestPrice(b)),
@@ -2917,6 +3002,25 @@
         const gvSortEl = document.getElementById('gv-sort');
         const destSortEl = document.getElementById('dest-sort');
         if (state.dayValue > 0) { gvSortEl.value = 'net'; destSortEl.value = 'net'; }
+        renderGvBoard();
+        renderDestBoard();
+      });
+
+      // 연차 상한 입력 -> 상한을 넘는 일정은 추천 후보에서 제외 (빈칸 = 무제한).
+      const maxLeaveEl = document.getElementById('max-leave');
+      const maxLeaveHint = () => {
+        document.getElementById('max-leave-hint').textContent =
+          state.maxLeave == null ? '· 무제한 (연차 많이 쓰는 긴 일정도 추천될 수 있음)'
+            : `· 연차 ${state.maxLeave}개 이내 일정만 추천`;
+      };
+      maxLeaveEl.value = state.maxLeave == null ? '' : state.maxLeave;
+      maxLeaveHint();
+      maxLeaveEl.addEventListener('input', () => {
+        const raw = String(maxLeaveEl.value).trim();
+        const v = parseInt(raw, 10);
+        state.maxLeave = raw === '' || isNaN(v) || v < 0 ? null : v;
+        try { localStorage.setItem(MAX_LEAVE_KEY, state.maxLeave == null ? '' : String(state.maxLeave)); } catch (e) {}
+        maxLeaveHint();
         renderGvBoard();
         renderDestBoard();
       });
