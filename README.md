@@ -122,6 +122,38 @@ python scripts/build_dashboard_data.py
 
 저장소 Settings → Pages → Source를 `main` 브랜치의 `/docs` 폴더로 지정.
 
+## 텔레그램 특가 알림
+
+`docs/data/deals.json`(대시보드의 "변동 항목" — 같은 연휴 윈도우·박수 기준 최근 평균가 대비
+15% 이상 하락한 특가)이 새로 생기거나 더 싸질 때마다 텔레그램으로 알려줍니다.
+`build.yml`이 대시보드 데이터를 재생성한 직후 `scripts/notify_telegram.py`를 실행합니다.
+
+### 설정 (약 5분)
+
+1. 텔레그램에서 [@BotFather](https://t.me/BotFather)에게 `/newbot`을 보내 봇을 만들고
+   토큰(`123456:ABC-...` 형태)을 받습니다.
+2. 알림 받을 대화의 chat id를 확인합니다: 만든 봇과 먼저 아무 대화나 나눈 뒤,
+   `https://api.telegram.org/bot<토큰>/getUpdates`를 열어 `"chat":{"id":...}` 값을 확인
+   (그룹방에 추가했다면 음수 id가 나올 수 있습니다).
+3. 저장소 Settings → Secrets and variables → Actions → **New repository secret**으로 추가:
+   | 이름 | 값 |
+   |------|-----|
+   | `TELEGRAM_BOT_TOKEN` | 1번에서 받은 토큰 |
+   | `TELEGRAM_CHAT_ID` | 2번에서 확인한 chat id |
+
+두 시크릿을 설정하지 않으면 알림 스텝은 그냥 건너뛰고 나머지 파이프라인은 평소대로 동작합니다.
+
+### 동작 방식
+
+- 알림 기준(할인율)은 기본적으로 `deals.json`에 뜨는 모든 항목(15%↑ 하락)이며,
+  더 엄격하게 쓰려면 `notify_telegram.py`를 실행하는 워크플로 스텝에
+  `TELEGRAM_MIN_DISCOUNT_PCT` 환경변수(%)를 추가하면 됩니다.
+- 같은 노선·날짜·직항/경유 조합은 한 번 알린 뒤 할인율이 5%p 이상 더 떨어지지 않으면
+  다시 알리지 않습니다 (`data/telegram_notified.json`에 기록). 특가 조건을 벗어나면
+  기록이 지워져서, 나중에 다시 떨어지면 새 특가로 재알림됩니다.
+- 로컬에서 테스트하려면 `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID`를 환경변수로 설정하고
+  `python scripts/build_dashboard_data.py && python scripts/notify_telegram.py`를 실행하세요.
+
 ## 주의사항
 
 - 구글 플라이트 화면 크롤링이므로 사이트 구조가 바뀌면 `collector/google_flights_crawler.py`의 파싱 로직을 갱신해야 함

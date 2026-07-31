@@ -6,6 +6,7 @@
 - 연휴 날짜 후보 생성 (min_nights > 연휴 길이 케이스 포함)
 - 평시 기준가 후보의 연휴 회피
 - 빌드 스크립트의 dedup / 할증률 계산
+- 텔레그램 알림의 중복 방지 로직
 """
 import sys
 from datetime import date, timedelta
@@ -19,6 +20,7 @@ from collector.google_flights_crawler import (
 )
 from holidays import get_holiday_windows
 from scripts.collect import build_baseline_candidates, build_date_candidates, group_routes
+from scripts.notify_telegram import deal_key, should_notify
 
 
 def test_parse_itinerary():
@@ -308,6 +310,17 @@ def test_destmeta_covers_all_destinations():
     # 강수 시즌 문자열은 반드시 12자(1~12월)
     for m in re.finditer(r"d\('([A-Z]{3})'[^)]*'([dmw]+)'\)", js):
         assert len(m.group(2)) == 12, f"{m.group(1)}: r 문자열이 {len(m.group(2))}자 (12자여야 함)"
+
+
+def test_notify_should_notify():
+    deal = {"route": {"origin": "ICN", "destination": "BKK"}, "depart_date": "2026-09-19",
+            "return_date": "2026-09-23", "stops": "직항", "discount_pct": 20.0}
+    assert deal_key(deal) == "ICN-BKK-2026-09-19-2026-09-23-직항"
+
+    assert should_notify(deal, None) is True  # 처음 보는 항목은 항상 알림
+    assert should_notify(deal, {"discount_pct": 20.0}) is False  # 같은 할인율 - 재알림 안함
+    assert should_notify(deal, {"discount_pct": 16.0}) is False  # 5%p 미만으로 더 싸짐 - 안함
+    assert should_notify(deal, {"discount_pct": 15.0}) is True  # 5%p 이상 더 싸짐 - 재알림
 
 
 def main():

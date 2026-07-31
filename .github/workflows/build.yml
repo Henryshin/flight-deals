@@ -45,11 +45,23 @@ jobs:
       - name: Build dashboard data
         run: python scripts/build_dashboard_data.py
 
+      # TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID 시크릿이 없으면 스크립트가 조용히 건너뛰므로
+      # 텔레그램 알림을 설정하지 않은 저장소에서도 이 스텝은 항상 성공한다.
+      - name: Send Telegram alerts for new deals
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/notify_telegram.py
+
       - name: Commit and push docs/data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # data/telegram_notified.json 은 merge=ours (collect_status.json과 동일한 이유:
+          # 런마다 통째로 다시 쓰는 상태 파일이라 충돌 시 어느 쪽이 남아도 무방).
+          git config merge.ours.driver true
           git add docs/data
+          if [ -f data/telegram_notified.json ]; then git add data/telegram_notified.json; fi
           git diff --cached --quiet || git commit -m "chore: rebuild dashboard data"
           for i in 1 2 3; do
             if git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push; then
