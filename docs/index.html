@@ -155,6 +155,15 @@
   .fav-btn { color: #c9ccd1; font-size: 18px; }
   .fav-btn.on { color: #e8a500; }
   .fav-btn:hover { color: #e8a500; }
+  /* 즐겨찾기 보드: 담은 시점 이후 기준(30일 평균 대비 15% 하락)에서 빠진 항목.
+     지우지 않고 '그때 값'이라는 표시만 달아 흐리게 남긴다. */
+  .badge-stale {
+    display: inline-block; background: #f1f3f4; color: #6e7781; border: 1px solid #d0d7de;
+    font-size: 13.5px; padding: 0 4px; border-radius: 2px; margin-left: 4px;
+  }
+  table.sheet > tbody > tr.deal-stale > td { color: var(--muted); }
+  table.sheet > tbody > tr.deal-stale > td.pct.up { color: #9aa0a6; }
+  .fav-count { font-weight: 400; font-size: 13.5px; opacity: 0.9; }
   .x-btn { color: #b7bcc4; font-weight: 700; }
   .x-btn:hover { color: #b3261e; }
   .target-input {
@@ -498,7 +507,8 @@
       3. 일정 옆 날씨(🌧/☀️/⛅)는 해당 기간의 평균 날씨<br />
       4. 보드는 두 가지 — <b>연휴 특가 보드</b>는 "이 연휴엔 어디가 싼가", <b>여행지별 연휴 보드</b>는 "이 여행지는 어느 연휴에 가야 싼가"를 봅니다.<br />
       5. 필터의 <b>휴일 가치</b>(하루 = n만원)를 설정하면, 조금 비싸도 여행 기간 안에 주말·공휴일이 더 많이 들어오는 일정(예: 목금 연휴에 출발을 앞당겨 앞주말도 여행지에서 보내기)을 <b>실질 비용</b>(= 가격 − 가치 × 덤 휴일)으로 비교해 추천합니다. 어느 <b>연휴</b>를 갈지도 이 기준으로 다시 고릅니다.<br />
-      6. <b>연차 상한</b>은 이 여행 하나에 쓸 연차의 한도입니다. 실질 비용은 덤 휴일만 편익으로 보므로 한도가 없으면 연차를 많이 태우는 긴 일정이 추천으로 올라옵니다 — 상한 안에서만 추천하고, 상한을 넘는 일정만 남으면 ⚠ 로 알려줍니다.
+      6. <b>연차 상한</b>은 이 여행 하나에 쓸 연차의 한도입니다. 실질 비용은 덤 휴일만 편익으로 보므로 한도가 없으면 연차를 많이 태우는 긴 일정이 추천으로 올라옵니다 — 상한 안에서만 추천하고, 상한을 넘는 일정만 남으면 ⚠ 로 알려줍니다.<br />
+      7. <b>변동 항목</b> 보드 1열의 <b>★</b> 를 누르면 그 일정이 맨 아래 <b>★ 즐겨찾기</b> 보드에 모입니다. 필터와 무관하게 담은 것은 모두 보이고, 다음 수집에서 기준을 벗어나 목록에서 빠진 항목도 <b>기준 미달</b>로 남습니다 (이 브라우저에만 저장).
     </div>
 
     <div class="chip-bar">
@@ -641,6 +651,7 @@
     <div id="deals-body" hidden>
       <div class="note" style="margin-bottom:0">
         <b>기준값</b> = 같은 연휴·같은 박수(일정 길이) 조건에서 최근 30일간 관측된 평균가. 다른 연휴끼리는 섞지 않습니다. <b>변동율</b>은 현재값이 그보다 얼마나 싼지입니다(15% 이상 하락한 날짜만 표시).
+        왼쪽 <b>★</b> 를 누르면 그 항목이 맨 아래 <b>★ 즐겨찾기</b> 보드에 모입니다.
       </div>
       <div class="toolbar-row">
         <label for="deal-sort">정렬</label>
@@ -662,12 +673,15 @@
         </select>
       </div>
       <div class="tbl-wrap">
+        <!-- 1열 ★ = 즐겨찾기. 담은 항목은 최하단 '★ 즐겨찾기' 보드에 모인다
+             (두 보드의 열 구성은 동일하게 유지한다). -->
         <table class="sheet wide">
           <thead>
             <tr>
+              <th style="width:4%">★</th>
               <th style="width:16%">항목</th>
-              <th style="width:22%">기간</th>
-              <th style="width:17%">일정</th>
+              <th style="width:21%">기간</th>
+              <th style="width:16%">일정</th>
               <th style="width:9%">직항/경유</th>
               <th style="width:11%">현재값</th>
               <th style="width:9%">기준값</th>
@@ -706,6 +720,44 @@
         <option value="null">상관없음</option>
       </select>
       <button id="btn-register">등록</button>
+    </div>
+
+    <!-- ★ 즐겨찾기: '변동 항목' 보드에서 담은 항목만 모아 보는 보드.
+         필터/정렬과 무관하게 담은 것은 전부 보인다 (담아 둔 걸 필터로 잃어버리면 안 되므로). -->
+    <h2 class="collapsible" id="favdeals-h2"><span class="collapse-caret">▼</span> ★ 즐겨찾기 <span class="fav-count" id="favdeals-count"></span> <span class="collapse-hint">(클릭해서 접기)</span></h2>
+    <div id="favdeals-body">
+      <div class="note" style="margin-bottom:0">
+        위 <b>변동 항목</b> 보드에서 <b>★</b> 를 누른 항목이 여기에 모입니다. 위쪽 필터(국가·연휴·최대 가격 등)와 무관하게 담은 항목은 모두 보입니다.
+        값은 수집될 때마다 최신값으로 갱신되고, 기준(30일 평균 대비 15% 하락)에서 빠진 항목은 <b>기준 미달</b>로 표시하되 담은 시점의 값과 함께 남겨 둡니다.
+        담긴 목록은 이 브라우저에만 저장됩니다.
+      </div>
+      <div class="toolbar-row">
+        <label for="favdeal-sort">정렬</label>
+        <select id="favdeal-sort">
+          <option value="saved">담은 순 (최근 먼저)</option>
+          <option value="discount">할인율순</option>
+          <option value="price">현재값 낮은순</option>
+          <option value="depart">출발일 빠른순</option>
+        </select>
+        <button id="btn-favdeals-clear" type="button">전체 비우기</button>
+      </div>
+      <div class="tbl-wrap">
+        <table class="sheet wide">
+          <thead>
+            <tr>
+              <th style="width:4%">★</th>
+              <th style="width:16%">항목</th>
+              <th style="width:21%">기간</th>
+              <th style="width:16%">일정</th>
+              <th style="width:9%">직항/경유</th>
+              <th style="width:11%">현재값</th>
+              <th style="width:9%">기준값</th>
+              <th style="width:8%">변동율</th>
+            </tr>
+          </thead>
+          <tbody id="favdeals"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -1101,6 +1153,11 @@
     }
 
     const FAVS_KEY = 'fd_favs';       // 내 목록(브라우저별): 담은 모니터 키 집합
+    // 변동 항목 즐겨찾기(브라우저별): { dealKey: {saved_at, deal} }.
+    // 위 FAVS_KEY 는 '노선' 단위지만 이쪽은 '노선 x 특정 일정' 단위라 별도로 둔다.
+    // 값을 통째로 담아 두는 이유는, 다음 수집에서 기준(15% 하락)에 못 미쳐 deals.json
+    // 에서 빠지더라도 담아 둔 항목이 소리 없이 사라지지 않게 하기 위함이다.
+    const DEAL_FAVS_KEY = 'fd_deal_favs';
     const VIEWMINE_KEY = 'fd_viewmine'; // 마지막으로 고른 뷰(내 목록/전체)를 기억
     const TARGETS_KEY = 'fd_targets';
     const PENDING_KEY = 'fd_pending';
@@ -1309,6 +1366,22 @@
     }
     function setFavs(set) { try { localStorage.setItem(FAVS_KEY, JSON.stringify([...set])); } catch (e) {} }
     function addToMyList(key) { const f = getFavs(); f.add(key); setFavs(f); } // 내 목록에 담기
+
+    // 변동 항목 한 줄의 식별자: 모니터 x 출발일 x 귀국일.
+    // (같은 노선·같은 날짜의 줄은 하나뿐이므로 이 셋이면 유일하다. 편명/시간은
+    //  수집마다 바뀔 수 있어 키에 넣지 않는다 — 넣으면 같은 일정인데도 매번 새 항목이 된다.)
+    function dealKey(d) {
+      return [rk(d.route), d.depart_date, d.return_date].join('|');
+    }
+    function getDealFavs() {
+      try {
+        const o = JSON.parse(localStorage.getItem(DEAL_FAVS_KEY) || '{}');
+        return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {};
+      } catch (e) { return {}; }
+    }
+    function setDealFavs(o) {
+      try { localStorage.setItem(DEAL_FAVS_KEY, JSON.stringify(o)); } catch (e) {}
+    }
     function getTargets() {
       try { return JSON.parse(localStorage.getItem(TARGETS_KEY) || '{}') || {}; }
       catch (e) { return {}; }
@@ -1946,13 +2019,44 @@
         '&hl=ko&curr=KRW';
     }
 
+    // 변동 항목 한 줄 (변동 항목 보드 / 즐겨찾기 보드 공용).
+    // opts.faved  : ★ 를 채워서 그린다
+    // opts.stale  : 담아 둔 뒤 기준에서 빠진 항목 — '기준 미달' 배지 + 흐린 줄
+    // opts.savedAt: 담은 날짜를 항목 칸 아래에 적는다 (즐겨찾기 보드)
+    // opts.withCountry: 항목 칸에 국가를 함께 적는다 (그룹 머리행이 없는 보드용)
+    function dealRowHtml(d, opts) {
+      const o = opts || {};
+      const label = d.route.label || (d.route.origin + ' → ' + d.route.destination);
+      const depHourStr = depHour(d.dep_time) ? ` <span class="go-time">${depHour(d.dep_time)}</span>` : '';
+      const staleBadge = o.stale
+        ? '<span class="badge-stale" title="담은 뒤 기준(30일 평균 대비 15% 하락)에서 빠졌습니다. 아래 값은 담은 시점의 마지막 값입니다.">기준 미달</span>'
+        : '';
+      const subParts = [];
+      if (o.withCountry && d.route.country) subParts.push(`${d.route.flag ? d.route.flag + ' ' : ''}${d.route.country}`);
+      if (o.savedAt) subParts.push(`담은 날 ${fmtSavedAt(o.savedAt)}`);
+      const sub = subParts.length ? `<span class="cell-sub">${esc(subParts.join(' · '))}</span>` : '';
+      return `
+          <tr class="${o.stale ? 'deal-stale' : ''}">
+            <td style="text-align:center"><button class="fav-btn${o.faved ? ' on' : ''}" data-dealfav="${esc(dealKey(d))}" title="즐겨찾기에 담기/빼기 (최하단 ★ 즐겨찾기 보드)">★</button></td>
+            <td><a href="${esc(d.booking_url)}" target="_blank" rel="noopener">${esc(label)}</a>
+              <button class="copy-btn" data-copy="${esc(d.booking_url)}" title="예약 링크 복사">📋</button>${staleBadge}${sub}</td>
+            <td class="period-cell">${fmtDateYY(d.depart_date, d.depart_weekday)}${depHourStr} ~ ${fmtDateYY(d.return_date, d.return_weekday)}${d.is_holiday_window ? ' <span class="badge-hol">연휴</span>' : ''}</td>
+            <td>${d.nights}박 ${d.days}일 · 연차 ${d.leave_days}개${tripStrip(d.depart_date, d.return_date)}${climateBadge(d.route.destination, d.depart_date)}</td>
+            <td>${stopsCell(d.stops, d.airline)}</td>
+            <td class="num">${fmt(d.current_price)} ${trendHtml(d.current_price, d.prev_price, false)}</td>
+            <td class="num">${fmt(d.avg_price)}</td>
+            <td class="num pct up">-${d.discount_pct}%</td>
+          </tr>
+        `;
+    }
+
     function renderDeals() {
       const tbody = document.getElementById('deals');
       if (!state.deals.length) {
         // 수집이 정상 동작 중(표본 있음)인데 기준을 충족하는 항목이 없는 경우와,
         // 아직 수집 전(표본 없음)인 경우를 구분해서 안내
         const collecting = state.routesStatus.some(r => r.sample_count > 0);
-        tbody.innerHTML = emptyRow(7, collecting ? NO_DEALS_MSG : EMPTY_DEALS_MSG);
+        tbody.innerHTML = emptyRow(8, collecting ? NO_DEALS_MSG : EMPTY_DEALS_MSG);
         return;
       }
       const sortKey = document.getElementById('deal-sort').value;
@@ -1967,7 +2071,7 @@
         d.leave_days <= maxLeave
       );
       if (!items.length) {
-        tbody.innerHTML = emptyRow(7, '조건에 맞는 항목이 없습니다. 필터를 조정해 보세요.');
+        tbody.innerHTML = emptyRow(8, '조건에 맞는 항목이 없습니다. 필터를 조정해 보세요.');
         return;
       }
 
@@ -1990,28 +2094,100 @@
       groups.forEach(g => g.items.sort(cmp));
       groups.sort((ga, gb) => cmp(ga.items[0], gb.items[0]));
 
+      const favKeys = new Set(Object.keys(getDealFavs()));
       tbody.innerHTML = groups.map(g => {
         const country = g.route.country || '기타';
-        const flag = g.route.flag || '';
         const label = g.route.label || (g.route.origin + ' → ' + g.route.destination);
-        const header = `<tr class="group-header"><td colspan="7">${esc(label)} · ${esc(country)}</td></tr>`;
-        const rows = g.items.map(d => {
-          const depHourStr = depHour(d.dep_time) ? ` <span class="go-time">${depHour(d.dep_time)}</span>` : '';
-          return `
-          <tr>
-            <td><a href="${esc(d.booking_url)}" target="_blank" rel="noopener">${esc(label)}</a>
-              <button class="copy-btn" data-copy="${esc(d.booking_url)}" title="예약 링크 복사">📋</button></td>
-            <td class="period-cell">${fmtDateYY(d.depart_date, d.depart_weekday)}${depHourStr} ~ ${fmtDateYY(d.return_date, d.return_weekday)}${d.is_holiday_window ? ' <span class="badge-hol">연휴</span>' : ''}</td>
-            <td>${d.nights}박 ${d.days}일 · 연차 ${d.leave_days}개${tripStrip(d.depart_date, d.return_date)}${climateBadge(d.route.destination, d.depart_date)}</td>
-            <td>${stopsCell(d.stops, d.airline)}</td>
-            <td class="num">${fmt(d.current_price)} ${trendHtml(d.current_price, d.prev_price, false)}</td>
-            <td class="num">${fmt(d.avg_price)}</td>
-            <td class="num pct up">-${d.discount_pct}%</td>
-          </tr>
-        `;
-        }).join('');
+        const header = `<tr class="group-header"><td colspan="8">${esc(label)} · ${esc(country)}</td></tr>`;
+        const rows = g.items.map(d => dealRowHtml(d, { faved: favKeys.has(dealKey(d)) })).join('');
         return header + rows;
       }).join('');
+    }
+
+    // ===================== ★ 즐겨찾기 (담은 변동 항목 모아보기) =====================
+    // "YYYY-MM-DDTHH:mm:ss..." -> "MM-DD" (담은 날짜 표시용)
+    function fmtSavedAt(iso) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+      return m ? `${m[2]}-${m[3]}` : '-';
+    }
+    // 담아 둔 항목 목록. 이번 수집 데이터에 같은 항목이 있으면 그 값으로 갱신하고
+    // (담은 시점은 유지), 없으면 담은 시점 값을 stale 로 남긴다.
+    function favDealEntries() {
+      const store = getDealFavs();
+      const live = new Map(state.deals.map(d => [dealKey(d), d]));
+      const out = [];
+      let dirty = false;
+      for (const key of Object.keys(store)) {
+        const ent = store[key];
+        if (!ent || !ent.deal || !ent.deal.route) { delete store[key]; dirty = true; continue; } // 깨진 값 정리
+        const cur = live.get(key);
+        if (!cur) { out.push({ key, savedAt: ent.saved_at, deal: ent.deal, stale: true }); continue; }
+        if (cur.current_price !== ent.deal.current_price || cur.avg_price !== ent.deal.avg_price
+          || cur.discount_pct !== ent.deal.discount_pct || cur.booking_url !== ent.deal.booking_url) {
+          store[key] = { saved_at: ent.saved_at, deal: cur };
+          dirty = true;
+        }
+        out.push({ key, savedAt: ent.saved_at, deal: cur, stale: false });
+      }
+      if (dirty) setDealFavs(store);
+      return out;
+    }
+
+    function renderFavDeals() {
+      const tbody = document.getElementById('favdeals');
+      const countEl = document.getElementById('favdeals-count');
+      const entries = favDealEntries();
+      if (countEl) countEl.textContent = entries.length ? `(${entries.length})` : '';
+      if (!entries.length) {
+        tbody.innerHTML = emptyRow(8, '담은 항목이 없습니다. 위 "변동 항목" 보드에서 ★ 를 눌러 담으세요.');
+        return;
+      }
+      const sortEl = document.getElementById('favdeal-sort');
+      const sortKey = sortEl ? sortEl.value : 'saved';
+      const cmpMap = {
+        // 담은 순: 최근에 담은 것이 위로 (담은 시각이 없는 옛 항목은 뒤로)
+        saved: (a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || '')),
+        discount: (a, b) => b.deal.discount_pct - a.deal.discount_pct,
+        price: (a, b) => a.deal.current_price - b.deal.current_price,
+        depart: (a, b) => (a.deal.depart_date < b.deal.depart_date ? -1 : a.deal.depart_date > b.deal.depart_date ? 1 : 0)
+      };
+      const cmp = cmpMap[sortKey] || cmpMap.saved;
+      // 아직 살아 있는 항목을 먼저, 기준에서 빠진 항목은 아래로 모은다.
+      entries.sort((a, b) => (a.stale ? 1 : 0) - (b.stale ? 1 : 0) || cmp(a, b));
+      tbody.innerHTML = entries.map(en => dealRowHtml(en.deal, {
+        faved: true, stale: en.stale, savedAt: en.savedAt, withCountry: true
+      })).join('');
+    }
+
+    // 변동 항목 ★ 토글. 담을 때는 그 시점의 값을 통째로 저장한다.
+    function toggleDealFav(key) {
+      if (!key) return;
+      const store = getDealFavs();
+      if (store[key]) {
+        delete store[key];
+        setDealFavs(store);
+        toast('즐겨찾기에서 뺐습니다');
+      } else {
+        const d = state.deals.find(x => dealKey(x) === key);
+        if (!d) { toast('이번 수집 목록에 없는 항목입니다', 'err'); return; }
+        store[key] = { saved_at: new Date().toISOString(), deal: d };
+        setDealFavs(store);
+        toast('즐겨찾기에 담았습니다 ★ (맨 아래 보드에서 모아보기)');
+      }
+      renderDeals();
+      renderFavDeals();
+    }
+
+    function clearDealFavs() {
+      const n = Object.keys(getDealFavs()).length;
+      if (!n) { toast('담은 항목이 없습니다'); return; }
+      excelConfirm(`즐겨찾기 ${n}개를 모두 비울까요?`).then(ok => {
+        if (!ok) return;
+        setDealFavs({});
+        renderDeals();
+        renderFavDeals();
+        toast('즐겨찾기를 비웠습니다');
+      });
     }
 
     // ===================== 스파크라인 =====================
@@ -2771,6 +2947,7 @@
         state.deals = state.deals.filter(d => rk(d.route) !== key);
         renderChips();
         renderDeals();
+        renderFavDeals(); // 삭제된 노선의 즐겨찾기는 '기준 미달'(담은 시점 값)로 남는다
         renderDestBoard();
         renderGvBoard(); // 삭제된 노선이 가성비 보드에 남지 않도록
       } catch (e) {
@@ -3126,6 +3303,8 @@
       });
       document.getElementById('gv-sort').addEventListener('change', renderGvBoard);
       document.getElementById('dest-sort').addEventListener('change', renderDestBoard);
+      document.getElementById('favdeal-sort').addEventListener('change', renderFavDeals);
+      document.getElementById('btn-favdeals-clear').addEventListener('click', clearDealFavs);
 
       // 휴일 가치 / 연차 상한: 입력 즉시 반영하지 않고 '적용' 버튼(또는 Enter)으로 확정한다.
       // 즉시 반영하던 방식은 표가 조용히 바뀌어 '내 숫자가 전체 데이터에 먹혔는지' 알 수
@@ -3138,6 +3317,8 @@
       // 스크롤 방해). 어느 쪽이든 사용자가 바꾼 상태는 브라우저에 기억된다.
       wireSimpleToggle('dest-h2', 'dest-body', true);
       wireSimpleToggle('deals-h2', 'deals-body', false);
+      // 즐겨찾기 보드는 기본 펼침 — 담아 둔 것을 보러 내려오는 자리라 접혀 있으면 의미가 없다.
+      wireSimpleToggle('favdeals-h2', 'favdeals-body', true);
 
       // 실시간 채팅 접기/펼치기 — 펼쳐져 있을 때만 폴링 (숨겨진 동안 불필요한 요청 방지)
       // 드래그로 창을 옮긴 직후의 click은 무시(안 그러면 옮길 때마다 접혀버림).
@@ -3185,6 +3366,10 @@
           renderDestBoard();
           return;
         }
+        // 변동 항목 ★ (일정 단위)는 여행지 ★ (노선 단위)보다 먼저 잡는다 — 속성이 달라
+        // 서로 안 섞이지만, 읽는 순서를 보드 순서와 맞춘다.
+        const dealFavBtn = e.target.closest('[data-dealfav]');
+        if (dealFavBtn) { toggleDealFav(dealFavBtn.getAttribute('data-dealfav')); return; }
         const favBtn = e.target.closest('[data-fav]');
         if (favBtn) { toggleFav(favBtn.getAttribute('data-fav')); return; }
         const delBtn = e.target.closest('[data-del]');
@@ -3254,6 +3439,7 @@
       renderChips();
       renderGvBoard();
       renderDeals();
+      renderFavDeals();
       renderDestBoard();
       renderMeta();
       setInterval(renderMeta, 60000);
