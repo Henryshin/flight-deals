@@ -1833,6 +1833,11 @@
     // 뿐 아니라 '어느 연휴가 이득인지'까지 바꾸도록.
     function cellBetterForBoard(c, best) {
       if (!best) return true;
+      // 연차 상한을 만족하는 칸을 항상 먼저 채택 — destGroupInfo의 wins 정렬과 같은 이유로,
+      // 휴일 가치가 0이어도 연차 상한은 어느 연휴가 대표로 뜨는지에 그대로 반영되어야 한다.
+      const cOk = cellNetCost(c) !== Infinity;
+      const bestOk = cellNetCost(best) !== Infinity;
+      if (cOk !== bestOk) return cOk;
       if (!dayValueWon()) return cellBetter(c, best);
       const at = gvTierRank(c.tier), bt = gvTierRank(best.tier);
       if (at !== bt) return at < bt;
@@ -2139,10 +2144,18 @@
       // 휴일 가치가 0이면 '싼 순'(값이 같으면 티어/특가율이 나은 칸을 앞으로 — 같은 값인데
       // '수집 중'인 칸이 대표가 되어 특가율이 안 보이는 일을 막는다).
       // 0보다 크면 '실질비용 싼 순' — 어느 연휴가 이득인지까지 슬라이더에 반영한다.
-      const wins = destWindowCells(g.items).sort((a, b) =>
-        (dayValueWon() ? (cellNetCost(a.cell) - cellNetCost(b.cell)) : 0)
-        || (a.cell.min_price - b.cell.min_price)
-        || (cellBetter(a.cell, b.cell) ? -1 : cellBetter(b.cell, a.cell) ? 1 : 0));
+      const wins = destWindowCells(g.items).sort((a, b) => {
+        // 연차 상한을 만족하는(=eligiblePairs 안에 후보가 있는) 연휴를 항상 먼저 채택한다.
+        // 이걸 dayValueWon() 뒤에 숨기면(예전처럼) 휴일 가치를 0으로 둔 사람은 연차 상한을
+        // 걸어도 대표 연휴가 안 바뀌고 ⚠ 배지만 뜨는 문제가 생긴다 — 연차 상한은 휴일
+        // 가치 설정과 무관하게 항상 반영되어야 한다.
+        const aOk = cellNetCost(a.cell) !== Infinity;
+        const bOk = cellNetCost(b.cell) !== Infinity;
+        if (aOk !== bOk) return aOk ? -1 : 1;
+        return (dayValueWon() ? (cellNetCost(a.cell) - cellNetCost(b.cell)) : 0)
+          || (a.cell.min_price - b.cell.min_price)
+          || (cellBetter(a.cell, b.cell) ? -1 : cellBetter(b.cell, a.cell) ? 1 : 0);
+      });
       const targets = getTargets();
       const reached = g.items.some(m => {
         const t = targets[rk(m)];
