@@ -417,6 +417,9 @@
   }
   .chat-jump-btn:hover { background: #1a5c38; }
   .chat-my-name { font-size: 12.5px; color: var(--muted); padding: 5px 10px 0; }
+  /* 닉네임 오른쪽에 붙는 "다음 전송까지 N초" 카운트다운. 0초(전송 가능)면 빈 문자열이라 자리도 안 차지. */
+  #chat-cooldown { margin-left: 4px; }
+  #chat-cooldown:not(:empty)::before { content: '· '; }
   .chat-note { position: relative; padding-right: 26px; }
   .chat-note-close {
     position: absolute; top: 2px; right: 4px; background: none; border: none; cursor: pointer;
@@ -560,7 +563,7 @@
             </div>
             <button id="chat-jump" class="chat-jump-btn" hidden>새 채팅 ↓</button>
           </div>
-          <div class="chat-my-name" id="chat-my-name"></div>
+          <div class="chat-my-name"><span id="chat-my-name-text"></span><span id="chat-cooldown"></span></div>
           <div class="chat-input-row">
             <input id="chat-text" placeholder="채팅 입력 후 Enter" maxlength="300" />
             <button id="btn-chat-send">전송</button>
@@ -931,7 +934,7 @@
 
       if (you) {
         myChatName = you;
-        const nameEl = document.getElementById('chat-my-name');
+        const nameEl = document.getElementById('chat-my-name-text');
         if (nameEl) nameEl.textContent = `나: ${you}`;
       }
 
@@ -1003,6 +1006,18 @@
       const el = document.getElementById('chat-queue-hint');
       if (!el) return;
       el.textContent = chatQueue.length ? `전송 대기 ${chatQueue.length}개…` : '';
+    }
+    // 닉네임(예: "나: 차분한 용감한 고양이 부장") 오른쪽에 "다음 전송까지 N초"를 초 단위로
+    // 갱신해 보여준다. 0초(= 지금 보내도 되는 상태)면 아무것도 안 보여준다.
+    function renderChatCooldown() {
+      const el = document.getElementById('chat-cooldown');
+      if (!el) return;
+      const remain = Math.ceil((chatNextSendAt - Date.now()) / 1000);
+      el.textContent = remain > 0 ? `다음 전송까지 ${remain}초` : '';
+    }
+    function startChatCooldownTicker() {
+      renderChatCooldown();
+      setInterval(renderChatCooldown, 250);
     }
     function scheduleChatQueueSend() {
       if (chatSendTimer || !chatQueue.length) return;
@@ -1139,6 +1154,7 @@
       placeChatWindow();
       wireChatDrag();
       wireChatNoteClose();
+      startChatCooldownTicker();
       setChatExpanded(false); // 기본으로 접힌 상태 (필요할 때 펼쳐서 폴링 시작)
     }
 
