@@ -182,14 +182,20 @@
   /* filter chips */
   .chip-bar { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; margin: 16px 0 0; background: #fafafa; border: 1px solid var(--grid); padding: 8px 10px; }
   .chip-bar .chip-cap { color: var(--muted); font-size: 15px; padding-top: 3px; }
-  .chip-groups { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+  /* 국가(왼쪽, 여러 줄) / 지역·직항경유·휴일가치·연차상한(오른쪽, 짧은 줄들)을 좌우로 나란히
+     둬서 세로로 계속 길어지지 않게 한다 — 오른쪽 칸은 왼쪽 국가 칩 높이 안에서 접힌다. */
+  .chip-groups { display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap; flex: 1; min-width: 0; }
+  .chip-col-country { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+  .chip-col-side {
+    flex: 0 0 auto; min-width: 260px; display: flex; flex-direction: column; gap: 6px;
+    border-left: 1px dashed var(--grid); padding-left: 14px;
+  }
   .chip-line { display: flex; align-items: flex-start; gap: 8px; }
   .chip-line .chip-sub { color: var(--muted); font-size: 15px; padding-top: 3px; min-width: 28px; flex-shrink: 0; }
-  #chip-region, #chip-concept, #chip-stops { display: flex; flex-wrap: wrap; gap: 6px; }
+  #chip-region, #chip-stops { display: flex; flex-wrap: wrap; gap: 6px; }
   /* 국가 칩은 대륙별로, 연휴 칩은 연도별로 행을 나눈다 */
   #chip-country, #gv-windows { display: flex; flex-direction: column; gap: 5px; }
   .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
-  #chip-region-line { border-top: 1px dashed var(--grid); padding-top: 6px; }
   .day-value-wrap { display: flex; align-items: center; gap: 4px; font-size: 15px; flex-wrap: wrap; }
   #day-value, #max-leave {
     width: 48px; font-family: Consolas, monospace; font-size: 15px; text-align: right;
@@ -441,39 +447,39 @@
     <div class="chip-bar">
       <span class="chip-cap">필터</span>
       <div class="chip-groups">
-        <div class="chip-line">
-          <span class="chip-sub">국가</span>
-          <div id="chip-country"></div>
-        </div>
-        <div class="chip-line" id="chip-region-line" hidden>
-          <span class="chip-sub">지역</span>
-          <div id="chip-region"></div>
-        </div>
-        <div class="chip-line" id="chip-concept-line">
-          <span class="chip-sub">컨셉</span>
-          <div id="chip-concept"></div>
-        </div>
-        <div class="chip-line" id="chip-stops-line">
-          <span class="chip-sub">직항/경유</span>
-          <div id="chip-stops"></div>
-        </div>
-        <div class="chip-line" id="day-value-line">
-          <span class="chip-sub">휴일 가치</span>
-          <div class="day-value-wrap" title="휴일 하루를 얼마의 가치로 볼지 정하면, 조금 비싸도 여행 기간 안에 주말·공휴일이 더 많이 들어오는 일정·연휴를 추천합니다. 실질 비용 = 가격 − 가치 × 덤 휴일(여행일 − 연차). 0이면 무조건 최저가 일정.">
-            하루 <input id="day-value" type="number" min="0" step="1" inputmode="numeric" /> 만원
-            <button type="button" class="apply-btn" id="day-value-apply" title="이 값으로 두 보드의 추천을 다시 계산합니다 (Enter 로도 적용)">적용</button>
-            <span class="cell-sub" id="day-value-hint"></span>
+        <div class="chip-col-country">
+          <div class="chip-line">
+            <span class="chip-sub">국가</span>
+            <div id="chip-country"></div>
           </div>
         </div>
-        <div class="chip-line" id="max-leave-line">
-          <span class="chip-sub">연차 상한</span>
-          <div class="day-value-wrap" title="이 여행 하나에 쓸 연차의 상한. 실질비용 공식은 덤 휴일만 편익으로 보므로 상한이 없으면 '연차 9개 쓰는 14박'처럼 연차를 태우는 일정이 추천으로 올라옵니다. 비워 두면 무제한.">
-            최대 <input id="max-leave" type="number" min="0" step="1" inputmode="numeric" placeholder="무제한" /> 개
-            <button type="button" class="apply-btn" id="max-leave-apply" title="이 값으로 두 보드의 추천을 다시 계산합니다 (Enter 로도 적용)">적용</button>
-            <span class="cell-sub" id="max-leave-hint"></span>
+        <div class="chip-col-side">
+          <div class="chip-line" id="chip-region-line" hidden>
+            <span class="chip-sub">지역</span>
+            <div id="chip-region"></div>
           </div>
+          <div class="chip-line" id="chip-stops-line">
+            <span class="chip-sub">직항/경유</span>
+            <div id="chip-stops"></div>
+          </div>
+          <div class="chip-line" id="day-value-line">
+            <span class="chip-sub">휴일 가치</span>
+            <div class="day-value-wrap" title="휴일 하루를 얼마의 가치로 볼지 정하면, 조금 비싸도 여행 기간 안에 주말·공휴일이 더 많이 들어오는 일정·연휴를 추천합니다. 실질 비용 = 가격 − 가치 × 덤 휴일(여행일 − 연차). 0이면 무조건 최저가 일정.">
+              하루 <input id="day-value" type="number" min="0" step="1" inputmode="numeric" /> 만원
+              <button type="button" class="apply-btn" id="day-value-apply" title="이 값으로 두 보드의 추천을 다시 계산합니다 (Enter 로도 적용)">적용</button>
+              <span class="cell-sub" id="day-value-hint"></span>
+            </div>
+          </div>
+          <div class="chip-line" id="max-leave-line">
+            <span class="chip-sub">연차 상한</span>
+            <div class="day-value-wrap" title="이 여행 하나에 쓸 연차의 상한. 실질비용 공식은 덤 휴일만 편익으로 보므로 상한이 없으면 '연차 9개 쓰는 14박'처럼 연차를 태우는 일정이 추천으로 올라옵니다. 비워 두면 무제한.">
+              최대 <input id="max-leave" type="number" min="0" step="1" inputmode="numeric" placeholder="무제한" /> 개
+              <button type="button" class="apply-btn" id="max-leave-apply" title="이 값으로 두 보드의 추천을 다시 계산합니다 (Enter 로도 적용)">적용</button>
+              <span class="cell-sub" id="max-leave-hint"></span>
+            </div>
+          </div>
+          <div id="apply-box" hidden></div>
         </div>
-        <div id="apply-box" hidden></div>
       </div>
     </div>
 
@@ -699,7 +705,7 @@
 
   <script>
     // airports.js / destmeta.js 는 정적 <script> 라 브라우저가 구버전을 캐시해,
-    // 새로 추가·수정한 목적지가 필터(특히 컨셉)에 안 뜨는 문제가 있었다
+    // 새로 추가·수정한 목적지가 필터/기후 배지에 안 뜨는 문제가 있었다
     // (JSON 데이터는 ?t= 로 캐시버스트하지만 이 JS들은 안 했음).
     // 여기서 캐시버스트로 최신을 강제 로드한다. document.write 는 최초 파싱 중
     // 동기·순서 보장 로드라 아래 메인 스크립트가 window.AIRPORTS/DEST_META 를 그대로 본다.
@@ -1079,7 +1085,6 @@
       expandedDests: new Set(), // 여행지별 상세 현황에서 펼쳐 놓은 노선(origin-destination) 키들
       selCountries: new Set(), // 1차 필터: 선택된 국가들 (다중선택)
       selCities: new Set(),    // 2차 필터: 선택된 지역(도착 도시)들 (다중선택, 선택 국가에 종속)
-      selConcepts: new Set(),  // 컨셉 필터: 휴양/도시/대자연 및 조합 (다중선택, OR)
       selStops: new Set(),     // 직항/경유 필터: 'direct'/'via' (다중선택, OR. 비어있으면 = 전체)
       // 휴일 하루의 가치(만원). 추천 일정 = (가격 - 가치 x 덤휴일) 최소인 일정.
       dayValue: (function () {
@@ -1392,27 +1397,24 @@
       } catch (e) { return fallback; }
     }
 
-    // ===================== 필터 칩 (국가 → 지역 + 컨셉 + 직항/경유) =====================
-    // 컨셉 필터 옵션: 단일 태그와 조합. 조합 칩은 두 태그를 모두 가진 목적지만 통과.
-    const CONCEPT_OPTIONS = ['휴양', '도시', '대자연', '휴양+도시', '휴양+대자연', '도시+대자연'];
+    // ===================== 필터 칩 (국가 → 지역 + 직항/경유) =====================
     // 직항/경유 필터 옵션: 모니터의 max_stops 정책 기준(0=직항 전용, 그 외=경유 허용).
     const STOPS_OPTIONS = [{ value: 'direct', label: '직항' }, { value: 'via', label: '경유' }];
     // 국가 -> 대륙 그룹(필터 국가 칩을 행으로 나누는 기준). 미등록 국가는 '그외'.
+    // 유럽은 나라 수가 많아 한 줄이 너무 길어지므로 서유럽/동유럽으로 나눈다.
     const COUNTRY_REGION = {
       일본: '동아시아', 중국: '동아시아', 대만: '동아시아', 홍콩: '동아시아', 마카오: '동아시아',
       베트남: '동남기타아시아', 태국: '동남기타아시아', 인도네시아: '동남기타아시아',
       필리핀: '동남기타아시아', 말레이시아: '동남기타아시아', 싱가포르: '동남기타아시아',
-      캄보디아: '동남기타아시아', 몽골: '동남기타아시아', 카자흐스탄: '동남기타아시아',
-      그리스: '유럽', 프랑스: '유럽', 영국: '유럽', 이탈리아: '유럽', 스페인: '유럽',
-      체코: '유럽', 오스트리아: '유럽', 튀르키예: '유럽', 독일: '유럽', 스위스: '유럽',
-      포르투갈: '유럽',
+      몽골: '동남기타아시아',
+      영국: '서유럽', 프랑스: '서유럽', 독일: '서유럽', 스위스: '서유럽', 오스트리아: '서유럽',
+      이탈리아: '서유럽', 스페인: '서유럽', 포르투갈: '서유럽',
+      체코: '동유럽', 그리스: '동유럽', 튀르키예: '동유럽',
       미국: '미주', 캐나다: '미주',
     };
+    // 필터 칩에서 아예 빼는 국가(목적지 자체는 그대로 있고, 국가 칩으로만 못 고름).
+    const HIDDEN_COUNTRIES = new Set(['캄보디아', '카자흐스탄']);
     function countryRegion(country) { return COUNTRY_REGION[country] || '그외'; }
-    function destConcepts(iata) {
-      const meta = (window.DEST_META || {})[iata];
-      return new Set((meta && meta.concepts) || []);
-    }
     // 모니터의 직항/경유 정책 분류: max_stops===0 이면 직항 전용, 그 외(1/2/상관없음)는 경유 허용.
     function routeStopsClass(routeLike) {
       return routeLike.max_stops === 0 ? 'direct' : 'via';
@@ -1422,15 +1424,6 @@
       if (state.selCountries.size && !state.selCountries.has(routeLike.country || '기타')) return false;
       // 2차: 지역(도착 도시) — 선택된 게 없으면 통과. 도시 선택은 국가에 종속.
       if (state.selCities.size && !state.selCities.has(destCityName(routeLike))) return false;
-      // 컨셉: 선택된 옵션 중 하나라도 만족하면 통과(OR). '휴양+도시'는 둘 다 필요.
-      if (state.selConcepts.size) {
-        const tags = destConcepts(routeLike.destination);
-        let ok = false;
-        for (const opt of state.selConcepts) {
-          if (opt.split('+').every(t => tags.has(t))) { ok = true; break; }
-        }
-        if (!ok) return false;
-      }
       // 직항/경유: 선택된 게 없으면 전체 통과.
       if (state.selStops.size && !state.selStops.has(routeStopsClass(routeLike))) return false;
       return true;
@@ -1456,25 +1449,20 @@
       const countries = new Map();
       for (const r of state.routesStatus) {
         const c = r.country || '기타';
+        if (HIDDEN_COUNTRIES.has(c)) continue;
         if (!countries.has(c)) countries.set(c, r.flag || (findAirport(r.destination) || {}).flag || '');
       }
-      const noSel = state.selCountries.size === 0 && state.selCities.size === 0 &&
-        state.selConcepts.size === 0 && state.selStops.size === 0;
+      const noSel = state.selCountries.size === 0 && state.selCities.size === 0 && state.selStops.size === 0;
       // 전체는 최상단 행, 그 아래 대륙별로 국가 칩을 행으로 나눈다(라벨 없음).
       let html = `<div class="chip-row">${chip('all', '', '전체', noSel)}</div>`;
-      const buckets = { 동아시아: [], 동남기타아시아: [], 유럽: [], 미주: [], 그외: [] };
+      const buckets = { 동아시아: [], 동남기타아시아: [], 서유럽: [], 동유럽: [], 미주: [], 그외: [] };
       for (const [c, flag] of countries) {
         buckets[countryRegion(c)].push(chip('country', c, c, state.selCountries.has(c)));
       }
-      for (const key of ['동아시아', '동남기타아시아', '유럽', '미주', '그외']) {
+      for (const key of ['동아시아', '동남기타아시아', '서유럽', '동유럽', '미주', '그외']) {
         if (buckets[key].length) html += `<div class="chip-row">${buckets[key].join('')}</div>`;
       }
       document.getElementById('chip-country').innerHTML = html;
-
-      // ── 컨셉 (국가와 독립적인 별도 축) ──
-      document.getElementById('chip-concept').innerHTML = CONCEPT_OPTIONS
-        .map(opt => chip('concept', opt, opt, state.selConcepts.has(opt)))
-        .join('');
 
       // ── 직항/경유 (국가와 독립적인 별도 축) ──
       document.getElementById('chip-stops').innerHTML = STOPS_OPTIONS
@@ -1506,7 +1494,6 @@
       if (type === 'all') {
         state.selCountries.clear();
         state.selCities.clear();
-        state.selConcepts.clear();
         state.selStops.clear();
       } else if (type === 'country') {
         if (state.selCountries.has(value)) state.selCountries.delete(value);
@@ -1515,9 +1502,6 @@
       } else if (type === 'city') {
         if (state.selCities.has(value)) state.selCities.delete(value);
         else state.selCities.add(value);
-      } else if (type === 'concept') {
-        if (state.selConcepts.has(value)) state.selConcepts.delete(value);
-        else state.selConcepts.add(value);
       } else if (type === 'stops') {
         if (state.selStops.has(value)) state.selStops.delete(value);
         else state.selStops.add(value);
