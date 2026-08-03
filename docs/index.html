@@ -1807,6 +1807,11 @@
       if (cell.tier === 'B') title += '\n※ 표본이 적어 참고용입니다';
       return `<span class="gv-badge ${cls}"${dim} title="${esc(title)}">${esc(txt)}</span>`;
     }
+    // 연차 상한 안에서 갈 수 있는 일정이 하나도 없어 목록에서 통째로 빠졌을 때의 안내 문구.
+    // (데이터가 아예 없는 것과 구분되는 별도 사유 — gvEmptyReason과 나란히 쓰인다.)
+    function capOverReason() {
+      return `연차 상한(${leaveCap()}개) 안에서 갈 수 있는 연휴가 없습니다 — 상한을 늘리면 후보가 보입니다`;
+    }
     // 이 연휴에 데이터가 없는 노선의 사유 (막연한 '—' 대신 이유를 보여준다)
     function gvEmptyReason(monitors) {
       const r = monitors[0] || {};
@@ -1855,13 +1860,23 @@
           if (c && cellBetterForBoard(c, best)) { best = c; bestWin = wid; }
         }
       }
-      return { cell: best, win: bestWin };
+      // cellBetterForBoard가 상한을 만족하는 칸을 항상 먼저 고르지만, 후보 전부가 상한을
+      // 넘으면 그중 '제일 나은' 것이라도 여전히 못 가는 일정이다 — ⚠만 달고 보여주는 대신
+      // '고른 게 없음'으로 취급해 gvEmptyReason 자리에 연차 상한 사유가 뜨게 한다.
+      if (best && leaveCap() !== Infinity && cellNetCost(best) === Infinity) {
+        return { cell: null, win: null, capBlocked: true };
+      }
+      return { cell: best, win: bestWin, capBlocked: false };
     }
     // 이 여행지의 연휴별 대표 칸: [{win, label, cell}, ...]
     // (연휴 칩으로 고른 연휴 중, 데이터가 있는 것만. 칩 선택이 비어 있으면 전체 연휴)
-    function destWindowCells(monitors) {
+    // applyCap=false 로 부르면 연차 상한 필터링 없이 원본 목록을 돌려준다 — "상한 때문에
+    // 다 걸러진 것"과 "애초에 데이터가 없는 것"을 구분해 안내 문구를 고르는 데 쓴다.
+    function destWindowCells(monitors, applyCap) {
+      if (applyCap == null) applyCap = true;
       const allCells = (state.matrix && state.matrix.cells) || {};
       const active = new Set(gvActiveWindowIds());
+      const cap = leaveCap();
       const out = [];
       for (const w of gvWindows()) {
         if (!active.has(w.id)) continue;
@@ -1877,8 +1892,11 @@
         found.sort((a, b) => (a.cell.min_price - b.cell.min_price)
           || (cellBetter(a.cell, b.cell) ? -1 : cellBetter(b.cell, a.cell) ? 1 : 0));
         const best = found[0];
+        // 연차 상한 안에서 갈 수 있는 일정이 하나도 없는 연휴는 아예 목록에서 뺀다 —
+        // 예전엔 ⚠ 배지만 달고 계속 보여줬는데, 어차피 못 가는 연휴라 경고 없이 숨긴다.
+        if (applyCap && cap !== Infinity && cellNetCost(best.cell) === Infinity) continue;
         // 모니터가 여럿(예: 경유 허용 + 직항 전용)인 노선은 대표(최저) 칸 뒤에 남는 칸들을
-        // 'alts'로 들고 있는다 — 직항이 항상 더 비싸서 대표로 못 뽑히더라도 화면에서
+        // 'alts'로 들고 있는다 — 직항이 항상 더 비싸서 대표로 못 뽑혀도 화면에서
         // 사라지지 않고 보조 옵션으로 보이게 하기 위함.
         out.push({
           win: w.id, label: gvWindowLabel(w.id), cell: best.cell, mon: best.mon,
@@ -1908,7 +1926,7 @@
       const rows = [];
       for (const g of groupMap.values()) {
         const pick = pickBestCell(g.monitors, activeIds, allCells);
-        rows.push({ route: g.route, monitors: g.monitors, cell: pick.cell, win: pick.win });
+        rows.push({ route: g.route, monitors: g.monitors, cell: pick.cell, win: pick.win, capBlocked: pick.capBlocked });
       }
       if (!rows.length) {
         tbody.innerHTML = emptyRow(6, '조건에 맞는 노선이 없습니다. 필터를 조정해 보세요.');
@@ -1955,8 +1973,9 @@
         const flag = r.route.flag || (findAirport(r.route.destination) || {}).flag || '';
         const nameCell = `${esc(label)}<span class="cell-sub">${esc(r.route.origin)}→${esc(r.route.destination)}</span>`;
         if (!r.cell) {
+          const reason = r.capBlocked ? capOverReason() : gvEmptyReason(r.monitors);
           return `<tr><td class="gv-rank">—</td><td>${nameCell}</td>` +
-            `<td colspan="4" class="gv-reason">${esc(gvEmptyReason(r.monitors))}</td></tr>`;
+            `<td colspan="4" class="gv-reason">${esc(reason)}</td></tr>`;
         }
         rank++;
         const b = primaryPair(r.cell);
@@ -2144,18 +2163,15 @@
       // 휴일 가치가 0이면 '싼 순'(값이 같으면 티어/특가율이 나은 칸을 앞으로 — 같은 값인데
       // '수집 중'인 칸이 대표가 되어 특가율이 안 보이는 일을 막는다).
       // 0보다 크면 '실질비용 싼 순' — 어느 연휴가 이득인지까지 슬라이더에 반영한다.
-      const wins = destWindowCells(g.items).sort((a, b) => {
-        // 연차 상한을 만족하는(=eligiblePairs 안에 후보가 있는) 연휴를 항상 먼저 채택한다.
-        // 이걸 dayValueWon() 뒤에 숨기면(예전처럼) 휴일 가치를 0으로 둔 사람은 연차 상한을
-        // 걸어도 대표 연휴가 안 바뀌고 ⚠ 배지만 뜨는 문제가 생긴다 — 연차 상한은 휴일
-        // 가치 설정과 무관하게 항상 반영되어야 한다.
-        const aOk = cellNetCost(a.cell) !== Infinity;
-        const bOk = cellNetCost(b.cell) !== Infinity;
-        if (aOk !== bOk) return aOk ? -1 : 1;
-        return (dayValueWon() ? (cellNetCost(a.cell) - cellNetCost(b.cell)) : 0)
-          || (a.cell.min_price - b.cell.min_price)
-          || (cellBetter(a.cell, b.cell) ? -1 : cellBetter(b.cell, a.cell) ? 1 : 0);
-      });
+      // (연차 상한을 못 만족하는 연휴는 destWindowCells가 이미 걸러서 넘기므로 여기선
+      // 신경 쓸 필요 없다.)
+      const wins = destWindowCells(g.items).sort((a, b) =>
+        (dayValueWon() ? (cellNetCost(a.cell) - cellNetCost(b.cell)) : 0)
+        || (a.cell.min_price - b.cell.min_price)
+        || (cellBetter(a.cell, b.cell) ? -1 : cellBetter(b.cell, a.cell) ? 1 : 0));
+      // 연차 상한 때문에 다 걸러진 것인지(원본 데이터는 있음), 애초에 데이터가 없는 것인지
+      // 구분 — 안내 문구를 gvEmptyReason 대신 capOverReason으로 보여줄지 여기서 정한다.
+      const capBlocked = !wins.length && destWindowCells(g.items, false).length > 0;
       const targets = getTargets();
       const reached = g.items.some(m => {
         const t = targets[rk(m)];
@@ -2177,6 +2193,7 @@
         // 더하면 중복 계산된다. 가장 큰 모집단 = 이 여행지의 실제 관측 수.
         samples: g.items.reduce((n, m) => Math.max(n, m.sample_count || 0), 0),
         reached,
+        capBlocked,
       };
     }
     // 펼쳤을 때 보이는 연휴별 시세 (싼 순). 그룹 하나당 <tr> 한 줄.
@@ -2211,9 +2228,10 @@
       }).join('');
 
       if (!info.wins.length) {
+        const reason = info.capBlocked ? capOverReason() : gvEmptyReason(g.items);
         return `<tr class="dest-detail-row" data-dest-detail="${esc(gk)}"><td colspan="7">` +
           `<div class="dest-detail"><div class="dest-detail-head">${heads}</div>` +
-          `<div class="dest-detail-foot">${esc(gvEmptyReason(g.items))}</div></div></td></tr>`;
+          `<div class="dest-detail-foot">${esc(reason)}</div></div></td></tr>`;
       }
 
       const maxPrice = info.wins.reduce((mx, w) => Math.max(mx, w.cell.min_price), 0) || 1;
@@ -2385,7 +2403,8 @@
 
         // 데이터가 없으면 특가 보드처럼 '이유' 한 칸으로 합쳐서 보여준다.
         if (!info.best) {
-          return head + `<td colspan="4" class="gv-reason">${esc(gvEmptyReason(g.items))}</td>` + tail
+          const reason = info.capBlocked ? capOverReason() : gvEmptyReason(g.items);
+          return head + `<td colspan="4" class="gv-reason">${esc(reason)}</td>` + tail
             + (open ? destDetailRowHtml(g, info) : '');
         }
 
