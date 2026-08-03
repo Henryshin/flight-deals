@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-1NSTL7K368"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-1NSTL7K368');
+</script>
+<!-- Simple visit counter (abacus.jasoncameron.dev) -->
+<script>
+  fetch('https://abacus.jasoncameron.dev/hit/excel-flights-xyz/site-visits')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var el = document.getElementById('visit-count');
+      if (el) el.textContent = d.value.toLocaleString();
+    })
+    .catch(function(){});
+</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>즐겨찾기 · 프로젝트 스케줄 조정표_v4.33</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='2' fill='%23217346'/%3E%3Ctext x='8' y='12' font-size='10' font-weight='bold' text-anchor='middle' fill='white' font-family='Arial'%3EX%3C/text%3E%3C/svg%3E" />
+<script src="airports.js"></script>
+<script src="destmeta.js"></script>
+<style>
+  :root {
+    --excel-green: #217346;
+    --grid: #d0d7de;
+    --bg: #f3f2f1;
+    --sheet: #ffffff;
+    --text: #1f2328;
+    --muted: #6e7781;
+    --sel: #caf0d8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Calibri, "맑은 고딕", Arial, sans-serif;
+    background: var(--bg); color: var(--text);
+    margin: 0; font-size: 16.5px;
+    padding-bottom: 34px;
+  }
+  [hidden] { display: none !important; }
+
+  /* fake ribbon */
+  .ribbon-tabs { background: var(--excel-green); color: #fff; padding: 5px 14px 0; font-size: 16px; display: flex; gap: 18px; overflow-x: auto; }
+  .ribbon-tabs span { padding: 5px 4px; opacity: 0.75; white-space: nowrap; }
+  .ribbon-tabs span.active { opacity: 1; border-bottom: 2px solid #fff; font-weight: 600; }
+  .page-nav { display: flex; gap: 2px; background: #1a5c38; padding: 0 10px; overflow-x: auto; }
+  .page-nav a { padding: 7px 18px; font-size: 16px; color: #d8ebe0; text-decoration: none; border-radius: 3px 3px 0 0; white-space: nowrap; }
+  .page-nav a:hover { background: #22683f; color: #fff; }
+  .page-nav a.active { background: var(--bg); color: var(--excel-green); font-weight: 700; }
+  .ribbon-toolbar { background: #fafafa; border-bottom: 1px solid var(--grid); padding: 5px 14px; font-size: 15px; color: var(--muted); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .rt-fresh { font-size: 15px; color: var(--muted); }
+
+  .sheet-wrap { padding: 18px 22px; }
+  .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin-bottom: 16px; }
+  h1 { font-size: 19px; font-weight: 700; margin: 0 0 2px; }
+  .sub { color: var(--muted); font-size: 15px; }
+  .note { background: #fffbe6; border: 1px solid #e8d98a; border-radius: 2px; padding: 6px 10px; font-size: 14.5px; color: #6b5c1f; margin-bottom: 16px; }
+  .note a { color: #0b5cab; }
+
+  h2 {
+    font-size: 16px; font-weight: 700; margin: 20px 0 0; color: #fff; background: var(--excel-green);
+    padding: 5px 10px; border: 1px solid #1a5c38;
+  }
+
+  .tbl-wrap { overflow-x: auto; background: var(--sheet); border-bottom: 1px solid var(--grid); }
+  table.sheet { width: 100%; border-collapse: collapse; background: var(--sheet); table-layout: fixed; }
+  table.sheet.wide { min-width: 900px; }
+  table.sheet th, table.sheet td {
+    border: 1px solid var(--grid); padding: 6px 9px; font-size: 15.5px; text-align: left;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  table.sheet th { background: #eaf3ee; color: #14532d; font-weight: 700; }
+  table.sheet > tbody > tr:nth-child(even) > td { background: #f8faf9; }
+  table.sheet > tbody > tr:hover > td { background: var(--sel); }
+  table.sheet a { color: #0b5cab; text-decoration: none; }
+  table.sheet a:hover { text-decoration: underline; }
+  td.num { text-align: right; font-family: Consolas, monospace; }
+  .empty-row td { color: var(--muted); text-align: center; padding: 18px; font-style: italic; }
+  .cell-sub { display: block; color: var(--muted); font-size: 14px; font-family: Calibri, "맑은 고딕", Arial, sans-serif; }
+  .win-name { font-weight: 700; color: #14532d; }
+  .badge-min { display: inline-block; background: var(--excel-green); color: #fff; font-size: 13px; padding: 0 5px; border-radius: 2px; margin-left: 4px; }
+  .badge-net { background: #0b5cab; }
+  .period-cell { line-height: 1.5; }
+  .price-link { color: inherit; text-decoration: none; border-bottom: 1px dashed var(--muted); }
+  .price-link:hover { color: #0b5cab; border-bottom-color: #0b5cab; }
+  .eff-note .price-link { font-size: inherit; }
+  .gv-reason { color: var(--muted); font-style: italic; }
+
+  /* 직항/경유 별도 열 */
+  .stops-direct { display: inline-block; background: #eaf3ee; color: #14532d; border: 1px solid #c3ddce; font-size: 14.5px; padding: 1px 6px; border-radius: 2px; white-space: nowrap; font-weight: 700; }
+  .stops-via { display: inline-block; background: #fff6e6; color: #8a5a00; border: 1px solid #e6cf98; font-size: 14.5px; padding: 1px 6px; border-radius: 2px; white-space: nowrap; }
+  /* 공휴일/연휴 시각화 스트립 */
+  .tstrip { display: flex; gap: 2px; margin-top: 3px; }
+  .tstrip-day { width: 9px; height: 9px; border-radius: 2px; border: 1px solid rgba(0,0,0,0.12); }
+  .tstrip-day.hol { background: #e5484d; }
+  .tstrip-day.wknd { background: #6aa3e0; }
+  .tstrip-day.wd { background: #d4d8dc; }
+  .gv-strip-row { display: flex; align-items: center; gap: 6px; margin-top: 3px; flex-wrap: wrap; }
+  .gv-strip-row .tstrip { margin-top: 0; }
+  .gv-strip-row .cell-sub { display: inline; }
+
+  /* 연휴 특가 보드: 특가율 배지 */
+  .gv-badge { display: inline-block; padding: 1px 7px; border-radius: 2px; font-weight: 700; font-size: 14.5px; white-space: nowrap; }
+  .gv-r0 { background: #e6f4ea; color: #1e7e34; border: 1px solid #b7dfc2; }
+  .gv-r1 { background: #fff8e1; color: #8a6d00; border: 1px solid #e8d98a; }
+  .gv-na { background: #f1f3f4; color: #6e7781; border: 1px solid #d0d7de; font-weight: 400; }
+
+  .copy-btn, .fav-btn, .x-btn {
+    background: none; border: none; cursor: pointer; padding: 0 2px; font-size: 18px; line-height: 1;
+    font-family: inherit; vertical-align: middle;
+  }
+  .fav-btn { color: #c9ccd1; }
+  .fav-btn.on { color: #e8a500; }
+  .fav-btn:hover { color: #e8a500; }
+
+  @media (max-width: 760px) {
+    .sheet-wrap { padding: 12px 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="ribbon-tabs">
+    <span>파일</span><span class="active">홈</span><span>삽입</span><span>페이지 레이아웃</span><span>데이터</span><span>검토</span><span>보기</span>
+  </div>
+  <div class="page-nav">
+    <a href="index.html">📋 노선별 특가 현황</a>
+    <a href="events.html">📅 항공사 정기 특가 일정</a>
+    <a class="active" href="favorites.html">★ 즐겨찾기</a>
+  </div>
+  <div class="ribbon-toolbar">
+    <span>Calibri · 11 · 표준 · 일반</span>
+    <span class="rt-fresh" title="누적 페이지 조회수">조회 <span id="visit-count">—</span></span>
+  </div>
+
+  <div class="sheet-wrap">
+    <div class="topbar">
+      <div>
+        <h1>★ 즐겨찾기</h1>
+        <div class="sub">담아둔 여행지 × 연휴만 모아서 봅니다</div>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>📋 노선별 특가 현황</b>의 <b>여행지별 연휴 보드</b>에서 여행지를 펼치면 나오는 연휴별 행(예: "9/24 추석") 맨 앞의 ★를 누르면
+      여기에 담깁니다. 즐겨찾기는 이 브라우저에만 저장됩니다.
+      <a href="index.html">→ 노선별 특가 현황으로 가기</a>
+    </div>
+
+    <h2>즐겨찾기한 연휴 <span id="fav-count"></span></h2>
+    <div class="tbl-wrap">
+      <table class="sheet wide">
+        <thead>
+          <tr>
+            <th style="width:4%"></th>
+            <th style="width:20%">여행지</th>
+            <th style="width:12%">연휴</th>
+            <th style="width:10%">최저가</th>
+            <th style="width:13%">특가율</th>
+            <th style="width:29%">추천 일정</th>
+            <th style="width:12%">직항/경유</th>
+          </tr>
+        </thead>
+        <tbody id="fav-board"></tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+  const FAVS_KEY = 'fd_favs';
+  const DAY_VALUE_KEY = 'fd_day_value';
+  const DAY_VALUE_DEFAULT = 10;
+  const MAX_LEAVE_KEY = 'fd_max_leave';
+  const MAX_LEAVE_DEFAULT = 5;
+  const cacheBust = `?t=${Date.now()}`;
+
+  const state = {
+    routesStatus: [],
+    matrix: null,
+    holidayWindows: [],
+    dayValue: (function () {
+      try {
+        const v = parseInt(localStorage.getItem(DAY_VALUE_KEY), 10);
+        return isNaN(v) || v < 0 ? DAY_VALUE_DEFAULT : v;
+      } catch (e) { return DAY_VALUE_DEFAULT; }
+    })(),
+    maxLeave: (function () {
+      try {
+        const raw = localStorage.getItem(MAX_LEAVE_KEY);
+        if (raw === '') return null;
+        const v = parseInt(raw, 10);
+        return isNaN(v) || v < 0 ? MAX_LEAVE_DEFAULT : v;
+      } catch (e) { return MAX_LEAVE_DEFAULT; }
+    })()
+  };
+  let holidaySet = new Set();
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+  function fmt(n) { return n == null ? '-' : Number(n).toLocaleString('ko-KR'); }
+  function rk(r) { return r.id || (r.origin + '-' + r.destination); }
+  function routeGroupKey(r) { return r.origin + '-' + r.destination; }
+  // 인덱스 페이지(destHolFavKey)와 같은 규칙: "<origin-destination>::<windowId>"
+  function destHolFavKey(gk, winId) { return gk + '::' + winId; }
+  function emptyRow(colspan, msg) {
+    return `<tr class="empty-row"><td colspan="${colspan}">${esc(msg)}</td></tr>`;
+  }
+  function getFavs() {
+    try { return new Set(JSON.parse(localStorage.getItem(FAVS_KEY) || '[]')); }
+    catch (e) { return new Set(); }
+  }
+  function setFavs(set) { try { localStorage.setItem(FAVS_KEY, JSON.stringify([...set])); } catch (e) {} }
+
+  async function fetchJson(path, fallback) {
+    try {
+      const res = await fetch(path + cacheBust);
+      if (!res.ok) return fallback;
+      return await res.json();
+    } catch (e) { return fallback; }
+  }
+
+  const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+  function weekdayOf(dateStr) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateStr == null ? '' : dateStr));
+    if (!m) return '';
+    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    if (isNaN(d.getTime())) return '';
+    return WEEKDAYS[d.getDay()];
+  }
+  function fmtDateYY(dateStr, wd) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateStr == null ? '' : dateStr));
+    if (!m) return esc(dateStr == null ? '' : dateStr);
+    const w = wd || weekdayOf(dateStr);
+    return `${m[1].slice(2)}-${m[2]}-${m[3]} (${esc(w)})`;
+  }
+  function stopsCell(stops, airline) {
+    const air = (airline == null ? '' : String(airline)).trim();
+    const airSub = air ? `<span class="cell-sub">${esc(air)}</span>` : '';
+    if (stops === '' || stops == null) {
+      return air ? '<span class="cell-sub">—</span>' + airSub : '<span class="cell-sub">—</span>';
+    }
+    const n = parseInt(stops, 10);
+    if (isNaN(n)) return '<span class="cell-sub">—</span>' + airSub;
+    const badge = n === 0
+      ? '<span class="stops-direct">직항</span>'
+      : `<span class="stops-via">경유${n}</span>`;
+    return badge + airSub;
+  }
+  function tripStrip(departStr, returnStr) {
+    const md = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(departStr || ''));
+    const mr = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(returnStr || ''));
+    if (!md || !mr) return '';
+    let cur = new Date(Number(md[1]), Number(md[2]) - 1, Number(md[3]));
+    const end = new Date(Number(mr[1]), Number(mr[2]) - 1, Number(mr[3]));
+    if (isNaN(cur.getTime()) || isNaN(end.getTime()) || end < cur) return '';
+    let cells = '', guard = 0;
+    while (cur <= end && guard < 40) {
+      const y = cur.getFullYear(), mo = cur.getMonth() + 1, da = cur.getDate();
+      const iso = `${y}-${String(mo).padStart(2, '0')}-${String(da).padStart(2, '0')}`;
+      const dow = cur.getDay();
+      let cls = 'wd', kind = '평일';
+      if (holidaySet.has(iso)) { cls = 'hol'; kind = '공휴일'; }
+      else if (dow === 0 || dow === 6) { cls = 'wknd'; kind = dow === 0 ? '일요일' : '토요일'; }
+      cells += `<span class="tstrip-day ${cls}" title="${esc(iso)} ${kind}"></span>`;
+      cur.setDate(cur.getDate() + 1);
+      guard++;
+    }
+    return `<span class="tstrip" title="공휴일(빨강)·주말(파랑)·평일(회색)">${cells}</span>`;
+  }
+  function climateBadge(iata, departDateStr) {
+    if (!window.climateFor) return '';
+    const m = /^\d{4}-(\d{2})/.exec(String(departDateStr || ''));
+    if (!m) return '';
+    const month = parseInt(m[1], 10);
+    const c = window.climateFor(iata, month);
+    if (!c) return '';
+    const rain = c.rain === '우기' ? '🌧 우기' : c.rain === '건기' ? '☀️ 건기' : '⛅ 보통';
+    const title = `${month}월 평균 기후 · ${rain} · 낮 최고 ${c.temp}°C · 습도 ${c.humidity}%`;
+    return `<span class="cell-sub" title="${esc(title)}">${rain} · ${c.temp}°C · 습도 ${c.humidity}%</span>`;
+  }
+
+  // ===================== 휴일 가치 반영 추천 (index.html과 동일 로직) =====================
+  function dayValueWon() { return (state.dayValue || 0) * 10000; }
+  function cellPairs(cell) {
+    if (Array.isArray(cell.pairs) && cell.pairs.length) return cell.pairs;
+    return cell.best ? [{ ...cell.best, price: cell.min_price }] : [];
+  }
+  function effCost(p) { return p.price - dayValueWon() * (p.bonus_days || 0); }
+  function leaveCap() { return state.maxLeave == null ? Infinity : state.maxLeave; }
+  function eligiblePairs(cell) {
+    const ps = cellPairs(cell);
+    const cap = leaveCap();
+    if (cap === Infinity) return ps;
+    return ps.filter(p => (p.leave_days || 0) <= cap);
+  }
+  function pickPair(cell) {
+    const ps = eligiblePairs(cell);
+    if (!ps.length) return null;
+    let best = ps[0];
+    for (const p of ps) if (effCost(p) < effCost(best)) best = p;
+    return best;
+  }
+  function schedText(b) {
+    return `${b.nights}박 ${b.days}일 (연차 ${b.leave_days}개 소모)`;
+  }
+  function primaryPair(cell) {
+    return cellPairs(cell)[0] || cell.best;
+  }
+  function recommendedAltNote(cell) {
+    const min = primaryPair(cell);
+    const rec = pickPair(cell);
+    if (min && !rec) {
+      return `<div class="cell-sub eff-note" title="이 연휴에서 찾은 일정은 모두 설정한 연차 상한(${leaveCap()}개)을 넘습니다 — 상한을 늘리면 후보가 보입니다">⚠ 연차 ${min.leave_days}개 필요 (상한 ${leaveCap()}개 초과)</div>`;
+    }
+    if (!min || !rec || rec === min || rec.depart_date === min.depart_date && rec.return_date === min.return_date) return '';
+    const diff = rec.price - min.price;
+    const dBonus = (rec.bonus_days || 0) - (min.bonus_days || 0);
+    const dLeave = (rec.leave_days || 0) - (min.leave_days || 0);
+    const period = `${fmtDateYY(rec.depart_date, rec.depart_weekday)} ~ ${fmtDateYY(rec.return_date, rec.return_weekday)}`;
+    const capped = (min.leave_days || 0) > leaveCap();
+    const title = capped
+      ? `최저가 일정(${fmt(min.price)}원)은 연차 ${min.leave_days}개가 필요해 상한(${leaveCap()}개)을 넘습니다. `
+        + `연차 ${rec.leave_days}개로 갈 수 있는 일정 중 실질 부담이 가장 낮은 것입니다`
+      : `최저가 일정(${fmt(min.price)}원, ${min.depart_date}~${min.return_date})보다 ${fmt(diff)}원 비싸지만 `
+        + `덤 휴일이 ${dBonus}일 더 많아, 휴일 하루 ${fmt(dayValueWon())}원 기준 실질 부담이 더 낮은 일정입니다`
+        + (dLeave > 0 ? ` (연차는 ${dLeave}개 더 씁니다)` : '');
+    const priceHtml = rec.booking_url
+      ? `<a class="price-link" href="${esc(rec.booking_url)}" target="_blank" rel="noopener">${fmt(rec.price)}원</a>`
+      : `${fmt(rec.price)}원`;
+    const delta = capped
+      ? `연차 ${min.leave_days}→${rec.leave_days}개`
+      : `+${fmt(diff)} · 휴일 +${dBonus}일${dLeave > 0 ? ` · 연차 +${dLeave}개` : ''}`;
+    return `<div class="cell-sub eff-note" title="${esc(title)}">💡 대신 추천: ${esc(period)} · ${schedText(rec)} · ${priceHtml} (${delta})</div>`;
+  }
+  function gvDealVal(cell) {
+    return (cell && cell.tier !== 'C' && cell.deal_pct != null) ? cell.deal_pct : null;
+  }
+  function gvDealBadge(cell) {
+    if (!cell) return '<span class="gv-badge gv-na">수집 대기</span>';
+    if (cell.tier === 'C') {
+      return `<span class="gv-badge gv-na" title="이 연휴의 통상 시세를 잡을 표본이 아직 부족합니다 (관측 ${cell.n_obs || 0}) — 최저가만 참고하세요">수집 중</span>`;
+    }
+    const d = cell.deal_pct || 0;
+    const cls = d >= 12 ? 'gv-r0' : d >= 5 ? 'gv-r1' : 'gv-na';
+    const txt = d >= 5 ? `통상가 −${d.toFixed(0)}%` : '통상가 수준';
+    const dim = cell.tier === 'B' ? ' style="opacity:.65"' : '';
+    let title = `이 연휴 통상 시세 약 ${fmt(cell.typical)}원 · 현재 최저가 ${fmt(cell.min_price)}원`
+      + ` (통상가 대비 −${d.toFixed(0)}%) · 관측 ${cell.n_obs}건`;
+    if (cell.tier === 'B') title += '\n※ 표본이 적어 참고용입니다';
+    return `<span class="gv-badge ${cls}"${dim} title="${esc(title)}">${esc(txt)}</span>`;
+  }
+  const gvTierRank = t => ({ A: 0, B: 1, C: 2 }[t] != null ? { A: 0, B: 1, C: 2 }[t] : 3);
+  function cellBetter(c, best) {
+    if (!best) return true;
+    const a = [gvTierRank(c.tier), -(gvDealVal(c) == null ? -1 : gvDealVal(c)), c.min_price];
+    const b = [gvTierRank(best.tier), -(gvDealVal(best) == null ? -1 : gvDealVal(best)), best.min_price];
+    return a[0] < b[0] || (a[0] === b[0] && (a[1] < b[1] || (a[1] === b[1] && a[2] < b[2])));
+  }
+
+  function gvWindows() {
+    if (state.matrix && Array.isArray(state.matrix.windows) && state.matrix.windows.length) {
+      return state.matrix.windows;
+    }
+    return state.holidayWindows || [];
+  }
+  function windowLabel(id) {
+    const w = gvWindows().find(x => x.id === id);
+    const m = /^\d{4}-(\d{2})-(\d{2})/.exec(id) || null;
+    const dateTxt = m ? `${parseInt(m[1], 10)}/${parseInt(m[2], 10)} ` : '';
+    return dateTxt + (w ? (w.label || '') : id);
+  }
+
+  // 즐겨찾기 키 하나(gk::winId) -> 화면에 필요한 값 묶음. 그룹 안 모니터가 여럿이면
+  // (직항 전용 + 경유 허용) index.html의 destWindowCells와 같은 기준으로 대표 칸을 고른다.
+  function resolveFav(key) {
+    const idx = key.indexOf('::');
+    if (idx < 0) return { key, gk: key, winId: '', missing: true };
+    const gk = key.slice(0, idx);
+    const winId = key.slice(idx + 2);
+    const monitors = state.routesStatus.filter(r => routeGroupKey(r) === gk);
+    if (!monitors.length) return { key, gk, winId, missing: true };
+    const cells = (state.matrix && state.matrix.cells) || {};
+    let best = null, mon = null;
+    for (const m of monitors) {
+      const c = (cells[winId] || {})[rk(m)];
+      if (!c) continue;
+      if (!best || c.min_price < best.min_price || (c.min_price === best.min_price && cellBetter(c, best))) {
+        best = c; mon = m;
+      }
+    }
+    return { key, gk, winId, route: monitors[0], cell: best, mon, missing: !best };
+  }
+
+  function rowHtml(r) {
+    const label = r.route ? (r.route.label || (r.route.origin + ' → ' + r.route.destination)) : r.gk;
+    const winLabel = windowLabel(r.winId);
+    if (r.missing) {
+      const reason = r.route
+        ? '이 연휴는 아직 시세 데이터가 없습니다 — 다음 자동 수집에서 채워집니다.'
+        : '노선 정보를 찾을 수 없습니다 (삭제된 노선일 수 있습니다).';
+      return `<tr>
+        <td style="text-align:center"><button class="fav-btn on" data-fav="${esc(r.key)}" title="즐겨찾기에서 빼기">★</button></td>
+        <td title="${esc(label)}">${esc(label)}</td>
+        <td class="win-name">${esc(winLabel)}</td>
+        <td colspan="4" class="gv-reason">${esc(reason)}</td>
+      </tr>`;
+    }
+    const b = primaryPair(r.cell);
+    const period = `${fmtDateYY(b.depart_date, b.depart_weekday)} ~ ${fmtDateYY(b.return_date, b.return_weekday)}`;
+    const sched = `${period} · ${schedText(b)}${recommendedAltNote(r.cell)}`;
+    const strip = `<span class="gv-strip-row">${tripStrip(b.depart_date, b.return_date)}${climateBadge(r.route.destination, b.depart_date)}</span>`;
+    return `<tr>
+      <td style="text-align:center"><button class="fav-btn on" data-fav="${esc(r.key)}" title="즐겨찾기에서 빼기">★</button></td>
+      <td title="${esc(label)}">${esc(label)}</td>
+      <td class="win-name">${esc(winLabel)}</td>
+      <td class="num"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(r.cell.min_price)}</a></td>
+      <td>${gvDealBadge(r.cell)}</td>
+      <td class="period-cell">${sched}${strip}</td>
+      <td>${stopsCell(b.stops, b.airline)}</td>
+    </tr>`;
+  }
+
+  function render() {
+    const tbody = document.getElementById('fav-board');
+    const keys = [...getFavs()];
+    const countEl = document.getElementById('fav-count');
+    if (!keys.length) {
+      countEl.textContent = '';
+      tbody.innerHTML = emptyRow(7, '즐겨찾기한 항목이 없습니다. 노선별 특가 현황에서 연휴 행의 ★를 눌러 담아보세요.');
+      return;
+    }
+    const rows = keys.map(resolveFav);
+    rows.sort((a, b) => {
+      const an = a.route ? (a.route.label || a.gk) : a.gk;
+      const bn = b.route ? (b.route.label || b.gk) : b.gk;
+      return an.localeCompare(bn, 'ko') || String(a.winId).localeCompare(String(b.winId));
+    });
+    countEl.textContent = `(${rows.length}개)`;
+    tbody.innerHTML = rows.map(rowHtml).join('');
+  }
+
+  document.addEventListener('click', e => {
+    const favBtn = e.target.closest('[data-fav]');
+    if (!favBtn) return;
+    const key = favBtn.getAttribute('data-fav');
+    const favs = getFavs();
+    favs.delete(key);
+    setFavs(favs);
+    render();
+  });
+
+  async function init() {
+    const [routesStatus, holidays, matrix] = await Promise.all([
+      fetchJson('data/routes_status.json', []),
+      fetchJson('data/holidays.json', []),
+      fetchJson('data/matrix.json', null)
+    ]);
+    state.routesStatus = Array.isArray(routesStatus) ? routesStatus : [];
+    if (Array.isArray(holidays)) {
+      holidaySet = new Set(holidays);
+      state.holidayWindows = [];
+    } else if (holidays && typeof holidays === 'object') {
+      holidaySet = new Set(Array.isArray(holidays.holidays) ? holidays.holidays : []);
+      state.holidayWindows = Array.isArray(holidays.windows) ? holidays.windows : [];
+    }
+    state.matrix = (matrix && typeof matrix === 'object' && !Array.isArray(matrix)) ? matrix : null;
+    render();
+  }
+  init();
+</script>
+</body>
+</html>

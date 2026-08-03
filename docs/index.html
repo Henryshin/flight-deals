@@ -465,6 +465,7 @@
   <div class="page-nav">
     <a class="active" href="index.html">📋 노선별 특가 현황</a>
     <a href="events.html">📅 항공사 정기 특가 일정</a>
+    <a href="favorites.html">★ 즐겨찾기</a>
   </div>
   <div class="ribbon-toolbar">
     <span>Calibri · 11 · 표준 · 일반</span>
@@ -617,13 +618,14 @@
       </div>
       <div class="tbl-wrap">
         <!-- 열 구성은 위 '연휴 특가 보드'와 동일한 순서/의미로 맞춘다
-             (★=순위 자리, 여행지=목적지, 최저가·특가율·추천 일정·직항/경유는 그대로).
+             (여행지=목적지, 최저가·특가율·추천 일정·직항/경유는 그대로).
+             즐겨찾기(★)는 여행지 단위가 아니라 펼쳤을 때 나오는 연휴별 행에 있다
+             (dest-tbl 첫 열 — 어느 여행지의 어느 연휴를 담았는지 명확하게).
              맨 뒤 목표가/✕ 만 이 보드 전용(모니터 관리) 열. -->
         <table class="sheet wide dest-sheet">
           <thead>
             <tr>
-              <th style="width:4%">★</th>
-              <th style="width:18%">여행지</th>
+              <th style="width:22%">여행지</th>
               <th style="width:10%">최저가</th>
               <th style="width:13%">특가율(통상가 대비)</th>
               <th style="width:31%" id="dest-sched-th">추천 일정</th>
@@ -1100,8 +1102,9 @@
       setChatExpanded(true); // 기본으로 펼쳐진 상태 (height 지정 + 폴링 시작)
     }
 
-    const FAVS_KEY = 'fd_favs';       // 내 목록(브라우저별): 담은 모니터 키 집합
-    const VIEWMINE_KEY = 'fd_viewmine'; // 마지막으로 고른 뷰(내 목록/전체)를 기억
+    // 즐겨찾기(브라우저별): "여행지-연휴"(origin-destination::windowId) 키 집합.
+    // 여행지 단위가 아니라 여행지×연휴 단위로 담는다 — "9/24 추석"처럼 특정 연휴만 찜해두는 용도.
+    const FAVS_KEY = 'fd_favs';
     const TARGETS_KEY = 'fd_targets';
     const PENDING_KEY = 'fd_pending';
     const DAY_VALUE_KEY = 'fd_day_value'; // 휴일 하루 가치 (만원, 비용-편익 계산용)
@@ -1142,15 +1145,6 @@
           const v = parseInt(raw, 10);
           return isNaN(v) || v < 0 ? MAX_LEAVE_DEFAULT : v;
         } catch (e) { return MAX_LEAVE_DEFAULT; }
-      })(),
-      // 내 목록을 담아본 적 있으면(또는 지난번 '내 목록' 뷰였으면) 내 목록으로 시작.
-      favOnly: (function () {
-        try {
-          const v = localStorage.getItem(VIEWMINE_KEY);
-          if (v === '1') return true;
-          if (v === '0') return false;
-          return new Set(JSON.parse(localStorage.getItem(FAVS_KEY) || '[]')).size > 0;
-        } catch (e) { return false; }
       })()
     };
     let holidaySet = new Set();
@@ -1308,7 +1302,8 @@
       catch (e) { return new Set(); }
     }
     function setFavs(set) { try { localStorage.setItem(FAVS_KEY, JSON.stringify([...set])); } catch (e) {} }
-    function addToMyList(key) { const f = getFavs(); f.add(key); setFavs(f); } // 내 목록에 담기
+    // 즐겨찾기 키: 여행지(origin-destination) + 연휴 id. favorites.html 도 같은 규칙으로 만든다.
+    function destHolFavKey(gk, winId) { return gk + '::' + winId; }
     function getTargets() {
       try { return JSON.parse(localStorage.getItem(TARGETS_KEY) || '{}') || {}; }
       catch (e) { return {}; }
@@ -1495,7 +1490,6 @@
       return routeLike.max_stops === 0 ? 'direct' : 'via';
     }
     function routePassesChip(routeLike) {
-      if (state.favOnly && !getFavs().has(rk(routeLike))) return false;
       // 1차: 국가 (선택된 게 없으면 전체 통과)
       if (state.selCountries.size && !state.selCountries.has(routeLike.country || '기타')) return false;
       // 2차: 지역(도착 도시) — 선택된 게 없으면 통과. 도시 선택은 국가에 종속.
@@ -1538,8 +1532,8 @@
       }
       const noSel = state.selCountries.size === 0 && state.selCities.size === 0 &&
         state.selConcepts.size === 0 && state.selStops.size === 0;
-      // 전체/★내목록 은 최상단 행, 그 아래 대륙별로 국가 칩을 행으로 나눈다(라벨 없음).
-      let html = `<div class="chip-row">${chip('all', '', '전체', noSel)}${chip('fav', '', '★ 내 목록', state.favOnly)}</div>`;
+      // 전체는 최상단 행, 그 아래 대륙별로 국가 칩을 행으로 나눈다(라벨 없음).
+      let html = `<div class="chip-row">${chip('all', '', '전체', noSel)}</div>`;
       const buckets = { 동아시아: [], 동남기타아시아: [], 유럽: [], 미주: [], 그외: [] };
       for (const [c, flag] of countries) {
         buckets[countryRegion(c)].push(chip('country', c, c, state.selCountries.has(c)));
@@ -1581,10 +1575,7 @@
     function onChipClick(ch) {
       const type = ch.getAttribute('data-chip');
       const value = ch.getAttribute('data-value');
-      if (type === 'fav') {
-        state.favOnly = !state.favOnly;
-        try { localStorage.setItem(VIEWMINE_KEY, state.favOnly ? '1' : '0'); } catch (e) {} // 뷰 선택 기억
-      } else if (type === 'all') {
+      if (type === 'all') {
         state.selCountries.clear();
         state.selCities.clear();
         state.selConcepts.clear();
@@ -2122,6 +2113,8 @@
     // 펼쳤을 때 보이는 연휴별 시세 (싼 순). 그룹 하나당 <tr> 한 줄.
     function destDetailRowHtml(g, info) {
       const targets = getTargets();
+      const gk = routeGroupKey(g.route);
+      const favs = getFavs();
       const solo = g.items.length === 1;
       // 모니터별 한 줄 요약(정책 수정 · 최근 관측 · 30일 · 마지막 갱신). 모니터가 둘 이상이면
       // 목표가/삭제도 여기서 모니터별로 다룬다(요약 행은 여행지 단위라 어느 모니터인지 모호해짐).
@@ -2149,7 +2142,7 @@
       }).join('');
 
       if (!info.wins.length) {
-        return `<tr class="dest-detail-row" data-dest-detail="${esc(routeGroupKey(g.route))}"><td colspan="8">` +
+        return `<tr class="dest-detail-row" data-dest-detail="${esc(gk)}"><td colspan="7">` +
           `<div class="dest-detail"><div class="dest-detail-head">${heads}</div>` +
           `<div class="dest-detail-foot">${esc(gvEmptyReason(g.items))}</div></div></td></tr>`;
       }
@@ -2178,8 +2171,11 @@
           return `<div class="cell-sub alt-opt" title="같은 연휴, 다른 모니터 옵션">` +
             `${stopsCell(ab.stops, ab.airline)} <a class="price-link" href="${esc(ab.booking_url)}" target="_blank" rel="noopener">${fmt(a.cell.min_price)}원</a></div>`;
         }).join('');
+        const favKey = destHolFavKey(gk, w.win);
+        const favOn = favs.has(favKey);
         return `
           <tr${isTop ? ' class="is-min"' : ''}>
+            <td style="text-align:center"><button class="fav-btn${favOn ? ' on' : ''}" data-fav="${esc(favKey)}" title="즐겨찾기에 담기/빼기">★</button></td>
             <td class="win-name">${esc(w.label)}${badges}</td>
             <td class="num"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(w.cell.min_price)}</a></td>
             <td>${gvDealBadge(w.cell)}</td>
@@ -2195,15 +2191,17 @@
       const foot = missing > 0
         ? `<div class="dest-detail-foot">${filtered ? '고른 연휴 중' : '그 외'} ${missing}개 연휴는 아직 수집 전입니다 — 다음 자동 수집에서 채워집니다.</div>`
         : '';
-      return `<tr class="dest-detail-row" data-dest-detail="${esc(routeGroupKey(g.route))}"><td colspan="8">
+      return `<tr class="dest-detail-row" data-dest-detail="${esc(gk)}"><td colspan="7">
         <div class="dest-detail">
           <div class="dest-detail-head">${heads}</div>
           <table class="dest-tbl">
             <thead>
-              <!-- 폭은 바깥 표(★+여행지 / 최저가 / 특가율 / 추천 일정 / 직항·경유 / 목표가+✕)와
-                   같은 비율로 맞춰, 펼친 표가 같은 격자의 연장처럼 읽히게 한다. -->
+              <!-- ★ = 이 연휴만 즐겨찾기(여행지×연휴 단위). 나머지 폭은 바깥 표(여행지 / 최저가 /
+                   특가율 / 추천 일정 / 직항·경유 / 목표가+✕)와 같은 비율로 맞춰, 펼친 표가 같은
+                   격자의 연장처럼 읽히게 한다. -->
               <tr>
-                <th style="width:22%">연휴</th>
+                <th style="width:4%">★</th>
+                <th style="width:18%">연휴</th>
                 <th style="width:10%">최저가</th>
                 <th style="width:13%">특가율</th>
                 <th style="width:34%">추천 일정</th>
@@ -2241,14 +2239,13 @@
       }
       const tbody = document.getElementById('dest-board');
       if (!state.routesStatus.length) {
-        tbody.innerHTML = emptyRow(8, "등록된 항목이 없습니다. 아래 '항목 등록'에서 추가하세요.");
+        tbody.innerHTML = emptyRow(7, "등록된 항목이 없습니다. 아래 '항목 등록'에서 추가하세요.");
         return;
       }
-      const favs = getFavs();
       const targets = getTargets();
       const list = state.routesStatus.filter(r => routePassesChip(r));
       if (!list.length) {
-        tbody.innerHTML = emptyRow(8, state.favOnly ? '내 목록이 비었습니다. ★를 눌러 담거나 "전체 노선"에서 골라 담으세요.' : '조건에 맞는 항목이 없습니다.');
+        tbody.innerHTML = emptyRow(7, '조건에 맞는 항목이 없습니다.');
         return;
       }
       // 여행지(origin-destination) 단위로 묶는다. 같은 노선의 직항/경유 모니터는 한 행.
@@ -2280,16 +2277,13 @@
       };
       const sortEl = document.getElementById('dest-sort');
       const cmp = cmpMap[sortEl ? sortEl.value : 'price'] || cmpMap.price;
-      const faved = g => g.items.some(m => favs.has(rk(m)));
-      groups.sort((a, b) => (faved(b) ? 1 : 0) - (faved(a) ? 1 : 0) || cmp(a, b));
+      groups.sort(cmp);
 
       tbody.innerHTML = groups.map((g, gi) => {
         const gk = routeGroupKey(g.route);
         const info = g.info;
         const solo = g.items.length === 1;
         const label = destName(g);
-        const favKeys = g.items.map(rk);
-        const fav = favKeys.some(k => favs.has(k));
         const open = state.expandedDests.has(gk);
         const target = solo ? targets[rk(g.items[0])] : null;
 
@@ -2314,7 +2308,6 @@
           .filter(Boolean).join(' ');
         const rowTag = `<tr data-dest-row="${esc(gk)}" class="${cls}">`;
         const head = `${rowTag}
-            <td style="text-align:center"><button class="fav-btn${fav ? ' on' : ''}" data-fav="${esc(favKeys.join('|'))}" title="내 목록에 담기/빼기">★</button></td>
             <td title="${esc(label)}">${nameCell}</td>`;
         const tail = `
             <td class="num">${targetCell}</td>
@@ -2376,17 +2369,13 @@
       renderDestBoard();
     }
 
-    // key 는 모니터 키 하나 또는 '|' 로 이은 여러 개(여행지 행 = 같은 노선의 모니터 전부).
-    // 여러 개일 때는 하나라도 담겨 있으면 전부 빼고, 아니면 전부 담는다.
+    // key = "<origin-destination>::<windowId>" (destHolFavKey) — 여행지×연휴 단위 즐겨찾기.
     function toggleFav(key) {
-      const keys = String(key).split('|').filter(Boolean);
-      if (!keys.length) return;
+      if (!key) return;
       const favs = getFavs();
-      const anyOn = keys.some(k => favs.has(k));
-      keys.forEach(k => { if (anyOn) favs.delete(k); else favs.add(k); });
+      if (favs.has(key)) favs.delete(key); else favs.add(key);
       setFavs(favs);
       renderDestBoard();
-      if (state.favOnly) { renderDeals(); renderGvBoard(); }
     }
 
     function onTargetChange(el) {
@@ -2654,7 +2643,6 @@
           };
           const r = await proxyCall('add', { route: entry });
           entry.id = r.id || `${o.iata}-${d.iata}`;
-          addToMyList(rk(entry)); // 내가 등록한 노선은 내 목록에 자동으로 담김
           markCollectStarted();
           toast(r.collected ? '등록 완료 ✓ 새 노선 수집을 시작했습니다' : '등록 완료 ✓ 다음 수집부터 반영');
           pendingMarkAdded(entry);
@@ -2704,7 +2692,6 @@
         };
         routes.push(entry);
         await ghPutRoutes(routes, sha, `feat: add route ${o.iata}→${d.iata}`);
-        addToMyList(rk(entry)); // 내가 등록한 노선은 내 목록에 자동으로 담김
         toast('등록 완료 ✓ 다음 수집부터 반영');
         pendingMarkAdded(entry); // 새로고침해도 유지되도록 대기 목록에 기록
         // 화면에 즉시(낙관적) 반영
