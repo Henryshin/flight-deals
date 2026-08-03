@@ -434,6 +434,9 @@
     background: var(--excel-green); color: #fff; cursor: pointer; font-family: inherit;
   }
   .chat-input-row button:hover { background: #1a5c38; }
+  /* 연달아 보낸 메시지가 큐에서 순서를 기다리는 동안 보여주는 문구 (비어 있으면 자리도 안 차지) */
+  .chat-queue-hint { font-size: 12.5px; color: var(--muted); padding: 0 8px 6px; min-height: 0; }
+  .chat-queue-hint:empty { padding: 0; }
 
   /* toast */
   #toast-wrap { position: fixed; right: 16px; bottom: 16px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
@@ -562,6 +565,7 @@
             <input id="chat-text" placeholder="채팅 입력 후 Enter" maxlength="300" />
             <button id="btn-chat-send">전송</button>
           </div>
+          <div class="chat-queue-hint" id="chat-queue-hint"></div>
         </div>
       </div>
     </div>
@@ -888,7 +892,14 @@
     // 카운터와 공유)에 기대므로, 실패하면 섹션 자체를 숨긴 채 조용히 포기한다.
     const CHAT_CLIENT_KEY = 'fd_chat_client'; // 브라우저별 고유 id -> 도배 방지(속도 제한)용
     const CHAT_POLL_MS = 5000;
+    // Worker의 CHAT_MIN_INTERVAL_MS(cloudflare-worker/worker.js)와 같은 값. 서버가 이 간격보다
+    // 빠른 전송을 429로 막으므로, 연달아 보낸 메시지는 여기서 큐에 쌓아 간격을 맞춰 순서대로
+    // 보낸다 — 사용자 입장에선 "막힘" 없이 그냥 조금씩 순서대로 올라가는 것처럼 보인다.
+    const CHAT_MIN_INTERVAL_MS = 3000;
     let chatPollTimer = null;
+    let chatQueue = [];       // 아직 안 보낸 메시지 텍스트들 (입력한 순서대로)
+    let chatSendTimer = null; // 다음 큐 전송을 예약한 타이머
+    let chatNextSendAt = 0;   // 이 시각 이후에나 다음 전송 시도 (클라이언트 쪽 예상치)
     let myChatName = ''; // 서버가 IP 기반으로 배정해준 내 닉네임 (chat_poll 응답의 you)
     function getChatClientId() {
       try {
@@ -976,21 +987,50 @@
     function stopChatPolling() {
       if (chatPollTimer) { clearInterval(chatPollTimer); chatPollTimer = null; }
     }
-    async function chatSendMessage() {
+    // 입력창의 메시지를 큐에 넣고 곧바로 비운다 — 연달아 Enter를 쳐도 입력이 막히지 않고,
+    // 큐에 쌓인 순서대로 서버 속도 제한(CHAT_MIN_INTERVAL_MS) 간격을 두고 하나씩 나간다.
+    function chatSendMessage() {
       const textEl = document.getElementById('chat-text');
       const text = textEl.value.trim();
       if (!text) return;
       textEl.value = '';
       textEl.focus();
+      chatQueue.push(text);
+      renderChatQueueHint();
+      scheduleChatQueueSend();
+    }
+    function renderChatQueueHint() {
+      const el = document.getElementById('chat-queue-hint');
+      if (!el) return;
+      el.textContent = chatQueue.length ? `전송 대기 ${chatQueue.length}개…` : '';
+    }
+    function scheduleChatQueueSend() {
+      if (chatSendTimer || !chatQueue.length) return;
+      const wait = Math.max(0, chatNextSendAt - Date.now());
+      chatSendTimer = setTimeout(chatSendNext, wait);
+    }
+    async function chatSendNext() {
+      chatSendTimer = null;
+      const text = chatQueue[0];
+      if (text == null) return;
       try {
         // 닉네임은 클라이언트가 정하지 않는다 — 서버가 접속 IP로 자동 배정.
         await proxyCall('chat_send', { clientId: getChatClientId(), text });
+        chatQueue.shift();
+        chatNextSendAt = Date.now() + CHAT_MIN_INTERVAL_MS;
         chatPollOnce();
       } catch (e) {
-        textEl.value = text; // 실패 시 입력 내용 복구
-        if (e && e.status === 429) toast('너무 빠르게 보냈습니다. 잠시 후 다시 시도하세요.', 'err');
-        else toast('채팅 전송 실패: ' + ((e && e.message) || '네트워크 오류'), 'err');
+        if (e && e.status === 429) {
+          // 서버 기준 아직 간격이 안 찼다 — 메시지는 큐에 그대로 두고 간격만큼 늦춰 재시도.
+          chatNextSendAt = Date.now() + CHAT_MIN_INTERVAL_MS;
+        } else {
+          // 진짜 실패(네트워크 오류 등)는 큐에서 빼고 알린다 — 재입력은 사용자 몫.
+          chatQueue.shift();
+          toast('채팅 전송 실패: "' + text + '" (' + ((e && e.message) || '네트워크 오류') + ')', 'err');
+        }
       }
+      renderChatQueueHint();
+      scheduleChatQueueSend();
     }
     // ---- 채팅창 드래그(창 안의 창처럼 옮기기) ----
     // position:absolute라 페이지 스크롤에 같이 따라가며, 제목표시줄(#chat-h2)을
@@ -1099,7 +1139,7 @@
       placeChatWindow();
       wireChatDrag();
       wireChatNoteClose();
-      setChatExpanded(true); // 기본으로 펼쳐진 상태 (height 지정 + 폴링 시작)
+      setChatExpanded(false); // 기본으로 접힌 상태 (필요할 때 펼쳐서 폴링 시작)
     }
 
     // 즐겨찾기(브라우저별): "여행지-연휴"(origin-destination::windowId) 키 집합.
