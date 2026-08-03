@@ -92,7 +92,7 @@
   }
   table.sheet th { background: #eaf3ee; color: #14532d; font-weight: 700; }
   /* 행 배경은 '직계' 행에만 (자식 결합자). 펼침 패널 안의 중첩 표까지 물들지 않도록.
-     .dest-sheet(여행지별 연휴 보드)는 펼침 행이 중간에 끼어들어 nth-child 줄무늬가 어긋나므로
+     .dest-sheet(여행지별 상세 현황)는 펼침 행이 중간에 끼어들어 nth-child 줄무늬가 어긋나므로
      제외하고, 대신 렌더링할 때 .zebra 클래스를 직접 붙인다. */
   table.sheet:not(.dest-sheet) > tbody > tr:nth-child(even) > td { background: #f8faf9; }
   table.sheet > tbody > tr.zebra > td { background: #f8faf9; }
@@ -161,9 +161,6 @@
     width: 72px; font-family: Consolas, monospace; font-size: 15px; text-align: right;
     border: 1px solid transparent; background: transparent; padding: 2px 4px; border-radius: 2px; color: var(--text);
   }
-  /* 여행지별 연휴 보드의 목표가 칸은 열 폭이 좁아질 수 있어(고정 레이아웃) 칸에 맞춰 줄어들게 한다.
-     펼침 패널 안의 목표가 입력(모니터별)은 표 칸이 아니라 글줄이므로 기본 폭 유지. */
-  tr[data-dest-row] > td > .target-input { width: 100%; max-width: 76px; box-sizing: border-box; }
   .target-input:hover { border-color: var(--grid); background: #fff; }
   .target-input:focus { border-color: var(--excel-green); background: #fff; outline: none; }
 
@@ -281,7 +278,7 @@
     box-shadow: inset 0 1px 2px rgba(0,0,0,0.18);
   }
 
-  /* 연휴 특가 보드: 특가율 배지 (통상가 대비 많이 쌀수록 초록) */
+  /* 특가 요약표: 특가율 배지 (통상가 대비 많이 쌀수록 초록) */
   .gv-badge { display: inline-block; padding: 1px 7px; border-radius: 2px; font-weight: 700; font-size: 14.5px; white-space: nowrap; }
   .gv-r0 { background: #e6f4ea; color: #1e7e34; border: 1px solid #b7dfc2; }
   .gv-r1 { background: #fff8e1; color: #8a6d00; border: 1px solid #e8d98a; }
@@ -292,7 +289,7 @@
   .gv-reason { color: var(--muted); font-style: italic; }
   .status-dot.err { background: #b3261e; }
 
-  /* 여행지별 연휴 보드: 여행지 행을 누르면 그 밑에 연휴별 시세가 펼쳐진다 */
+  /* 여행지별 상세 현황: 여행지 행을 누르면 그 밑에 연휴별 시세가 펼쳐진다 */
   .dest-toggle {
     background: none; border: none; padding: 0; cursor: pointer; font-family: inherit;
     font-size: 15.5px; color: var(--text); text-align: left; width: 100%;
@@ -503,7 +500,7 @@
       1. <b>특가율</b> = 시세 대비 얼마나 싼지 나타내는 지표. 통상 연휴 기간이라 가격이 비싸지만, 이를 모르고 있는 해외 항공사 혹은 프로모션 중인 항공사가 단 한개라도 있을 경우 나타나는 가격.<br />
       2. 연휴기간에 연차 끼워써야하는 직장인들을 위해 만든 사이트로, 다른날짜 검색이 필요한 경우에는 스카이스캐너 이용 권고.<br />
       3. 일정 옆 날씨(🌧/☀️/⛅)는 해당 기간의 평균 날씨<br />
-      4. 보드는 두 가지 — <b>연휴 특가 보드</b>는 "이 연휴엔 어디가 싼가", <b>여행지별 연휴 보드</b>는 "이 여행지는 어느 연휴에 가야 싼가"를 봅니다.<br />
+      4. 보드는 두 가지 — <b>특가 요약표</b>는 "이 연휴엔 어디가 싼가", <b>여행지별 상세 현황</b>은 "이 여행지는 어느 연휴에 가야 싼가"를 봅니다.<br />
       5. 필터의 <b>휴일 가치</b>(하루 = n만원)를 설정하면, 조금 비싸도 여행 기간 안에 주말·공휴일이 더 많이 들어오는 일정(예: 목금 연휴에 출발을 앞당겨 앞주말도 여행지에서 보내기)을 <b>실질 비용</b>(= 가격 − 가치 × 덤 휴일)으로 비교해 추천합니다. 어느 <b>연휴</b>를 갈지도 이 기준으로 다시 고릅니다.<br />
       6. <b>연차 상한</b>은 이 여행 하나에 쓸 연차의 한도입니다. 실질 비용은 덤 휴일만 편익으로 보므로 한도가 없으면 연차를 많이 태우는 긴 일정이 추천으로 올라옵니다 — 상한 안에서만 추천하고, 상한을 넘는 일정만 남으면 ⚠ 로 알려줍니다.
     </div>
@@ -573,8 +570,8 @@
       </div>
     </div>
 
-    <h2>연휴 특가 보드</h2>
-    <!-- 연휴 칩은 아래 '여행지별 연휴 보드'에도 함께 걸린다 (state.gvWindows 공유) -->
+    <h2>특가 요약표</h2>
+    <!-- 연휴 칩은 아래 '여행지별 상세 현황'에도 함께 걸린다 (state.gvWindows 공유) -->
     <div class="chip-bar">
       <span class="chip-cap">연휴<span class="chip-cap-note">두 보드 공통</span></span>
       <div class="chip-groups" id="gv-windows"></div>
@@ -604,12 +601,12 @@
       </table>
     </div>
 
-    <h2 class="collapsible" id="dest-h2"><span class="collapse-caret">▼</span> 여행지별 연휴 보드 <span class="collapse-hint">(클릭해서 접기)</span></h2>
+    <h2 class="collapsible" id="dest-h2"><span class="collapse-caret">▼</span> 여행지별 상세 현황 <span class="collapse-hint">(클릭해서 접기)</span></h2>
     <div id="dest-body">
       <div class="note" style="margin-bottom:0">
         여행지를 <b>클릭</b>하면 그 아래로 <b>연휴별 최저가</b>가 싼 순서대로 펼쳐집니다. "이 여행지는 어느 연휴에 가야 싼가"를 보는 보드입니다.
-        (위 <b>연휴 특가 보드</b>는 반대로 "이 연휴엔 어디가 싼가"를 봅니다.)
-        열 구성은 특가 보드와 같고, 위 <b>연휴 칩 필터</b>도 이 보드에 함께 적용됩니다.
+        (위 <b>특가 요약표</b>는 반대로 "이 연휴엔 어디가 싼가"를 봅니다.)
+        열 구성은 특가 요약표와 같고, 위 <b>연휴 칩 필터</b>도 이 보드에 함께 적용됩니다.
       </div>
       <div class="toolbar-row">
         <label for="dest-sort">정렬</label>
@@ -624,20 +621,19 @@
         <span id="dest-win-filter" class="win-filter"></span>
       </div>
       <div class="tbl-wrap">
-        <!-- 열 구성은 위 '연휴 특가 보드'와 동일한 순서/의미로 맞춘다
+        <!-- 열 구성은 위 '특가 요약표'와 동일한 순서/의미로 맞춘다
              (여행지=목적지, 최저가·특가율·추천 일정·직항/경유는 그대로).
              즐겨찾기(★)는 여행지 단위가 아니라 펼쳤을 때 나오는 연휴별 행에 있다
              (dest-tbl 첫 열 — 어느 여행지의 어느 연휴를 담았는지 명확하게).
-             맨 뒤 목표가/✕ 만 이 보드 전용(모니터 관리) 열. -->
+             맨 뒤 ✕(삭제) 만 이 보드 전용 열. -->
         <table class="sheet wide dest-sheet">
           <thead>
             <tr>
               <th style="width:22%">여행지</th>
               <th style="width:10%">최저가</th>
               <th style="width:13%">특가율(통상가 대비)</th>
-              <th style="width:31%" id="dest-sched-th">추천 일정</th>
+              <th style="width:41%" id="dest-sched-th">추천 일정</th>
               <th style="width:12%">직항/경유</th>
-              <th style="width:10%">목표가</th>
               <th style="width:2%"></th>
             </tr>
           </thead>
@@ -1181,7 +1177,7 @@
       matrix: null,        // 연휴 가성비 매트릭스 (docs/data/matrix.json)
       holidayWindows: [],  // 연휴 윈도우 목록 (holidays.json 신형식)
       gvWindows: new Set(), // 특가 보드에서 선택된 연휴 id들 (비어있으면 = 전체)
-      expandedDests: new Set(), // 여행지별 연휴 보드에서 펼쳐 놓은 노선(origin-destination) 키들
+      expandedDests: new Set(), // 여행지별 상세 현황에서 펼쳐 놓은 노선(origin-destination) 키들
       selCountries: new Set(), // 1차 필터: 선택된 국가들 (다중선택)
       selCities: new Set(),    // 2차 필터: 선택된 지역(도착 도시)들 (다중선택, 선택 국가에 종속)
       selConcepts: new Set(),  // 컨셉 필터: 휴양/도시/대자연 및 조합 (다중선택, OR)
@@ -2128,7 +2124,7 @@
       return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${line}${dots}</svg>`;
     }
 
-    // ===================== 여행지별 연휴 보드 =====================
+    // ===================== 여행지별 상세 현황 =====================
     // 모니터 한 개의 수집 상태 -> {dot, text}
     function monitorStatus(r) {
       if (r.sample_count > 0) {
@@ -2246,7 +2242,7 @@
 
       if (!info.wins.length) {
         const reason = info.capBlocked ? capOverReason() : gvEmptyReason(g.items);
-        return `<tr class="dest-detail-row" data-dest-detail="${esc(gk)}"><td colspan="7">` +
+        return `<tr class="dest-detail-row" data-dest-detail="${esc(gk)}"><td colspan="6">` +
           `<div class="dest-detail"><div class="dest-detail-head">${heads}</div>` +
           `<div class="dest-detail-foot">${esc(reason)}</div></div></td></tr>`;
       }
@@ -2297,13 +2293,13 @@
       const foot = missing > 0
         ? `<div class="dest-detail-foot">${filtered ? '고른 연휴 중' : '그 외'} ${missing}개 연휴는 아직 수집 전입니다 — 다음 자동 수집에서 채워집니다.</div>`
         : '';
-      return `<tr class="dest-detail-row" data-dest-detail="${esc(gk)}"><td colspan="7">
+      return `<tr class="dest-detail-row" data-dest-detail="${esc(gk)}"><td colspan="6">
         <div class="dest-detail">
           <div class="dest-detail-head">${heads}</div>
           <table class="dest-tbl">
             <thead>
               <!-- ★ = 이 연휴만 즐겨찾기(여행지×연휴 단위). 나머지 폭은 바깥 표(여행지 / 최저가 /
-                   특가율 / 추천 일정 / 직항·경유 / 목표가+✕)와 같은 비율로 맞춰, 펼친 표가 같은
+                   특가율 / 추천 일정 / 직항·경유 / ✕)와 같은 비율로 맞춰, 펼친 표가 같은
                    격자의 연장처럼 읽히게 한다. -->
               <tr>
                 <th style="width:4%">★</th>
@@ -2345,13 +2341,12 @@
       }
       const tbody = document.getElementById('dest-board');
       if (!state.routesStatus.length) {
-        tbody.innerHTML = emptyRow(7, "등록된 항목이 없습니다. 아래 '항목 등록'에서 추가하세요.");
+        tbody.innerHTML = emptyRow(6, "등록된 항목이 없습니다. 아래 '항목 등록'에서 추가하세요.");
         return;
       }
-      const targets = getTargets();
       const list = state.routesStatus.filter(r => routePassesChip(r));
       if (!list.length) {
-        tbody.innerHTML = emptyRow(7, '조건에 맞는 항목이 없습니다.');
+        tbody.innerHTML = emptyRow(6, '조건에 맞는 항목이 없습니다.');
         return;
       }
       // 여행지(origin-destination) 단위로 묶는다. 같은 노선의 직항/경유 모니터는 한 행.
@@ -2391,7 +2386,6 @@
         const solo = g.items.length === 1;
         const label = destName(g);
         const open = state.expandedDests.has(gk);
-        const target = solo ? targets[rk(g.items[0])] : null;
 
         // 여행지 칸: 이름(펼치기 버튼) + 상태/노선/표본 + 수집 정책(✎).
         // 상태는 별도 열 대신 여기 점+글자로 넣어, 나머지 열을 특가 보드와 같게 맞춘다.
@@ -2403,9 +2397,6 @@
           `<span class="cell-sub" title="${esc(g.items.map(statusTitle).join(' / '))}">${sub}</span>` +
           (solo ? `<button class="policy-edit" data-edit="${esc(rk(g.items[0]))}" title="박수/경유 수정">${esc(routePolicyLabel(g.items[0]))} ✎</button>` : '');
 
-        const targetCell = solo
-          ? `<input class="target-input" data-target-key="${esc(rk(g.items[0]))}" value="${target != null ? target : ''}" placeholder="입력" inputmode="numeric" title="목표가 (원) — 입력 후 Enter" />`
-          : '<span class="cell-sub" title="모니터별로 다릅니다 — 펼쳐서 설정하세요">펼쳐서</span>';
         const delCell = solo
           ? `<button class="x-btn" data-del="${esc(rk(g.items[0]))}" title="항목 삭제">✕</button>`
           : '';
@@ -2416,7 +2407,6 @@
         const head = `${rowTag}
             <td title="${esc(label)}">${nameCell}</td>`;
         const tail = `
-            <td class="num">${targetCell}</td>
             <td style="text-align:center">${delCell}</td>
           </tr>`;
 
@@ -2427,7 +2417,7 @@
             + (open ? destDetailRowHtml(g, info) : '');
         }
 
-        // 아래 네 칸(최저가 · 특가율 · 추천 일정 · 직항/경유)은 연휴 특가 보드와 같은 구성.
+        // 아래 네 칸(최저가 · 특가율 · 추천 일정 · 직항/경유)은 특가 요약표와 같은 구성.
         // 다만 여기서는 '어느 연휴가 가장 싼가'가 핵심이라 일정 앞에 연휴 이름을 붙인다.
         const b = displayPair(info.best.cell);
         const capSwapped = b !== primaryPair(info.best.cell);
@@ -3229,7 +3219,7 @@
       document.getElementById('btn-dest-expand').addEventListener('click', () => setAllDestExpanded(true));
       document.getElementById('btn-dest-collapse').addEventListener('click', () => setAllDestExpanded(false));
 
-      // 섹션 접기/펼치기. 여행지별 연휴 보드는 기본 펼침, 변동 항목은 기본 접힘(길어서
+      // 섹션 접기/펼치기. 여행지별 상세 현황은 기본 펼침, 변동 항목은 기본 접힘(길어서
       // 스크롤 방해). 어느 쪽이든 사용자가 바꾼 상태는 브라우저에 기억된다.
       wireSimpleToggle('dest-h2', 'dest-body', true);
       wireSimpleToggle('deals-h2', 'deals-body', false);
