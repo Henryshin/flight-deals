@@ -152,17 +152,17 @@
   "cells": {
     "2026-08-17": {
       "ICN-NRT": {
-        "min_price": 289600,
+        "min_price": 291300,
         "typical": 428600,
-        "deal_pct": 32.4,
+        "deal_pct": 32.0,
         "tier": "A",
         "n_obs": 42,
         "n_pairs": 7,
         "offpeak_baseline": 340400,
-        "offpeak_ratio": 0.851,
+        "offpeak_ratio": 0.856,
         "pairs": [
           {
-            "price": 289600,
+            "price": 291300,
             "depart_date": "2026-08-08",
             "return_date": "2026-08-17",
             "depart_weekday": "토",
@@ -172,14 +172,14 @@
             "leave_days": 5,
             "bonus_days": 5,
             "stops": "0",
-            "airline": "제주항공",
-            "dep_time": "16:25",
-            "arr_time": "18:50",
+            "airline": "에어서울",
+            "dep_time": "09:20",
+            "arr_time": "11:50",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Tokyo%20on%202026-08-08%20through%202026-08-17&hl=ko&curr=KRW"
           }
         ],
         "best": {
-          "price": 289600,
+          "price": 291300,
           "depart_date": "2026-08-08",
           "return_date": "2026-08-17",
           "depart_weekday": "토",
@@ -189,9 +189,9 @@
           "leave_days": 5,
           "bonus_days": 5,
           "stops": "0",
-          "airline": "제주항공",
-          "dep_time": "16:25",
-          "arr_time": "18:50",
+          "airline": "에어서울",
+          "dep_time": "09:20",
+          "arr_time": "11:50",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Tokyo%20on%202026-08-08%20through%202026-08-17&hl=ko&curr=KRW"
         }
       },
@@ -246,8 +246,8 @@
         "tier": "A",
         "n_obs": 62,
         "n_pairs": 8,
-        "offpeak_baseline": 507100,
-        "offpeak_ratio": 0.828,
+        "offpeak_baseline": 452100,
+        "offpeak_ratio": 0.929,
         "pairs": [
           {
             "price": 419900,
@@ -285,8 +285,8 @@
       },
       "ICN-DPS": {
         "min_price": 845042,
-        "typical": 1230900,
-        "deal_pct": 31.3,
+        "typical": 1236650,
+        "deal_pct": 31.7,
         "tier": "A",
         "n_obs": 62,
         "n_pairs": 9,
@@ -310,7 +310,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Bali%20on%202026-08-12%20through%202026-08-18&hl=ko&curr=KRW"
           },
           {
-            "price": 1241500,
+            "price": 1293000,
             "depart_date": "2026-08-08",
             "return_date": "2026-08-17",
             "depart_weekday": "토",
@@ -320,9 +320,9 @@
             "leave_days": 5,
             "bonus_days": 5,
             "stops": "1",
-            "airline": "",
-            "dep_time": "00:10",
-            "arr_time": "12:05",
+            "airline": "세부퍼시픽",
+            "dep_time": "06:35",
+            "arr_time": "07:50+1",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Bali%20on%202026-08-08%20through%202026-08-17&hl=ko&curr=KRW"
           }
         ],
@@ -345,8 +345,8 @@
       },
       "ICN-DPS-d": {
         "min_price": 1220100,
-        "typical": 1457700,
-        "deal_pct": 16.3,
+        "typical": 1425300,
+        "deal_pct": 14.4,
         "tier": "A",
         "n_obs": 31,
         "n_pairs": 9,
@@ -465,7 +465,7 @@
       },
       "ICN-PVG": {
         "min_price": 417000,
-        "typical": 475462,
+        "typical": 475631,
         "deal_pct": 12.3,
         "tier": "A",
         "n_obs": 62,
@@ -640,17 +640,17 @@
         }
       },
       "ICN-GUM": {
-        "min_price": 274401,
-        "typical": 371841,
-        "deal_pct": 26.2,
+        "min_price": 274287,
+        "typical": 380254,
+        "deal_pct": 27.9,
         "tier": "A",
         "n_obs": 31,
         "n_pairs": 8,
         "offpeak_baseline": 270150,
-        "offpeak_ratio": 1.016,
+        "offpeak_ratio": 1.015,
         "pairs": [
           {
-            "price": 274401,
+            "price": 274287,
             "depart_date": "2026-08-15",
             "return_date": "2026-08-18",
             "depart_weekday": "토",
@@ -683,7 +683,7 @@
           }
         ],
         "best": {
-          "price": 274401,
+          "price": 274287,
           "depart_date": "2026-08-15",
           "return_date": "2026-08-18",
           "depart_weekday": "토",
@@ -804,30 +804,30 @@
         }
       },
       "ICN-ATH": {
-        "min_price": 994300,
+        "min_price": 1028400,
         "typical": 1068040,
-        "deal_pct": 6.9,
+        "deal_pct": 3.7,
         "tier": "A",
         "n_obs": 28,
         "n_pairs": 8,
         "offpeak_baseline": 1126100,
-        "offpeak_ratio": 0.883,
+        "offpeak_ratio": 0.913,
         "pairs": [
           {
-            "price": 994300,
-            "depart_date": "2026-08-12",
-            "return_date": "2026-08-19",
-            "depart_weekday": "수",
-            "return_weekday": "수",
-            "nights": 7,
-            "days": 8,
-            "leave_days": 5,
+            "price": 1028400,
+            "depart_date": "2026-08-14",
+            "return_date": "2026-08-20",
+            "depart_weekday": "금",
+            "return_weekday": "목",
+            "nights": 6,
+            "days": 7,
+            "leave_days": 4,
             "bonus_days": 3,
             "stops": "1",
-            "airline": "에어프랑스",
-            "dep_time": "11:40",
-            "arr_time": "11:15+1",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Athens,%20Greece%20on%202026-08-12%20through%202026-08-19&hl=ko&curr=KRW"
+            "airline": "에티하드항공",
+            "dep_time": "18:20",
+            "arr_time": "06:15+1",
+            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Athens,%20Greece%20on%202026-08-14%20through%202026-08-20&hl=ko&curr=KRW"
           },
           {
             "price": 1285000,
@@ -863,20 +863,20 @@
           }
         ],
         "best": {
-          "price": 994300,
-          "depart_date": "2026-08-12",
-          "return_date": "2026-08-19",
-          "depart_weekday": "수",
-          "return_weekday": "수",
-          "nights": 7,
-          "days": 8,
-          "leave_days": 5,
+          "price": 1028400,
+          "depart_date": "2026-08-14",
+          "return_date": "2026-08-20",
+          "depart_weekday": "금",
+          "return_weekday": "목",
+          "nights": 6,
+          "days": 7,
+          "leave_days": 4,
           "bonus_days": 3,
           "stops": "1",
-          "airline": "에어프랑스",
-          "dep_time": "11:40",
-          "arr_time": "11:15+1",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Athens,%20Greece%20on%202026-08-12%20through%202026-08-19&hl=ko&curr=KRW"
+          "airline": "에티하드항공",
+          "dep_time": "18:20",
+          "arr_time": "06:15+1",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Athens,%20Greece%20on%202026-08-14%20through%202026-08-20&hl=ko&curr=KRW"
         }
       },
       "ICN-CDG": {
@@ -1006,7 +1006,7 @@
         "tier": "A",
         "n_obs": 62,
         "n_pairs": 8,
-        "offpeak_baseline": 608350,
+        "offpeak_baseline": 608300,
         "offpeak_ratio": 1.06,
         "pairs": [
           {
@@ -1121,8 +1121,8 @@
       },
       "ICN-NGO": {
         "min_price": 230800,
-        "typical": 428150,
-        "deal_pct": 46.1,
+        "typical": 428900,
+        "deal_pct": 46.2,
         "tier": "A",
         "n_obs": 36,
         "n_pairs": 8,
@@ -1165,8 +1165,8 @@
       },
       "ICN-HKG": {
         "min_price": 300839,
-        "typical": 513050,
-        "deal_pct": 41.4,
+        "typical": 504908,
+        "deal_pct": 40.4,
         "tier": "A",
         "n_obs": 62,
         "n_pairs": 8,
@@ -1225,8 +1225,8 @@
       },
       "ICN-MFM": {
         "min_price": 402900,
-        "typical": 692950,
-        "deal_pct": 41.9,
+        "typical": 689400,
+        "deal_pct": 41.6,
         "tier": "A",
         "n_obs": 62,
         "n_pairs": 8,
@@ -1422,8 +1422,8 @@
         "tier": "A",
         "n_obs": 62,
         "n_pairs": 9,
-        "offpeak_baseline": 531820,
-        "offpeak_ratio": 0.907,
+        "offpeak_baseline": 529300,
+        "offpeak_ratio": 0.911,
         "pairs": [
           {
             "price": 482190,
@@ -1442,7 +1442,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Phuket%20on%202026-08-12%20through%202026-08-19&hl=ko&curr=KRW"
           },
           {
-            "price": 756238,
+            "price": 756789,
             "depart_date": "2026-08-08",
             "return_date": "2026-08-17",
             "depart_weekday": "토",
@@ -1536,19 +1536,19 @@
         }
       },
       "ICN-SGN": {
-        "min_price": 399727,
+        "min_price": 402661,
         "typical": 538295,
-        "deal_pct": 25.7,
+        "deal_pct": 25.2,
         "tier": "A",
         "n_obs": 42,
         "n_pairs": 7,
         "offpeak_baseline": 406335,
-        "offpeak_ratio": 0.984,
+        "offpeak_ratio": 0.991,
         "pairs": [
           {
-            "price": 399727,
-            "depart_date": "2026-08-08",
-            "return_date": "2026-08-17",
+            "price": 402661,
+            "depart_date": "2026-08-15",
+            "return_date": "2026-08-24",
             "depart_weekday": "토",
             "return_weekday": "월",
             "nights": 9,
@@ -1559,13 +1559,13 @@
             "airline": "비엣젯",
             "dep_time": "21:15",
             "arr_time": "00:30+1",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Ho%20Chi%20Minh%20City%20on%202026-08-08%20through%202026-08-17&hl=ko&curr=KRW"
+            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Ho%20Chi%20Minh%20City%20on%202026-08-15%20through%202026-08-24&hl=ko&curr=KRW"
           }
         ],
         "best": {
-          "price": 399727,
-          "depart_date": "2026-08-08",
-          "return_date": "2026-08-17",
+          "price": 402661,
+          "depart_date": "2026-08-15",
+          "return_date": "2026-08-24",
           "depart_weekday": "토",
           "return_weekday": "월",
           "nights": 9,
@@ -1576,7 +1576,7 @@
           "airline": "비엣젯",
           "dep_time": "21:15",
           "arr_time": "00:30+1",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Ho%20Chi%20Minh%20City%20on%202026-08-08%20through%202026-08-17&hl=ko&curr=KRW"
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Ho%20Chi%20Minh%20City%20on%202026-08-15%20through%202026-08-24&hl=ko&curr=KRW"
         }
       },
       "ICN-HAN": {
@@ -1606,9 +1606,25 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Hanoi%20on%202026-08-16%20through%202026-08-21&hl=ko&curr=KRW"
           },
           {
-            "price": 364248,
-            "depart_date": "2026-08-08",
-            "return_date": "2026-08-17",
+            "price": 364689,
+            "depart_date": "2026-08-15",
+            "return_date": "2026-08-18",
+            "depart_weekday": "토",
+            "return_weekday": "화",
+            "nights": 3,
+            "days": 4,
+            "leave_days": 1,
+            "bonus_days": 3,
+            "stops": "0",
+            "airline": "제주항공",
+            "dep_time": "20:40",
+            "arr_time": "23:45",
+            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Hanoi%20on%202026-08-15%20through%202026-08-18&hl=ko&curr=KRW"
+          },
+          {
+            "price": 367100,
+            "depart_date": "2026-08-15",
+            "return_date": "2026-08-24",
             "depart_weekday": "토",
             "return_weekday": "월",
             "nights": 9,
@@ -1616,10 +1632,10 @@
             "leave_days": 5,
             "bonus_days": 5,
             "stops": "0",
-            "airline": "비엣젯",
-            "dep_time": "11:05",
-            "arr_time": "13:35",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Hanoi%20on%202026-08-08%20through%202026-08-17&hl=ko&curr=KRW"
+            "airline": "제주항공",
+            "dep_time": "20:40",
+            "arr_time": "23:45",
+            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Hanoi%20on%202026-08-15%20through%202026-08-24&hl=ko&curr=KRW"
           }
         ],
         "best": {
@@ -1646,8 +1662,8 @@
         "tier": "A",
         "n_obs": 60,
         "n_pairs": 9,
-        "offpeak_baseline": 375144,
-        "offpeak_ratio": 1.469,
+        "offpeak_baseline": 373347,
+        "offpeak_ratio": 1.476,
         "pairs": [
           {
             "price": 551228,
@@ -1726,7 +1742,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Cebu%20on%202026-08-11%20through%202026-08-18&hl=ko&curr=KRW"
           },
           {
-            "price": 580428,
+            "price": 579817,
             "depart_date": "2026-08-08",
             "return_date": "2026-08-17",
             "depart_weekday": "토",
@@ -1821,8 +1837,8 @@
       },
       "ICN-KUL": {
         "min_price": 431631,
-        "typical": 571300,
-        "deal_pct": 24.4,
+        "typical": 565390,
+        "deal_pct": 23.7,
         "tier": "A",
         "n_obs": 42,
         "n_pairs": 7,
@@ -1982,7 +1998,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Singapore%20on%202026-08-16%20through%202026-08-18&hl=ko&curr=KRW"
           },
           {
-            "price": 460784,
+            "price": 460772,
             "depart_date": "2026-08-08",
             "return_date": "2026-08-17",
             "depart_weekday": "토",
@@ -2017,8 +2033,8 @@
       },
       "ICN-REP": {
         "min_price": 486734,
-        "typical": 513529,
-        "deal_pct": 5.2,
+        "typical": 514584,
+        "deal_pct": 5.4,
         "tier": "A",
         "n_obs": 21,
         "n_pairs": 7,
@@ -2042,20 +2058,20 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Siem%20Reap%20on%202026-08-16%20through%202026-08-21&hl=ko&curr=KRW"
           },
           {
-            "price": 510361,
-            "depart_date": "2026-08-14",
+            "price": 512606,
+            "depart_date": "2026-08-15",
             "return_date": "2026-08-23",
-            "depart_weekday": "금",
+            "depart_weekday": "토",
             "return_weekday": "일",
-            "nights": 9,
-            "days": 10,
-            "leave_days": 5,
+            "nights": 8,
+            "days": 9,
+            "leave_days": 4,
             "bonus_days": 5,
             "stops": "1",
             "airline": "비엣젯",
             "dep_time": "11:05",
             "arr_time": "18:05",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Siem%20Reap%20on%202026-08-14%20through%202026-08-23&hl=ko&curr=KRW"
+            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Siem%20Reap%20on%202026-08-15%20through%202026-08-23&hl=ko&curr=KRW"
           }
         ],
         "best": {
@@ -2262,7 +2278,7 @@
         "tier": "A",
         "n_obs": 28,
         "n_pairs": 8,
-        "offpeak_baseline": 1854800,
+        "offpeak_baseline": 1854000,
         "offpeak_ratio": 0.61,
         "pairs": [
           {
@@ -2360,17 +2376,17 @@
         }
       },
       "ICN-PRG": {
-        "min_price": 1005900,
+        "min_price": 1065900,
         "typical": 1368300,
-        "deal_pct": 26.5,
+        "deal_pct": 22.1,
         "tier": "A",
         "n_obs": 49,
         "n_pairs": 8,
         "offpeak_baseline": 1615200,
-        "offpeak_ratio": 0.623,
+        "offpeak_ratio": 0.66,
         "pairs": [
           {
-            "price": 1005900,
+            "price": 1065900,
             "depart_date": "2026-08-12",
             "return_date": "2026-08-19",
             "depart_weekday": "수",
@@ -2380,9 +2396,9 @@
             "leave_days": 5,
             "bonus_days": 3,
             "stops": "1",
-            "airline": "에어프랑스",
-            "dep_time": "11:40",
-            "arr_time": "21:40",
+            "airline": "루프트한자",
+            "dep_time": "12:20",
+            "arr_time": "23:15",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Prague,%20Czechia%20on%202026-08-12%20through%202026-08-19&hl=ko&curr=KRW"
           },
           {
@@ -2419,7 +2435,7 @@
           }
         ],
         "best": {
-          "price": 1005900,
+          "price": 1065900,
           "depart_date": "2026-08-12",
           "return_date": "2026-08-19",
           "depart_weekday": "수",
@@ -2429,24 +2445,24 @@
           "leave_days": 5,
           "bonus_days": 3,
           "stops": "1",
-          "airline": "에어프랑스",
-          "dep_time": "11:40",
-          "arr_time": "21:40",
+          "airline": "루프트한자",
+          "dep_time": "12:20",
+          "arr_time": "23:15",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Prague,%20Czechia%20on%202026-08-12%20through%202026-08-19&hl=ko&curr=KRW"
         }
       },
       "ICN-VIE": {
-        "min_price": 1030200,
+        "min_price": 976300,
         "typical": 1124800,
-        "deal_pct": 8.4,
+        "deal_pct": 13.2,
         "tier": "A",
         "n_obs": 35,
         "n_pairs": 8,
         "offpeak_baseline": 1164300,
-        "offpeak_ratio": 0.885,
+        "offpeak_ratio": 0.839,
         "pairs": [
           {
-            "price": 1030200,
+            "price": 976300,
             "depart_date": "2026-08-12",
             "return_date": "2026-08-19",
             "depart_weekday": "수",
@@ -2456,9 +2472,9 @@
             "leave_days": 5,
             "bonus_days": 3,
             "stops": "1",
-            "airline": "에미레이트항공",
-            "dep_time": "22:45",
-            "arr_time": "13:00+1",
+            "airline": "루프트한자",
+            "dep_time": "12:20",
+            "arr_time": "23:05",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Vienna,%20Austria%20on%202026-08-12%20through%202026-08-19&hl=ko&curr=KRW"
           },
           {
@@ -2495,7 +2511,7 @@
           }
         ],
         "best": {
-          "price": 1030200,
+          "price": 976300,
           "depart_date": "2026-08-12",
           "return_date": "2026-08-19",
           "depart_weekday": "수",
@@ -2505,21 +2521,21 @@
           "leave_days": 5,
           "bonus_days": 3,
           "stops": "1",
-          "airline": "에미레이트항공",
-          "dep_time": "22:45",
-          "arr_time": "13:00+1",
+          "airline": "루프트한자",
+          "dep_time": "12:20",
+          "arr_time": "23:05",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Vienna,%20Austria%20on%202026-08-12%20through%202026-08-19&hl=ko&curr=KRW"
         }
       },
       "ICN-IST": {
         "min_price": 957300,
-        "typical": 1097750,
-        "deal_pct": 12.8,
+        "typical": 1101200,
+        "deal_pct": 13.1,
         "tier": "A",
         "n_obs": 56,
         "n_pairs": 8,
-        "offpeak_baseline": 1289700,
-        "offpeak_ratio": 0.742,
+        "offpeak_baseline": 1284250,
+        "offpeak_ratio": 0.745,
         "pairs": [
           {
             "price": 957300,
@@ -2589,8 +2605,8 @@
       },
       "ICN-FRA": {
         "min_price": 1024200,
-        "typical": 1389800,
-        "deal_pct": 26.3,
+        "typical": 1381000,
+        "deal_pct": 25.8,
         "tier": "A",
         "n_obs": 56,
         "n_pairs": 8,
@@ -2794,6 +2810,22 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Los%20Angeles%20on%202026-08-14%20through%202026-08-20&hl=ko&curr=KRW"
           },
           {
+            "price": 1730700,
+            "depart_date": "2026-08-15",
+            "return_date": "2026-08-23",
+            "depart_weekday": "토",
+            "return_weekday": "일",
+            "nights": 8,
+            "days": 9,
+            "leave_days": 4,
+            "bonus_days": 5,
+            "stops": "0",
+            "airline": "에어프레미아",
+            "dep_time": "13:00",
+            "arr_time": "08:20",
+            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Los%20Angeles%20on%202026-08-15%20through%202026-08-23&hl=ko&curr=KRW"
+          },
+          {
             "price": 2060700,
             "depart_date": "2026-08-09",
             "return_date": "2026-08-23",
@@ -2974,7 +3006,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Seattle%20on%202026-08-14%20through%202026-08-20&hl=ko&curr=KRW"
           },
           {
-            "price": 2150592,
+            "price": 2151141,
             "depart_date": "2026-08-15",
             "return_date": "2026-08-23",
             "depart_weekday": "토",
@@ -3256,8 +3288,8 @@
         "tier": "A",
         "n_obs": 68,
         "n_pairs": 9,
-        "offpeak_baseline": 507100,
-        "offpeak_ratio": 0.669,
+        "offpeak_baseline": 452100,
+        "offpeak_ratio": 0.75,
         "pairs": [
           {
             "price": 339213,
@@ -3292,7 +3324,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Da%20Nang%20International%20Airport%20on%202026-09-23%20through%202026-09-28&hl=ko&curr=KRW"
           },
           {
-            "price": 410352,
+            "price": 409909,
             "depart_date": "2026-09-17",
             "return_date": "2026-09-27",
             "depart_weekday": "목",
@@ -3624,7 +3656,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Taipei%20on%202026-09-24%20through%202026-09-28&hl=ko&curr=KRW"
           },
           {
-            "price": 343294,
+            "price": 337376,
             "depart_date": "2026-09-17",
             "return_date": "2026-09-27",
             "depart_weekday": "목",
@@ -3635,8 +3667,8 @@
             "bonus_days": 6,
             "stops": "0",
             "airline": "",
-            "dep_time": "23:00",
-            "arr_time": "00:35+1",
+            "dep_time": "00:30",
+            "arr_time": "02:15",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Taipei%20on%202026-09-17%20through%202026-09-27&hl=ko&curr=KRW"
           }
         ],
@@ -3776,7 +3808,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Phu%20Quoc%20on%202026-09-23%20through%202026-09-28&hl=ko&curr=KRW"
           },
           {
-            "price": 506400,
+            "price": 515925,
             "depart_date": "2026-09-17",
             "return_date": "2026-09-27",
             "depart_weekday": "목",
@@ -4148,7 +4180,7 @@
         "tier": "A",
         "n_obs": 59,
         "n_pairs": 9,
-        "offpeak_baseline": 608350,
+        "offpeak_baseline": 608300,
         "offpeak_ratio": 0.615,
         "pairs": [
           {
@@ -4459,10 +4491,10 @@
       },
       "ICN-PEK": {
         "min_price": 378400,
-        "typical": 515700,
-        "deal_pct": 26.6,
+        "typical": 513600,
+        "deal_pct": 26.3,
         "tier": "A",
-        "n_obs": 66,
+        "n_obs": 67,
         "n_pairs": 9,
         "offpeak_baseline": 314200,
         "offpeak_ratio": 1.204,
@@ -4576,7 +4608,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Qingdao%20on%202026-09-23%20through%202026-09-28&hl=ko&curr=KRW"
           },
           {
-            "price": 370500,
+            "price": 350500,
             "depart_date": "2026-09-17",
             "return_date": "2026-09-27",
             "depart_weekday": "목",
@@ -4652,7 +4684,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Bangkok%20on%202026-09-23%20through%202026-09-27&hl=ko&curr=KRW"
           },
           {
-            "price": 445560,
+            "price": 445013,
             "depart_date": "2026-09-17",
             "return_date": "2026-09-27",
             "depart_weekday": "목",
@@ -4692,8 +4724,8 @@
         "tier": "A",
         "n_obs": 42,
         "n_pairs": 7,
-        "offpeak_baseline": 531820,
-        "offpeak_ratio": 0.88,
+        "offpeak_baseline": 529300,
+        "offpeak_ratio": 0.885,
         "pairs": [
           {
             "price": 468200,
@@ -4774,17 +4806,17 @@
         }
       },
       "ICN-SGN": {
-        "min_price": 372329,
-        "typical": 541850,
-        "deal_pct": 31.3,
+        "min_price": 379500,
+        "typical": 548999,
+        "deal_pct": 30.9,
         "tier": "A",
         "n_obs": 62,
         "n_pairs": 8,
         "offpeak_baseline": 406335,
-        "offpeak_ratio": 0.916,
+        "offpeak_ratio": 0.934,
         "pairs": [
           {
-            "price": 372329,
+            "price": 379500,
             "depart_date": "2026-09-17",
             "return_date": "2026-09-27",
             "depart_weekday": "목",
@@ -4794,14 +4826,14 @@
             "leave_days": 5,
             "bonus_days": 6,
             "stops": "0",
-            "airline": "비엣젯",
-            "dep_time": "21:15",
-            "arr_time": "00:30+1",
+            "airline": "베트남항공",
+            "dep_time": "10:35",
+            "arr_time": "13:45",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Ho%20Chi%20Minh%20City%20on%202026-09-17%20through%202026-09-27&hl=ko&curr=KRW"
           }
         ],
         "best": {
-          "price": 372329,
+          "price": 379500,
           "depart_date": "2026-09-17",
           "return_date": "2026-09-27",
           "depart_weekday": "목",
@@ -4811,9 +4843,9 @@
           "leave_days": 5,
           "bonus_days": 6,
           "stops": "0",
-          "airline": "비엣젯",
-          "dep_time": "21:15",
-          "arr_time": "00:30+1",
+          "airline": "베트남항공",
+          "dep_time": "10:35",
+          "arr_time": "13:45",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Ho%20Chi%20Minh%20City%20on%202026-09-17%20through%202026-09-27&hl=ko&curr=KRW"
         }
       },
@@ -4844,7 +4876,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Hanoi%20on%202026-09-23%20through%202026-09-26&hl=ko&curr=KRW"
           },
           {
-            "price": 400419,
+            "price": 400097,
             "depart_date": "2026-09-17",
             "return_date": "2026-09-27",
             "depart_weekday": "목",
@@ -4879,13 +4911,13 @@
       },
       "ICN-CXR": {
         "min_price": 392081,
-        "typical": 699402,
+        "typical": 698794,
         "deal_pct": 43.9,
         "tier": "A",
         "n_obs": 36,
         "n_pairs": 7,
-        "offpeak_baseline": 375144,
-        "offpeak_ratio": 1.045,
+        "offpeak_baseline": 373347,
+        "offpeak_ratio": 1.05,
         "pairs": [
           {
             "price": 392081,
@@ -5024,7 +5056,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Manila%20on%202026-09-21%20through%202026-09-25&hl=ko&curr=KRW"
           },
           {
-            "price": 367609,
+            "price": 367235,
             "depart_date": "2026-09-17",
             "return_date": "2026-09-27",
             "depart_weekday": "목",
@@ -5128,7 +5160,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kota%20Kinabalu%20on%202026-09-20%20through%202026-09-25&hl=ko&curr=KRW"
           },
           {
-            "price": 423579,
+            "price": 423030,
             "depart_date": "2026-09-18",
             "return_date": "2026-09-27",
             "depart_weekday": "금",
@@ -5163,7 +5195,7 @@
       },
       "ICN-SIN": {
         "min_price": 457449,
-        "typical": 507176,
+        "typical": 507163,
         "deal_pct": 9.8,
         "tier": "A",
         "n_obs": 33,
@@ -5204,7 +5236,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Singapore%20on%202026-09-23%20through%202026-09-28&hl=ko&curr=KRW"
           },
           {
-            "price": 541100,
+            "price": 486477,
             "depart_date": "2026-09-17",
             "return_date": "2026-09-27",
             "depart_weekday": "목",
@@ -5238,17 +5270,17 @@
         }
       },
       "ICN-REP": {
-        "min_price": 476190,
+        "min_price": 475689,
         "typical": 761882,
-        "deal_pct": 37.5,
+        "deal_pct": 37.6,
         "tier": "A",
         "n_obs": 31,
         "n_pairs": 8,
         "offpeak_baseline": 483628,
-        "offpeak_ratio": 0.985,
+        "offpeak_ratio": 0.984,
         "pairs": [
           {
-            "price": 476190,
+            "price": 475689,
             "depart_date": "2026-09-17",
             "return_date": "2026-09-27",
             "depart_weekday": "목",
@@ -5265,7 +5297,7 @@
           }
         ],
         "best": {
-          "price": 476190,
+          "price": 475689,
           "depart_date": "2026-09-17",
           "return_date": "2026-09-27",
           "depart_weekday": "목",
@@ -5436,7 +5468,7 @@
         "tier": "A",
         "n_obs": 27,
         "n_pairs": 8,
-        "offpeak_baseline": 1854800,
+        "offpeak_baseline": 1854000,
         "offpeak_ratio": 0.761,
         "pairs": [
           {
@@ -5506,49 +5538,33 @@
         }
       },
       "ICN-BCN": {
-        "min_price": 2040400,
+        "min_price": 1965400,
         "typical": 2286750,
-        "deal_pct": 10.8,
+        "deal_pct": 14.1,
         "tier": "A",
         "n_obs": 26,
         "n_pairs": 8,
         "offpeak_baseline": 2061400,
-        "offpeak_ratio": 0.99,
+        "offpeak_ratio": 0.953,
         "pairs": [
           {
-            "price": 2040400,
-            "depart_date": "2026-09-22",
-            "return_date": "2026-09-30",
-            "depart_weekday": "화",
-            "return_weekday": "수",
-            "nights": 8,
-            "days": 9,
-            "leave_days": 5,
+            "price": 1965400,
+            "depart_date": "2026-09-23",
+            "return_date": "2026-09-29",
+            "depart_weekday": "수",
+            "return_weekday": "화",
+            "nights": 6,
+            "days": 7,
+            "leave_days": 3,
             "bonus_days": 4,
             "stops": "0",
             "airline": "아시아나항공",
             "dep_time": "11:50",
             "arr_time": "19:10",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Barcelona,%20Spain%20on%202026-09-22%20through%202026-09-30&hl=ko&curr=KRW"
+            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Barcelona,%20Spain%20on%202026-09-23%20through%202026-09-29&hl=ko&curr=KRW"
           },
           {
-            "price": 2534700,
-            "depart_date": "2026-09-20",
-            "return_date": "2026-09-28",
-            "depart_weekday": "일",
-            "return_weekday": "월",
-            "nights": 8,
-            "days": 9,
-            "leave_days": 4,
-            "bonus_days": 5,
-            "stops": "0",
-            "airline": "아시아나항공",
-            "dep_time": "11:50",
-            "arr_time": "19:10",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Barcelona,%20Spain%20on%202026-09-20%20through%202026-09-28&hl=ko&curr=KRW"
-          },
-          {
-            "price": 2690400,
+            "price": 2511400,
             "depart_date": "2026-09-19",
             "return_date": "2026-10-04",
             "depart_weekday": "토",
@@ -5565,20 +5581,20 @@
           }
         ],
         "best": {
-          "price": 2040400,
-          "depart_date": "2026-09-22",
-          "return_date": "2026-09-30",
-          "depart_weekday": "화",
-          "return_weekday": "수",
-          "nights": 8,
-          "days": 9,
-          "leave_days": 5,
+          "price": 1965400,
+          "depart_date": "2026-09-23",
+          "return_date": "2026-09-29",
+          "depart_weekday": "수",
+          "return_weekday": "화",
+          "nights": 6,
+          "days": 7,
+          "leave_days": 3,
           "bonus_days": 4,
           "stops": "0",
           "airline": "아시아나항공",
           "dep_time": "11:50",
           "arr_time": "19:10",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Barcelona,%20Spain%20on%202026-09-22%20through%202026-09-30&hl=ko&curr=KRW"
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Barcelona,%20Spain%20on%202026-09-23%20through%202026-09-29&hl=ko&curr=KRW"
         }
       },
       "ICN-PRG": {
@@ -5700,7 +5716,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Vienna,%20Austria%20on%202026-09-20%20through%202026-09-28&hl=ko&curr=KRW"
           },
           {
-            "price": 1734100,
+            "price": 1737600,
             "depart_date": "2026-09-19",
             "return_date": "2026-10-04",
             "depart_weekday": "토",
@@ -5740,8 +5756,8 @@
         "tier": "A",
         "n_obs": 32,
         "n_pairs": 5,
-        "offpeak_baseline": 1289700,
-        "offpeak_ratio": 0.782,
+        "offpeak_baseline": 1284250,
+        "offpeak_ratio": 0.786,
         "pairs": [
           {
             "price": 1009074,
@@ -5795,8 +5811,8 @@
       },
       "ICN-FRA": {
         "min_price": 1375500,
-        "typical": 1569800,
-        "deal_pct": 12.4,
+        "typical": 1573250,
+        "deal_pct": 12.6,
         "tier": "A",
         "n_obs": 54,
         "n_pairs": 8,
@@ -5870,17 +5886,17 @@
         }
       },
       "ICN-ZRH": {
-        "min_price": 1397000,
+        "min_price": 1381100,
         "typical": 1623500,
-        "deal_pct": 14.0,
+        "deal_pct": 14.9,
         "tier": "A",
         "n_obs": 53,
         "n_pairs": 8,
         "offpeak_baseline": 1054900,
-        "offpeak_ratio": 1.324,
+        "offpeak_ratio": 1.309,
         "pairs": [
           {
-            "price": 1397000,
+            "price": 1381100,
             "depart_date": "2026-09-23",
             "return_date": "2026-09-29",
             "depart_weekday": "수",
@@ -5890,9 +5906,9 @@
             "leave_days": 3,
             "bonus_days": 4,
             "stops": "1",
-            "airline": "루프트한자",
+            "airline": "에어프랑스",
             "dep_time": "11:40",
-            "arr_time": "20:05",
+            "arr_time": "22:25",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Zurich,%20Switzerland%20on%202026-09-23%20through%202026-09-29&hl=ko&curr=KRW"
           },
           {
@@ -5929,7 +5945,7 @@
           }
         ],
         "best": {
-          "price": 1397000,
+          "price": 1381100,
           "depart_date": "2026-09-23",
           "return_date": "2026-09-29",
           "depart_weekday": "수",
@@ -5939,9 +5955,9 @@
           "leave_days": 3,
           "bonus_days": 4,
           "stops": "1",
-          "airline": "루프트한자",
+          "airline": "에어프랑스",
           "dep_time": "11:40",
-          "arr_time": "20:05",
+          "arr_time": "22:25",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Zurich,%20Switzerland%20on%202026-09-23%20through%202026-09-29&hl=ko&curr=KRW"
         }
       },
@@ -6212,7 +6228,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Seattle%20on%202026-09-20%20through%202026-09-28&hl=ko&curr=KRW"
           },
           {
-            "price": 1601612,
+            "price": 1600385,
             "depart_date": "2026-09-19",
             "return_date": "2026-10-04",
             "depart_weekday": "토",
@@ -6332,7 +6348,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Vancouver%20on%202026-09-22%20through%202026-09-30&hl=ko&curr=KRW"
           },
           {
-            "price": 1349547,
+            "price": 1348432,
             "depart_date": "2026-09-19",
             "return_date": "2026-10-04",
             "depart_weekday": "토",
@@ -6369,8 +6385,8 @@
     "2026-10-05": {
       "ICN-NRT": {
         "min_price": 383664,
-        "typical": 474816,
-        "deal_pct": 19.2,
+        "typical": 474390,
+        "deal_pct": 19.1,
         "tier": "A",
         "n_obs": 26,
         "n_pairs": 8,
@@ -6394,7 +6410,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Tokyo%20on%202026-10-02%20through%202026-10-06&hl=ko&curr=KRW"
           },
           {
-            "price": 472050,
+            "price": 471196,
             "depart_date": "2026-10-01",
             "return_date": "2026-10-11",
             "depart_weekday": "목",
@@ -6510,8 +6526,8 @@
         "tier": "A",
         "n_obs": 50,
         "n_pairs": 8,
-        "offpeak_baseline": 507100,
-        "offpeak_ratio": 0.851,
+        "offpeak_baseline": 452100,
+        "offpeak_ratio": 0.954,
         "pairs": [
           {
             "price": 431400,
@@ -6760,17 +6776,17 @@
         }
       },
       "ICN-PVG": {
-        "min_price": 413700,
+        "min_price": 399800,
         "typical": 480850,
-        "deal_pct": 14.0,
+        "deal_pct": 16.9,
         "tier": "A",
         "n_obs": 50,
         "n_pairs": 8,
         "offpeak_baseline": 386100,
-        "offpeak_ratio": 1.071,
+        "offpeak_ratio": 1.035,
         "pairs": [
           {
-            "price": 413700,
+            "price": 399800,
             "depart_date": "2026-10-01",
             "return_date": "2026-10-11",
             "depart_weekday": "목",
@@ -6779,15 +6795,15 @@
             "days": 11,
             "leave_days": 5,
             "bonus_days": 6,
-            "stops": "1",
-            "airline": "",
-            "dep_time": "22:55",
-            "arr_time": "09:10+1",
+            "stops": "0",
+            "airline": "중국남방항공",
+            "dep_time": "12:35",
+            "arr_time": "13:45",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Shanghai%20on%202026-10-01%20through%202026-10-11&hl=ko&curr=KRW"
           }
         ],
         "best": {
-          "price": 413700,
+          "price": 399800,
           "depart_date": "2026-10-01",
           "return_date": "2026-10-11",
           "depart_weekday": "목",
@@ -6796,10 +6812,10 @@
           "days": 11,
           "leave_days": 5,
           "bonus_days": 6,
-          "stops": "1",
-          "airline": "",
-          "dep_time": "22:55",
-          "arr_time": "09:10+1",
+          "stops": "0",
+          "airline": "중국남방항공",
+          "dep_time": "12:35",
+          "arr_time": "13:45",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Shanghai%20on%202026-10-01%20through%202026-10-11&hl=ko&curr=KRW"
         }
       },
@@ -6908,33 +6924,17 @@
         }
       },
       "ICN-PQC": {
-        "min_price": 336957,
+        "min_price": 314762,
         "typical": 541565,
-        "deal_pct": 37.8,
+        "deal_pct": 41.9,
         "tier": "A",
         "n_obs": 47,
         "n_pairs": 8,
         "offpeak_baseline": 411514,
-        "offpeak_ratio": 0.819,
+        "offpeak_ratio": 0.765,
         "pairs": [
           {
-            "price": 336957,
-            "depart_date": "2026-10-04",
-            "return_date": "2026-10-08",
-            "depart_weekday": "일",
-            "return_weekday": "목",
-            "nights": 4,
-            "days": 5,
-            "leave_days": 3,
-            "bonus_days": 2,
-            "stops": "0",
-            "airline": "비엣젯",
-            "dep_time": "02:10",
-            "arr_time": "05:35",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Phu%20Quoc%20on%202026-10-04%20through%202026-10-08&hl=ko&curr=KRW"
-          },
-          {
-            "price": 382525,
+            "price": 314762,
             "depart_date": "2026-10-01",
             "return_date": "2026-10-11",
             "depart_weekday": "목",
@@ -6944,27 +6944,27 @@
             "leave_days": 5,
             "bonus_days": 6,
             "stops": "0",
-            "airline": "제주항공",
-            "dep_time": "17:20",
-            "arr_time": "21:25",
+            "airline": "비엣젯",
+            "dep_time": "02:10",
+            "arr_time": "05:35",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Phu%20Quoc%20on%202026-10-01%20through%202026-10-11&hl=ko&curr=KRW"
           }
         ],
         "best": {
-          "price": 336957,
-          "depart_date": "2026-10-04",
-          "return_date": "2026-10-08",
-          "depart_weekday": "일",
-          "return_weekday": "목",
-          "nights": 4,
-          "days": 5,
-          "leave_days": 3,
-          "bonus_days": 2,
+          "price": 314762,
+          "depart_date": "2026-10-01",
+          "return_date": "2026-10-11",
+          "depart_weekday": "목",
+          "return_weekday": "일",
+          "nights": 10,
+          "days": 11,
+          "leave_days": 5,
+          "bonus_days": 6,
           "stops": "0",
           "airline": "비엣젯",
           "dep_time": "02:10",
           "arr_time": "05:35",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Phu%20Quoc%20on%202026-10-04%20through%202026-10-08&hl=ko&curr=KRW"
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Phu%20Quoc%20on%202026-10-01%20through%202026-10-11&hl=ko&curr=KRW"
         }
       },
       "ICN-GUM": {
@@ -7334,7 +7334,7 @@
         "tier": "A",
         "n_obs": 50,
         "n_pairs": 8,
-        "offpeak_baseline": 608350,
+        "offpeak_baseline": 608300,
         "offpeak_ratio": 0.778,
         "pairs": [
           {
@@ -7798,8 +7798,8 @@
         "tier": "A",
         "n_obs": 48,
         "n_pairs": 9,
-        "offpeak_baseline": 531820,
-        "offpeak_ratio": 0.959,
+        "offpeak_baseline": 529300,
+        "offpeak_ratio": 0.964,
         "pairs": [
           {
             "price": 510245,
@@ -7878,7 +7878,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Chiang%20Mai%20on%202026-10-04%20through%202026-10-08&hl=ko&curr=KRW"
           },
           {
-            "price": 435100,
+            "price": 490100,
             "depart_date": "2026-10-01",
             "return_date": "2026-10-11",
             "depart_weekday": "목",
@@ -7912,47 +7912,63 @@
         }
       },
       "ICN-SGN": {
-        "min_price": 357974,
+        "min_price": 359373,
         "typical": 421800,
-        "deal_pct": 15.1,
+        "deal_pct": 14.8,
         "tier": "A",
         "n_obs": 34,
         "n_pairs": 6,
         "offpeak_baseline": 406335,
-        "offpeak_ratio": 0.881,
+        "offpeak_ratio": 0.884,
         "pairs": [
           {
-            "price": 357974,
-            "depart_date": "2026-10-01",
-            "return_date": "2026-10-11",
-            "depart_weekday": "목",
-            "return_weekday": "일",
-            "nights": 10,
-            "days": 11,
-            "leave_days": 5,
-            "bonus_days": 6,
+            "price": 359373,
+            "depart_date": "2026-10-02",
+            "return_date": "2026-10-06",
+            "depart_weekday": "금",
+            "return_weekday": "화",
+            "nights": 4,
+            "days": 5,
+            "leave_days": 2,
+            "bonus_days": 3,
             "stops": "0",
             "airline": "비엣젯",
             "dep_time": "11:40",
             "arr_time": "14:55",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Ho%20Chi%20Minh%20City%20on%202026-10-01%20through%202026-10-11&hl=ko&curr=KRW"
+            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Ho%20Chi%20Minh%20City%20on%202026-10-02%20through%202026-10-06&hl=ko&curr=KRW"
+          },
+          {
+            "price": 370700,
+            "depart_date": "2026-10-03",
+            "return_date": "2026-10-12",
+            "depart_weekday": "토",
+            "return_weekday": "월",
+            "nights": 9,
+            "days": 10,
+            "leave_days": 4,
+            "bonus_days": 6,
+            "stops": "0",
+            "airline": "베트남항공",
+            "dep_time": "17:55",
+            "arr_time": "21:20",
+            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Ho%20Chi%20Minh%20City%20on%202026-10-03%20through%202026-10-12&hl=ko&curr=KRW"
           }
         ],
         "best": {
-          "price": 357974,
-          "depart_date": "2026-10-01",
-          "return_date": "2026-10-11",
-          "depart_weekday": "목",
-          "return_weekday": "일",
-          "nights": 10,
-          "days": 11,
-          "leave_days": 5,
-          "bonus_days": 6,
+          "price": 359373,
+          "depart_date": "2026-10-02",
+          "return_date": "2026-10-06",
+          "depart_weekday": "금",
+          "return_weekday": "화",
+          "nights": 4,
+          "days": 5,
+          "leave_days": 2,
+          "bonus_days": 3,
           "stops": "0",
           "airline": "비엣젯",
           "dep_time": "11:40",
           "arr_time": "14:55",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Ho%20Chi%20Minh%20City%20on%202026-10-01%20through%202026-10-11&hl=ko&curr=KRW"
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Ho%20Chi%20Minh%20City%20on%202026-10-02%20through%202026-10-06&hl=ko&curr=KRW"
         }
       },
       "ICN-HAN": {
@@ -8006,8 +8022,8 @@
         "tier": "A",
         "n_obs": 39,
         "n_pairs": 9,
-        "offpeak_baseline": 375144,
-        "offpeak_ratio": 1.083,
+        "offpeak_baseline": 373347,
+        "offpeak_ratio": 1.088,
         "pairs": [
           {
             "price": 406375,
@@ -8146,7 +8162,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Manila%20on%202026-10-04%20through%202026-10-08&hl=ko&curr=KRW"
           },
           {
-            "price": 364775,
+            "price": 364451,
             "depart_date": "2026-10-01",
             "return_date": "2026-10-11",
             "depart_weekday": "목",
@@ -8180,77 +8196,61 @@
         }
       },
       "ICN-KUL": {
-        "min_price": 422303,
+        "min_price": 421283,
         "typical": 483365,
-        "deal_pct": 12.6,
+        "deal_pct": 12.8,
         "tier": "A",
         "n_obs": 34,
         "n_pairs": 6,
         "offpeak_baseline": 556050,
-        "offpeak_ratio": 0.759,
+        "offpeak_ratio": 0.758,
         "pairs": [
           {
-            "price": 422303,
-            "depart_date": "2026-10-04",
-            "return_date": "2026-10-08",
-            "depart_weekday": "일",
-            "return_weekday": "목",
-            "nights": 4,
-            "days": 5,
-            "leave_days": 3,
-            "bonus_days": 2,
-            "stops": "1",
-            "airline": "",
-            "dep_time": "11:00",
-            "arr_time": "21:45",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kuala%20Lumpur%20on%202026-10-04%20through%202026-10-08&hl=ko&curr=KRW"
-          },
-          {
-            "price": 454468,
-            "depart_date": "2026-10-02",
+            "price": 421283,
+            "depart_date": "2026-10-01",
             "return_date": "2026-10-11",
-            "depart_weekday": "금",
+            "depart_weekday": "목",
             "return_weekday": "일",
-            "nights": 9,
-            "days": 10,
-            "leave_days": 4,
+            "nights": 10,
+            "days": 11,
+            "leave_days": 5,
             "bonus_days": 6,
-            "stops": "0",
-            "airline": "에어아시아",
-            "dep_time": "08:15",
-            "arr_time": "13:45",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kuala%20Lumpur%20on%202026-10-02%20through%202026-10-11&hl=ko&curr=KRW"
+            "stops": "1",
+            "airline": "비엣젯",
+            "dep_time": "21:15",
+            "arr_time": "12:35+1",
+            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kuala%20Lumpur%20on%202026-10-01%20through%202026-10-11&hl=ko&curr=KRW"
           }
         ],
         "best": {
-          "price": 422303,
-          "depart_date": "2026-10-04",
-          "return_date": "2026-10-08",
-          "depart_weekday": "일",
-          "return_weekday": "목",
-          "nights": 4,
-          "days": 5,
-          "leave_days": 3,
-          "bonus_days": 2,
+          "price": 421283,
+          "depart_date": "2026-10-01",
+          "return_date": "2026-10-11",
+          "depart_weekday": "목",
+          "return_weekday": "일",
+          "nights": 10,
+          "days": 11,
+          "leave_days": 5,
+          "bonus_days": 6,
           "stops": "1",
-          "airline": "",
-          "dep_time": "11:00",
-          "arr_time": "21:45",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kuala%20Lumpur%20on%202026-10-04%20through%202026-10-08&hl=ko&curr=KRW"
+          "airline": "비엣젯",
+          "dep_time": "21:15",
+          "arr_time": "12:35+1",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kuala%20Lumpur%20on%202026-10-01%20through%202026-10-11&hl=ko&curr=KRW"
         }
       },
       "ICN-BKI": {
-        "min_price": 352700,
+        "min_price": 372700,
         "typical": 712216,
-        "deal_pct": 50.5,
+        "deal_pct": 47.7,
         "tier": "A",
         "n_obs": 48,
         "n_pairs": 9,
         "offpeak_baseline": 448358,
-        "offpeak_ratio": 0.787,
+        "offpeak_ratio": 0.831,
         "pairs": [
           {
-            "price": 352700,
+            "price": 372700,
             "depart_date": "2026-09-26",
             "return_date": "2026-10-11",
             "depart_weekday": "토",
@@ -8267,7 +8267,7 @@
           }
         ],
         "best": {
-          "price": 352700,
+          "price": 372700,
           "depart_date": "2026-09-26",
           "return_date": "2026-10-11",
           "depart_weekday": "토",
@@ -8326,7 +8326,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Singapore%20on%202026-10-02%20through%202026-10-06&hl=ko&curr=KRW"
           },
           {
-            "price": 425992,
+            "price": 423614,
             "depart_date": "2026-10-01",
             "return_date": "2026-10-11",
             "depart_weekday": "목",
@@ -8600,17 +8600,17 @@
         }
       },
       "ICN-FCO": {
-        "min_price": 1811700,
+        "min_price": 1721700,
         "typical": 2038300,
-        "deal_pct": 11.1,
+        "deal_pct": 15.5,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 7,
-        "offpeak_baseline": 1854800,
-        "offpeak_ratio": 0.977,
+        "offpeak_baseline": 1854000,
+        "offpeak_ratio": 0.929,
         "pairs": [
           {
-            "price": 1811700,
+            "price": 1721700,
             "depart_date": "2026-09-27",
             "return_date": "2026-10-11",
             "depart_weekday": "일",
@@ -8643,7 +8643,7 @@
           }
         ],
         "best": {
-          "price": 1811700,
+          "price": 1721700,
           "depart_date": "2026-09-27",
           "return_date": "2026-10-11",
           "depart_weekday": "일",
@@ -8838,7 +8838,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Vienna,%20Austria%20on%202026-09-29%20through%202026-10-06&hl=ko&curr=KRW"
           },
           {
-            "price": 1202700,
+            "price": 1152800,
             "depart_date": "2026-09-27",
             "return_date": "2026-10-11",
             "depart_weekday": "일",
@@ -8888,17 +8888,17 @@
         }
       },
       "ICN-IST": {
-        "min_price": 1107159,
+        "min_price": 1062200,
         "typical": 1504650,
-        "deal_pct": 26.4,
+        "deal_pct": 29.4,
         "tier": "A",
         "n_obs": 22,
         "n_pairs": 5,
-        "offpeak_baseline": 1289700,
-        "offpeak_ratio": 0.858,
+        "offpeak_baseline": 1284250,
+        "offpeak_ratio": 0.827,
         "pairs": [
           {
-            "price": 1107159,
+            "price": 1062200,
             "depart_date": "2026-09-27",
             "return_date": "2026-10-11",
             "depart_weekday": "일",
@@ -8910,7 +8910,7 @@
             "stops": "1",
             "airline": "에미레이트항공",
             "dep_time": "23:55",
-            "arr_time": "14:25+1",
+            "arr_time": "13:05+1",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Istanbul,%20Turkey%20on%202026-09-27%20through%202026-10-11&hl=ko&curr=KRW"
           },
           {
@@ -8931,7 +8931,7 @@
           }
         ],
         "best": {
-          "price": 1107159,
+          "price": 1062200,
           "depart_date": "2026-09-27",
           "return_date": "2026-10-11",
           "depart_weekday": "일",
@@ -8943,7 +8943,7 @@
           "stops": "1",
           "airline": "에미레이트항공",
           "dep_time": "23:55",
-          "arr_time": "14:25+1",
+          "arr_time": "13:05+1",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Istanbul,%20Turkey%20on%202026-09-27%20through%202026-10-11&hl=ko&curr=KRW"
         }
       },
@@ -8974,7 +8974,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Frankfurt,%20Germany%20on%202026-09-29%20through%202026-10-06&hl=ko&curr=KRW"
           },
           {
-            "price": 1298600,
+            "price": 1248700,
             "depart_date": "2026-09-27",
             "return_date": "2026-10-11",
             "depart_weekday": "일",
@@ -9297,8 +9297,8 @@
       },
       "ICN-SFO": {
         "min_price": 1055700,
-        "typical": 1210100,
-        "deal_pct": 12.8,
+        "typical": 1194300,
+        "deal_pct": 11.6,
         "tier": "A",
         "n_obs": 9,
         "n_pairs": 7,
@@ -9356,17 +9356,17 @@
         }
       },
       "ICN-SEA": {
-        "min_price": 1093630,
+        "min_price": 1092077,
         "typical": 1408117,
-        "deal_pct": 22.3,
+        "deal_pct": 22.4,
         "tier": "A",
         "n_obs": 9,
         "n_pairs": 7,
         "offpeak_baseline": 1287250,
-        "offpeak_ratio": 0.85,
+        "offpeak_ratio": 0.848,
         "pairs": [
           {
-            "price": 1093630,
+            "price": 1092077,
             "depart_date": "2026-09-27",
             "return_date": "2026-10-11",
             "depart_weekday": "일",
@@ -9399,7 +9399,7 @@
           }
         ],
         "best": {
-          "price": 1093630,
+          "price": 1092077,
           "depart_date": "2026-09-27",
           "return_date": "2026-10-11",
           "depart_weekday": "일",
@@ -9640,7 +9640,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Osaka%20on%202026-10-08%20through%202026-10-12&hl=ko&curr=KRW"
           },
           {
-            "price": 397963,
+            "price": 397833,
             "depart_date": "2026-10-02",
             "return_date": "2026-10-12",
             "depart_weekday": "금",
@@ -9675,13 +9675,13 @@
       },
       "ICN-DAD": {
         "min_price": 396400,
-        "typical": 505473,
-        "deal_pct": 21.6,
+        "typical": 517023,
+        "deal_pct": 23.3,
         "tier": "A",
         "n_obs": 40,
         "n_pairs": 5,
-        "offpeak_baseline": 507100,
-        "offpeak_ratio": 0.782,
+        "offpeak_baseline": 452100,
+        "offpeak_ratio": 0.877,
         "pairs": [
           {
             "price": 396400,
@@ -9716,7 +9716,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Da%20Nang%20International%20Airport%20on%202026-10-09%20through%202026-10-12&hl=ko&curr=KRW"
           },
           {
-            "price": 438436,
+            "price": 435957,
             "depart_date": "2026-10-02",
             "return_date": "2026-10-12",
             "depart_weekday": "금",
@@ -9725,10 +9725,10 @@
             "days": 11,
             "leave_days": 5,
             "bonus_days": 6,
-            "stops": "1",
-            "airline": "필리핀항공",
-            "dep_time": "07:20",
-            "arr_time": "15:20",
+            "stops": "0",
+            "airline": "비엣젯",
+            "dep_time": "07:00",
+            "arr_time": "09:40",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Da%20Nang%20International%20Airport%20on%202026-10-02%20through%202026-10-12&hl=ko&curr=KRW"
           }
         ],
@@ -9776,7 +9776,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Bali%20on%202026-10-07%20through%202026-10-14&hl=ko&curr=KRW"
           },
           {
-            "price": 493274,
+            "price": 478348,
             "depart_date": "2026-10-03",
             "return_date": "2026-10-18",
             "depart_weekday": "토",
@@ -10016,7 +10016,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Taipei%20on%202026-10-09%20through%202026-10-12&hl=ko&curr=KRW"
           },
           {
-            "price": 350417,
+            "price": 350064,
             "depart_date": "2026-10-02",
             "return_date": "2026-10-12",
             "depart_weekday": "금",
@@ -10076,7 +10076,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kaohsiung%20on%202026-10-08%20through%202026-10-12&hl=ko&curr=KRW"
           },
           {
-            "price": 411633,
+            "price": 411172,
             "depart_date": "2026-10-02",
             "return_date": "2026-10-12",
             "depart_weekday": "금",
@@ -10110,33 +10110,17 @@
         }
       },
       "ICN-PQC": {
-        "min_price": 400741,
-        "typical": 478400,
-        "deal_pct": 16.2,
+        "min_price": 289116,
+        "typical": 482664,
+        "deal_pct": 40.1,
         "tier": "A",
-        "n_obs": 39,
+        "n_obs": 40,
         "n_pairs": 5,
         "offpeak_baseline": 411514,
-        "offpeak_ratio": 0.974,
+        "offpeak_ratio": 0.703,
         "pairs": [
           {
-            "price": 400741,
-            "depart_date": "2026-10-05",
-            "return_date": "2026-10-09",
-            "depart_weekday": "월",
-            "return_weekday": "금",
-            "nights": 4,
-            "days": 5,
-            "leave_days": 3,
-            "bonus_days": 2,
-            "stops": "0",
-            "airline": "비엣젯",
-            "dep_time": "02:10",
-            "arr_time": "05:35",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Phu%20Quoc%20on%202026-10-05%20through%202026-10-09&hl=ko&curr=KRW"
-          },
-          {
-            "price": 414465,
+            "price": 289116,
             "depart_date": "2026-10-02",
             "return_date": "2026-10-12",
             "depart_weekday": "금",
@@ -10153,20 +10137,20 @@
           }
         ],
         "best": {
-          "price": 400741,
-          "depart_date": "2026-10-05",
-          "return_date": "2026-10-09",
-          "depart_weekday": "월",
-          "return_weekday": "금",
-          "nights": 4,
-          "days": 5,
-          "leave_days": 3,
-          "bonus_days": 2,
+          "price": 289116,
+          "depart_date": "2026-10-02",
+          "return_date": "2026-10-12",
+          "depart_weekday": "금",
+          "return_weekday": "월",
+          "nights": 10,
+          "days": 11,
+          "leave_days": 5,
+          "bonus_days": 6,
           "stops": "0",
           "airline": "비엣젯",
           "dep_time": "02:10",
           "arr_time": "05:35",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Phu%20Quoc%20on%202026-10-05%20through%202026-10-09&hl=ko&curr=KRW"
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Phu%20Quoc%20on%202026-10-02%20through%202026-10-12&hl=ko&curr=KRW"
         }
       },
       "ICN-GUM": {
@@ -10196,7 +10180,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Guam%20on%202026-10-05%20through%202026-10-09&hl=ko&curr=KRW"
           },
           {
-            "price": 412908,
+            "price": 413453,
             "depart_date": "2026-10-02",
             "return_date": "2026-10-12",
             "depart_weekday": "금",
@@ -10334,7 +10318,7 @@
         }
       },
       "ICN-ATH": {
-        "min_price": 1025560,
+        "min_price": 1025639,
         "typical": 1302100,
         "deal_pct": 21.2,
         "tier": "A",
@@ -10344,7 +10328,7 @@
         "offpeak_ratio": 0.911,
         "pairs": [
           {
-            "price": 1025560,
+            "price": 1025639,
             "depart_date": "2026-10-04",
             "return_date": "2026-10-18",
             "depart_weekday": "일",
@@ -10377,7 +10361,7 @@
           }
         ],
         "best": {
-          "price": 1025560,
+          "price": 1025639,
           "depart_date": "2026-10-04",
           "return_date": "2026-10-18",
           "depart_weekday": "일",
@@ -10546,17 +10530,17 @@
         }
       },
       "ICN-CTS": {
-        "min_price": 572021,
+        "min_price": 571867,
         "typical": 729100,
-        "deal_pct": 21.5,
+        "deal_pct": 21.6,
         "tier": "A",
         "n_obs": 40,
         "n_pairs": 5,
-        "offpeak_baseline": 608350,
+        "offpeak_baseline": 608300,
         "offpeak_ratio": 0.94,
         "pairs": [
           {
-            "price": 572021,
+            "price": 571867,
             "depart_date": "2026-10-02",
             "return_date": "2026-10-12",
             "depart_weekday": "금",
@@ -10573,7 +10557,7 @@
           }
         ],
         "best": {
-          "price": 572021,
+          "price": 571867,
           "depart_date": "2026-10-02",
           "return_date": "2026-10-12",
           "depart_weekday": "금",
@@ -10692,7 +10676,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Nagoya%20on%202026-10-08%20through%202026-10-12&hl=ko&curr=KRW"
           },
           {
-            "price": 508447,
+            "price": 508024,
             "depart_date": "2026-10-02",
             "return_date": "2026-10-12",
             "depart_weekday": "금",
@@ -10727,8 +10711,8 @@
       },
       "ICN-HKG": {
         "min_price": 314455,
-        "typical": 426538,
-        "deal_pct": 26.3,
+        "typical": 416388,
+        "deal_pct": 24.5,
         "tier": "A",
         "n_obs": 40,
         "n_pairs": 5,
@@ -11016,8 +11000,8 @@
         "tier": "A",
         "n_obs": 38,
         "n_pairs": 8,
-        "offpeak_baseline": 531820,
-        "offpeak_ratio": 0.96,
+        "offpeak_baseline": 529300,
+        "offpeak_ratio": 0.965,
         "pairs": [
           {
             "price": 510680,
@@ -11172,7 +11156,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Ho%20Chi%20Minh%20City%20on%202026-10-08%20through%202026-10-12&hl=ko&curr=KRW"
           },
           {
-            "price": 354411,
+            "price": 352262,
             "depart_date": "2026-10-02",
             "return_date": "2026-10-12",
             "depart_weekday": "금",
@@ -11207,8 +11191,8 @@
       },
       "ICN-HAN": {
         "min_price": 303422,
-        "typical": 407529,
-        "deal_pct": 25.5,
+        "typical": 416226,
+        "deal_pct": 27.1,
         "tier": "A",
         "n_obs": 40,
         "n_pairs": 5,
@@ -11248,7 +11232,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Hanoi%20on%202026-10-08%20through%202026-10-11&hl=ko&curr=KRW"
           },
           {
-            "price": 368511,
+            "price": 368022,
             "depart_date": "2026-10-02",
             "return_date": "2026-10-12",
             "depart_weekday": "금",
@@ -11257,10 +11241,10 @@
             "days": 11,
             "leave_days": 5,
             "bonus_days": 6,
-            "stops": "1",
-            "airline": "필리핀항공",
-            "dep_time": "07:20",
-            "arr_time": "00:45+1",
+            "stops": "0",
+            "airline": "비엣젯",
+            "dep_time": "06:25",
+            "arr_time": "08:55",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Hanoi%20on%202026-10-02%20through%202026-10-12&hl=ko&curr=KRW"
           }
         ],
@@ -11288,8 +11272,8 @@
         "tier": "A",
         "n_obs": 29,
         "n_pairs": 8,
-        "offpeak_baseline": 375144,
-        "offpeak_ratio": 0.98,
+        "offpeak_baseline": 373347,
+        "offpeak_ratio": 0.985,
         "pairs": [
           {
             "price": 367700,
@@ -11460,7 +11444,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Manila%20on%202026-10-08%20through%202026-10-12&hl=ko&curr=KRW"
           },
           {
-            "price": 435775,
+            "price": 435451,
             "depart_date": "2026-10-02",
             "return_date": "2026-10-12",
             "depart_weekday": "금",
@@ -11494,33 +11478,17 @@
         }
       },
       "ICN-KUL": {
-        "min_price": 434608,
-        "typical": 468016,
-        "deal_pct": 7.1,
+        "min_price": 421283,
+        "typical": 466310,
+        "deal_pct": 9.7,
         "tier": "A",
         "n_obs": 22,
         "n_pairs": 3,
         "offpeak_baseline": 556050,
-        "offpeak_ratio": 0.782,
+        "offpeak_ratio": 0.758,
         "pairs": [
           {
-            "price": 434608,
-            "depart_date": "2026-10-08",
-            "return_date": "2026-10-12",
-            "depart_weekday": "목",
-            "return_weekday": "월",
-            "nights": 4,
-            "days": 5,
-            "leave_days": 2,
-            "bonus_days": 3,
-            "stops": "1",
-            "airline": "비엣젯",
-            "dep_time": "21:15",
-            "arr_time": "12:35+1",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kuala%20Lumpur%20on%202026-10-08%20through%202026-10-12&hl=ko&curr=KRW"
-          },
-          {
-            "price": 461133,
+            "price": 421283,
             "depart_date": "2026-10-02",
             "return_date": "2026-10-12",
             "depart_weekday": "금",
@@ -11531,26 +11499,26 @@
             "bonus_days": 6,
             "stops": "1",
             "airline": "비엣젯",
-            "dep_time": "21:15",
+            "dep_time": "11:40",
             "arr_time": "12:35+1",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kuala%20Lumpur%20on%202026-10-02%20through%202026-10-12&hl=ko&curr=KRW"
           }
         ],
         "best": {
-          "price": 434608,
-          "depart_date": "2026-10-08",
+          "price": 421283,
+          "depart_date": "2026-10-02",
           "return_date": "2026-10-12",
-          "depart_weekday": "목",
+          "depart_weekday": "금",
           "return_weekday": "월",
-          "nights": 4,
-          "days": 5,
-          "leave_days": 2,
-          "bonus_days": 3,
+          "nights": 10,
+          "days": 11,
+          "leave_days": 5,
+          "bonus_days": 6,
           "stops": "1",
           "airline": "비엣젯",
-          "dep_time": "21:15",
+          "dep_time": "11:40",
           "arr_time": "12:35+1",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kuala%20Lumpur%20on%202026-10-08%20through%202026-10-12&hl=ko&curr=KRW"
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kuala%20Lumpur%20on%202026-10-02%20through%202026-10-12&hl=ko&curr=KRW"
         }
       },
       "ICN-BKI": {
@@ -11640,7 +11608,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Singapore%20on%202026-10-09%20through%202026-10-12&hl=ko&curr=KRW"
           },
           {
-            "price": 437392,
+            "price": 435014,
             "depart_date": "2026-10-02",
             "return_date": "2026-10-12",
             "depart_weekday": "금",
@@ -11700,7 +11668,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Siem%20Reap%20on%202026-10-08%20through%202026-10-12&hl=ko&curr=KRW"
           },
           {
-            "price": 523247,
+            "price": 522417,
             "depart_date": "2026-10-02",
             "return_date": "2026-10-12",
             "depart_weekday": "금",
@@ -11848,7 +11816,7 @@
             "stops": "1",
             "airline": "",
             "dep_time": "10:55",
-            "arr_time": "19:25",
+            "arr_time": "18:00",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Almaty%20on%202026-10-03%20through%202026-10-18&hl=ko&curr=KRW"
           }
         ],
@@ -11952,7 +11920,7 @@
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 7,
-        "offpeak_baseline": 1854800,
+        "offpeak_baseline": 1854000,
         "offpeak_ratio": 0.891,
         "pairs": [
           {
@@ -12039,8 +12007,8 @@
       },
       "ICN-BCN": {
         "min_price": 1886400,
-        "typical": 2452000,
-        "deal_pct": 23.1,
+        "typical": 2396100,
+        "deal_pct": 21.3,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 7,
@@ -12080,20 +12048,20 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Barcelona,%20Spain%20on%202026-10-05%20through%202026-10-12&hl=ko&curr=KRW"
           },
           {
-            "price": 2621600,
-            "depart_date": "2026-10-03",
-            "return_date": "2026-10-17",
-            "depart_weekday": "토",
-            "return_weekday": "토",
+            "price": 2498400,
+            "depart_date": "2026-10-04",
+            "return_date": "2026-10-18",
+            "depart_weekday": "일",
+            "return_weekday": "일",
             "nights": 14,
             "days": 15,
             "leave_days": 8,
             "bonus_days": 7,
             "stops": "0",
-            "airline": "티웨이항공",
-            "dep_time": "11:05",
-            "arr_time": "19:00",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Barcelona,%20Spain%20on%202026-10-03%20through%202026-10-17&hl=ko&curr=KRW"
+            "airline": "아시아나항공",
+            "dep_time": "11:50",
+            "arr_time": "19:10",
+            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Barcelona,%20Spain%20on%202026-10-04%20through%202026-10-18&hl=ko&curr=KRW"
           },
           {
             "price": 2995100,
@@ -12172,7 +12140,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Prague,%20Czechia%20on%202026-10-05%20through%202026-10-12&hl=ko&curr=KRW"
           },
           {
-            "price": 1514900,
+            "price": 1574600,
             "depart_date": "2026-10-04",
             "return_date": "2026-10-18",
             "depart_weekday": "일",
@@ -12288,8 +12256,8 @@
         "tier": "A",
         "n_obs": 36,
         "n_pairs": 7,
-        "offpeak_baseline": 1289700,
-        "offpeak_ratio": 0.866,
+        "offpeak_baseline": 1284250,
+        "offpeak_ratio": 0.87,
         "pairs": [
           {
             "price": 1117100,
@@ -12308,7 +12276,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Istanbul,%20Turkey%20on%202026-10-07%20through%202026-10-13&hl=ko&curr=KRW"
           },
           {
-            "price": 1141959,
+            "price": 1141374,
             "depart_date": "2026-10-04",
             "return_date": "2026-10-18",
             "depart_weekday": "일",
@@ -12690,30 +12658,46 @@
         }
       },
       "ICN-SFO": {
-        "min_price": 915700,
-        "typical": 1144300,
-        "deal_pct": 20.0,
+        "min_price": 955700,
+        "typical": 1192900,
+        "deal_pct": 19.9,
         "tier": "A",
         "n_obs": 9,
         "n_pairs": 7,
         "offpeak_baseline": 1185300,
-        "offpeak_ratio": 0.773,
+        "offpeak_ratio": 0.806,
         "pairs": [
           {
-            "price": 915700,
-            "depart_date": "2026-10-04",
-            "return_date": "2026-10-18",
-            "depart_weekday": "일",
-            "return_weekday": "일",
+            "price": 955700,
+            "depart_date": "2026-10-05",
+            "return_date": "2026-10-12",
+            "depart_weekday": "월",
+            "return_weekday": "월",
+            "nights": 7,
+            "days": 8,
+            "leave_days": 4,
+            "bonus_days": 4,
+            "stops": "0",
+            "airline": "에어프레미아",
+            "dep_time": "19:15",
+            "arr_time": "14:15",
+            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20San%20Francisco%20on%202026-10-05%20through%202026-10-12&hl=ko&curr=KRW"
+          },
+          {
+            "price": 1055700,
+            "depart_date": "2026-10-03",
+            "return_date": "2026-10-17",
+            "depart_weekday": "토",
+            "return_weekday": "토",
             "nights": 14,
             "days": 15,
             "leave_days": 8,
             "bonus_days": 7,
             "stops": "0",
             "airline": "에어프레미아",
-            "dep_time": "19:15",
-            "arr_time": "14:15",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20San%20Francisco%20on%202026-10-04%20through%202026-10-18&hl=ko&curr=KRW"
+            "dep_time": "18:00",
+            "arr_time": "13:00",
+            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20San%20Francisco%20on%202026-10-03%20through%202026-10-17&hl=ko&curr=KRW"
           },
           {
             "price": 1144300,
@@ -12733,34 +12717,34 @@
           }
         ],
         "best": {
-          "price": 915700,
-          "depart_date": "2026-10-04",
-          "return_date": "2026-10-18",
-          "depart_weekday": "일",
-          "return_weekday": "일",
-          "nights": 14,
-          "days": 15,
-          "leave_days": 8,
-          "bonus_days": 7,
+          "price": 955700,
+          "depart_date": "2026-10-05",
+          "return_date": "2026-10-12",
+          "depart_weekday": "월",
+          "return_weekday": "월",
+          "nights": 7,
+          "days": 8,
+          "leave_days": 4,
+          "bonus_days": 4,
           "stops": "0",
           "airline": "에어프레미아",
           "dep_time": "19:15",
           "arr_time": "14:15",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20San%20Francisco%20on%202026-10-04%20through%202026-10-18&hl=ko&curr=KRW"
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20San%20Francisco%20on%202026-10-05%20through%202026-10-12&hl=ko&curr=KRW"
         }
       },
       "ICN-SEA": {
-        "min_price": 1093630,
+        "min_price": 1092077,
         "typical": 1275600,
-        "deal_pct": 14.3,
+        "deal_pct": 14.4,
         "tier": "A",
         "n_obs": 9,
         "n_pairs": 7,
         "offpeak_baseline": 1287250,
-        "offpeak_ratio": 0.85,
+        "offpeak_ratio": 0.848,
         "pairs": [
           {
-            "price": 1093630,
+            "price": 1092077,
             "depart_date": "2026-10-04",
             "return_date": "2026-10-18",
             "depart_weekday": "일",
@@ -12793,7 +12777,7 @@
           }
         ],
         "best": {
-          "price": 1093630,
+          "price": 1092077,
           "depart_date": "2026-10-04",
           "return_date": "2026-10-18",
           "depart_weekday": "일",
@@ -13008,17 +12992,17 @@
         }
       },
       "ICN-KIX": {
-        "min_price": 404037,
+        "min_price": 403142,
         "typical": 675100,
-        "deal_pct": 40.2,
+        "deal_pct": 40.3,
         "tier": "A",
         "n_obs": 46,
         "n_pairs": 8,
         "offpeak_baseline": 440966,
-        "offpeak_ratio": 0.916,
+        "offpeak_ratio": 0.914,
         "pairs": [
           {
-            "price": 404037,
+            "price": 403142,
             "depart_date": "2026-12-24",
             "return_date": "2027-01-03",
             "depart_weekday": "목",
@@ -13035,7 +13019,7 @@
           }
         ],
         "best": {
-          "price": 404037,
+          "price": 403142,
           "depart_date": "2026-12-24",
           "return_date": "2027-01-03",
           "depart_weekday": "목",
@@ -13058,8 +13042,8 @@
         "tier": "A",
         "n_obs": 46,
         "n_pairs": 8,
-        "offpeak_baseline": 507100,
-        "offpeak_ratio": 0.93,
+        "offpeak_baseline": 452100,
+        "offpeak_ratio": 1.044,
         "pairs": [
           {
             "price": 471800,
@@ -13078,7 +13062,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Da%20Nang%20International%20Airport%20on%202026-12-25%20through%202027-01-02&hl=ko&curr=KRW"
           },
           {
-            "price": 509276,
+            "price": 508848,
             "depart_date": "2026-12-24",
             "return_date": "2027-01-03",
             "depart_weekday": "목",
@@ -13138,7 +13122,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Bali%20on%202026-12-23%20through%202026-12-30&hl=ko&curr=KRW"
           },
           {
-            "price": 702673,
+            "price": 702613,
             "depart_date": "2026-12-19",
             "return_date": "2027-01-03",
             "depart_weekday": "토",
@@ -13318,7 +13302,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Shanghai%20on%202026-12-24%20through%202026-12-27&hl=ko&curr=KRW"
           },
           {
-            "price": 391970,
+            "price": 391888,
             "depart_date": "2026-12-24",
             "return_date": "2027-01-03",
             "depart_weekday": "목",
@@ -13472,33 +13456,17 @@
         }
       },
       "ICN-PQC": {
-        "min_price": 657668,
+        "min_price": 649319,
         "typical": 747952,
-        "deal_pct": 12.1,
+        "deal_pct": 13.2,
         "tier": "A",
         "n_obs": 29,
         "n_pairs": 8,
         "offpeak_baseline": 411514,
-        "offpeak_ratio": 1.598,
+        "offpeak_ratio": 1.578,
         "pairs": [
           {
-            "price": 657668,
-            "depart_date": "2026-12-19",
-            "return_date": "2026-12-27",
-            "depart_weekday": "토",
-            "return_weekday": "일",
-            "nights": 8,
-            "days": 9,
-            "leave_days": 4,
-            "bonus_days": 5,
-            "stops": "0",
-            "airline": "비엣젯",
-            "dep_time": "05:00",
-            "arr_time": "08:50",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Phu%20Quoc%20on%202026-12-19%20through%202026-12-27&hl=ko&curr=KRW"
-          },
-          {
-            "price": 675924,
+            "price": 649319,
             "depart_date": "2026-12-24",
             "return_date": "2027-01-03",
             "depart_weekday": "목",
@@ -13515,20 +13483,20 @@
           }
         ],
         "best": {
-          "price": 657668,
-          "depart_date": "2026-12-19",
-          "return_date": "2026-12-27",
-          "depart_weekday": "토",
+          "price": 649319,
+          "depart_date": "2026-12-24",
+          "return_date": "2027-01-03",
+          "depart_weekday": "목",
           "return_weekday": "일",
-          "nights": 8,
-          "days": 9,
-          "leave_days": 4,
-          "bonus_days": 5,
+          "nights": 10,
+          "days": 11,
+          "leave_days": 5,
+          "bonus_days": 6,
           "stops": "0",
           "airline": "비엣젯",
           "dep_time": "05:00",
           "arr_time": "08:50",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Phu%20Quoc%20on%202026-12-19%20through%202026-12-27&hl=ko&curr=KRW"
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Phu%20Quoc%20on%202026-12-24%20through%202027-01-03&hl=ko&curr=KRW"
         }
       },
       "ICN-GUM": {
@@ -13914,7 +13882,7 @@
         "tier": "A",
         "n_obs": 46,
         "n_pairs": 8,
-        "offpeak_baseline": 608350,
+        "offpeak_baseline": 608300,
         "offpeak_ratio": 1.151,
         "pairs": [
           {
@@ -14044,17 +14012,17 @@
         }
       },
       "ICN-NGO": {
-        "min_price": 262198,
+        "min_price": 261518,
         "typical": 549800,
-        "deal_pct": 52.3,
+        "deal_pct": 52.4,
         "tier": "A",
         "n_obs": 30,
         "n_pairs": 8,
         "offpeak_baseline": 434900,
-        "offpeak_ratio": 0.603,
+        "offpeak_ratio": 0.601,
         "pairs": [
           {
-            "price": 262198,
+            "price": 261518,
             "depart_date": "2026-12-24",
             "return_date": "2027-01-03",
             "depart_weekday": "목",
@@ -14071,7 +14039,7 @@
           }
         ],
         "best": {
-          "price": 262198,
+          "price": 261518,
           "depart_date": "2026-12-24",
           "return_date": "2027-01-03",
           "depart_weekday": "목",
@@ -14088,17 +14056,17 @@
         }
       },
       "ICN-HKG": {
-        "min_price": 377500,
+        "min_price": 384546,
         "typical": 434900,
-        "deal_pct": 13.2,
+        "deal_pct": 11.6,
         "tier": "A",
         "n_obs": 46,
         "n_pairs": 8,
         "offpeak_baseline": 370757,
-        "offpeak_ratio": 1.018,
+        "offpeak_ratio": 1.037,
         "pairs": [
           {
-            "price": 377500,
+            "price": 384546,
             "depart_date": "2026-12-24",
             "return_date": "2027-01-03",
             "depart_weekday": "목",
@@ -14115,7 +14083,7 @@
           }
         ],
         "best": {
-          "price": 377500,
+          "price": 384546,
           "depart_date": "2026-12-24",
           "return_date": "2027-01-03",
           "depart_weekday": "목",
@@ -14362,8 +14330,8 @@
         "tier": "A",
         "n_obs": 36,
         "n_pairs": 8,
-        "offpeak_baseline": 531820,
-        "offpeak_ratio": 1.366,
+        "offpeak_baseline": 529300,
+        "offpeak_ratio": 1.372,
         "pairs": [
           {
             "price": 726300,
@@ -14442,7 +14410,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Chiang%20Mai%20on%202026-12-19%20through%202026-12-27&hl=ko&curr=KRW"
           },
           {
-            "price": 705800,
+            "price": 780400,
             "depart_date": "2026-12-24",
             "return_date": "2027-01-03",
             "depart_weekday": "목",
@@ -14562,7 +14530,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Hanoi%20on%202026-12-24%20through%202026-12-27&hl=ko&curr=KRW"
           },
           {
-            "price": 364192,
+            "price": 364219,
             "depart_date": "2026-12-24",
             "return_date": "2027-01-03",
             "depart_weekday": "목",
@@ -14602,8 +14570,8 @@
         "tier": "A",
         "n_obs": 38,
         "n_pairs": 8,
-        "offpeak_baseline": 375144,
-        "offpeak_ratio": 1.455,
+        "offpeak_baseline": 373347,
+        "offpeak_ratio": 1.462,
         "pairs": [
           {
             "price": 545656,
@@ -14622,7 +14590,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Nha%20Trang%20on%202026-12-22%20through%202026-12-29&hl=ko&curr=KRW"
           },
           {
-            "price": 620577,
+            "price": 619957,
             "depart_date": "2026-12-19",
             "return_date": "2027-01-03",
             "depart_weekday": "토",
@@ -14632,9 +14600,9 @@
             "leave_days": 8,
             "bonus_days": 8,
             "stops": "0",
-            "airline": "진에어",
-            "dep_time": "19:55",
-            "arr_time": "23:20",
+            "airline": "티웨이항공",
+            "dep_time": "20:10",
+            "arr_time": "23:55",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Nha%20Trang%20on%202026-12-19%20through%202027-01-03&hl=ko&curr=KRW"
           }
         ],
@@ -14830,7 +14798,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kota%20Kinabalu%20on%202026-12-22%20through%202026-12-29&hl=ko&curr=KRW"
           },
           {
-            "price": 644442,
+            "price": 643346,
             "depart_date": "2026-12-19",
             "return_date": "2027-01-03",
             "depart_weekday": "토",
@@ -14950,7 +14918,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Siem%20Reap%20on%202026-12-19%20through%202026-12-27&hl=ko&curr=KRW"
           },
           {
-            "price": 549437,
+            "price": 528206,
             "depart_date": "2026-12-24",
             "return_date": "2027-01-03",
             "depart_weekday": "목",
@@ -15154,7 +15122,7 @@
         "tier": "A",
         "n_obs": 17,
         "n_pairs": 6,
-        "offpeak_baseline": 1854800,
+        "offpeak_baseline": 1854000,
         "offpeak_ratio": 0.691,
         "pairs": [
           {
@@ -15426,8 +15394,8 @@
         "tier": "A",
         "n_obs": 36,
         "n_pairs": 7,
-        "offpeak_baseline": 1289700,
-        "offpeak_ratio": 0.74,
+        "offpeak_baseline": 1284250,
+        "offpeak_ratio": 0.743,
         "pairs": [
           {
             "price": 954000,
@@ -15661,7 +15629,7 @@
       },
       "ICN-LAX": {
         "min_price": 1187900,
-        "typical": 1375400,
+        "typical": 1374250,
         "deal_pct": 13.6,
         "tier": "A",
         "n_obs": 8,
@@ -15686,7 +15654,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Los%20Angeles%20on%202026-12-24%20through%202026-12-30&hl=ko&curr=KRW"
           },
           {
-            "price": 1337900,
+            "price": 1262900,
             "depart_date": "2026-12-20",
             "return_date": "2027-01-03",
             "depart_weekday": "일",
@@ -16156,7 +16124,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Osaka%20on%202026-12-26%20through%202027-01-03&hl=ko&curr=KRW"
           },
           {
-            "price": 429955,
+            "price": 429632,
             "depart_date": "2026-12-25",
             "return_date": "2027-01-04",
             "depart_weekday": "금",
@@ -16191,16 +16159,32 @@
       },
       "ICN-DAD": {
         "min_price": 471800,
-        "typical": 593000,
-        "deal_pct": 20.4,
+        "typical": 609150,
+        "deal_pct": 22.5,
         "tier": "A",
         "n_obs": 42,
         "n_pairs": 7,
-        "offpeak_baseline": 507100,
-        "offpeak_ratio": 0.93,
+        "offpeak_baseline": 452100,
+        "offpeak_ratio": 1.044,
         "pairs": [
           {
             "price": 471800,
+            "depart_date": "2026-12-25",
+            "return_date": "2027-01-02",
+            "depart_weekday": "금",
+            "return_weekday": "토",
+            "nights": 8,
+            "days": 9,
+            "leave_days": 4,
+            "bonus_days": 5,
+            "stops": "1",
+            "airline": "필리핀항공",
+            "dep_time": "20:30",
+            "arr_time": "13:25+1",
+            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Da%20Nang%20International%20Airport%20on%202026-12-25%20through%202027-01-02&hl=ko&curr=KRW"
+          },
+          {
+            "price": 586700,
             "depart_date": "2026-12-25",
             "return_date": "2027-01-04",
             "depart_weekday": "금",
@@ -16209,28 +16193,28 @@
             "days": 11,
             "leave_days": 5,
             "bonus_days": 6,
-            "stops": "1",
-            "airline": "필리핀항공",
-            "dep_time": "20:30",
-            "arr_time": "13:25+1",
+            "stops": "0",
+            "airline": "베트남항공",
+            "dep_time": "00:30",
+            "arr_time": "03:35",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Da%20Nang%20International%20Airport%20on%202026-12-25%20through%202027-01-04&hl=ko&curr=KRW"
           }
         ],
         "best": {
           "price": 471800,
           "depart_date": "2026-12-25",
-          "return_date": "2027-01-04",
+          "return_date": "2027-01-02",
           "depart_weekday": "금",
-          "return_weekday": "월",
-          "nights": 10,
-          "days": 11,
-          "leave_days": 5,
-          "bonus_days": 6,
+          "return_weekday": "토",
+          "nights": 8,
+          "days": 9,
+          "leave_days": 4,
+          "bonus_days": 5,
           "stops": "1",
           "airline": "필리핀항공",
           "dep_time": "20:30",
           "arr_time": "13:25+1",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Da%20Nang%20International%20Airport%20on%202026-12-25%20through%202027-01-04&hl=ko&curr=KRW"
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Da%20Nang%20International%20Airport%20on%202026-12-25%20through%202027-01-02&hl=ko&curr=KRW"
         }
       },
       "ICN-DPS": {
@@ -16260,7 +16244,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Bali%20on%202026-12-31%20through%202027-01-07&hl=ko&curr=KRW"
           },
           {
-            "price": 644629,
+            "price": 618022,
             "depart_date": "2026-12-25",
             "return_date": "2027-01-06",
             "depart_weekday": "금",
@@ -16440,7 +16424,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Shanghai%20on%202026-12-31%20through%202027-01-03&hl=ko&curr=KRW"
           },
           {
-            "price": 448315,
+            "price": 424300,
             "depart_date": "2026-12-25",
             "return_date": "2027-01-04",
             "depart_weekday": "금",
@@ -16449,10 +16433,10 @@
             "days": 11,
             "leave_days": 5,
             "bonus_days": 6,
-            "stops": "0",
-            "airline": "",
-            "dep_time": "17:40",
-            "arr_time": "18:55",
+            "stops": "1",
+            "airline": "중국남방항공",
+            "dep_time": "13:30",
+            "arr_time": "21:00",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Shanghai%20on%202026-12-25%20through%202027-01-04&hl=ko&curr=KRW"
           }
         ],
@@ -16500,7 +16484,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Taipei%20on%202026-12-31%20through%202027-01-04&hl=ko&curr=KRW"
           },
           {
-            "price": 417107,
+            "price": 416225,
             "depart_date": "2026-12-25",
             "return_date": "2027-01-04",
             "depart_weekday": "금",
@@ -16620,7 +16604,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Phu%20Quoc%20on%202026-12-31%20through%202027-01-04&hl=ko&curr=KRW"
           },
           {
-            "price": 675924,
+            "price": 649825,
             "depart_date": "2026-12-25",
             "return_date": "2027-01-04",
             "depart_weekday": "금",
@@ -16654,17 +16638,17 @@
         }
       },
       "ICN-GUM": {
-        "min_price": 675038,
+        "min_price": 674809,
         "typical": 764993,
         "deal_pct": 11.8,
         "tier": "A",
         "n_obs": 21,
         "n_pairs": 7,
         "offpeak_baseline": 270150,
-        "offpeak_ratio": 2.499,
+        "offpeak_ratio": 2.498,
         "pairs": [
           {
-            "price": 675038,
+            "price": 674809,
             "depart_date": "2026-12-25",
             "return_date": "2027-01-04",
             "depart_weekday": "금",
@@ -16681,7 +16665,7 @@
           }
         ],
         "best": {
-          "price": 675038,
+          "price": 674809,
           "depart_date": "2026-12-25",
           "return_date": "2027-01-04",
           "depart_weekday": "금",
@@ -16956,7 +16940,7 @@
         "tier": "A",
         "n_obs": 42,
         "n_pairs": 7,
-        "offpeak_baseline": 608350,
+        "offpeak_baseline": 608300,
         "offpeak_ratio": 1.057,
         "pairs": [
           {
@@ -16976,7 +16960,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Sapporo%20on%202026-12-27%20through%202027-01-01&hl=ko&curr=KRW"
           },
           {
-            "price": 694400,
+            "price": 719400,
             "depart_date": "2026-12-25",
             "return_date": "2027-01-04",
             "depart_weekday": "금",
@@ -16988,7 +16972,7 @@
             "stops": "1",
             "airline": "전일본공수",
             "dep_time": "07:45",
-            "arr_time": "14:35",
+            "arr_time": "13:35",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Sapporo%20on%202026-12-25%20through%202027-01-04&hl=ko&curr=KRW"
           }
         ],
@@ -17070,9 +17054,9 @@
         }
       },
       "ICN-NGO": {
-        "min_price": 309846,
+        "min_price": 309457,
         "typical": 396139,
-        "deal_pct": 21.8,
+        "deal_pct": 21.9,
         "tier": "A",
         "n_obs": 37,
         "n_pairs": 7,
@@ -17080,7 +17064,7 @@
         "offpeak_ratio": 0.712,
         "pairs": [
           {
-            "price": 309846,
+            "price": 309457,
             "depart_date": "2026-12-25",
             "return_date": "2027-01-04",
             "depart_weekday": "금",
@@ -17097,7 +17081,7 @@
           }
         ],
         "best": {
-          "price": 309846,
+          "price": 309457,
           "depart_date": "2026-12-25",
           "return_date": "2027-01-04",
           "depart_weekday": "금",
@@ -17404,8 +17388,8 @@
         "tier": "A",
         "n_obs": 36,
         "n_pairs": 8,
-        "offpeak_baseline": 531820,
-        "offpeak_ratio": 1.214,
+        "offpeak_baseline": 529300,
+        "offpeak_ratio": 1.22,
         "pairs": [
           {
             "price": 645600,
@@ -17424,7 +17408,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Phuket%20on%202026-12-31%20through%202027-01-07&hl=ko&curr=KRW"
           },
           {
-            "price": 725052,
+            "price": 724814,
             "depart_date": "2026-12-25",
             "return_date": "2027-01-06",
             "depart_weekday": "금",
@@ -17588,7 +17572,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Hanoi%20on%202026-12-26%20through%202027-01-03&hl=ko&curr=KRW"
           },
           {
-            "price": 380044,
+            "price": 379882,
             "depart_date": "2026-12-25",
             "return_date": "2027-01-04",
             "depart_weekday": "금",
@@ -17622,17 +17606,17 @@
         }
       },
       "ICN-CXR": {
-        "min_price": 629188,
+        "min_price": 628800,
         "typical": 752600,
         "deal_pct": 16.4,
         "tier": "A",
         "n_obs": 37,
         "n_pairs": 8,
-        "offpeak_baseline": 375144,
-        "offpeak_ratio": 1.677,
+        "offpeak_baseline": 373347,
+        "offpeak_ratio": 1.684,
         "pairs": [
           {
-            "price": 629188,
+            "price": 628800,
             "depart_date": "2026-12-25",
             "return_date": "2027-01-06",
             "depart_weekday": "금",
@@ -17649,7 +17633,7 @@
           }
         ],
         "best": {
-          "price": 629188,
+          "price": 628800,
           "depart_date": "2026-12-25",
           "return_date": "2027-01-06",
           "depart_weekday": "금",
@@ -17890,33 +17874,17 @@
         }
       },
       "ICN-SIN": {
-        "min_price": 829288,
+        "min_price": 768410,
         "typical": 1022550,
-        "deal_pct": 18.9,
+        "deal_pct": 24.9,
         "tier": "A",
         "n_obs": 16,
         "n_pairs": 8,
         "offpeak_baseline": 526300,
-        "offpeak_ratio": 1.576,
+        "offpeak_ratio": 1.46,
         "pairs": [
           {
-            "price": 829288,
-            "depart_date": "2027-01-01",
-            "return_date": "2027-01-04",
-            "depart_weekday": "금",
-            "return_weekday": "월",
-            "nights": 3,
-            "days": 4,
-            "leave_days": 1,
-            "bonus_days": 3,
-            "stops": "0",
-            "airline": "제주항공",
-            "dep_time": "18:10",
-            "arr_time": "00:10+1",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Singapore%20on%202027-01-01%20through%202027-01-04&hl=ko&curr=KRW"
-          },
-          {
-            "price": 903400,
+            "price": 768410,
             "depart_date": "2026-12-25",
             "return_date": "2027-01-04",
             "depart_weekday": "금",
@@ -17933,20 +17901,20 @@
           }
         ],
         "best": {
-          "price": 829288,
-          "depart_date": "2027-01-01",
+          "price": 768410,
+          "depart_date": "2026-12-25",
           "return_date": "2027-01-04",
           "depart_weekday": "금",
           "return_weekday": "월",
-          "nights": 3,
-          "days": 4,
-          "leave_days": 1,
-          "bonus_days": 3,
+          "nights": 10,
+          "days": 11,
+          "leave_days": 5,
+          "bonus_days": 6,
           "stops": "0",
-          "airline": "제주항공",
-          "dep_time": "18:10",
-          "arr_time": "00:10+1",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Singapore%20on%202027-01-01%20through%202027-01-04&hl=ko&curr=KRW"
+          "airline": "티웨이항공",
+          "dep_time": "15:30",
+          "arr_time": "21:25",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Singapore%20on%202026-12-25%20through%202027-01-04&hl=ko&curr=KRW"
         }
       },
       "ICN-REP": {
@@ -17976,7 +17944,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Siem%20Reap%20on%202026-12-25%20through%202027-01-02&hl=ko&curr=KRW"
           },
           {
-            "price": 605385,
+            "price": 604947,
             "depart_date": "2026-12-25",
             "return_date": "2027-01-04",
             "depart_weekday": "금",
@@ -18196,8 +18164,8 @@
         "tier": "A",
         "n_obs": 19,
         "n_pairs": 7,
-        "offpeak_baseline": 1854800,
-        "offpeak_ratio": 0.626,
+        "offpeak_baseline": 1854000,
+        "offpeak_ratio": 0.627,
         "pairs": [
           {
             "price": 1161700,
@@ -18452,8 +18420,8 @@
         "tier": "A",
         "n_obs": 28,
         "n_pairs": 6,
-        "offpeak_baseline": 1289700,
-        "offpeak_ratio": 0.732,
+        "offpeak_baseline": 1284250,
+        "offpeak_ratio": 0.735,
         "pairs": [
           {
             "price": 944100,
@@ -18702,17 +18670,17 @@
         }
       },
       "ICN-LAX": {
-        "min_price": 1262900,
+        "min_price": 1187900,
         "typical": 1759300,
-        "deal_pct": 28.2,
+        "deal_pct": 32.5,
         "tier": "A",
         "n_obs": 10,
         "n_pairs": 7,
         "offpeak_baseline": 1009300,
-        "offpeak_ratio": 1.251,
+        "offpeak_ratio": 1.177,
         "pairs": [
           {
-            "price": 1262900,
+            "price": 1187900,
             "depart_date": "2026-12-25",
             "return_date": "2027-01-03",
             "depart_weekday": "금",
@@ -18745,7 +18713,7 @@
           }
         ],
         "best": {
-          "price": 1262900,
+          "price": 1187900,
           "depart_date": "2026-12-25",
           "return_date": "2027-01-03",
           "depart_weekday": "금",
@@ -19042,7 +19010,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Tokyo%20on%202027-02-05%20through%202027-02-10&hl=ko&curr=KRW"
           },
           {
-            "price": 402762,
+            "price": 402453,
             "depart_date": "2027-01-30",
             "return_date": "2027-02-09",
             "depart_weekday": "토",
@@ -19077,8 +19045,8 @@
       },
       "ICN-KIX": {
         "min_price": 397440,
-        "typical": 639000,
-        "deal_pct": 37.8,
+        "typical": 656550,
+        "deal_pct": 39.5,
         "tier": "A",
         "n_obs": 20,
         "n_pairs": 6,
@@ -19153,13 +19121,13 @@
       },
       "ICN-DAD": {
         "min_price": 421800,
-        "typical": 665050,
-        "deal_pct": 36.6,
+        "typical": 639942,
+        "deal_pct": 34.1,
         "tier": "A",
         "n_obs": 20,
         "n_pairs": 6,
-        "offpeak_baseline": 507100,
-        "offpeak_ratio": 0.832,
+        "offpeak_baseline": 452100,
+        "offpeak_ratio": 0.933,
         "pairs": [
           {
             "price": 421800,
@@ -19476,17 +19444,17 @@
         }
       },
       "ICN-PQC": {
-        "min_price": 821587,
+        "min_price": 802262,
         "typical": 1013900,
-        "deal_pct": 19.0,
+        "deal_pct": 20.9,
         "tier": "A",
         "n_obs": 20,
         "n_pairs": 6,
         "offpeak_baseline": 411514,
-        "offpeak_ratio": 1.996,
+        "offpeak_ratio": 1.95,
         "pairs": [
           {
-            "price": 821587,
+            "price": 802262,
             "depart_date": "2027-01-30",
             "return_date": "2027-02-09",
             "depart_weekday": "토",
@@ -19503,7 +19471,7 @@
           }
         ],
         "best": {
-          "price": 821587,
+          "price": 802262,
           "depart_date": "2027-01-30",
           "return_date": "2027-02-09",
           "depart_weekday": "토",
@@ -19713,8 +19681,8 @@
       },
       "ICN-FUK": {
         "min_price": 458500,
-        "typical": 643450,
-        "deal_pct": 28.7,
+        "typical": 645950,
+        "deal_pct": 29.0,
         "tier": "A",
         "n_obs": 20,
         "n_pairs": 6,
@@ -19772,17 +19740,17 @@
         }
       },
       "ICN-CTS": {
-        "min_price": 659400,
+        "min_price": 734400,
         "typical": 931100,
-        "deal_pct": 29.2,
+        "deal_pct": 21.1,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 6,
-        "offpeak_baseline": 608350,
-        "offpeak_ratio": 1.084,
+        "offpeak_baseline": 608300,
+        "offpeak_ratio": 1.207,
         "pairs": [
           {
-            "price": 659400,
+            "price": 734400,
             "depart_date": "2027-01-30",
             "return_date": "2027-02-09",
             "depart_weekday": "토",
@@ -19799,7 +19767,7 @@
           }
         ],
         "best": {
-          "price": 659400,
+          "price": 734400,
           "depart_date": "2027-01-30",
           "return_date": "2027-02-09",
           "depart_weekday": "토",
@@ -20068,17 +20036,17 @@
         }
       },
       "ICN-TAO": {
-        "min_price": 360803,
+        "min_price": 361417,
         "typical": 508900,
-        "deal_pct": 29.1,
+        "deal_pct": 29.0,
         "tier": "A",
         "n_obs": 15,
         "n_pairs": 6,
         "offpeak_baseline": 355550,
-        "offpeak_ratio": 1.015,
+        "offpeak_ratio": 1.017,
         "pairs": [
           {
-            "price": 360803,
+            "price": 361417,
             "depart_date": "2027-01-30",
             "return_date": "2027-02-09",
             "depart_weekday": "토",
@@ -20095,7 +20063,7 @@
           }
         ],
         "best": {
-          "price": 360803,
+          "price": 361417,
           "depart_date": "2027-01-30",
           "return_date": "2027-02-09",
           "depart_weekday": "토",
@@ -20178,8 +20146,8 @@
         "tier": "A",
         "n_obs": 20,
         "n_pairs": 6,
-        "offpeak_baseline": 531820,
-        "offpeak_ratio": 1.274,
+        "offpeak_baseline": 529300,
+        "offpeak_ratio": 1.28,
         "pairs": [
           {
             "price": 677490,
@@ -20261,8 +20229,8 @@
       },
       "ICN-SGN": {
         "min_price": 421800,
-        "typical": 599643,
-        "deal_pct": 29.7,
+        "typical": 588855,
+        "deal_pct": 28.4,
         "tier": "A",
         "n_obs": 30,
         "n_pairs": 8,
@@ -20370,8 +20338,8 @@
         "tier": "A",
         "n_obs": 20,
         "n_pairs": 6,
-        "offpeak_baseline": 375144,
-        "offpeak_ratio": 1.644,
+        "offpeak_baseline": 373347,
+        "offpeak_ratio": 1.652,
         "pairs": [
           {
             "price": 616800,
@@ -20556,17 +20524,17 @@
         }
       },
       "ICN-BKI": {
-        "min_price": 664532,
+        "min_price": 663188,
         "typical": 951050,
-        "deal_pct": 30.1,
+        "deal_pct": 30.3,
         "tier": "A",
         "n_obs": 20,
         "n_pairs": 6,
         "offpeak_baseline": 448358,
-        "offpeak_ratio": 1.482,
+        "offpeak_ratio": 1.479,
         "pairs": [
           {
-            "price": 664532,
+            "price": 663188,
             "depart_date": "2027-01-30",
             "return_date": "2027-02-09",
             "depart_weekday": "토",
@@ -20583,7 +20551,7 @@
           }
         ],
         "best": {
-          "price": 664532,
+          "price": 663188,
           "depart_date": "2027-01-30",
           "return_date": "2027-02-09",
           "depart_weekday": "토",
@@ -20858,7 +20826,7 @@
         "tier": "A",
         "n_obs": 11,
         "n_pairs": 6,
-        "offpeak_baseline": 1854800,
+        "offpeak_baseline": 1854000,
         "offpeak_ratio": 0.866,
         "pairs": [
           {
@@ -21114,8 +21082,8 @@
         "tier": "A",
         "n_obs": 16,
         "n_pairs": 4,
-        "offpeak_baseline": 1289700,
-        "offpeak_ratio": 0.824,
+        "offpeak_baseline": 1284250,
+        "offpeak_ratio": 0.828,
         "pairs": [
           {
             "price": 1063000,
@@ -21804,8 +21772,8 @@
         "tier": "A",
         "n_obs": 22,
         "n_pairs": 7,
-        "offpeak_baseline": 507100,
-        "offpeak_ratio": 0.786,
+        "offpeak_baseline": 452100,
+        "offpeak_ratio": 0.881,
         "pairs": [
           {
             "price": 398356,
@@ -22035,7 +22003,7 @@
       },
       "ICN-TPE": {
         "min_price": 269130,
-        "typical": 379824,
+        "typical": 379358,
         "deal_pct": 29.1,
         "tier": "A",
         "n_obs": 20,
@@ -22079,8 +22047,8 @@
       },
       "ICN-KHH": {
         "min_price": 316806,
-        "typical": 402500,
-        "deal_pct": 21.3,
+        "typical": 402239,
+        "deal_pct": 21.2,
         "tier": "A",
         "n_obs": 22,
         "n_pairs": 7,
@@ -22440,7 +22408,7 @@
         "tier": "A",
         "n_obs": 20,
         "n_pairs": 7,
-        "offpeak_baseline": 608350,
+        "offpeak_baseline": 608300,
         "offpeak_ratio": 0.77,
         "pairs": [
           {
@@ -22807,8 +22775,8 @@
       },
       "ICN-BKK": {
         "min_price": 454645,
-        "typical": 500810,
-        "deal_pct": 9.2,
+        "typical": 495798,
+        "deal_pct": 8.3,
         "tier": "A",
         "n_obs": 22,
         "n_pairs": 6,
@@ -22832,20 +22800,20 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Bangkok%20on%202027-03-01%20through%202027-03-05&hl=ko&curr=KRW"
           },
           {
-            "price": 482800,
-            "depart_date": "2027-02-27",
-            "return_date": "2027-03-08",
+            "price": 460600,
+            "depart_date": "2027-02-20",
+            "return_date": "2027-03-01",
             "depart_weekday": "토",
             "return_weekday": "월",
             "nights": 9,
             "days": 10,
             "leave_days": 5,
             "bonus_days": 5,
-            "stops": "1",
+            "stops": "0",
             "airline": "",
-            "dep_time": "22:05",
-            "arr_time": "01:55",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Bangkok%20on%202027-02-27%20through%202027-03-08&hl=ko&curr=KRW"
+            "dep_time": "09:35",
+            "arr_time": "13:30",
+            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Bangkok%20on%202027-02-20%20through%202027-03-01&hl=ko&curr=KRW"
           }
         ],
         "best": {
@@ -22872,8 +22840,8 @@
         "tier": "A",
         "n_obs": 22,
         "n_pairs": 6,
-        "offpeak_baseline": 531820,
-        "offpeak_ratio": 0.918,
+        "offpeak_baseline": 529300,
+        "offpeak_ratio": 0.923,
         "pairs": [
           {
             "price": 488412,
@@ -23080,8 +23048,8 @@
         "tier": "A",
         "n_obs": 21,
         "n_pairs": 6,
-        "offpeak_baseline": 375144,
-        "offpeak_ratio": 1.365,
+        "offpeak_baseline": 373347,
+        "offpeak_ratio": 1.371,
         "pairs": [
           {
             "price": 511938,
@@ -23100,7 +23068,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Nha%20Trang%20on%202027-02-26%20through%202027-03-05&hl=ko&curr=KRW"
           },
           {
-            "price": 542281,
+            "price": 522914,
             "depart_date": "2027-02-20",
             "return_date": "2027-03-01",
             "depart_weekday": "토",
@@ -23560,22 +23528,6 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20London,%20United%20Kingdom%20on%202027-02-23%20through%202027-03-02&hl=ko&curr=KRW"
           },
           {
-            "price": 1488900,
-            "depart_date": "2027-02-27",
-            "return_date": "2027-03-07",
-            "depart_weekday": "토",
-            "return_weekday": "일",
-            "nights": 8,
-            "days": 9,
-            "leave_days": 4,
-            "bonus_days": 5,
-            "stops": "0",
-            "airline": "대한항공",
-            "dep_time": "13:20",
-            "arr_time": "18:50",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20London,%20United%20Kingdom%20on%202027-02-27%20through%202027-03-07&hl=ko&curr=KRW"
-          },
-          {
             "price": 1523300,
             "depart_date": "2027-02-21",
             "return_date": "2027-03-07",
@@ -23616,7 +23568,7 @@
         "tier": "A",
         "n_obs": 10,
         "n_pairs": 7,
-        "offpeak_baseline": 1854800,
+        "offpeak_baseline": 1854000,
         "offpeak_ratio": 0.664,
         "pairs": [
           {
@@ -23824,8 +23776,8 @@
         "tier": "A",
         "n_obs": 20,
         "n_pairs": 6,
-        "offpeak_baseline": 1289700,
-        "offpeak_ratio": 0.636,
+        "offpeak_baseline": 1284250,
+        "offpeak_ratio": 0.639,
         "pairs": [
           {
             "price": 820700,
@@ -24466,8 +24418,8 @@
         "tier": "A",
         "n_obs": 22,
         "n_pairs": 6,
-        "offpeak_baseline": 507100,
-        "offpeak_ratio": 0.717,
+        "offpeak_baseline": 452100,
+        "offpeak_ratio": 0.804,
         "pairs": [
           {
             "price": 363374,
@@ -24716,17 +24668,17 @@
         }
       },
       "ICN-PVG": {
-        "min_price": 414800,
+        "min_price": 363100,
         "typical": 484650,
-        "deal_pct": 14.4,
+        "deal_pct": 25.1,
         "tier": "A",
         "n_obs": 14,
         "n_pairs": 6,
         "offpeak_baseline": 386100,
-        "offpeak_ratio": 1.074,
+        "offpeak_ratio": 0.94,
         "pairs": [
           {
-            "price": 414800,
+            "price": 363100,
             "depart_date": "2027-04-29",
             "return_date": "2027-05-09",
             "depart_weekday": "목",
@@ -24743,7 +24695,7 @@
           }
         ],
         "best": {
-          "price": 414800,
+          "price": 363100,
           "depart_date": "2027-04-29",
           "return_date": "2027-05-09",
           "depart_weekday": "목",
@@ -24906,7 +24858,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Phu%20Quoc%20on%202027-05-04%20through%202027-05-09&hl=ko&curr=KRW"
           },
           {
-            "price": 643462,
+            "price": 643342,
             "depart_date": "2027-04-29",
             "return_date": "2027-05-09",
             "depart_weekday": "목",
@@ -25186,8 +25138,8 @@
         "tier": "A",
         "n_obs": 20,
         "n_pairs": 6,
-        "offpeak_baseline": 608350,
-        "offpeak_ratio": 0.973,
+        "offpeak_baseline": 608300,
+        "offpeak_ratio": 0.974,
         "pairs": [
           {
             "price": 592200,
@@ -25373,8 +25325,8 @@
       },
       "ICN-MFM": {
         "min_price": 414500,
-        "typical": 665353,
-        "deal_pct": 37.7,
+        "typical": 664172,
+        "deal_pct": 37.6,
         "tier": "A",
         "n_obs": 20,
         "n_pairs": 6,
@@ -25430,7 +25382,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Macau%20on%202027-05-04%20through%202027-05-09&hl=ko&curr=KRW"
           },
           {
-            "price": 686706,
+            "price": 684345,
             "depart_date": "2027-04-29",
             "return_date": "2027-05-09",
             "depart_weekday": "목",
@@ -25600,63 +25552,47 @@
         }
       },
       "ICN-BKK": {
-        "min_price": 481707,
-        "typical": 597200,
-        "deal_pct": 19.3,
+        "min_price": 460600,
+        "typical": 597100,
+        "deal_pct": 22.9,
         "tier": "A",
         "n_obs": 22,
         "n_pairs": 7,
         "offpeak_baseline": 470200,
-        "offpeak_ratio": 1.024,
+        "offpeak_ratio": 0.98,
         "pairs": [
           {
-            "price": 481707,
-            "depart_date": "2027-05-03",
-            "return_date": "2027-05-07",
-            "depart_weekday": "월",
-            "return_weekday": "금",
-            "nights": 4,
-            "days": 5,
-            "leave_days": 4,
-            "bonus_days": 1,
-            "stops": "1",
-            "airline": "",
-            "dep_time": "11:00",
-            "arr_time": "15:50+1",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Bangkok%20on%202027-05-03%20through%202027-05-07&hl=ko&curr=KRW"
-          },
-          {
-            "price": 551400,
+            "price": 460600,
             "depart_date": "2027-05-01",
-            "return_date": "2027-05-10",
+            "return_date": "2027-05-09",
             "depart_weekday": "토",
-            "return_weekday": "월",
-            "nights": 9,
-            "days": 10,
-            "leave_days": 5,
+            "return_weekday": "일",
+            "nights": 8,
+            "days": 9,
+            "leave_days": 4,
             "bonus_days": 5,
-            "stops": "1",
-            "airline": "세부퍼시픽",
-            "dep_time": "06:35",
-            "arr_time": "22:00",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Bangkok%20on%202027-05-01%20through%202027-05-10&hl=ko&curr=KRW"
+            "stops": "0",
+            "airline": "",
+            "dep_time": "09:35",
+            "arr_time": "13:25",
+            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Bangkok%20on%202027-05-01%20through%202027-05-09&hl=ko&curr=KRW"
           }
         ],
         "best": {
-          "price": 481707,
-          "depart_date": "2027-05-03",
-          "return_date": "2027-05-07",
-          "depart_weekday": "월",
-          "return_weekday": "금",
-          "nights": 4,
-          "days": 5,
+          "price": 460600,
+          "depart_date": "2027-05-01",
+          "return_date": "2027-05-09",
+          "depart_weekday": "토",
+          "return_weekday": "일",
+          "nights": 8,
+          "days": 9,
           "leave_days": 4,
-          "bonus_days": 1,
-          "stops": "1",
+          "bonus_days": 5,
+          "stops": "0",
           "airline": "",
-          "dep_time": "11:00",
-          "arr_time": "15:50+1",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Bangkok%20on%202027-05-03%20through%202027-05-07&hl=ko&curr=KRW"
+          "dep_time": "09:35",
+          "arr_time": "13:25",
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Bangkok%20on%202027-05-01%20through%202027-05-09&hl=ko&curr=KRW"
         }
       },
       "ICN-HKT": {
@@ -25666,8 +25602,8 @@
         "tier": "A",
         "n_obs": 22,
         "n_pairs": 7,
-        "offpeak_baseline": 531820,
-        "offpeak_ratio": 0.876,
+        "offpeak_baseline": 529300,
+        "offpeak_ratio": 0.88,
         "pairs": [
           {
             "price": 465708,
@@ -25806,7 +25742,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Ho%20Chi%20Minh%20City%20on%202027-05-04%20through%202027-05-08&hl=ko&curr=KRW"
           },
           {
-            "price": 412717,
+            "price": 403100,
             "depart_date": "2027-05-01",
             "return_date": "2027-05-09",
             "depart_weekday": "토",
@@ -25840,17 +25776,17 @@
         }
       },
       "ICN-HAN": {
-        "min_price": 278674,
+        "min_price": 270062,
         "typical": 379000,
-        "deal_pct": 26.5,
+        "deal_pct": 28.7,
         "tier": "A",
         "n_obs": 20,
         "n_pairs": 6,
         "offpeak_baseline": 369350,
-        "offpeak_ratio": 0.754,
+        "offpeak_ratio": 0.731,
         "pairs": [
           {
-            "price": 278674,
+            "price": 270062,
             "depart_date": "2027-04-29",
             "return_date": "2027-05-09",
             "depart_weekday": "목",
@@ -25867,7 +25803,7 @@
           }
         ],
         "best": {
-          "price": 278674,
+          "price": 270062,
           "depart_date": "2027-04-29",
           "return_date": "2027-05-09",
           "depart_weekday": "목",
@@ -25890,8 +25826,8 @@
         "tier": "A",
         "n_obs": 22,
         "n_pairs": 7,
-        "offpeak_baseline": 375144,
-        "offpeak_ratio": 1.268,
+        "offpeak_baseline": 373347,
+        "offpeak_ratio": 1.274,
         "pairs": [
           {
             "price": 475600,
@@ -25945,7 +25881,7 @@
       },
       "ICN-CEB": {
         "min_price": 325294,
-        "typical": 380957,
+        "typical": 380953,
         "deal_pct": 14.6,
         "tier": "A",
         "n_obs": 22,
@@ -26090,20 +26026,20 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kuala%20Lumpur%20on%202027-05-04%20through%202027-05-08&hl=ko&curr=KRW"
           },
           {
-            "price": 468692,
-            "depart_date": "2027-04-30",
+            "price": 467384,
+            "depart_date": "2027-05-01",
             "return_date": "2027-05-09",
-            "depart_weekday": "금",
+            "depart_weekday": "토",
             "return_weekday": "일",
-            "nights": 9,
-            "days": 10,
-            "leave_days": 5,
+            "nights": 8,
+            "days": 9,
+            "leave_days": 4,
             "bonus_days": 5,
             "stops": "1",
             "airline": "세부퍼시픽",
             "dep_time": "06:35",
             "arr_time": "00:10+1",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kuala%20Lumpur%20on%202027-04-30%20through%202027-05-09&hl=ko&curr=KRW"
+            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kuala%20Lumpur%20on%202027-05-01%20through%202027-05-09&hl=ko&curr=KRW"
           }
         ],
         "best": {
@@ -26458,7 +26394,7 @@
         "tier": "A",
         "n_obs": 11,
         "n_pairs": 8,
-        "offpeak_baseline": 1854800,
+        "offpeak_baseline": 1854000,
         "offpeak_ratio": 1.049,
         "pairs": [
           {
@@ -26698,8 +26634,8 @@
         "tier": "A",
         "n_obs": 6,
         "n_pairs": 3,
-        "offpeak_baseline": 1289700,
-        "offpeak_ratio": 0.94,
+        "offpeak_baseline": 1284250,
+        "offpeak_ratio": 0.944,
         "pairs": [
           {
             "price": 1212700,
@@ -26778,7 +26714,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Frankfurt,%20Germany%20on%202027-05-03%20through%202027-05-10&hl=ko&curr=KRW"
           },
           {
-            "price": 1617600,
+            "price": 1742000,
             "depart_date": "2027-04-30",
             "return_date": "2027-05-08",
             "depart_weekday": "금",
@@ -26787,10 +26723,10 @@
             "days": 9,
             "leave_days": 5,
             "bonus_days": 4,
-            "stops": "0",
-            "airline": "루프트한자",
-            "dep_time": "12:20",
-            "arr_time": "18:40",
+            "stops": "1",
+            "airline": "",
+            "dep_time": "21:50",
+            "arr_time": "09:20+1",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Frankfurt,%20Germany%20on%202027-04-30%20through%202027-05-08&hl=ko&curr=KRW"
           }
         ],
@@ -27446,17 +27382,17 @@
         }
       },
       "ICN-DAD": {
-        "min_price": 307718,
+        "min_price": 307626,
         "typical": 381800,
         "deal_pct": 19.4,
         "tier": "A",
         "n_obs": 22,
         "n_pairs": 7,
-        "offpeak_baseline": 507100,
-        "offpeak_ratio": 0.607,
+        "offpeak_baseline": 452100,
+        "offpeak_ratio": 0.68,
         "pairs": [
           {
-            "price": 307718,
+            "price": 307626,
             "depart_date": "2027-05-06",
             "return_date": "2027-05-16",
             "depart_weekday": "목",
@@ -27473,7 +27409,7 @@
           }
         ],
         "best": {
-          "price": 307718,
+          "price": 307626,
           "depart_date": "2027-05-06",
           "return_date": "2027-05-16",
           "depart_weekday": "목",
@@ -27712,7 +27648,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Shanghai%20on%202027-05-11%20through%202027-05-16&hl=ko&curr=KRW"
           },
           {
-            "price": 471700,
+            "price": 420000,
             "depart_date": "2027-05-06",
             "return_date": "2027-05-16",
             "depart_weekday": "목",
@@ -27898,17 +27834,17 @@
         }
       },
       "ICN-PQC": {
-        "min_price": 361365,
+        "min_price": 349001,
         "typical": 616808,
-        "deal_pct": 41.4,
+        "deal_pct": 43.4,
         "tier": "A",
         "n_obs": 22,
         "n_pairs": 7,
         "offpeak_baseline": 411514,
-        "offpeak_ratio": 0.878,
+        "offpeak_ratio": 0.848,
         "pairs": [
           {
-            "price": 361365,
+            "price": 349001,
             "depart_date": "2027-05-06",
             "return_date": "2027-05-16",
             "depart_weekday": "목",
@@ -27925,7 +27861,7 @@
           }
         ],
         "best": {
-          "price": 361365,
+          "price": 349001,
           "depart_date": "2027-05-06",
           "return_date": "2027-05-16",
           "depart_weekday": "목",
@@ -28236,7 +28172,7 @@
         "tier": "A",
         "n_obs": 22,
         "n_pairs": 7,
-        "offpeak_baseline": 608350,
+        "offpeak_baseline": 608300,
         "offpeak_ratio": 0.957,
         "pairs": [
           {
@@ -28501,22 +28437,6 @@
         "pairs": [
           {
             "price": 299400,
-            "depart_date": "2027-05-11",
-            "return_date": "2027-05-16",
-            "depart_weekday": "화",
-            "return_weekday": "일",
-            "nights": 5,
-            "days": 6,
-            "leave_days": 3,
-            "bonus_days": 3,
-            "stops": "0",
-            "airline": "아시아나항공",
-            "dep_time": "20:35",
-            "arr_time": "23:30",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Hong%20Kong%20on%202027-05-11%20through%202027-05-16&hl=ko&curr=KRW"
-          },
-          {
-            "price": 337900,
             "depart_date": "2027-05-06",
             "return_date": "2027-05-16",
             "depart_weekday": "목",
@@ -28534,19 +28454,19 @@
         ],
         "best": {
           "price": 299400,
-          "depart_date": "2027-05-11",
+          "depart_date": "2027-05-06",
           "return_date": "2027-05-16",
-          "depart_weekday": "화",
+          "depart_weekday": "목",
           "return_weekday": "일",
-          "nights": 5,
-          "days": 6,
-          "leave_days": 3,
-          "bonus_days": 3,
+          "nights": 10,
+          "days": 11,
+          "leave_days": 6,
+          "bonus_days": 5,
           "stops": "0",
           "airline": "아시아나항공",
           "dep_time": "20:35",
           "arr_time": "23:30",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Hong%20Kong%20on%202027-05-11%20through%202027-05-16&hl=ko&curr=KRW"
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Hong%20Kong%20on%202027-05-06%20through%202027-05-16&hl=ko&curr=KRW"
         }
       },
       "ICN-MFM": {
@@ -28608,7 +28528,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Macau%20on%202027-05-12%20through%202027-05-17&hl=ko&curr=KRW"
           },
           {
-            "price": 576577,
+            "price": 574759,
             "depart_date": "2027-05-06",
             "return_date": "2027-05-16",
             "depart_weekday": "목",
@@ -28719,10 +28639,10 @@
       },
       "ICN-TAO": {
         "min_price": 343500,
-        "typical": 491350,
-        "deal_pct": 30.1,
+        "typical": 488500,
+        "deal_pct": 29.7,
         "tier": "A",
-        "n_obs": 16,
+        "n_obs": 17,
         "n_pairs": 7,
         "offpeak_baseline": 355550,
         "offpeak_ratio": 0.966,
@@ -28776,7 +28696,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Qingdao%20on%202027-05-11%20through%202027-05-16&hl=ko&curr=KRW"
           },
           {
-            "price": 4957200,
+            "price": 488500,
             "depart_date": "2027-05-06",
             "return_date": "2027-05-16",
             "depart_weekday": "목",
@@ -28785,10 +28705,10 @@
             "days": 11,
             "leave_days": 6,
             "bonus_days": 5,
-            "stops": "1",
-            "airline": "전일본공수",
-            "dep_time": "19:55",
-            "arr_time": "12:30+1",
+            "stops": "0",
+            "airline": "대한항공",
+            "dep_time": "07:50",
+            "arr_time": "08:40",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Qingdao%20on%202027-05-06%20through%202027-05-16&hl=ko&curr=KRW"
           }
         ],
@@ -28876,8 +28796,8 @@
         "tier": "A",
         "n_obs": 20,
         "n_pairs": 7,
-        "offpeak_baseline": 531820,
-        "offpeak_ratio": 0.897,
+        "offpeak_baseline": 529300,
+        "offpeak_ratio": 0.901,
         "pairs": [
           {
             "price": 476789,
@@ -28958,17 +28878,17 @@
         }
       },
       "ICN-SGN": {
-        "min_price": 412717,
+        "min_price": 403348,
         "typical": 453152,
-        "deal_pct": 8.9,
+        "deal_pct": 11.0,
         "tier": "A",
         "n_obs": 22,
         "n_pairs": 8,
         "offpeak_baseline": 406335,
-        "offpeak_ratio": 1.016,
+        "offpeak_ratio": 0.993,
         "pairs": [
           {
-            "price": 412717,
+            "price": 403348,
             "depart_date": "2027-05-08",
             "return_date": "2027-05-16",
             "depart_weekday": "토",
@@ -28985,7 +28905,7 @@
           }
         ],
         "best": {
-          "price": 412717,
+          "price": 403348,
           "depart_date": "2027-05-08",
           "return_date": "2027-05-16",
           "depart_weekday": "토",
@@ -29002,17 +28922,17 @@
         }
       },
       "ICN-HAN": {
-        "min_price": 278674,
+        "min_price": 270013,
         "typical": 313299,
-        "deal_pct": 11.1,
+        "deal_pct": 13.8,
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 7,
         "offpeak_baseline": 369350,
-        "offpeak_ratio": 0.754,
+        "offpeak_ratio": 0.731,
         "pairs": [
           {
-            "price": 278674,
+            "price": 270013,
             "depart_date": "2027-05-06",
             "return_date": "2027-05-16",
             "depart_weekday": "목",
@@ -29029,7 +28949,7 @@
           }
         ],
         "best": {
-          "price": 278674,
+          "price": 270013,
           "depart_date": "2027-05-06",
           "return_date": "2027-05-16",
           "depart_weekday": "목",
@@ -29046,17 +28966,17 @@
         }
       },
       "ICN-CXR": {
-        "min_price": 364506,
+        "min_price": 352032,
         "typical": 541108,
-        "deal_pct": 32.6,
+        "deal_pct": 34.9,
         "tier": "A",
         "n_obs": 20,
         "n_pairs": 7,
-        "offpeak_baseline": 375144,
-        "offpeak_ratio": 0.972,
+        "offpeak_baseline": 373347,
+        "offpeak_ratio": 0.943,
         "pairs": [
           {
-            "price": 364506,
+            "price": 352032,
             "depart_date": "2027-05-09",
             "return_date": "2027-05-15",
             "depart_weekday": "일",
@@ -29089,7 +29009,7 @@
           }
         ],
         "best": {
-          "price": 364506,
+          "price": 352032,
           "depart_date": "2027-05-09",
           "return_date": "2027-05-15",
           "depart_weekday": "일",
@@ -29106,9 +29026,9 @@
         }
       },
       "ICN-CEB": {
-        "min_price": 323484,
+        "min_price": 323306,
         "typical": 361070,
-        "deal_pct": 10.4,
+        "deal_pct": 10.5,
         "tier": "A",
         "n_obs": 20,
         "n_pairs": 7,
@@ -29116,7 +29036,7 @@
         "offpeak_ratio": 0.783,
         "pairs": [
           {
-            "price": 323484,
+            "price": 323306,
             "depart_date": "2027-05-09",
             "return_date": "2027-05-15",
             "depart_weekday": "일",
@@ -29149,7 +29069,7 @@
           }
         ],
         "best": {
-          "price": 323484,
+          "price": 323306,
           "depart_date": "2027-05-09",
           "return_date": "2027-05-15",
           "depart_weekday": "일",
@@ -29236,20 +29156,20 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kuala%20Lumpur%20on%202027-05-12%20through%202027-05-16&hl=ko&curr=KRW"
           },
           {
-            "price": 431272,
-            "depart_date": "2027-05-07",
+            "price": 416707,
+            "depart_date": "2027-05-08",
             "return_date": "2027-05-16",
-            "depart_weekday": "금",
+            "depart_weekday": "토",
             "return_weekday": "일",
-            "nights": 9,
-            "days": 10,
-            "leave_days": 5,
+            "nights": 8,
+            "days": 9,
+            "leave_days": 4,
             "bonus_days": 5,
             "stops": "1",
             "airline": "비엣젯",
-            "dep_time": "21:15",
-            "arr_time": "12:35+1",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kuala%20Lumpur%20on%202027-05-07%20through%202027-05-16&hl=ko&curr=KRW"
+            "dep_time": "11:05",
+            "arr_time": "11:30+1",
+            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Kuala%20Lumpur%20on%202027-05-08%20through%202027-05-16&hl=ko&curr=KRW"
           }
         ],
         "best": {
@@ -29358,17 +29278,17 @@
         }
       },
       "ICN-REP": {
-        "min_price": 479831,
+        "min_price": 464560,
         "typical": 479831,
-        "deal_pct": 0.0,
+        "deal_pct": 3.2,
         "tier": "A",
         "n_obs": 11,
         "n_pairs": 8,
         "offpeak_baseline": 483628,
-        "offpeak_ratio": 0.992,
+        "offpeak_ratio": 0.961,
         "pairs": [
           {
-            "price": 479831,
+            "price": 464560,
             "depart_date": "2027-05-08",
             "return_date": "2027-05-16",
             "depart_weekday": "토",
@@ -29385,7 +29305,7 @@
           }
         ],
         "best": {
-          "price": 479831,
+          "price": 464560,
           "depart_date": "2027-05-08",
           "return_date": "2027-05-16",
           "depart_weekday": "토",
@@ -29556,8 +29476,8 @@
         "tier": "A",
         "n_obs": 10,
         "n_pairs": 7,
-        "offpeak_baseline": 1854800,
-        "offpeak_ratio": 0.966,
+        "offpeak_baseline": 1854000,
+        "offpeak_ratio": 0.967,
         "pairs": [
           {
             "price": 1791900,
@@ -29687,8 +29607,8 @@
       },
       "ICN-PRG": {
         "min_price": 958200,
-        "typical": 1209100,
-        "deal_pct": 20.8,
+        "typical": 1224800,
+        "deal_pct": 21.8,
         "tier": "A",
         "n_obs": 14,
         "n_pairs": 7,
@@ -29712,7 +29632,7 @@
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Prague,%20Czechia%20on%202027-05-06%20through%202027-05-14&hl=ko&curr=KRW"
           },
           {
-            "price": 1101400,
+            "price": 1155300,
             "depart_date": "2027-05-08",
             "return_date": "2027-05-16",
             "depart_weekday": "토",
@@ -29812,8 +29732,8 @@
         "tier": "C",
         "n_obs": 2,
         "n_pairs": 1,
-        "offpeak_baseline": 1289700,
-        "offpeak_ratio": 0.704,
+        "offpeak_baseline": 1284250,
+        "offpeak_ratio": 0.707,
         "pairs": [
           {
             "price": 907400,
@@ -30090,17 +30010,17 @@
         }
       },
       "ICN-JFK": {
-        "min_price": 1252500,
+        "min_price": 1202500,
         "typical": 1335000,
-        "deal_pct": 6.2,
+        "deal_pct": 9.9,
         "tier": "A",
         "n_obs": 9,
         "n_pairs": 7,
         "offpeak_baseline": 1236600,
-        "offpeak_ratio": 1.013,
+        "offpeak_ratio": 0.972,
         "pairs": [
           {
-            "price": 1252500,
+            "price": 1202500,
             "depart_date": "2027-05-08",
             "return_date": "2027-05-16",
             "depart_weekday": "토",
@@ -30117,7 +30037,7 @@
           }
         ],
         "best": {
-          "price": 1252500,
+          "price": 1202500,
           "depart_date": "2027-05-08",
           "return_date": "2027-05-16",
           "depart_weekday": "토",
@@ -30486,8 +30406,8 @@
         "tier": "A",
         "n_obs": 20,
         "n_pairs": 5,
-        "offpeak_baseline": 507100,
-        "offpeak_ratio": 0.753,
+        "offpeak_baseline": 452100,
+        "offpeak_ratio": 0.845,
         "pairs": [
           {
             "price": 381800,
@@ -30972,30 +30892,30 @@
         }
       },
       "ICN-ATH": {
-        "min_price": 880400,
+        "min_price": 900000,
         "typical": 957800,
-        "deal_pct": 8.1,
+        "deal_pct": 6.0,
         "tier": "A",
         "n_obs": 11,
         "n_pairs": 8,
         "offpeak_baseline": 1126100,
-        "offpeak_ratio": 0.782,
+        "offpeak_ratio": 0.799,
         "pairs": [
           {
-            "price": 880400,
-            "depart_date": "2027-06-01",
-            "return_date": "2027-06-08",
-            "depart_weekday": "화",
-            "return_weekday": "화",
-            "nights": 7,
-            "days": 8,
-            "leave_days": 6,
+            "price": 900000,
+            "depart_date": "2027-06-03",
+            "return_date": "2027-06-09",
+            "depart_weekday": "목",
+            "return_weekday": "수",
+            "nights": 6,
+            "days": 7,
+            "leave_days": 5,
             "bonus_days": 2,
             "stops": "1",
             "airline": "루프트한자",
             "dep_time": "11:40",
             "arr_time": "23:05",
-            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Athens,%20Greece%20on%202027-06-01%20through%202027-06-08&hl=ko&curr=KRW"
+            "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Athens,%20Greece%20on%202027-06-03%20through%202027-06-09&hl=ko&curr=KRW"
           },
           {
             "price": 1179600,
@@ -31015,20 +30935,20 @@
           }
         ],
         "best": {
-          "price": 880400,
-          "depart_date": "2027-06-01",
-          "return_date": "2027-06-08",
-          "depart_weekday": "화",
-          "return_weekday": "화",
-          "nights": 7,
-          "days": 8,
-          "leave_days": 6,
+          "price": 900000,
+          "depart_date": "2027-06-03",
+          "return_date": "2027-06-09",
+          "depart_weekday": "목",
+          "return_weekday": "수",
+          "nights": 6,
+          "days": 7,
+          "leave_days": 5,
           "bonus_days": 2,
           "stops": "1",
           "airline": "루프트한자",
           "dep_time": "11:40",
           "arr_time": "23:05",
-          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Athens,%20Greece%20on%202027-06-01%20through%202027-06-08&hl=ko&curr=KRW"
+          "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Athens,%20Greece%20on%202027-06-03%20through%202027-06-09&hl=ko&curr=KRW"
         }
       },
       "ICN-CDG": {
@@ -31174,7 +31094,7 @@
         "tier": "A",
         "n_obs": 18,
         "n_pairs": 5,
-        "offpeak_baseline": 608350,
+        "offpeak_baseline": 608300,
         "offpeak_ratio": 0.957,
         "pairs": [
           {
@@ -31606,8 +31526,8 @@
         "tier": "A",
         "n_obs": 22,
         "n_pairs": 7,
-        "offpeak_baseline": 531820,
-        "offpeak_ratio": 0.897,
+        "offpeak_baseline": 529300,
+        "offpeak_ratio": 0.901,
         "pairs": [
           {
             "price": 476789,
@@ -31688,17 +31608,17 @@
         }
       },
       "ICN-SGN": {
-        "min_price": 438488,
+        "min_price": 428857,
         "typical": 507250,
-        "deal_pct": 13.6,
+        "deal_pct": 15.5,
         "tier": "A",
         "n_obs": 20,
         "n_pairs": 6,
         "offpeak_baseline": 406335,
-        "offpeak_ratio": 1.079,
+        "offpeak_ratio": 1.055,
         "pairs": [
           {
-            "price": 438488,
+            "price": 428857,
             "depart_date": "2027-05-29",
             "return_date": "2027-06-07",
             "depart_weekday": "토",
@@ -31715,7 +31635,7 @@
           }
         ],
         "best": {
-          "price": 438488,
+          "price": 428857,
           "depart_date": "2027-05-29",
           "return_date": "2027-06-07",
           "depart_weekday": "토",
@@ -31782,8 +31702,8 @@
         "tier": "A",
         "n_obs": 22,
         "n_pairs": 7,
-        "offpeak_baseline": 375144,
-        "offpeak_ratio": 1.268,
+        "offpeak_baseline": 373347,
+        "offpeak_ratio": 1.274,
         "pairs": [
           {
             "price": 475600,
@@ -31820,17 +31740,17 @@
         }
       },
       "ICN-CEB": {
-        "min_price": 324443,
+        "min_price": 324126,
         "typical": 364365,
         "deal_pct": 11.0,
         "tier": "A",
         "n_obs": 22,
         "n_pairs": 7,
         "offpeak_baseline": 412900,
-        "offpeak_ratio": 0.786,
+        "offpeak_ratio": 0.785,
         "pairs": [
           {
-            "price": 324443,
+            "price": 324126,
             "depart_date": "2027-06-05",
             "return_date": "2027-06-13",
             "depart_weekday": "토",
@@ -31847,7 +31767,7 @@
           }
         ],
         "best": {
-          "price": 324443,
+          "price": 324126,
           "depart_date": "2027-06-05",
           "return_date": "2027-06-13",
           "depart_weekday": "토",
@@ -32072,17 +31992,17 @@
         }
       },
       "ICN-REP": {
-        "min_price": 907800,
+        "min_price": 836000,
         "typical": 988600,
-        "deal_pct": 8.2,
+        "deal_pct": 15.4,
         "tier": "A",
         "n_obs": 9,
         "n_pairs": 6,
         "offpeak_baseline": 483628,
-        "offpeak_ratio": 1.877,
+        "offpeak_ratio": 1.729,
         "pairs": [
           {
-            "price": 907800,
+            "price": 836000,
             "depart_date": "2027-05-29",
             "return_date": "2027-06-07",
             "depart_weekday": "토",
@@ -32092,14 +32012,14 @@
             "leave_days": 6,
             "bonus_days": 4,
             "stops": "1",
-            "airline": "대한항공",
-            "dep_time": "09:45",
+            "airline": "",
+            "dep_time": "10:20",
             "arr_time": "18:45",
             "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Siem%20Reap%20on%202027-05-29%20through%202027-06-07&hl=ko&curr=KRW"
           }
         ],
         "best": {
-          "price": 907800,
+          "price": 836000,
           "depart_date": "2027-05-29",
           "return_date": "2027-06-07",
           "depart_weekday": "토",
@@ -32109,8 +32029,8 @@
           "leave_days": 6,
           "bonus_days": 4,
           "stops": "1",
-          "airline": "대한항공",
-          "dep_time": "09:45",
+          "airline": "",
+          "dep_time": "10:20",
           "arr_time": "18:45",
           "booking_url": "https://www.google.com/travel/flights/search?q=Flights%20from%20Seoul%20to%20Siem%20Reap%20on%202027-05-29%20through%202027-06-07&hl=ko&curr=KRW"
         }
@@ -32286,8 +32206,8 @@
         "tier": "A",
         "n_obs": 11,
         "n_pairs": 8,
-        "offpeak_baseline": 1854800,
-        "offpeak_ratio": 0.887,
+        "offpeak_baseline": 1854000,
+        "offpeak_ratio": 0.888,
         "pairs": [
           {
             "price": 1645500,
@@ -32542,8 +32462,8 @@
         "tier": "A",
         "n_obs": 12,
         "n_pairs": 3,
-        "offpeak_baseline": 1289700,
-        "offpeak_ratio": 0.77,
+        "offpeak_baseline": 1284250,
+        "offpeak_ratio": 0.774,
         "pairs": [
           {
             "price": 993700,
@@ -32625,8 +32545,8 @@
       },
       "ICN-ZRH": {
         "min_price": 1098900,
-        "typical": 1436100,
-        "deal_pct": 23.5,
+        "typical": 1386100,
+        "deal_pct": 20.7,
         "tier": "A",
         "n_obs": 11,
         "n_pairs": 7,
