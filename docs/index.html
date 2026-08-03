@@ -10,16 +10,6 @@
 
   gtag('config', 'G-1NSTL7K368');
 </script>
-<!-- Simple visit counter (abacus.jasoncameron.dev) -->
-<script>
-  fetch('https://abacus.jasoncameron.dev/hit/excel-flights-xyz/site-visits')
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      var el = document.getElementById('visit-count');
-      if (el) el.textContent = d.value.toLocaleString();
-    })
-    .catch(function(){});
-</script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>프로젝트 스케줄 조정표_v4.33</title>
@@ -51,16 +41,6 @@
   .page-nav a { padding: 7px 18px; font-size: 16px; color: #d8ebe0; text-decoration: none; border-radius: 3px 3px 0 0; white-space: nowrap; }
   .page-nav a:hover { background: #22683f; color: #fff; }
   .page-nav a.active { background: var(--bg); color: var(--excel-green); font-weight: 700; }
-  .ribbon-toolbar { background: #fafafa; border-bottom: 1px solid var(--grid); padding: 5px 14px; font-size: 15px; color: var(--muted); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .rt-sep { width: 1px; height: 16px; background: var(--grid); }
-  .rt-btn {
-    font-family: inherit; font-size: 15px; padding: 2px 9px; cursor: pointer;
-    border: 1px solid var(--grid); border-radius: 2px; background: #fff; color: var(--text);
-  }
-  .rt-btn:hover { background: var(--sel); border-color: var(--excel-green); }
-  .rt-btn:disabled { opacity: .55; cursor: default; }
-  .rt-fresh { font-size: 15px; color: var(--muted); }
-  .rt-right { margin-left: auto; }
   .formula-bar { background: #fff; border-bottom: 1px solid var(--grid); padding: 4px 14px; font-size: 15.5px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
   .formula-bar .cellref { border: 1px solid var(--grid); background: #fff; padding: 1px 8px; font-weight: 600; color: var(--text); border-radius: 2px; min-width: 46px; text-align: center; }
   .formula-bar .fx { color: var(--excel-green); font-style: italic; font-weight: 700; }
@@ -98,8 +78,6 @@
   table.sheet > tbody > tr.zebra > td { background: #f8faf9; }
   table.sheet > tbody > tr.zebra:hover > td { background: var(--sel); }
   table.sheet > tbody > tr:hover > td { background: var(--sel); }
-  table.sheet > tbody > tr.target-hit > td { background: #fff3c4; }
-  table.sheet > tbody > tr.target-hit:hover > td { background: #ffeda8; }
   table.sheet a { color: #0b5cab; text-decoration: none; }
   table.sheet a:hover { text-decoration: underline; }
   td.num { text-align: right; font-family: Consolas, monospace; }
@@ -115,7 +93,6 @@
   .trend.down { color: #0b5cab; }
   .trend.flat { color: var(--muted); font-weight: 400; }
 
-  .badge-hit { display: inline-block; background: var(--excel-green); color: #fff; font-size: 13.5px; padding: 1px 5px; border-radius: 2px; margin-left: 4px; font-family: Calibri, "맑은 고딕", Arial, sans-serif; }
   .badge-hol { display: inline-block; background: #fdecea; color: #b3261e; border: 1px solid #efc4c0; font-size: 13.5px; padding: 0 4px; border-radius: 2px; margin-left: 4px; }
   .badge-stops { display: inline-block; background: #eaf3ee; color: #14532d; border: 1px solid #c3ddce; font-size: 13.5px; padding: 0 4px; border-radius: 2px; margin-left: 4px; white-space: nowrap; }
   .nextday { font-size: 12px; color: #b3261e; margin-left: 1px; }
@@ -157,12 +134,6 @@
   .fav-btn:hover { color: #e8a500; }
   .x-btn { color: #b7bcc4; font-weight: 700; }
   .x-btn:hover { color: #b3261e; }
-  .target-input {
-    width: 72px; font-family: Consolas, monospace; font-size: 15px; text-align: right;
-    border: 1px solid transparent; background: transparent; padding: 2px 4px; border-radius: 2px; color: var(--text);
-  }
-  .target-input:hover { border-color: var(--grid); background: #fff; }
-  .target-input:focus { border-color: var(--excel-green); background: #fff; outline: none; }
 
   svg.spark { display: block; }
   .spark-none { color: var(--muted); }
@@ -202,26 +173,11 @@
   .toolbar-row button:hover { background: #1a5c38; }
   .toolbar-row button:disabled { opacity: .6; cursor: default; }
   .toolbar-row label { color: var(--muted); font-size: 15px; }
-  .muted-arrow { color: var(--muted); }
 
   tr.group-header td {
     background: #dcece2 !important; font-weight: 700; color: #14532d;
     border-top: 2px solid var(--excel-green);
   }
-
-  /* autocomplete */
-  .ac-wrap { position: relative; display: inline-block; }
-  .ac-list {
-    position: absolute; top: 100%; left: 0; z-index: 60; background: #fff;
-    border: 1px solid var(--grid); min-width: 265px; max-height: 224px; overflow-y: auto;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.14);
-  }
-  .ac-item { padding: 5px 9px; font-size: 15.5px; border-bottom: 1px solid #eef1f3; cursor: pointer; white-space: nowrap; }
-  .ac-item:last-child { border-bottom: none; }
-  .ac-item.active, .ac-item:hover { background: var(--sel); }
-  .ac-item b { color: #14532d; font-family: Consolas, monospace; }
-  .ac-sub { color: var(--muted); }
-
 
   /* filter chips */
   .chip-bar { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; margin: 16px 0 0; background: #fafafa; border: 1px solid var(--grid); padding: 8px 10px; }
@@ -297,9 +253,6 @@
   .dest-toggle:hover { color: var(--excel-green); }
   .dest-caret { display: inline-block; width: 11px; color: var(--excel-green); font-size: 11px; }
   table.sheet > tbody > tr.dest-open > td { background: #eef6f1; }
-  /* 목표가 도달(노랑)은 펼침(연녹)보다 우선 — 펼쳤다고 도달 표시가 사라지면 안 된다 */
-  table.sheet > tbody > tr.dest-open.target-hit > td { background: #fff3c4; }
-  table.sheet > tbody > tr.dest-open.target-hit:hover > td { background: #ffeda8; }
   table.sheet > tbody > tr.dest-detail-row > td,
   table.sheet > tbody > tr.dest-detail-row:hover > td { background: #fbfdfc; padding: 0; }
   .dest-detail { padding: 8px 10px 10px 26px; border-left: 3px solid var(--excel-green); }
@@ -470,16 +423,6 @@
     <a href="events.html">📅 항공사 정기 특가 일정</a>
     <a href="favorites.html">★ 즐겨찾기</a>
   </div>
-  <div class="ribbon-toolbar">
-    <span>Calibri · 11 · 표준 · 일반</span>
-    <span class="rt-sep"></span>
-    <button class="rt-btn" id="btn-collect" title="GitHub Actions 수집 워크플로 실행">▶ 지금 수집 실행</button>
-    <span class="rt-fresh" id="next-update" title="자동 수집은 4시간마다 실행됩니다"></span>
-    <span class="rt-fresh" id="freshness"></span>
-    <span class="rt-fresh" title="누적 페이지 조회수">조회 <span id="visit-count">—</span></span>
-    <span class="rt-fresh" id="live-count" hidden></span>
-    <button class="rt-btn rt-right" id="btn-settings" title="GitHub 연결 설정">⚙️ 설정</button>
-  </div>
   <div class="formula-bar">
     <span class="cellref">A1</span>
     <span class="fx">fx</span>
@@ -493,16 +436,6 @@
         <div class="sub">연차 아껴서 휴가가자!</div>
       </div>
       <div class="calendar" id="calendar"></div>
-    </div>
-
-    <div class="note" style="margin-bottom:0; line-height:1.7">
-      <b>📖 사용 메뉴얼</b><br />
-      1. <b>특가율</b> = 시세 대비 얼마나 싼지 나타내는 지표. 통상 연휴 기간이라 가격이 비싸지만, 이를 모르고 있는 해외 항공사 혹은 프로모션 중인 항공사가 단 한개라도 있을 경우 나타나는 가격.<br />
-      2. 연휴기간에 연차 끼워써야하는 직장인들을 위해 만든 사이트로, 다른날짜 검색이 필요한 경우에는 스카이스캐너 이용 권고.<br />
-      3. 일정 옆 날씨(🌧/☀️/⛅)는 해당 기간의 평균 날씨<br />
-      4. 보드는 두 가지 — <b>특가 요약표</b>는 "이 연휴엔 어디가 싼가", <b>여행지별 상세 현황</b>은 "이 여행지는 어느 연휴에 가야 싼가"를 봅니다.<br />
-      5. 필터의 <b>휴일 가치</b>(하루 = n만원)를 설정하면, 조금 비싸도 여행 기간 안에 주말·공휴일이 더 많이 들어오는 일정(예: 목금 연휴에 출발을 앞당겨 앞주말도 여행지에서 보내기)을 <b>실질 비용</b>(= 가격 − 가치 × 덤 휴일)으로 비교해 추천합니다. 어느 <b>연휴</b>를 갈지도 이 기준으로 다시 고릅니다.<br />
-      6. <b>연차 상한</b>은 이 여행 하나에 쓸 연차의 한도입니다. 실질 비용은 덤 휴일만 편익으로 보므로 한도가 없으면 연차를 많이 태우는 긴 일정이 추천으로 올라옵니다 — 상한 안에서만 추천하고, 상한을 넘는 일정만 남으면 ⚠ 로 알려줍니다.
     </div>
 
     <div class="chip-bar">
@@ -603,11 +536,6 @@
 
     <h2 class="collapsible" id="dest-h2"><span class="collapse-caret">▼</span> 여행지별 상세 현황 <span class="collapse-hint">(클릭해서 접기)</span></h2>
     <div id="dest-body">
-      <div class="note" style="margin-bottom:0">
-        여행지를 <b>클릭</b>하면 그 아래로 <b>연휴별 최저가</b>가 싼 순서대로 펼쳐집니다. "이 여행지는 어느 연휴에 가야 싼가"를 보는 보드입니다.
-        (위 <b>특가 요약표</b>는 반대로 "이 연휴엔 어디가 싼가"를 봅니다.)
-        열 구성은 특가 요약표와 같고, 위 <b>연휴 칩 필터</b>도 이 보드에 함께 적용됩니다.
-      </div>
       <div class="toolbar-row">
         <label for="dest-sort">정렬</label>
         <select id="dest-sort">
@@ -684,34 +612,6 @@
       </div>
     </div>
 
-    <h2>항목 등록</h2>
-    <div class="note" style="margin-bottom:10px">목록에 없는 노선을 직접 추가할 때만 사용합니다. (최초 1회 ⚙️ 설정에서 공유 암호/토큰 필요)</div>
-    <div class="toolbar-row">
-      <div class="ac-wrap">
-        <input id="reg-origin" placeholder="출발지 (예: ic, 인천)" style="width:150px" autocomplete="off" />
-        <div class="ac-list" id="ac-origin" hidden></div>
-      </div>
-      <span class="muted-arrow">→</span>
-      <div class="ac-wrap">
-        <input id="reg-destination" placeholder="도착지 (예: 도쿄, NRT)" style="width:150px" autocomplete="off" />
-        <div class="ac-list" id="ac-destination" hidden></div>
-      </div>
-      <input id="reg-label" placeholder="라벨 (자동 입력)" style="width:170px" />
-      <input id="reg-country" placeholder="국가 (자동)" style="width:90px" />
-      <select id="reg-nights" title="최소 여행 박수 (이 박수 이상 일정을 모두 수집)">
-        <option value="2">최소 2박</option>
-        <option value="3" selected>최소 3박</option>
-        <option value="4">최소 4박</option>
-        <option value="5">최소 5박</option>
-        <option value="6">최소 6박</option>
-      </select>
-      <select id="reg-stops" title="직항/경유 정책">
-        <option value="0">직항만</option>
-        <option value="1" selected>직항+경유1회까지</option>
-        <option value="null">상관없음</option>
-      </select>
-      <button id="btn-register">등록</button>
-    </div>
   </div>
 
   <div id="generated-at"></div>
@@ -723,7 +623,7 @@
       <div class="dlg-body">
         <div class="dlg-notice" id="settings-notice" hidden></div>
         <div id="settings-help-token">
-          GitHub Fine-grained 토큰을 <b>한 번만</b> 붙여넣으면 자동 저장되어, 이후 항목 등록/삭제·수집 실행 때 다시 입력할 필요가 없습니다.
+          GitHub Fine-grained 토큰을 <b>한 번만</b> 붙여넣으면 자동 저장되어, 이후 항목 삭제·수집 실행 때 다시 입력할 필요가 없습니다.
           토큰은 이 브라우저(localStorage)에만 저장됩니다.
           <ol>
             <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">토큰 생성 페이지</a>를 엽니다.</li>
@@ -846,9 +746,9 @@
     }
 
     // ===================== 동시접속자 카운터 =====================
-    // 누적 조회수는 abacus 위젯(#visit-count)이 이미 표시하므로, 여기서는 "지금 몇 명이
-    // 보고 있는지"만 담당한다. Worker의 COUNTER_KV 바인딩(선택 기능)에 기대므로, 실패하면
-    // 위젯을 그냥 숨긴 채 조용히 포기한다(페이지의 다른 기능에는 영향 없음).
+    // "지금 몇 명이 보고 있는지"를 채팅 헤더의 배지로 보여준다. Worker의 COUNTER_KV
+    // 바인딩(선택 기능)에 기대므로, 실패하면 배지를 그냥 비운 채 조용히 포기한다
+    // (페이지의 다른 기능에는 영향 없음).
     const LIVE_CLIENT_KEY = 'fd_live_client'; // 탭(세션)별 고유 id -> 동시접속자 집계용
     const HEARTBEAT_MS = 45000;               // 서버 만료(120초)보다 충분히 짧은 갱신 주기
     function getLiveClientId() {
@@ -1157,7 +1057,6 @@
     // 즐겨찾기(브라우저별): "여행지-연휴"(origin-destination::windowId) 키 집합.
     // 여행지 단위가 아니라 여행지×연휴 단위로 담는다 — "9/24 추석"처럼 특정 연휴만 찜해두는 용도.
     const FAVS_KEY = 'fd_favs';
-    const TARGETS_KEY = 'fd_targets';
     const PENDING_KEY = 'fd_pending';
     const DAY_VALUE_KEY = 'fd_day_value'; // 휴일 하루 가치 (만원, 비용-편익 계산용)
     const DAY_VALUE_DEFAULT = 10;
@@ -1356,11 +1255,6 @@
     function setFavs(set) { try { localStorage.setItem(FAVS_KEY, JSON.stringify([...set])); } catch (e) {} }
     // 즐겨찾기 키: 여행지(origin-destination) + 연휴 id. favorites.html 도 같은 규칙으로 만든다.
     function destHolFavKey(gk, winId) { return gk + '::' + winId; }
-    function getTargets() {
-      try { return JSON.parse(localStorage.getItem(TARGETS_KEY) || '{}') || {}; }
-      catch (e) { return {}; }
-    }
-    function setTargets(t) { try { localStorage.setItem(TARGETS_KEY, JSON.stringify(t)); } catch (e) {} }
 
     // 등록/삭제 직후 ~ 다음 수집 전까지의 낙관적 변경을 새로고침에도 유지하기 위한 대기 목록.
     // 정적 routes_status.json / deals.json 은 수집 워크플로가 돌아야 갱신되므로,
@@ -1379,13 +1273,6 @@
       const p = getPending();
       p.added = p.added.filter(en => rk(en) !== key);
       if (p.removed.indexOf(key) < 0) p.removed.push(key);
-      setPending(p);
-    }
-    function pendingMarkAdded(entry) {
-      const p = getPending();
-      p.removed = p.removed.filter(k => k !== rk(entry));
-      p.added = p.added.filter(en => rk(en) !== rk(entry));
-      p.added.push(entry);
       setPending(p);
     }
     function applyPending() {
@@ -1494,17 +1381,6 @@
         body: JSON.stringify(body)
       });
       if (!res.ok) throw ghError(res.status);
-    }
-    // only: "ICN-DPS" 처럼 특정 노선(origin-destination)만 수집. 비우면 전체 수집.
-    async function dispatchCollect(only) {
-      if (usingProxy()) { await proxyCall('collect', { only: (only || '').trim() }); return; }
-      const inputs = (only && only.trim()) ? { only: only.trim() } : {};
-      const res = await fetch(`${GH_API}/repos/${GITHUB_REPO}/actions/workflows/collect.yml/dispatches`, {
-        method: 'POST',
-        headers: Object.assign({ 'Content-Type': 'application/json' }, ghHeaders()),
-        body: JSON.stringify({ ref: 'main', inputs })
-      });
-      if (res.status !== 204) throw ghError(res.status);
     }
 
     // ===================== 데이터 로딩 =====================
@@ -2155,22 +2031,6 @@
         r.collect_status_detail || '',
       ].filter(Boolean).join(' · ');
     }
-    // 이 모니터가 예약 가능한 최저가 (연휴 칩으로 고른 연휴 통틀어).
-    // 고른 연휴에 칸이 없으면 null — 필터 밖 연휴 가격으로 '목표가 도달'이 뜨면 안 되므로,
-    // 최근 관측값 폴백은 이 모니터에 매트릭스 데이터가 아예 없을 때만 쓴다.
-    function monitorBestPrice(mon) {
-      const allCells = (state.matrix && state.matrix.cells) || {};
-      const active = new Set(gvActiveWindowIds());
-      let best = null, sawAny = false;
-      for (const wid of Object.keys(allCells)) {
-        const c = allCells[wid][rk(mon)];
-        if (!c) continue;
-        sawAny = true;
-        if (active.has(wid) && (best == null || c.min_price < best)) best = c.min_price;
-      }
-      if (best != null) return best;
-      return sawAny ? null : mon.latest_price;
-    }
     // 여행지(노선) 그룹 하나 -> 화면에 필요한 값 묶음
     function destGroupInfo(g) {
       // 휴일 가치가 0이면 '싼 순'(값이 같으면 티어/특가율이 나은 칸을 앞으로 — 같은 값인데
@@ -2185,12 +2045,6 @@
       // 연차 상한 때문에 다 걸러진 것인지(원본 데이터는 있음), 애초에 데이터가 없는 것인지
       // 구분 — 안내 문구를 gvEmptyReason 대신 capOverReason으로 보여줄지 여기서 정한다.
       const capBlocked = !wins.length && destWindowCells(g.items, false).length > 0;
-      const targets = getTargets();
-      const reached = g.items.some(m => {
-        const t = targets[rk(m)];
-        const p = monitorBestPrice(m);
-        return t != null && p != null && p <= t;
-      });
       // 상태는 그룹 안에서 가장 좋은 모니터 기준 (정상 > 표본 부족 > 나머지)
       const rank = { ok: 0, waiting: 1, none: 2, err: 3 };
       let st = null;
@@ -2205,18 +2059,16 @@
         // 같은 노선의 모니터들은 표본이 서로 포함 관계(직항 모니터 ⊂ 경유 허용 모니터)라
         // 더하면 중복 계산된다. 가장 큰 모집단 = 이 여행지의 실제 관측 수.
         samples: g.items.reduce((n, m) => Math.max(n, m.sample_count || 0), 0),
-        reached,
         capBlocked,
       };
     }
     // 펼쳤을 때 보이는 연휴별 시세 (싼 순). 그룹 하나당 <tr> 한 줄.
     function destDetailRowHtml(g, info) {
-      const targets = getTargets();
       const gk = routeGroupKey(g.route);
       const favs = getFavs();
       const solo = g.items.length === 1;
       // 모니터별 한 줄 요약(정책 수정 · 최근 관측 · 30일 · 마지막 갱신). 모니터가 둘 이상이면
-      // 목표가/삭제도 여기서 모니터별로 다룬다(요약 행은 여행지 단위라 어느 모니터인지 모호해짐).
+      // 삭제도 여기서 모니터별로 다룬다(요약 행은 여행지 단위라 어느 모니터인지 모호해짐).
       const heads = g.items.map(m => {
         const key = rk(m);
         const latest = m.latest_price != null
@@ -2231,8 +2083,7 @@
           ? ` · <a href="${esc(url)}" target="_blank" rel="noopener">검색 열기</a>` +
             ` <button class="copy-btn" data-copy="${esc(url)}" title="링크 복사">📋</button>` : '';
         const manage = solo ? '' :
-          ` · <input class="target-input" data-target-key="${esc(key)}" value="${targets[key] != null ? targets[key] : ''}" placeholder="목표가" inputmode="numeric" title="목표가 (원) — 입력 후 Enter" />` +
-          ` <button class="x-btn" data-del="${esc(key)}" title="이 모니터 삭제">✕</button>`;
+          ` · <button class="x-btn" data-del="${esc(key)}" title="이 모니터 삭제">✕</button>`;
         // 추이(스파크라인)는 요약 행에서 뺐으므로(열 구성을 특가 보드와 맞추느라) 여기에 둔다.
         const spark = (state.history[key] || []).length
           ? ` <span class="head-spark" title="수집일별 최저가 추이">${sparklineSVG(state.history[key])}</span>` : '';
@@ -2341,7 +2192,7 @@
       }
       const tbody = document.getElementById('dest-board');
       if (!state.routesStatus.length) {
-        tbody.innerHTML = emptyRow(6, "등록된 항목이 없습니다. 아래 '항목 등록'에서 추가하세요.");
+        tbody.innerHTML = emptyRow(6, '등록된 항목이 없습니다.');
         return;
       }
       const list = state.routesStatus.filter(r => routePassesChip(r));
@@ -2401,8 +2252,7 @@
           ? `<button class="x-btn" data-del="${esc(rk(g.items[0]))}" title="항목 삭제">✕</button>`
           : '';
         // 줄무늬는 여행지 순번으로 직접 매긴다 (펼침 행이 끼어들어도 어긋나지 않도록)
-        const cls = [gi % 2 === 1 ? 'zebra' : '', open ? 'dest-open' : '', info.reached ? 'target-hit' : '']
-          .filter(Boolean).join(' ');
+        const cls = [gi % 2 === 1 ? 'zebra' : '', open ? 'dest-open' : ''].filter(Boolean).join(' ');
         const rowTag = `<tr data-dest-row="${esc(gk)}" class="${cls}">`;
         const head = `${rowTag}
             <td title="${esc(label)}">${nameCell}</td>`;
@@ -2425,7 +2275,7 @@
         const scheduleLine = `<span class="win-name">${esc(info.best.label)}</span> · ${period} · ${schedText(b)}${capSwapped ? '' : recommendedAltNote(info.best.cell)}`;
         const stripRow = `<span class="gv-strip-row">${tripStrip(b.depart_date, b.return_date)}${climateBadge(g.route.destination, b.depart_date)}</span>`;
         const row = head + `
-            <td class="num"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(b.price)}</a>${info.reached ? '<span class="badge-hit">목표가 도달 🎯</span>' : ''}</td>
+            <td class="num"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(b.price)}</a></td>
             <td>${gvDealBadge(info.best.cell, b.price)}</td>
             <td class="period-cell">${scheduleLine}${stripRow}</td>
             <td>${stopsCell(b.stops, b.airline)}</td>` + tail;
@@ -2433,8 +2283,7 @@
       }).join('');
     }
 
-    // 여행지 행 펼치기/접기 — 표 전체를 다시 그리지 않고 해당 행만 갈아끼운다
-    // (입력 중인 목표가 칸이 리렌더로 날아가지 않도록).
+    // 여행지 행 펼치기/접기 — 표 전체를 다시 그리지 않고 해당 행만 갈아끼운다.
     function toggleDest(gk) {
       const row = document.querySelector(`tr[data-dest-row="${cssEsc(gk)}"]`);
       if (!row) return;
@@ -2476,104 +2325,17 @@
       renderDestBoard();
     }
 
-    function onTargetChange(el) {
-      const key = el.getAttribute('data-target-key');
-      const v = parseInt(String(el.value).replace(/[^0-9]/g, ''), 10);
-      const targets = getTargets();
-      if (!v || v <= 0) {
-        if (targets[key] != null) { delete targets[key]; setTargets(targets); toast('목표가를 삭제했습니다'); }
-      } else {
-        targets[key] = v;
-        setTargets(targets);
-        toast(`목표가 저장: ${fmt(v)}원 🎯`);
-      }
-      renderDestBoard();
-    }
-
     // ===================== 수집 시각 (meta) =====================
     function renderMeta() {
-      if (!state.meta || !state.meta.generated_at) {
-        document.getElementById('freshness').textContent = '';
-        return;
-      }
+      const el = document.getElementById('generated-at');
+      if (!state.meta || !state.meta.generated_at) { if (el) el.textContent = ''; return; }
       // generated_at 은 UTC 로 생성됨. 타임존 표기가 없는 (구버전) 값을 로컬 시각으로
       // 오해하지 않도록 'Z' 를 붙이고, 6자리 소수점 초는 3자리로 잘라 파싱 호환성 확보.
       let iso = String(state.meta.generated_at).replace(/(\.\d{3})\d+/, '$1');
       if (!/(Z|[+-]\d{2}:?\d{2})$/.test(iso)) iso += 'Z';
       const dt = new Date(iso);
       if (isNaN(dt.getTime())) return;
-      const diffMs = Date.now() - dt.getTime();
-      const mins = Math.max(0, Math.floor(diffMs / 60000));
-      let rel;
-      if (mins < 1) rel = '방금 전';
-      else if (mins < 60) rel = `${mins}분 전`;
-      else if (mins < 1440) rel = `${Math.floor(mins / 60)}시간 전`;
-      else rel = `${Math.floor(mins / 1440)}일 전`;
-      const stamp = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
-      const stale = diffMs > 6 * 3600 * 1000;
-      document.getElementById('freshness').innerHTML =
-        `<span class="status-dot ${stale ? 'waiting' : 'ok'}"></span>마지막 수집: ${rel} (${stamp})${stale ? ' · <b style="color:#c9a227">수집 지연</b>' : ''}`;
-      document.getElementById('generated-at').textContent = `Last sync: ${dt.toLocaleString('ko-KR')}`;
-    }
-
-    // ===================== 다음 수집 카운트다운 / 진행중 표시 =====================
-    const SCHED_INTERVAL_H = 4;   // collect.yml cron "0 */4 * * *" -> UTC 0,4,8,12,16,20시
-    const TYPICAL_RUN_MIN = 18;   // 전체 수집 1회 대략 소요(분)
-    const collectRun = { running: false, startedMs: null, lastPoll: 0 };
-
-    function nextScheduledMs(nowMs) {
-      const d = new Date(nowMs);
-      const nextH = (Math.floor(d.getUTCHours() / SCHED_INTERVAL_H) + 1) * SCHED_INTERVAL_H;
-      const nd = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0));
-      nd.setUTCHours(nextH); // 24 이상이면 자동으로 다음날로 넘어감
-      return nd.getTime();
-    }
-    function fmtDur(ms) {
-      const m = Math.max(0, Math.round(ms / 60000));
-      if (m < 1) return '1분 미만';
-      if (m < 60) return `${m}분`;
-      return `${Math.floor(m / 60)}시간 ${m % 60}분`;
-    }
-    function renderNextUpdate() {
-      const el = document.getElementById('next-update');
-      if (!el) return;
-      const now = Date.now();
-      if (collectRun.running) {
-        const elapsed = collectRun.startedMs ? (now - collectRun.startedMs) : 0;
-        const remain = TYPICAL_RUN_MIN * 60000 - elapsed;
-        el.innerHTML = remain > 60000
-          ? `<span class="status-dot waiting"></span>🔄 수집 중 · 완료까지 약 ${fmtDur(remain)}`
-          : '<span class="status-dot waiting"></span>🔄 수집 중 · 거의 완료';
-        return;
-      }
-      el.innerHTML = `<span class="status-dot ok"></span>다음 자동 수집까지 약 ${fmtDur(nextScheduledMs(now) - now)}`;
-    }
-    async function pollCollectRunning() {
-      if (!getToken()) { collectRun.running = false; return; } // 토큰 없으면 진행중 감지 생략
-      const now = Date.now();
-      if (now - collectRun.lastPoll < 40000) return;
-      collectRun.lastPoll = now;
-      try {
-        const res = await fetch(`${GH_API}/repos/${GITHUB_REPO}/actions/workflows/collect.yml/runs?per_page=1`, { headers: ghHeaders() });
-        if (!res.ok) return;
-        const run = ((await res.json()).workflow_runs || [])[0];
-        if (run && (run.status === 'in_progress' || run.status === 'queued')) {
-          collectRun.running = true;
-          collectRun.startedMs = run.run_started_at ? new Date(run.run_started_at).getTime() : now;
-        } else {
-          collectRun.running = false;
-        }
-      } catch (e) {}
-    }
-    function markCollectStarted() { // 수집 트리거 직후 낙관적 표시
-      collectRun.running = true; collectRun.startedMs = Date.now(); collectRun.lastPoll = 0;
-      renderNextUpdate();
-    }
-    function startCountdown() {
-      renderNextUpdate();
-      setInterval(renderNextUpdate, 30000);
-      pollCollectRunning().then(renderNextUpdate);
-      setInterval(() => pollCollectRunning().then(renderNextUpdate), 45000);
+      if (el) el.textContent = `Last sync: ${dt.toLocaleString('ko-KR')}`;
     }
 
     // ===================== 미니 달력 =====================
@@ -2637,197 +2399,7 @@
       document.getElementById('calendar').innerHTML = html;
     }
 
-    // ===================== 공항 자동완성 =====================
-    const regSel = { origin: null, destination: null };
-    let labelTouched = false;
-    let countryTouched = false;
-
-    function setupAutocomplete(inputEl, listEl, onPick) {
-      let items = [];
-      let active = -1;
-      function close() { listEl.hidden = true; items = []; active = -1; }
-      function render() {
-        if (!items.length) { close(); return; }
-        listEl.innerHTML = items.map((ap, i) =>
-          `<div class="ac-item${i === active ? ' active' : ''}" data-i="${i}">` +
-          `<b>${esc(ap.iata)}</b> ${esc(ap.name_ko)} <span class="ac-sub">· ${esc(ap.city_ko)}, ${esc(ap.country_ko)}</span> ${esc(ap.flag || '')}</div>`
-        ).join('');
-        listEl.hidden = false;
-      }
-      function pick(i) {
-        const ap = items[i];
-        if (!ap) return;
-        inputEl.value = ap.iata;
-        close();
-        onPick(ap);
-      }
-      inputEl.addEventListener('input', () => {
-        onPick(null); // 타이핑하면 선택 해제
-        const q = inputEl.value.trim();
-        if (!q) { close(); return; }
-        items = (window.searchAirports ? window.searchAirports(q, 8) : []) || [];
-        active = items.length ? 0 : -1;
-        render();
-      });
-      inputEl.addEventListener('keydown', e => {
-        // 한글 IME 조합 확정용 Enter/키 입력이 자동완성 선택으로 오동작하지 않도록 무시
-        if (e.isComposing || e.keyCode === 229) return;
-        if (listEl.hidden) return;
-        if (e.key === 'ArrowDown') { active = Math.min(active + 1, items.length - 1); render(); e.preventDefault(); }
-        else if (e.key === 'ArrowUp') { active = Math.max(active - 1, 0); render(); e.preventDefault(); }
-        else if (e.key === 'Enter') { if (active >= 0) { pick(active); e.preventDefault(); } }
-        else if (e.key === 'Escape') { close(); }
-      });
-      inputEl.addEventListener('blur', () => { setTimeout(close, 180); });
-      listEl.addEventListener('mousedown', e => {
-        const it = e.target.closest('.ac-item');
-        if (it) { e.preventDefault(); pick(parseInt(it.getAttribute('data-i'), 10)); }
-      });
-    }
-
-    function shortAirportName(ap) {
-      return String(ap.name_ko || '').replace(/국제공항$|공항$/, '');
-    }
-    function makeLabel(o, d) {
-      const dn = shortAirportName(d);
-      const paren = dn && dn !== d.city_ko ? `(${dn})` : '';
-      return `${o.city_ko}→${d.city_ko}${paren}`;
-    }
-    function updateRegAutofill() {
-      const o = regSel.origin, d = regSel.destination;
-      const labelEl = document.getElementById('reg-label');
-      const countryEl = document.getElementById('reg-country');
-      if (o && d && (!labelTouched || !labelEl.value.trim())) labelEl.value = makeLabel(o, d);
-      if (d) {
-        if (!countryTouched || !countryEl.value.trim()) countryEl.value = d.country_ko || '';
-      }
-    }
-    function resolveSel(which) {
-      if (regSel[which]) return regSel[which];
-      const el = document.getElementById(which === 'origin' ? 'reg-origin' : 'reg-destination');
-      const v = el.value.trim().toUpperCase();
-      if (/^[A-Z]{3}$/.test(v)) return findAirport(v);
-      return null;
-    }
-
-    // ===================== 등록 / 삭제 / 수집 실행 =====================
-    async function registerRoute() {
-      const o = resolveSel('origin');
-      const d = resolveSel('destination');
-      if (!o || !d) {
-        alert('출발지/도착지를 검색 목록에서 선택하세요 (예: "인천" 입력 후 ICN 선택)');
-        return;
-      }
-      if (o.iata === d.iata) { alert('출발지와 도착지가 같습니다.'); return; }
-      if (!hasCredential()) {
-        openSettings('토큰을 한 번만 등록하면 페이지에서 바로 등록됩니다');
-        return;
-      }
-      const label = document.getElementById('reg-label').value.trim() || makeLabel(o, d);
-      const country = document.getElementById('reg-country').value.trim() || d.country_ko || '기타';
-      const minNights = parseInt(document.getElementById('reg-nights').value, 10) || 3;
-      const stopsVal = document.getElementById('reg-stops').value;
-      const maxStops = stopsVal === 'null' ? null : parseInt(stopsVal, 10);
-      const btn = document.getElementById('btn-register');
-      btn.disabled = true;
-      btn.textContent = '등록 중…';
-      try {
-        // 프록시 모드: 서버(Worker)가 중복검사·id·수집트리거까지 처리.
-        if (usingProxy()) {
-          const entry = {
-            origin: o.iata, destination: d.iata, label, country,
-            flag: d.flag || '', origin_city: o.city_en, destination_city: d.city_en,
-            min_nights: minNights, max_stops: maxStops
-          };
-          const r = await proxyCall('add', { route: entry });
-          entry.id = r.id || `${o.iata}-${d.iata}`;
-          markCollectStarted();
-          toast(r.collected ? '등록 완료 ✓ 새 노선 수집을 시작했습니다' : '등록 완료 ✓ 다음 수집부터 반영');
-          pendingMarkAdded(entry);
-          state.routesStatus.push(Object.assign({}, entry, {
-            sample_count: 0, last_collected_at: null, latest_price: null,
-            latest_depart_date: null, latest_return_date: null,
-            prev_price: null, min_price_30d: null, avg_price_30d: null
-          }));
-          clearRegForm();
-          renderChips();
-          renderDestBoard();
-          renderGvBoard(); // 새 노선이 가성비 보드에도 '수집 대기'로 즉시 보이도록
-          return;
-        }
-        const { routes, sha } = await ghGetRoutes();
-        // 중복 검사: 같은 (출발,도착,경유정책) 만 차단. 같은 o-d 라도 stops 가 다르면 허용.
-        const sameOD = routes.filter(r => r.origin === o.iata && r.destination === d.iata);
-        if (sameOD.some(r => (r.max_stops == null ? null : parseInt(r.max_stops, 10)) === maxStops)) {
-          const stopTxt = maxStops === 0 ? '직항' : maxStops == null ? '상관없음' : '경유' + maxStops + '까지';
-          alert(`이미 등록된 항목입니다: ${o.iata}→${d.iata} (${stopTxt})`);
-          return;
-        }
-        // id 규칙: 해당 o-d 의 첫 모니터면 깨끗한 "O-D", 이미 존재하면 "O-D-${stopsTag}", 충돌 시 -2,-3...
-        const existingIds = new Set(routes.map(rk));
-        let id;
-        if (sameOD.length === 0) {
-          id = `${o.iata}-${d.iata}`;
-        } else {
-          id = `${o.iata}-${d.iata}-${stopsTag(maxStops)}`;
-          if (existingIds.has(id)) {
-            let k = 2;
-            while (existingIds.has(`${id}-${k}`)) k++;
-            id = `${id}-${k}`;
-          }
-        }
-        const entry = {
-          id,
-          origin: o.iata,
-          destination: d.iata,
-          label,
-          country,
-          flag: d.flag || '',
-          origin_city: o.city_en,
-          destination_city: d.city_en,
-          min_nights: minNights,
-          max_stops: maxStops
-        };
-        routes.push(entry);
-        await ghPutRoutes(routes, sha, `feat: add route ${o.iata}→${d.iata}`);
-        toast('등록 완료 ✓ 다음 수집부터 반영');
-        pendingMarkAdded(entry); // 새로고침해도 유지되도록 대기 목록에 기록
-        // 화면에 즉시(낙관적) 반영
-        state.routesStatus.push(Object.assign({}, entry, {
-          sample_count: 0, last_collected_at: null, latest_price: null,
-          latest_depart_date: null, latest_return_date: null,
-          prev_price: null, min_price_30d: null, avg_price_30d: null
-        }));
-        clearRegForm();
-        renderChips();
-        renderDestBoard();
-        renderGvBoard(); // 새 노선이 가성비 보드에도 '수집 대기'로 즉시 보이도록
-        // 신규 노선은 등록 즉시 그 노선만 1회 크롤링 (전체 수집은 4시간 주기 유지).
-        try {
-          await dispatchCollect(`${o.iata}-${d.iata}`);
-          markCollectStarted();
-          toast('새 노선 수집을 시작했습니다 · 몇 분 뒤 반영됩니다');
-        } catch (e2) { handleGhError(e2); }
-      } catch (e) {
-        usingProxy() ? handleProxyError(e) : handleGhError(e);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = '등록';
-      }
-    }
-
-    function clearRegForm() {
-      ['reg-origin', 'reg-destination', 'reg-label', 'reg-country'].forEach(id => {
-        document.getElementById(id).value = '';
-      });
-      document.getElementById('reg-nights').value = '3';
-      document.getElementById('reg-stops').value = '1';
-      regSel.origin = null;
-      regSel.destination = null;
-      labelTouched = false;
-      countryTouched = false;
-    }
-
+    // ===================== 삭제 / 수집 실행 =====================
     async function deleteRoute(key) {
       const r = state.routesStatus.find(x => rk(x) === key);
       const label = (r && r.label) || key.replace('-', '→');
@@ -2925,25 +2497,6 @@
         renderDestBoard();
       } catch (e) {
         usingProxy() ? handleProxyError(e) : handleGhError(e);
-      }
-    }
-
-    async function runCollectClicked() {
-      if (!hasCredential()) {
-        openSettings('토큰을 한 번만 등록하면 페이지에서 바로 수집을 실행할 수 있습니다');
-        return;
-      }
-      if (!(await excelConfirm('지금 데이터 수집을 실행할까요?\n(GitHub Actions 워크플로가 시작됩니다)'))) return;
-      const btn = document.getElementById('btn-collect');
-      btn.disabled = true;
-      try {
-        await dispatchCollect();
-        markCollectStarted();
-        toast('수집 실행 요청 완료 ✓ 몇 분 뒤 데이터가 갱신됩니다');
-      } catch (e) {
-        usingProxy() ? handleProxyError(e) : handleGhError(e);
-      } finally {
-        btn.disabled = false;
       }
     }
 
@@ -3182,9 +2735,6 @@
 
     // ===================== 이벤트 연결 / 초기화 =====================
     function wireEvents() {
-      document.getElementById('btn-register').addEventListener('click', registerRoute);
-      document.getElementById('btn-collect').addEventListener('click', runCollectClicked);
-      document.getElementById('btn-settings').addEventListener('click', () => openSettings());
       document.getElementById('btn-settings-close').addEventListener('click', closeSettings);
       document.getElementById('settings-x').addEventListener('click', closeSettings);
       document.getElementById('btn-token-save').addEventListener('click', saveTokenClicked);
@@ -3241,20 +2791,6 @@
       });
       document.getElementById('chat-jump').addEventListener('click', jumpToChatBottom);
 
-      document.getElementById('reg-label').addEventListener('input', () => { labelTouched = true; });
-      document.getElementById('reg-country').addEventListener('input', () => { countryTouched = true; });
-
-      setupAutocomplete(
-        document.getElementById('reg-origin'),
-        document.getElementById('ac-origin'),
-        ap => { regSel.origin = ap; if (ap) updateRegAutofill(); }
-      );
-      setupAutocomplete(
-        document.getElementById('reg-destination'),
-        document.getElementById('ac-destination'),
-        ap => { regSel.destination = ap; updateRegAutofill(); }
-      );
-
       // 동적 요소 이벤트 위임
       document.addEventListener('click', e => {
         const copyBtn = e.target.closest('[data-copy]');
@@ -3283,8 +2819,6 @@
         if (chipBtn) { onChipClick(chipBtn); return; }
       });
       document.addEventListener('change', e => {
-        const ti = e.target.closest('[data-target-key]');
-        if (ti) { onTargetChange(ti); return; }
         const calSel = e.target.closest('#cal-center-select');
         if (calSel) {
           const parts = calSel.value.split('-');
@@ -3342,7 +2876,6 @@
       renderDestBoard();
       renderMeta();
       setInterval(renderMeta, 60000);
-      startCountdown();
       initLiveCounter(); // 실패해도(Worker/COUNTER_KV 미설정 등) 조용히 무시, 페이지 동작엔 무영향
       initChat();
     }
