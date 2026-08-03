@@ -105,7 +105,7 @@
   .gv-strip-row .tstrip { margin-top: 0; }
   .gv-strip-row .cell-sub { display: inline; }
 
-  /* 연휴 특가 보드: 특가율 배지 */
+  /* 특가 요약표: 특가율 배지 */
   .gv-badge { display: inline-block; padding: 1px 7px; border-radius: 2px; font-weight: 700; font-size: 14.5px; white-space: nowrap; }
   .gv-r0 { background: #e6f4ea; color: #1e7e34; border: 1px solid #b7dfc2; }
   .gv-r1 { background: #fff8e1; color: #8a6d00; border: 1px solid #e8d98a; }
@@ -147,7 +147,7 @@
     </div>
 
     <div class="note">
-      <b>📋 노선별 특가 현황</b>의 <b>여행지별 연휴 보드</b>에서 여행지를 펼치면 나오는 연휴별 행(예: "9/24 추석") 맨 앞의 ★를 누르면
+      <b>📋 노선별 특가 현황</b>의 <b>여행지별 상세 현황</b>에서 여행지를 펼치면 나오는 연휴별 행(예: "9/24 추석") 맨 앞의 ★를 누르면
       여기에 담깁니다. 즐겨찾기는 이 브라우저에만 저장됩니다.
       <a href="index.html">→ 노선별 특가 현황으로 가기</a>
     </div>
@@ -314,6 +314,14 @@
   function primaryPair(cell) {
     return cellPairs(cell)[0] || cell.best;
   }
+  // index.html과 같은 규칙: 최저가 일정이 연차 상한을 넘으면 상한 안에서 실질비용이
+  // 가장 낮은 일정으로 대표 자리를 통째로 바꿔친다 (상한 초과 일정을 대표로 보여주지 않음).
+  function displayPair(cell) {
+    const min = primaryPair(cell);
+    const cap = leaveCap();
+    if (!min || cap === Infinity || (min.leave_days || 0) <= cap) return min;
+    return pickPair(cell) || min;
+  }
   function recommendedAltNote(cell) {
     const min = primaryPair(cell);
     const rec = pickPair(cell);
@@ -343,16 +351,17 @@
   function gvDealVal(cell) {
     return (cell && cell.tier !== 'C' && cell.deal_pct != null) ? cell.deal_pct : null;
   }
-  function gvDealBadge(cell) {
+  function gvDealBadge(cell, price) {
     if (!cell) return '<span class="gv-badge gv-na">수집 대기</span>';
     if (cell.tier === 'C') {
       return `<span class="gv-badge gv-na" title="이 연휴의 통상 시세를 잡을 표본이 아직 부족합니다 (관측 ${cell.n_obs || 0}) — 최저가만 참고하세요">수집 중</span>`;
     }
-    const d = cell.deal_pct || 0;
+    const p = price != null ? price : cell.min_price;
+    const d = cell.typical > 0 ? Math.max(0, Math.round((cell.typical - p) / cell.typical * 100)) : (cell.deal_pct || 0);
     const cls = d >= 12 ? 'gv-r0' : d >= 5 ? 'gv-r1' : 'gv-na';
     const txt = d >= 5 ? `통상가 −${d.toFixed(0)}%` : '통상가 수준';
     const dim = cell.tier === 'B' ? ' style="opacity:.65"' : '';
-    let title = `이 연휴 통상 시세 약 ${fmt(cell.typical)}원 · 현재 최저가 ${fmt(cell.min_price)}원`
+    let title = `이 연휴 통상 시세 약 ${fmt(cell.typical)}원 · 현재가 ${fmt(p)}원`
       + ` (통상가 대비 −${d.toFixed(0)}%) · 관측 ${cell.n_obs}건`;
     if (cell.tier === 'B') title += '\n※ 표본이 적어 참고용입니다';
     return `<span class="gv-badge ${cls}"${dim} title="${esc(title)}">${esc(txt)}</span>`;
@@ -413,16 +422,17 @@
         <td colspan="4" class="gv-reason">${esc(reason)}</td>
       </tr>`;
     }
-    const b = primaryPair(r.cell);
+    const b = displayPair(r.cell);
+    const capSwapped = b !== primaryPair(r.cell);
     const period = `${fmtDateYY(b.depart_date, b.depart_weekday)} ~ ${fmtDateYY(b.return_date, b.return_weekday)}`;
-    const sched = `${period} · ${schedText(b)}${recommendedAltNote(r.cell)}`;
+    const sched = `${period} · ${schedText(b)}${capSwapped ? '' : recommendedAltNote(r.cell)}`;
     const strip = `<span class="gv-strip-row">${tripStrip(b.depart_date, b.return_date)}${climateBadge(r.route.destination, b.depart_date)}</span>`;
     return `<tr>
       <td style="text-align:center"><button class="fav-btn on" data-fav="${esc(r.key)}" title="즐겨찾기에서 빼기">★</button></td>
       <td title="${esc(label)}">${esc(label)}</td>
       <td class="win-name">${esc(winLabel)}</td>
-      <td class="num"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(r.cell.min_price)}</a></td>
-      <td>${gvDealBadge(r.cell)}</td>
+      <td class="num"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(b.price)}</a></td>
+      <td>${gvDealBadge(r.cell, b.price)}</td>
       <td class="period-cell">${sched}${strip}</td>
       <td>${stopsCell(b.stops, b.airline)}</td>
     </tr>`;
