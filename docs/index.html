@@ -891,7 +891,7 @@
     // 살짝(최대 CHAT_POLL_MS) 늦게 보일 수 있다. Worker의 COUNTER_KV(동시접속자
     // 카운터와 공유)에 기대므로, 실패하면 섹션 자체를 숨긴 채 조용히 포기한다.
     const CHAT_CLIENT_KEY = 'fd_chat_client'; // 브라우저별 고유 id -> 도배 방지(속도 제한)용
-    const CHAT_POLL_MS = 5000;
+    const CHAT_POLL_MS = 3000; // 체감 지연을 줄이려 5초 -> 3초로 (KV 읽기 요청은 그만큼 늘어남)
     // Worker의 CHAT_MIN_INTERVAL_MS(cloudflare-worker/worker.js)와 같은 값. 서버가 이 간격보다
     // 빠른 전송을 429로 막으므로, 연달아 보낸 메시지는 여기서 큐에 쌓아 간격을 맞춰 순서대로
     // 보낸다 — 사용자 입장에선 "막힘" 없이 그냥 조금씩 순서대로 올라가는 것처럼 보인다.
