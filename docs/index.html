@@ -778,7 +778,10 @@
     // 바인딩(선택 기능)에 기대므로, 실패하면 배지를 그냥 비운 채 조용히 포기한다
     // (페이지의 다른 기능에는 영향 없음).
     const LIVE_CLIENT_KEY = 'fd_live_client'; // 탭(세션)별 고유 id -> 동시접속자 집계용
-    const HEARTBEAT_MS = 45000;               // 서버 만료(120초)보다 충분히 짧은 갱신 주기
+    // Cloudflare KV 무료 플랜은 하루 쓰기 1,000회로 한도가 작아, 하트비트 간격을 너무
+    // 짧게 잡으면(예: 45초) 탭 하나를 반나절만 켜둬도 한도를 거의 다 써버린다.
+    // 90초로 늘리고(서버 만료 180초의 절반), 아래에서 백그라운드 탭은 아예 멈춘다.
+    const HEARTBEAT_MS = 90000;
     function getLiveClientId() {
       try {
         let id = sessionStorage.getItem(LIVE_CLIENT_KEY);
@@ -803,14 +806,21 @@
     async function initLiveCounter() {
       if (!usingProxy()) return; // 프록시(Worker) 미연결이면 카운터도 표시하지 않음
       const clientId = getLiveClientId();
+      let timer = null;
       async function beat() {
         try {
           const { concurrent } = await proxyCall('heartbeat', { clientId });
           renderLiveCounter(concurrent);
         } catch (e) { /* COUNTER_KV 미설정 등 실패는 무시, 다음 하트비트에서 재시도 */ }
       }
-      beat();
-      setInterval(beat, HEARTBEAT_MS);
+      // 백그라운드(다른 탭으로 전환·최소화)에서는 하트비트를 완전히 멈춰 KV 쓰기 낭비를
+      // 막는다 — 화면을 보고 있지 않으면 "지금 접속 중"이라는 정보도 어차피 덜 중요하다.
+      function start() { if (!timer) { beat(); timer = setInterval(beat, HEARTBEAT_MS); } }
+      function stop() { if (timer) { clearInterval(timer); timer = null; } }
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') start(); else stop();
+      });
+      if (document.visibilityState === 'visible') start();
     }
 
     // ===================== 실시간 채팅 =====================

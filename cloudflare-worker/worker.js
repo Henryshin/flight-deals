@@ -236,7 +236,7 @@ async function editRoute(env, id, minNightsRaw, maxStopsRaw) {
 
 // ---------- 동시접속자 카운터 (Workers KV) ----------
 const PRESENCE_PREFIX = "presence:";
-const PRESENCE_TTL_SEC = 120; // 클라이언트 하트비트 주기(45~60초)보다 넉넉히 잡은 만료 시간
+const PRESENCE_TTL_SEC = 180; // 클라이언트 하트비트 주기(90초)보다 넉넉히 잡은 만료 시간
 const CLIENT_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 
 async function heartbeat(env, clientId) {
@@ -262,7 +262,6 @@ async function countPresence(env) {
 // chat_poll을 호출해 최근 메시지를 다시 받아오는 방식이다. KV는 최종 일관성이라
 // 동시에 여러 명이 보내면 드물게 유실될 수 있지만, 소규모 사용에는 충분하다.
 const CHAT_KEY = "chat:messages";
-const CHAT_SEQ_KEY = "chat:seq";  // 새 채팅 유무 판단용 단조 증가 카운터
 const CHAT_MAX = 200;             // KV에 보관하는 최대 메시지 수(오래된 것부터 삭제)
 const CHAT_POLL_LIMIT = 50;       // 한 번의 poll로 내려주는 최근 메시지 수
 const CHAT_TEXT_MAX = 300;
@@ -410,13 +409,12 @@ async function chatSend(env, request, clientId, text) {
   // 커스텀 닉네임이 저장돼 있으면 그걸, 없으면 접속 IP 기반 자동 배정 이름을 쓴다.
   const cleanName = await resolveChatName(env, request, clientId);
 
-  // seq: 새 채팅 유무를 클라이언트가 판단하는 데 쓰는 단조 증가 번호. 동시 전송 시
-  // 드물게 KV 최종 일관성으로 두 메시지가 같은 seq를 받을 수 있지만 표시용일 뿐이라 무해하다.
-  const seqRaw = await env.COUNTER_KV.get(CHAT_SEQ_KEY);
-  const seq = (parseInt(seqRaw, 10) || 0) + 1;
-  await env.COUNTER_KV.put(CHAT_SEQ_KEY, String(seq));
-
   const list = await readChatList(env);
+  // seq: 새 채팅 유무를 클라이언트가 판단하는 데 쓰는 단조 증가 번호. 별도 KV 키로
+  // 관리하지 않고 목록의 마지막 seq + 1로 계산해 KV 읽기/쓰기를 각각 1회씩 아낀다
+  // (무료 플랜 KV 쓰기 한도가 하루 1,000회로 작아서 절약이 중요하다). 동시 전송 시
+  // 드물게 KV 최종 일관성으로 두 메시지가 같은 seq를 받을 수 있지만 표시용일 뿐이라 무해하다.
+  const seq = (list.length ? list[list.length - 1].seq : 0) + 1;
   list.push({ seq, t: now, name: cleanName, text: cleanText, cid: await hashClientId(clientId) });
   await env.COUNTER_KV.put(CHAT_KEY, JSON.stringify(list.slice(-CHAT_MAX)));
 
