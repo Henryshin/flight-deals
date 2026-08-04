@@ -50,11 +50,13 @@ export default {
 
     // 실시간 채팅: 동시접속자 카운터와 마찬가지로 누구나 읽고 쓸 수 있어야 하므로
     // 공유 암호 게이트/GH_TOKEN 앞에서 처리한다 (GitHub 쓰기와 무관한 별개 기능).
-    if (action === "chat_poll" || action === "chat_send") {
+    if (action === "chat_poll" || action === "chat_send" || action === "chat_set_name") {
       if (!env.COUNTER_KV) return json({ error: "서버에 COUNTER_KV 가 설정되지 않았습니다." }, 500, cors);
       try {
-        if (action === "chat_poll") return json(await chatPoll(env, request), 200, cors);
-        return json(await chatSend(env, request, String(body.clientId || ""), body.text), 200, cors);
+        const clientId = String(body.clientId || "");
+        if (action === "chat_poll") return json(await chatPoll(env, request, clientId), 200, cors);
+        if (action === "chat_set_name") return json(await chatSetName(env, request, clientId, body.name), 200, cors);
+        return json(await chatSend(env, request, clientId, body.text), 200, cors);
       } catch (e) {
         return json({ error: String((e && e.message) || e) }, (e && e.status) || 500, cors);
       }
@@ -265,6 +267,9 @@ const CHAT_MAX = 200;             // KV에 보관하는 최대 메시지 수(오
 const CHAT_POLL_LIMIT = 50;       // 한 번의 poll로 내려주는 최근 메시지 수
 const CHAT_TEXT_MAX = 300;
 const CHAT_MIN_INTERVAL_MS = 3000; // 같은 clientId의 최소 전송 간격(도배 방지)
+const CHAT_NAME_MAX = 16;          // 닉네임 길이 상한 (말풍선 레이아웃 보호 목적)
+const CHAT_NAME_TTL = 60 * 60 * 24 * 180; // 커스텀 닉네임 보관 기간(180일 미접속 시 자동 배정으로 복귀)
+const CHAT_NAME_MIN_INTERVAL_MS = 5000;   // 닉네임 변경 최소 간격(연속 변경으로 사칭 방지)
 // 닉네임 = 형용사 2개 + 캐릭터 + 직급 (예: "현명한 용감한 루팡 대리")
 const CHAT_ADJECTIVES = [
   "현명한", "게으른", "성실한", "용감한", "은밀한", "당당한", "느긋한", "예리한",
@@ -321,9 +326,48 @@ async function readChatList(env) {
   } catch (e) { return []; }
 }
 
-async function chatPoll(env, request) {
+// 닉네임 해석: clientId로 저장해 둔 커스텀 닉네임이 있으면 그걸, 없으면 기존처럼
+// 접속 IP 기반 자동 배정 이름을 쓴다. clientId가 비어 있으면(예: 구버전 클라이언트)
+// 자동 배정으로 안전하게 폴백한다.
+async function resolveChatName(env, request, clientId) {
+  if (clientId) {
+    const custom = await env.COUNTER_KV.get("chat:name:" + clientId);
+    if (custom) return custom;
+  }
+  return await deriveChatName(request);
+}
+
+async function chatPoll(env, request, clientId) {
   const list = await readChatList(env);
-  return { messages: list.slice(-CHAT_POLL_LIMIT), you: await deriveChatName(request) };
+  return { messages: list.slice(-CHAT_POLL_LIMIT), you: await resolveChatName(env, request, clientId) };
+}
+
+// 닉네임을 직접 지정(또는 빈 값으로 보내 자동 배정으로 되돌리기). clientId별로 KV에
+// 저장해 다음 poll/send부터 계속 그 이름을 쓴다 — 로그인 없이도 "이 브라우저의 내 이름"이
+// 유지된다. 연속 변경(사칭 목적 등)을 막으려고 chat_send와 같은 방식으로 속도 제한한다.
+async function chatSetName(env, request, clientId, name) {
+  if (!CLIENT_ID_RE.test(clientId)) throw fail("clientId 형식 오류", 400);
+
+  const rateKey = "chat:namerate:" + clientId;
+  const last = await env.COUNTER_KV.get(rateKey);
+  const now = Date.now();
+  if (last && now - Number(last) < CHAT_NAME_MIN_INTERVAL_MS) {
+    throw fail("너무 빠르게 변경했습니다. 잠시 후 다시 시도하세요.", 429);
+  }
+  await env.COUNTER_KV.put(rateKey, String(now), { expirationTtl: 60 });
+
+  const key = "chat:name:" + clientId;
+  const raw = String(name == null ? "" : name).trim();
+  if (!raw) {
+    // 빈 값 = 커스텀 닉네임을 지우고 자동 배정(IP 기반)으로 되돌린다.
+    await env.COUNTER_KV.delete(key);
+    return { name: await deriveChatName(request) };
+  }
+  // 제어문자 제거 + 길이 제한. 완전한 비속어 필터는 아니고 레이아웃 보호가 목적.
+  const cleaned = raw.replace(/[\x00-\x1f\x7f]/g, "").slice(0, CHAT_NAME_MAX);
+  if (!cleaned) throw fail("올바른 닉네임을 입력하세요.", 400);
+  await env.COUNTER_KV.put(key, cleaned, { expirationTtl: CHAT_NAME_TTL });
+  return { name: cleaned };
 }
 
 async function chatSend(env, request, clientId, text) {
@@ -339,9 +383,8 @@ async function chatSend(env, request, clientId, text) {
   }
   await env.COUNTER_KV.put(rateKey, String(now), { expirationTtl: 60 });
 
-  // 닉네임은 클라이언트가 정하는 게 아니라 접속 IP로부터 서버가 매번 다시 계산한다
-  // (스푸핑 불가, 별도 저장 없이도 항상 같은 값 -> 자동 배정 + 유지 둘 다 만족).
-  const cleanName = await deriveChatName(request);
+  // 커스텀 닉네임이 저장돼 있으면 그걸, 없으면 접속 IP 기반 자동 배정 이름을 쓴다.
+  const cleanName = await resolveChatName(env, request, clientId);
 
   // seq: 새 채팅 유무를 클라이언트가 판단하는 데 쓰는 단조 증가 번호. 동시 전송 시
   // 드물게 KV 최종 일관성으로 두 메시지가 같은 seq를 받을 수 있지만 표시용일 뿐이라 무해하다.
