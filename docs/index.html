@@ -376,6 +376,16 @@
   /* 닉네임 오른쪽에 붙는 "다음 전송까지 N초" 카운트다운. 0초(전송 가능)면 빈 문자열이라 자리도 안 차지. */
   #chat-cooldown { margin-left: 4px; }
   #chat-cooldown:not(:empty)::before { content: '· '; }
+  .chat-name-edit-btn {
+    background: none; border: none; cursor: pointer; padding: 0; margin-left: 6px;
+    color: #0b5cab; font-size: 12.5px; font-family: inherit;
+  }
+  .chat-name-edit-btn:hover { text-decoration: underline; }
+  .chat-name-edit-row { display: flex; gap: 6px; padding: 4px 10px 0; align-items: center; }
+  .chat-name-edit-row input {
+    flex: 1; min-width: 0; font-family: Calibri, "맑은 고딕", Arial, sans-serif; font-size: 14px; padding: 4px 7px;
+    border: 1px solid var(--grid); border-radius: 2px; background: #fff; color: var(--text);
+  }
   .chat-note { position: relative; padding-right: 26px; }
   .chat-note-close {
     position: absolute; top: 2px; right: 4px; background: none; border: none; cursor: pointer;
@@ -507,7 +517,15 @@
             </div>
             <button id="chat-jump" class="chat-jump-btn" hidden>새 채팅 ↓</button>
           </div>
-          <div class="chat-my-name"><span id="chat-my-name-text"></span><span id="chat-cooldown"></span></div>
+          <div class="chat-my-name">
+            <span id="chat-my-name-text"></span><span id="chat-cooldown"></span>
+            <button type="button" class="chat-name-edit-btn" id="chat-name-edit-btn" title="닉네임 바꾸기">✎ 닉네임 바꾸기</button>
+          </div>
+          <div class="chat-name-edit-row" id="chat-name-edit-row" hidden>
+            <input id="chat-name-input" maxlength="16" placeholder="닉네임 (비우고 저장하면 자동 배정)" />
+            <button type="button" class="apply-btn" id="chat-name-save">저장</button>
+            <button type="button" class="apply-btn" id="chat-name-cancel">취소</button>
+          </div>
           <div class="chat-input-row">
             <input id="chat-text" placeholder="채팅 입력 후 Enter" maxlength="300" />
             <button id="btn-chat-send">전송</button>
@@ -878,9 +896,45 @@
         if (jumpBtn) jumpBtn.hidden = false;
       }
     }
+    // ---- 닉네임 직접 지정 (기본은 접속 IP 기반 자동 배정, 원하면 바꿀 수 있음) ----
+    function openChatNameEdit() {
+      const row = document.getElementById('chat-name-edit-row');
+      const input = document.getElementById('chat-name-input');
+      if (!row || !input) return;
+      input.value = myChatName || '';
+      row.hidden = false;
+      input.focus();
+      input.select();
+    }
+    function closeChatNameEdit() {
+      const row = document.getElementById('chat-name-edit-row');
+      if (row) row.hidden = true;
+    }
+    async function saveChatName() {
+      const input = document.getElementById('chat-name-input');
+      if (!input) return;
+      const name = input.value.trim();
+      try {
+        const { name: applied } = await proxyCall('chat_set_name', { clientId: getChatClientId(), name });
+        myChatName = applied;
+        const nameEl = document.getElementById('chat-my-name-text');
+        if (nameEl) nameEl.textContent = `나: ${applied}`;
+        closeChatNameEdit();
+        toast(name ? `닉네임을 "${applied}"(으)로 바꿨습니다` : '닉네임을 자동 배정으로 되돌렸습니다');
+        // 지난 메시지도 새 이름 기준으로 '내 메시지' 정렬을 다시 매기도록 강제 재렌더.
+        // (서버는 과거 메시지에 붙은 이름을 소급해 바꾸지 않으므로, 이름 변경 전에
+        // 보낸 메시지는 앞으로도 그때 이름으로 표시된다 — 채팅 서비스 흔한 동작.)
+        chatLastSeq = 0;
+        chatPollOnce();
+      } catch (e) {
+        if (e && e.status === 429) toast('너무 빠르게 변경했습니다. 잠시 후 다시 시도하세요.', 'err');
+        else toast('닉네임 변경 실패: ' + ((e && e.message) || '네트워크 오류'), 'err');
+      }
+    }
     async function chatPollOnce() {
       try {
-        const { messages, you } = await proxyCall('chat_poll', {});
+        // clientId를 보내야 서버가 이 브라우저가 설정해 둔 커스텀 닉네임을 찾아 you로 돌려준다.
+        const { messages, you } = await proxyCall('chat_poll', { clientId: getChatClientId() });
         updateChatView(messages, you);
       } catch (e) {
         // 첫 로딩부터 실패한 경우(예: COUNTER_KV 미설정)에만 안내 문구 표시,
@@ -2780,6 +2834,15 @@
         chatSendMessage();
       });
       document.getElementById('chat-jump').addEventListener('click', jumpToChatBottom);
+
+      document.getElementById('chat-name-edit-btn').addEventListener('click', openChatNameEdit);
+      document.getElementById('chat-name-cancel').addEventListener('click', closeChatNameEdit);
+      document.getElementById('chat-name-save').addEventListener('click', saveChatName);
+      document.getElementById('chat-name-input').addEventListener('keydown', e => {
+        if (e.isComposing || e.keyCode === 229) return;
+        if (e.key === 'Enter') { e.preventDefault(); saveChatName(); }
+        else if (e.key === 'Escape') { e.preventDefault(); closeChatNameEdit(); }
+      });
 
       // 동적 요소 이벤트 위임
       document.addEventListener('click', e => {
