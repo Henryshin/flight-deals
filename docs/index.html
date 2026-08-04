@@ -195,7 +195,8 @@
   #chip-region, #chip-stops { display: flex; flex-wrap: wrap; gap: 6px; }
   /* 국가 칩은 대륙별로, 연휴 칩은 연도별로 행을 나눈다 */
   #chip-country, #gv-windows { display: flex; flex-direction: column; gap: 5px; }
-  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .chip-region-label { color: var(--muted); font-size: 15px; min-width: 70px; flex-shrink: 0; }
   .day-value-wrap { display: flex; align-items: center; gap: 4px; font-size: 15px; flex-wrap: wrap; }
   #day-value, #max-leave {
     width: 48px; font-family: Consolas, monospace; font-size: 15px; text-align: right;
@@ -455,11 +456,9 @@
     </div>
 
     <div class="chip-bar">
-      <span class="chip-cap">필터</span>
       <div class="chip-groups">
         <div class="chip-col-country">
           <div class="chip-line">
-            <span class="chip-sub">국가</span>
             <div id="chip-country"></div>
           </div>
         </div>
@@ -1479,8 +1478,10 @@
       영국: '서유럽', 프랑스: '서유럽', 독일: '서유럽', 스위스: '서유럽', 오스트리아: '서유럽',
       이탈리아: '서유럽', 스페인: '서유럽', 포르투갈: '서유럽',
       체코: '동유럽', 그리스: '동유럽', 튀르키예: '동유럽',
-      미국: '미주', 캐나다: '미주',
+      미국: '미주', 캐나다: '미주', 괌: '미주', 북마리아나제도: '미주',
     };
+    // 국가 칩 행 앞에 붙이는 지역 라벨(그외는 라벨 없이 표시).
+    const REGION_LABELS = { 동아시아: '동아시아', 동남기타아시아: '동남아시아', 서유럽: '서유럽', 동유럽: '동유럽', 미주: '미주' };
     // 필터 칩에서 아예 빼는 국가(목적지 자체는 그대로 있고, 국가 칩으로만 못 고름).
     const HIDDEN_COUNTRIES = new Set(['캄보디아', '카자흐스탄']);
     function countryRegion(country) { return COUNTRY_REGION[country] || '그외'; }
@@ -1522,14 +1523,17 @@
         if (!countries.has(c)) countries.set(c, r.flag || (findAirport(r.destination) || {}).flag || '');
       }
       const noSel = state.selCountries.size === 0 && state.selCities.size === 0 && state.selStops.size === 0;
-      // 전체는 최상단 행, 그 아래 대륙별로 국가 칩을 행으로 나눈다(라벨 없음).
+      // 전체는 최상단 행, 그 아래 대륙별로 국가 칩을 행으로 나누고 왼쪽에 지역 라벨을 붙인다.
       let html = `<div class="chip-row">${chip('all', '', '전체', noSel)}</div>`;
       const buckets = { 동아시아: [], 동남기타아시아: [], 서유럽: [], 동유럽: [], 미주: [], 그외: [] };
       for (const [c, flag] of countries) {
         buckets[countryRegion(c)].push(chip('country', c, c, state.selCountries.has(c)));
       }
       for (const key of ['동아시아', '동남기타아시아', '서유럽', '동유럽', '미주', '그외']) {
-        if (buckets[key].length) html += `<div class="chip-row">${buckets[key].join('')}</div>`;
+        if (!buckets[key].length) continue;
+        const label = REGION_LABELS[key];
+        const labelHtml = label ? `<span class="chip-region-label">${esc(label)}</span>` : '';
+        html += `<div class="chip-row">${labelHtml}${buckets[key].join('')}</div>`;
       }
       document.getElementById('chip-country').innerHTML = html;
 
