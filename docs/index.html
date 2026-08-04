@@ -829,6 +829,7 @@
     let chatSendTimer = null; // 다음 큐 전송을 예약한 타이머
     let chatNextSendAt = 0;   // 이 시각 이후에나 다음 전송 시도 (클라이언트 쪽 예상치)
     let myChatName = ''; // 서버가 IP 기반으로 배정해준 내 닉네임 (chat_poll 응답의 you)
+    let myChatCid = ''; // 내 clientId의 서버측 해시 (chat_poll 응답의 youCid) - 말풍선 좌/우 정렬용
     function getChatClientId() {
       try {
         let id = localStorage.getItem(CHAT_CLIENT_KEY);
@@ -850,13 +851,14 @@
       if (scrollBox) scrollBox.scrollTop = scrollBox.scrollHeight;
       if (jumpBtn) jumpBtn.hidden = true;
     }
-    function updateChatView(messages, you) {
+    function updateChatView(messages, you, youCid) {
       const listEl = document.getElementById('chat-list');
       const scrollBox = document.getElementById('chat-scroll');
       const jumpBtn = document.getElementById('chat-jump');
       if (!listEl || !scrollBox) return;
       listEl.dataset.loaded = '1';
 
+      if (youCid) myChatCid = youCid;
       if (you) {
         myChatName = you;
         const nameEl = document.getElementById('chat-my-name-text');
@@ -881,7 +883,9 @@
       listEl.innerHTML = messages.map(m => {
         const d = new Date(m.t);
         const time = pad(d.getHours()) + ':' + pad(d.getMinutes());
-        const mine = m.name === myChatName;
+        // cid(clientId 해시)로 비교하면 닉네임을 바꿔도 과거 내 메시지가 계속 오른쪽에
+        // 정렬된다. cid가 없는(이 기능 배포 전에 저장된) 옛 메시지만 이름으로 폴백.
+        const mine = m.cid ? m.cid === myChatCid : m.name === myChatName;
         return `<div class="chat-bubble${mine ? ' mine' : ''}">` +
           `<div class="chat-bubble-meta"><span class="chat-name">${esc(m.name)}</span><span class="chat-time">${time}</span></div>` +
           `<div class="chat-bubble-text">${highlightMentions(esc(m.text))}</div></div>`;
@@ -914,8 +918,12 @@
       const input = document.getElementById('chat-name-input');
       if (!input) return;
       const name = input.value.trim();
+      // "관리자"는 예약된 닉네임 -> 서버가 CHAT_ADMIN_PASS 를 요구한다. 평소엔 안 보이는
+      // 별도 암호 입력창이라, 이 이름을 시도할 때만 프롬프트로 물어본다.
+      const adminPass = name === '관리자' ? (window.prompt('관리자 닉네임은 암호가 필요합니다. 암호를 입력하세요.') || '') : undefined;
+      if (name === '관리자' && adminPass === '') return; // 취소 또는 빈 입력 -> 시도하지 않음
       try {
-        const { name: applied } = await proxyCall('chat_set_name', { clientId: getChatClientId(), name });
+        const { name: applied } = await proxyCall('chat_set_name', { clientId: getChatClientId(), name, adminPass });
         myChatName = applied;
         const nameEl = document.getElementById('chat-my-name-text');
         if (nameEl) nameEl.textContent = `나: ${applied}`;
@@ -928,14 +936,16 @@
         chatPollOnce();
       } catch (e) {
         if (e && e.status === 429) toast('너무 빠르게 변경했습니다. 잠시 후 다시 시도하세요.', 'err');
+        else if (e && e.status === 403) toast('이 닉네임은 사용할 수 없습니다.', 'err');
         else toast('닉네임 변경 실패: ' + ((e && e.message) || '네트워크 오류'), 'err');
       }
     }
     async function chatPollOnce() {
       try {
-        // clientId를 보내야 서버가 이 브라우저가 설정해 둔 커스텀 닉네임을 찾아 you로 돌려준다.
-        const { messages, you } = await proxyCall('chat_poll', { clientId: getChatClientId() });
-        updateChatView(messages, you);
+        // clientId를 보내야 서버가 이 브라우저가 설정해 둔 커스텀 닉네임(you)과
+        // clientId 해시(youCid, 말풍선 좌/우 정렬용)를 찾아 돌려준다.
+        const { messages, you, youCid } = await proxyCall('chat_poll', { clientId: getChatClientId() });
+        updateChatView(messages, you, youCid);
       } catch (e) {
         // 첫 로딩부터 실패한 경우(예: COUNTER_KV 미설정)에만 안내 문구 표시,
         // 이미 목록을 보여준 뒤의 일시적 실패는 화면을 그대로 유지한다.
