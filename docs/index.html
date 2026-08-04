@@ -483,6 +483,14 @@
       </div>
     </div>
 
+    <!-- 연휴 선택 칩: 아래 두 보드(특가 요약표/여행지별 상세 현황) 모두에 걸린다
+         (state.gvWindows 공유). 특가 요약표를 접어도 필터가 사라지면 안 되므로
+         필터 바로 아래, 두 보드 h2보다 위에 둔다. -->
+    <div class="chip-bar">
+      <span class="chip-cap">연휴<span class="chip-cap-note">두 보드 공통</span></span>
+      <div class="chip-groups" id="gv-windows"></div>
+    </div>
+
     <!-- 실시간 채팅: 별도 창처럼 떠 있는(드래그 가능) 패널. position:absolute라
          페이지와 함께 스크롤되며(고정 아님), 제목표시줄(#chat-h2)을 끌어 옮길 수 있다. -->
     <div id="chat-section" hidden>
@@ -509,35 +517,32 @@
       </div>
     </div>
 
-    <h2>특가 요약표</h2>
-    <!-- 연휴 칩은 아래 '여행지별 상세 현황'에도 함께 걸린다 (state.gvWindows 공유) -->
-    <div class="chip-bar">
-      <span class="chip-cap">연휴<span class="chip-cap-note">두 보드 공통</span></span>
-      <div class="chip-groups" id="gv-windows"></div>
-    </div>
-    <div class="toolbar-row">
-      <label for="gv-sort">정렬</label>
-      <select id="gv-sort">
-        <option value="deal">특가율 높은순</option>
-        <option value="price">최저가순</option>
-        <option value="net">실질비용순 (휴일가치 반영)</option>
-        <option value="eff">연차 효율순</option>
-      </select>
-    </div>
-    <div class="tbl-wrap">
-      <table class="sheet wide">
-        <thead>
-          <tr>
-            <th style="width:5%">순위</th>
-            <th style="width:18%">목적지</th>
-            <th style="width:12%">최저가</th>
-            <th style="width:14%">특가율(통상가 대비)</th>
-            <th style="width:36%">추천 일정</th>
-            <th style="width:15%">직항/경유</th>
-          </tr>
-        </thead>
-        <tbody id="gv-board"></tbody>
-      </table>
+    <h2 class="collapsible" id="gv-h2"><span class="collapse-caret">▼</span> 특가 요약표 <span class="collapse-hint">(클릭해서 접기)</span></h2>
+    <div id="gv-body">
+      <div class="toolbar-row">
+        <label for="gv-sort">정렬</label>
+        <select id="gv-sort">
+          <option value="deal">특가율 높은순</option>
+          <option value="price">최저가순</option>
+          <option value="net">실질비용순 (휴일가치 반영)</option>
+          <option value="eff">연차 효율순</option>
+        </select>
+      </div>
+      <div class="tbl-wrap">
+        <table class="sheet wide">
+          <thead>
+            <tr>
+              <th style="width:5%">순위</th>
+              <th style="width:18%">목적지</th>
+              <th style="width:12%">최저가</th>
+              <th style="width:14%">특가율(통상가 대비)</th>
+              <th style="width:36%">추천 일정</th>
+              <th style="width:15%">직항/경유</th>
+            </tr>
+          </thead>
+          <tbody id="gv-board"></tbody>
+        </table>
+      </div>
     </div>
 
     <h2 class="collapsible" id="dest-h2"><span class="collapse-caret">▼</span> 여행지별 상세 현황 <span class="collapse-hint">(클릭해서 접기)</span></h2>
@@ -2753,8 +2758,9 @@
       document.getElementById('btn-dest-expand').addEventListener('click', () => setAllDestExpanded(true));
       document.getElementById('btn-dest-collapse').addEventListener('click', () => setAllDestExpanded(false));
 
-      // 섹션 접기/펼치기. 여행지별 상세 현황은 기본 펼침, 변동 항목은 기본 접힘(길어서
-      // 스크롤 방해). 어느 쪽이든 사용자가 바꾼 상태는 브라우저에 기억된다.
+      // 섹션 접기/펼치기. 특가 요약표·여행지별 상세 현황은 기본 펼침, 변동 항목은
+      // 기본 접힘(길어서 스크롤 방해). 어느 쪽이든 사용자가 바꾼 상태는 브라우저에 기억된다.
+      wireSimpleToggle('gv-h2', 'gv-body', true);
       wireSimpleToggle('dest-h2', 'dest-body', true);
       wireSimpleToggle('deals-h2', 'deals-body', false);
 
