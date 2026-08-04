@@ -79,6 +79,32 @@ def test_date_candidates_short_window_unlocked():
     assert len(build_date_candidates(3, max_pairs=5, today=today)) == 5
 
 
+def test_priority_routes_boost_candidates():
+    """PRIORITY_FILE 에 있는 노선은 후보 상한이 부스트되고, 파일이 없으면 빈 집합(무동작)이어야 한다."""
+    import json
+    import tempfile
+    from scripts import collect
+
+    tmp = Path(tempfile.mktemp(suffix=".json"))
+    orig = collect.PRIORITY_FILE
+    try:
+        collect.PRIORITY_FILE = tmp
+        assert collect.load_priority_routes() == set()  # 파일 없음 -> 무동작
+
+        tmp.write_text(json.dumps(["icn-khh", " icn-han ", ""]), encoding="utf-8")
+        assert collect.load_priority_routes() == {"ICN-KHH", "ICN-HAN"}
+    finally:
+        collect.PRIORITY_FILE = orig
+        tmp.unlink(missing_ok=True)
+
+    today = date(2026, 7, 23)
+    base = build_date_candidates(3, max_pairs=collect.MAX_PAIRS_PER_ROUTE, today=today)
+    boosted = build_date_candidates(
+        3, max_pairs=int(collect.MAX_PAIRS_PER_ROUTE * collect.PRIORITY_BOOST), today=today
+    )
+    assert len(boosted) > len(base), "부스트된 상한이 더 많은 후보를 내야 한다"
+
+
 def test_candidates_overlap_their_window():
     """후보 일정은 반드시 자기 연휴 윈도우와 겹쳐야 한다."""
     today = date(2026, 7, 23)

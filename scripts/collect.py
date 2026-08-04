@@ -30,12 +30,20 @@ ROOT = Path(__file__).parent.parent
 ROUTES_FILE = ROOT / "data" / "routes.json"
 PRICES_FILE = ROOT / "data" / "prices.csv"
 STATUS_FILE = ROOT / "data" / "collect_status.json"
+# 관리자가 "더 자주/다양하게 수집했으면 하는" 노선을 직접 골라두는 파일.
+# ["ICN-KHH", "ICN-HAN"] 처럼 origin-destination 문자열 배열. 없거나 비어 있으면
+# 기존과 동일하게(가중치 없이) 동작 — 실사용 인기도를 서버에서 집계하는 대신,
+# 크롤 예산 자체를 늘리지 않고 "어디에 더 쓸지"만 조정하는 저비용 대안.
+PRIORITY_FILE = ROOT / "data" / "priority_routes.json"
 DEFAULT_TRIP_LENGTH_DAYS = 3
 
 # 노선당 연휴 날짜쌍 후보 상한. 윈도우 간 라운드로빈으로 뽑으므로 상한에 걸려도
 # 모든 연휴가 최소 몇 개씩은 커버된다. 18 = 연휴 6개에 ~3쌍씩 -> 통상 시세(중앙값)를
 # 잡을 표본이 하루 만에 tier B, 이튿날 tier A 로 차오른다. (45 모니터 x ~18 = 런당 ~810 로드)
 MAX_PAIRS_PER_ROUTE = int(os.environ.get("MAX_PAIRS_PER_ROUTE", "18"))
+# PRIORITY_FILE에 있는 노선은 후보 상한을 이 배수만큼 늘려서, 같은 총 예산 안에서도
+# 그 노선에 더 다양한(특히 덤휴일이 큰 앵커) 후보가 배정되게 한다.
+PRIORITY_BOOST = float(os.environ.get("PRIORITY_BOOST", "2"))
 # 이 시간(분)을 넘기면 새 쿼리를 시작하지 않음. 4시간 크론에 맞춘 기본값.
 TIME_BUDGET_MIN = float(os.environ.get("TIME_BUDGET_MIN", "170"))
 # 평시(비연휴) 기준가 후보는 하루 1회만 수집 (연휴 가성비 지표의 분모).
@@ -293,6 +301,23 @@ def load_status_attempts():
     return out
 
 
+def load_priority_routes():
+    """PRIORITY_FILE(관리자 지정 우선순위 노선 목록) 로드.
+
+    파일이 없거나 형식이 안 맞으면 빈 집합 -> 부스트 없이 기존과 동일하게 동작
+    (안전한 기본값이라 이 파일을 아직 안 만든 배포에서도 그냥 무시된다).
+    """
+    if not PRIORITY_FILE.exists():
+        return set()
+    try:
+        data = json.loads(PRIORITY_FILE.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return set()
+    if not isinstance(data, list):
+        return set()
+    return {str(x).strip().upper() for x in data if str(x).strip()}
+
+
 def hours_since(ts):
     """ISO 시각 문자열(날짜만도 허용) 이후 경과 시간. 파싱 불가면 None."""
     if not ts:
@@ -468,6 +493,10 @@ def main():
         attempts.get(f"{s[0]}-{s[1]}", ""),
     ))
 
+    priority_routes = load_priority_routes()
+    if priority_routes:
+        print(f"우선순위 노선({len(priority_routes)}개): 후보 상한 x{PRIORITY_BOOST}")
+
     # 구 헤더 파일이면 먼저 신 헤더로 마이그레이션해 csv.DictReader 일관성 유지.
     migrate_prices_file()
 
@@ -499,10 +528,16 @@ def main():
                 continue
 
             # 그룹 내 '고유 min_nights'별 후보의 합집합 (같은 날짜쌍은 한 번만).
+            # 우선순위 노선은 상한을 부스트해 같은 예산 안에서도 더 다양한(특히
+            # 덤휴일 큰 앵커) 후보까지 배정되게 한다.
+            max_pairs = (
+                int(MAX_PAIRS_PER_ROUTE * PRIORITY_BOOST)
+                if group_key in priority_routes else MAX_PAIRS_PER_ROUTE
+            )
             candidates = []
             seen_pairs = set()
             for mn in nights_variants:
-                for cand in build_date_candidates(mn):
+                for cand in build_date_candidates(mn, max_pairs=max_pairs):
                     pair = (cand[0], cand[1])
                     if pair not in seen_pairs:
                         seen_pairs.add(pair)
