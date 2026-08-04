@@ -1480,7 +1480,7 @@
     }
 
     // ===================== 필터 칩 (국가 → 지역 + 직항/경유) =====================
-    // 직항/경유 필터 옵션: 모니터의 max_stops 정책 기준(0=직항 전용, 그 외=경유 허용).
+    // 직항/경유 필터 옵션: 수집된 항공편의 실제 stops 값 기준(0=직항, 1 이상=경유).
     const STOPS_OPTIONS = [{ value: 'direct', label: '직항' }, { value: 'via', label: '경유' }];
     // 국가 -> 대륙 그룹(필터 국가 칩을 행으로 나누는 기준). 미등록 국가는 '그외'.
     // 유럽은 나라 수가 많아 한 줄이 너무 길어지므로 서유럽/남유럽/동유럽으로 나눈다.
@@ -1498,18 +1498,30 @@
     // 필터 칩에서 아예 빼는 국가(목적지 자체는 그대로 있고, 국가 칩으로만 못 고름).
     const HIDDEN_COUNTRIES = new Set(['캄보디아', '카자흐스탄']);
     function countryRegion(country) { return COUNTRY_REGION[country] || '그외'; }
-    // 모니터의 직항/경유 정책 분류: max_stops===0 이면 직항 전용, 그 외(1/2/상관없음)는 경유 허용.
-    function routeStopsClass(routeLike) {
-      return routeLike.max_stops === 0 ? 'direct' : 'via';
-    }
     function routePassesChip(routeLike) {
       // 1차: 국가 (선택된 게 없으면 전체 통과)
       if (state.selCountries.size && !state.selCountries.has(routeLike.country || '기타')) return false;
       // 2차: 지역(도착 도시) — 선택된 게 없으면 통과. 도시 선택은 국가에 종속.
       if (state.selCities.size && !state.selCities.has(destCityName(routeLike))) return false;
-      // 직항/경유: 선택된 게 없으면 전체 통과.
-      if (state.selStops.size && !state.selStops.has(routeStopsClass(routeLike))) return false;
+      // 직항/경유는 노선(모니터) 단위가 아니라 일정(pair) 단위로 거른다 — pairMatchesStops.
+      // 예전엔 모니터의 수집 정책(max_stops===0)으로 노선 전체를 걸렀는데, 직항 전용
+      // 모니터가 없는 나라(예: 베트남 전 노선이 max_stops=1)를 고르면 직항에 실제 직항편이
+      // 있어도 전부 사라지는 문제가 있었다.
       return true;
+    }
+    // 일정(pair) 하나가 직항/경유 칩 선택에 맞는지 — 수집된 항공편의 실제 stops 값 기준.
+    // stops 정보가 없는(구버전 수집) 일정은 분류할 수 없으므로 필터를 통과시킨다.
+    function pairMatchesStops(p) {
+      if (!state.selStops.size) return true;
+      if (!p || p.stops === '' || p.stops == null) return true;
+      const n = parseInt(p.stops, 10);
+      if (isNaN(n)) return true;
+      return state.selStops.has(n === 0 ? 'direct' : 'via');
+    }
+    // 일정 단위 필터(연차 상한 or 직항/경유)가 하나라도 걸려 있는가 — 켜져 있을 때만
+    // '조건에 맞는 일정이 하나도 없는 칸'을 목록에서 걸러낸다.
+    function pairFilterActive() {
+      return leaveCap() !== Infinity || state.selStops.size > 0;
     }
 
     // 선택 국가에 속하지 않게 된 도시 선택은 제거 (드릴다운 정합성 유지)
@@ -1666,7 +1678,8 @@
     // 최저가 칸(primaryPair)은 그대로 유지한다 — 최저가는 cell.min_price 와 묶여 있어
     // 여기서 바꾸면 특가율/정렬 기준까지 어긋난다.
     function eligiblePairs(cell) {
-      const ps = cellPairs(cell);
+      // 직항/경유 칩이 걸려 있으면 실제 항공편 기준으로 일정을 먼저 거른다.
+      const ps = cellPairs(cell).filter(pairMatchesStops);
       const cap = leaveCap();
       if (cap === Infinity) return ps;
       return ps.filter(p => (p.leave_days || 0) <= cap);
@@ -1703,7 +1716,11 @@
     function displayPair(cell) {
       const min = primaryPair(cell);
       const cap = leaveCap();
-      if (!min || cap === Infinity || (min.leave_days || 0) <= cap) return min;
+      if (!min) return min;
+      const capOk = cap === Infinity || (min.leave_days || 0) <= cap;
+      // 최저가 일정이 연차 상한을 넘거나 직항/경유 칩 조건에 안 맞으면(예: 직항 필터인데
+      // 최저가는 경유편), 조건에 맞는 일정 중 실질비용 최적으로 통째로 바꿔친다.
+      if (capOk && pairMatchesStops(min)) return min;
       return pickPair(cell) || min;
     }
     // 휴일 가치 반영 추천 일정이 최저가 일정과 다르면(더 비싸지만 실질 비용이 낮음),
@@ -1767,9 +1784,14 @@
       if (cell.tier === 'B') title += '\n※ 표본이 적어 참고용입니다';
       return `<span class="gv-badge ${cls}"${dim} title="${esc(title)}">${esc(txt)}</span>`;
     }
-    // 연차 상한 안에서 갈 수 있는 일정이 하나도 없어 목록에서 통째로 빠졌을 때의 안내 문구.
-    // (데이터가 아예 없는 것과 구분되는 별도 사유 — gvEmptyReason과 나란히 쓰인다.)
+    // 일정 단위 필터(연차 상한·직항/경유)에 맞는 일정이 하나도 없어 목록에서 통째로
+    // 빠졌을 때의 안내 문구. (데이터가 아예 없는 것과 구분되는 별도 사유 — gvEmptyReason과
+    // 나란히 쓰인다.) 어떤 필터 때문인지에 따라 문구를 고른다.
     function capOverReason() {
+      const capOn = leaveCap() !== Infinity;
+      const stopsOn = state.selStops.size > 0;
+      if (capOn && stopsOn) return `연차 상한(${leaveCap()}개)과 직항/경유 조건에 맞는 일정이 없습니다 — 조건을 조정해 보세요`;
+      if (stopsOn) return '직항/경유 조건에 맞는 일정이 없습니다 — 필터를 조정해 보세요';
       return `연차 상한(${leaveCap()}개) 안에서 갈 수 있는 연휴가 없습니다 — 상한을 늘리면 후보가 보입니다`;
     }
     // 이 연휴에 데이터가 없는 노선의 사유 (막연한 '—' 대신 이유를 보여준다)
@@ -1820,10 +1842,10 @@
           if (c && cellBetterForBoard(c, best)) { best = c; bestWin = wid; }
         }
       }
-      // cellBetterForBoard가 상한을 만족하는 칸을 항상 먼저 고르지만, 후보 전부가 상한을
-      // 넘으면 그중 '제일 나은' 것이라도 여전히 못 가는 일정이다 — ⚠만 달고 보여주는 대신
-      // '고른 게 없음'으로 취급해 gvEmptyReason 자리에 연차 상한 사유가 뜨게 한다.
-      if (best && leaveCap() !== Infinity && cellNetCost(best) === Infinity) {
+      // cellBetterForBoard가 조건(연차 상한·직항/경유)을 만족하는 칸을 항상 먼저 고르지만,
+      // 후보 전부가 조건을 못 맞추면 그중 '제일 나은' 것이라도 여전히 못 가는 일정이다 —
+      // ⚠만 달고 보여주는 대신 '고른 게 없음'으로 취급해 사유 문구가 뜨게 한다.
+      if (best && pairFilterActive() && cellNetCost(best) === Infinity) {
         return { cell: null, win: null, capBlocked: true };
       }
       return { cell: best, win: bestWin, capBlocked: false };
@@ -1836,7 +1858,6 @@
       if (applyCap == null) applyCap = true;
       const allCells = (state.matrix && state.matrix.cells) || {};
       const active = new Set(gvActiveWindowIds());
-      const cap = leaveCap();
       const out = [];
       for (const w of gvWindows()) {
         if (!active.has(w.id)) continue;
@@ -1846,21 +1867,25 @@
           if (c) found.push({ cell: c, mon: rk(mon) });
         }
         if (!found.length) continue;
+        // 조건(연차 상한·직항/경유)에 맞는 일정이 하나도 없는 칸은 대표 선정 전에 먼저
+        // 뺀다 — 대표만 검사하면 '경유가 더 싼 칸'이 대표로 뽑혀, 같은 연휴에 조건을
+        // 만족하는 직항 칸이 있는데도 연휴 전체가 사라지는 오판이 생긴다.
+        const usable = (applyCap && pairFilterActive())
+          ? found.filter(x => cellNetCost(x.cell) !== Infinity)
+          : found;
+        if (!usable.length) continue;
         // 이 보드의 축은 '최저가'라, 같은 연휴 안에서 모니터끼리는 '싼 칸'이 대표다.
         // (특가 보드의 cellBetter 는 티어 우선이라 여기 쓰면 더 비싼 칸이 최저가로 표시될 수 있음.
         //  값이 같을 때만 티어/특가율로 가른다.)
-        found.sort((a, b) => (a.cell.min_price - b.cell.min_price)
+        usable.sort((a, b) => (a.cell.min_price - b.cell.min_price)
           || (cellBetter(a.cell, b.cell) ? -1 : cellBetter(b.cell, a.cell) ? 1 : 0));
-        const best = found[0];
-        // 연차 상한 안에서 갈 수 있는 일정이 하나도 없는 연휴는 아예 목록에서 뺀다 —
-        // 예전엔 ⚠ 배지만 달고 계속 보여줬는데, 어차피 못 가는 연휴라 경고 없이 숨긴다.
-        if (applyCap && cap !== Infinity && cellNetCost(best.cell) === Infinity) continue;
+        const best = usable[0];
         // 모니터가 여럿(예: 경유 허용 + 직항 전용)인 노선은 대표(최저) 칸 뒤에 남는 칸들을
         // 'alts'로 들고 있는다 — 직항이 항상 더 비싸서 대표로 못 뽑혀도 화면에서
         // 사라지지 않고 보조 옵션으로 보이게 하기 위함.
         out.push({
           win: w.id, label: gvWindowLabel(w.id), cell: best.cell, mon: best.mon,
-          alts: found.slice(1),
+          alts: usable.slice(1),
         });
       }
       return out;
@@ -1886,6 +1911,9 @@
       const rows = [];
       for (const g of groupMap.values()) {
         const pick = pickBestCell(g.monitors, activeIds, allCells);
+        // 직항/경유 칩이 걸려 있을 땐 조건에 맞는 일정이 없는 노선을 조용히 뺀다
+        // (연차 상한만 걸린 경우는 기존처럼 사유 행으로 남겨 '왜 없는지' 보여준다).
+        if (state.selStops.size && !pick.cell) continue;
         rows.push({ route: g.route, monitors: g.monitors, cell: pick.cell, win: pick.win, capBlocked: pick.capBlocked });
       }
       if (!rows.length) {
@@ -1995,6 +2023,7 @@
 
       const items = state.deals.filter(d =>
         routePassesChip(d.route) &&
+        pairMatchesStops(d) && // 직항/경유 칩: 이 변동 건 자체의 실제 항공편 기준
         d.current_price <= maxPrice &&
         d.leave_days <= maxLeave
       );
@@ -2192,9 +2221,12 @@
         // 모니터가 여럿인 노선(예: 경유 허용 + 직항 전용)은 대표(최저) 칸 옆에 남는 모니터의
         // 칸도 작게 보여준다 — 직항이 경유보다 비싸 대표로 못 뽑혀도 화면에서 사라지지 않게.
         const altHtml = (w.alts || []).map(a => {
-          const ab = a.cell.best;
+          // displayPair: 직항/경유·연차 상한 필터가 걸려 있으면 조건에 맞는 일정 기준으로 표시
+          // (원래 최저가 일정이 조건에 안 맞으면 가격도 그 일정 것으로 함께 바뀐다).
+          const ab = displayPair(a.cell) || a.cell.best;
+          if (!ab) return '';
           return `<div class="cell-sub alt-opt" title="같은 연휴, 다른 모니터 옵션">` +
-            `${stopsCell(ab.stops, ab.airline)} <a class="price-link" href="${esc(ab.booking_url)}" target="_blank" rel="noopener">${fmt(a.cell.min_price)}원</a></div>`;
+            `${stopsCell(ab.stops, ab.airline)} <a class="price-link" href="${esc(ab.booking_url)}" target="_blank" rel="noopener">${fmt(ab.price)}원</a></div>`;
         }).join('');
         const favKey = destHolFavKey(gk, w.win);
         const favOn = favs.has(favKey);
@@ -2279,8 +2311,17 @@
         if (!groupMap.has(gk)) groupMap.set(gk, { route: r, items: [] });
         groupMap.get(gk).items.push(r);
       }
-      const groups = [...groupMap.values()];
+      let groups = [...groupMap.values()];
       groups.forEach(g => { g.info = destGroupInfo(g); });
+      // 직항/경유 칩이 걸려 있을 땐 조건에 맞는 일정이 없는 여행지를 조용히 뺀다
+      // (연차 상한만 걸린 경우는 기존처럼 사유와 함께 남긴다).
+      if (state.selStops.size) {
+        groups = groups.filter(g => g.info.best);
+        if (!groups.length) {
+          tbody.innerHTML = emptyRow(6, '조건에 맞는 항목이 없습니다.');
+          return;
+        }
+      }
 
       const bestPrice = g => (g.info.best ? g.info.best.cell.min_price : Infinity);
       // 정렬 기준은 반드시 '그 행에 실제로 보이는 값'이어야 한다. 특가율 칸은 대표 연휴
