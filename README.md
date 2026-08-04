@@ -89,11 +89,19 @@ tests/test_smoke.py    # 브라우저 없이 도는 스모크 테스트 (python 
 ```
 
 - `origin`/`destination`은 IATA 공항 코드
-- 구글 플라이트 크롤러는 도시명을 인식하므로, 새 공항 코드를 쓰려면 `collector/google_flights_crawler.py`의 `AIRPORT_CITY` 표에도 추가해야 함 (단, 대시보드에서 등록하면 도시명이 `routes.json`에 함께 저장되어 폴백 표가 없어도 동작)
+- 구글 플라이트 크롤러는 도시명을 인식하므로, 새 공항 코드를 쓰려면 `collector/google_flights_crawler.py`의 `AIRPORT_CITY` 표에도 추가해야 함
 
-## 공항 검색 데이터베이스 (`docs/airports.js`)
+## 우선순위 노선 (수집 다양성 조정)
 
-대시보드의 항목 등록 자동완성은 `docs/airports.js`의 공항 목록을 사용합니다. 목록은 두 부분으로 구성됩니다.
+`data/priority_routes.json`에 `["ICN-KHH", "ICN-HAN"]` 처럼 origin-destination 배열을 적어두면, 그 노선들은 연휴당 날짜쌍 후보 상한이 `PRIORITY_BOOST`(기본 2)배로 늘어나 같은 총 크롤 예산 안에서도 더 다양한 일정 후보(특히 덤휴일이 큰 앵커 후보)를 확보합니다. 하루짜리 연휴처럼 원래 후보가 1개뿐이던 노선도 이걸로 여러 개를 만들어, 휴일 가치/연차 상한 설정이 실제로 고를 게 생기게 됩니다.
+
+- 실사용 인기도(즐겨찾기/조회수) 집계는 서버(Cloudflare Worker) 쪽 작업이 필요해 아직 없음 — 지금은 관리자가 직접 고르는 방식
+- 파일이 없거나 비어 있으면 기존과 동일하게(부스트 없이) 동작
+- `PRIORITY_BOOST` 환경변수로 배율 조정 가능 (`collect.yml`의 `env:`에 추가)
+
+## 공항 데이터베이스 (`docs/airports.js`)
+
+`docs/airports.js`의 공항 목록은 대시보드에서 국기 이모지·도시명 표시(`findAirport`)에 씁니다. 목록은 두 부분으로 구성됩니다.
 
 - **상단 큐레이션 목록**: 한국인 여행자 기준 인기순으로 한글 도시/공항명을 손으로 관리 (검색 우선순위 상단)
 - **`GENERATED_EXT` 블록**: 전 세계 정기 IATA 공항 전체를 자동 생성 (시모지시마 등 소규모·지방 공항 포함)
