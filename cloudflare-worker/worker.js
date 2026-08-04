@@ -55,7 +55,7 @@ export default {
       try {
         const clientId = String(body.clientId || "");
         if (action === "chat_poll") return json(await chatPoll(env, request, clientId), 200, cors);
-        if (action === "chat_set_name") return json(await chatSetName(env, request, clientId, body.name), 200, cors);
+        if (action === "chat_set_name") return json(await chatSetName(env, request, clientId, body.name, body.adminPass), 200, cors);
         return json(await chatSend(env, request, clientId, body.text), 200, cors);
       } catch (e) {
         return json({ error: String((e && e.message) || e) }, (e && e.status) || 500, cors);
@@ -285,6 +285,18 @@ const CHAT_RANKS = ["사원", "주임", "대리", "과장", "차장", "부장", 
 // IP를 그대로 노출하지 않으려 고정 문자열을 섞어 해시한다(완전한 익명화는 아니고,
 // 닉네임만 봐서는 IP를 바로 못 알아보게 하는 정도의 가벼운 방지).
 const CHAT_NAME_PEPPER = "flight-deals-chat-v2";
+// clientId를 그대로 저장/노출하지 않고, "이 메시지가 내가 보낸 것인지" 클라이언트가
+// 판별할 수 있는 정도로만 결정적 해시를 남긴다(말풍선 좌/우 정렬용). 닉네임이 바뀌어도
+// clientId는 그대로이므로, 이름 대신 이 값으로 비교하면 과거 메시지도 계속 "내 말풍선"으로
+// 올바르게 오른쪽 정렬된다.
+const CHAT_CID_PEPPER = "flight-deals-chat-cid-v1";
+async function hashClientId(clientId) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(CHAT_CID_PEPPER + clientId));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 16);
+}
+// 아무나 선점하지 못하게 예약해 둔 닉네임 -> 설정하려면 CHAT_ADMIN_PASS 와 일치하는
+// 암호가 필요하다 (사이트 관리자만 알고 있는, 친구들에게 공유하는 SHARE_PASS와는 별개의 값).
+const CHAT_RESERVED_NAMES = new Set(["관리자"]);
 
 function getClientIp(request) {
   return request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For") || "0.0.0.0";
@@ -339,13 +351,17 @@ async function resolveChatName(env, request, clientId) {
 
 async function chatPoll(env, request, clientId) {
   const list = await readChatList(env);
-  return { messages: list.slice(-CHAT_POLL_LIMIT), you: await resolveChatName(env, request, clientId) };
+  return {
+    messages: list.slice(-CHAT_POLL_LIMIT),
+    you: await resolveChatName(env, request, clientId),
+    youCid: clientId ? await hashClientId(clientId) : null,
+  };
 }
 
 // 닉네임을 직접 지정(또는 빈 값으로 보내 자동 배정으로 되돌리기). clientId별로 KV에
 // 저장해 다음 poll/send부터 계속 그 이름을 쓴다 — 로그인 없이도 "이 브라우저의 내 이름"이
 // 유지된다. 연속 변경(사칭 목적 등)을 막으려고 chat_send와 같은 방식으로 속도 제한한다.
-async function chatSetName(env, request, clientId, name) {
+async function chatSetName(env, request, clientId, name, adminPass) {
   if (!CLIENT_ID_RE.test(clientId)) throw fail("clientId 형식 오류", 400);
 
   const rateKey = "chat:namerate:" + clientId;
@@ -366,6 +382,14 @@ async function chatSetName(env, request, clientId, name) {
   // 제어문자 제거 + 길이 제한. 완전한 비속어 필터는 아니고 레이아웃 보호가 목적.
   const cleaned = raw.replace(/[\x00-\x1f\x7f]/g, "").slice(0, CHAT_NAME_MAX);
   if (!cleaned) throw fail("올바른 닉네임을 입력하세요.", 400);
+  // "관리자" 등 예약된 이름은 사이트 관리자만 아는 CHAT_ADMIN_PASS 를 함께 보내야
+  // 설정할 수 있다. 시크릿이 아예 설정돼 있지 않으면(=아직 준비 안 됨) 누구도 가져갈 수
+  // 없도록 항상 거부한다.
+  if (CHAT_RESERVED_NAMES.has(cleaned)) {
+    if (!env.CHAT_ADMIN_PASS || String(adminPass || "") !== env.CHAT_ADMIN_PASS) {
+      throw fail("이 닉네임은 사용할 수 없습니다.", 403);
+    }
+  }
   await env.COUNTER_KV.put(key, cleaned, { expirationTtl: CHAT_NAME_TTL });
   return { name: cleaned };
 }
@@ -393,7 +417,7 @@ async function chatSend(env, request, clientId, text) {
   await env.COUNTER_KV.put(CHAT_SEQ_KEY, String(seq));
 
   const list = await readChatList(env);
-  list.push({ seq, t: now, name: cleanName, text: cleanText });
+  list.push({ seq, t: now, name: cleanName, text: cleanText, cid: await hashClientId(clientId) });
   await env.COUNTER_KV.put(CHAT_KEY, JSON.stringify(list.slice(-CHAT_MAX)));
 
   return { ok: true };
