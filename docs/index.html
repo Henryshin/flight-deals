@@ -281,10 +281,6 @@
   .badge-min { display: inline-block; background: var(--excel-green); color: #fff; font-size: 13px; padding: 0 5px; border-radius: 2px; margin-left: 4px; }
   /* 실질 최적(휴일 가치 반영)은 최저가 배지와 구분되게 파란 계열 */
   .badge-net { background: #0b5cab; }
-  /* 연휴 간 가격 비교 막대 (그 여행지 안에서 최고가 대비 상대 길이) */
-  .pbar { display: block; height: 9px; background: #eef1f3; border: 1px solid var(--grid); border-radius: 2px; overflow: hidden; }
-  .pbar > i { display: block; height: 100%; background: #9fc6ae; }
-  .pbar.is-min > i { background: var(--excel-green); }
   .dest-detail-foot { color: var(--muted); font-size: 14px; font-style: italic; margin-top: 6px; }
   .dest-detail-head .head-spark svg.spark { display: inline-block; vertical-align: middle; }
   /* 두 보드가 함께 쓰는 연휴 칩 필터의 현재 상태 표시 */
@@ -598,48 +594,6 @@
             </tr>
           </thead>
           <tbody id="dest-board"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <h2 class="collapsible" id="deals-h2"><span class="collapse-caret">▶</span> 변동 항목 <span class="collapse-hint">(클릭해서 펼치기)</span></h2>
-    <div id="deals-body" hidden>
-      <div class="note" style="margin-bottom:0">
-        <b>기준값</b> = 같은 연휴·같은 박수(일정 길이) 조건에서 최근 30일간 관측된 평균가. 다른 연휴끼리는 섞지 않습니다. <b>변동율</b>은 현재값이 그보다 얼마나 싼지입니다(15% 이상 하락한 날짜만 표시).
-      </div>
-      <div class="toolbar-row">
-        <label for="deal-sort">정렬</label>
-        <select id="deal-sort">
-          <option value="discount">할인율순</option>
-          <option value="price">현재값 낮은순</option>
-          <option value="depart">출발일 빠른순</option>
-          <option value="leave">연차 적은순</option>
-        </select>
-        <label for="deal-max-price">최대 가격</label>
-        <input id="deal-max-price" type="number" min="0" step="10000" placeholder="원" style="width:100px" />
-        <label for="deal-max-leave">최대 연차</label>
-        <select id="deal-max-leave">
-          <option value="">제한없음</option>
-          <option value="0">0일</option>
-          <option value="1">1일</option>
-          <option value="2">2일</option>
-          <option value="3">3일</option>
-        </select>
-      </div>
-      <div class="tbl-wrap">
-        <table class="sheet wide">
-          <thead>
-            <tr>
-              <th style="width:16%">항목</th>
-              <th style="width:22%">기간</th>
-              <th style="width:17%">일정</th>
-              <th style="width:9%">직항/경유</th>
-              <th style="width:11%">현재값</th>
-              <th style="width:9%">기준값</th>
-              <th style="width:8%">변동율</th>
-            </tr>
-          </thead>
-          <tbody id="deals"></tbody>
         </table>
       </div>
     </div>
@@ -1153,11 +1107,8 @@
     // 추천으로 올라온다. 이 사이트의 전제(연차 아껴 쓰기)를 지키는 예산 제약.
     const MAX_LEAVE_KEY = 'fd_max_leave';
     const MAX_LEAVE_DEFAULT = 5;
-    const EMPTY_DEALS_MSG = "데이터 초기화 후 재수집 중입니다. 다음 자동 수집(최대 4시간) 또는 '지금 수집 실행'으로 갱신하세요.";
-    const NO_DEALS_MSG = '현재 기준(30일 평균 대비 15% 이상 하락)을 충족하는 항목이 없습니다. 다음 수집에서 다시 계산됩니다.';
 
     const state = {
-      deals: [],
       routesStatus: [],
       history: {},
       meta: null,
@@ -1344,7 +1295,7 @@
     function destHolFavKey(gk, winId) { return gk + '::' + winId; }
 
     // 등록/삭제 직후 ~ 다음 수집 전까지의 낙관적 변경을 새로고침에도 유지하기 위한 대기 목록.
-    // 정적 routes_status.json / deals.json 은 수집 워크플로가 돌아야 갱신되므로,
+    // 정적 routes_status.json / matrix.json 은 수집 워크플로가 돌아야 갱신되므로,
     // 그 사이에는 localStorage 의 tombstone(removed) / 대기 등록(added)을 덧입혀 보여준다.
     function getPending() {
       try {
@@ -1370,7 +1321,6 @@
         if (statusKeys.has(key)) {
           // 정적 데이터가 아직 삭제를 모름 → 화면에서 숨기고 tombstone 유지
           state.routesStatus = state.routesStatus.filter(r => rk(r) !== key);
-          state.deals = state.deals.filter(d => rk(d.route) !== key);
           removed.push(key);
         }
         // 정적 데이터에 이미 없으면 수집이 반영된 것 → tombstone 제거
@@ -1608,7 +1558,6 @@
       }
       renderChips();
       renderGvBoard();
-      renderDeals();
       renderDestBoard();
     }
 
@@ -1984,7 +1933,7 @@
       }).join('');
     }
 
-    // ===================== 변동 항목 (deals) =====================
+    // ===================== 가격 등락 표시 =====================
     function trendHtml(cur, prev, emptyAsDash) {
       if (cur == null || prev == null) {
         return emptyAsDash ? '<span class="trend flat">—</span>' : '';
@@ -2004,75 +1953,6 @@
       return 'https://www.google.com/travel/flights/search?q=' +
         encodeURIComponent(`Flights from ${oc} to ${dc} on ${dep} through ${ret}`) +
         '&hl=ko&curr=KRW';
-    }
-
-    function renderDeals() {
-      const tbody = document.getElementById('deals');
-      if (!state.deals.length) {
-        // 수집이 정상 동작 중(표본 있음)인데 기준을 충족하는 항목이 없는 경우와,
-        // 아직 수집 전(표본 없음)인 경우를 구분해서 안내
-        const collecting = state.routesStatus.some(r => r.sample_count > 0);
-        tbody.innerHTML = emptyRow(7, collecting ? NO_DEALS_MSG : EMPTY_DEALS_MSG);
-        return;
-      }
-      const sortKey = document.getElementById('deal-sort').value;
-      const maxPriceRaw = document.getElementById('deal-max-price').value;
-      const maxPrice = maxPriceRaw ? parseInt(maxPriceRaw, 10) : Infinity;
-      const maxLeaveRaw = document.getElementById('deal-max-leave').value;
-      const maxLeave = maxLeaveRaw === '' ? Infinity : parseInt(maxLeaveRaw, 10);
-
-      const items = state.deals.filter(d =>
-        routePassesChip(d.route) &&
-        pairMatchesStops(d) && // 직항/경유 칩: 이 변동 건 자체의 실제 항공편 기준
-        d.current_price <= maxPrice &&
-        d.leave_days <= maxLeave
-      );
-      if (!items.length) {
-        tbody.innerHTML = emptyRow(7, '조건에 맞는 항목이 없습니다. 필터를 조정해 보세요.');
-        return;
-      }
-
-      const cmpMap = {
-        discount: (a, b) => b.discount_pct - a.discount_pct,
-        price: (a, b) => a.current_price - b.current_price,
-        depart: (a, b) => (a.depart_date < b.depart_date ? -1 : a.depart_date > b.depart_date ? 1 : 0),
-        leave: (a, b) => (a.leave_days - b.leave_days) || (b.discount_pct - a.discount_pct)
-      };
-      const cmp = cmpMap[sortKey] || cmpMap.discount;
-
-      // 노선별 그룹 유지: 그룹 내부 정렬 후, 그룹 대표값으로 그룹 정렬
-      const groupMap = new Map();
-      for (const d of items) {
-        const k = routeGroupKey(d.route); // 레벨1: 노선(origin-destination) 단위로 묶음
-        if (!groupMap.has(k)) groupMap.set(k, { route: d.route, items: [] });
-        groupMap.get(k).items.push(d);
-      }
-      const groups = [...groupMap.values()];
-      groups.forEach(g => g.items.sort(cmp));
-      groups.sort((ga, gb) => cmp(ga.items[0], gb.items[0]));
-
-      tbody.innerHTML = groups.map(g => {
-        const country = g.route.country || '기타';
-        const flag = g.route.flag || '';
-        const label = g.route.label || (g.route.origin + ' → ' + g.route.destination);
-        const header = `<tr class="group-header"><td colspan="7">${esc(label)} · ${esc(country)}</td></tr>`;
-        const rows = g.items.map(d => {
-          const depHourStr = depHour(d.dep_time) ? ` <span class="go-time">${depHour(d.dep_time)}</span>` : '';
-          return `
-          <tr>
-            <td><a href="${esc(d.booking_url)}" target="_blank" rel="noopener">${esc(label)}</a>
-              <button class="copy-btn" data-copy="${esc(d.booking_url)}" title="예약 링크 복사">📋</button></td>
-            <td class="period-cell">${fmtDateYY(d.depart_date, d.depart_weekday)}${depHourStr} ~ ${fmtDateYY(d.return_date, d.return_weekday)}${d.is_holiday_window ? ' <span class="badge-hol">연휴</span>' : ''}</td>
-            <td>${d.nights}박 ${d.days}일 · 연차 ${d.leave_days}개${tripStrip(d.depart_date, d.return_date)}${climateBadge(d.route.destination, d.depart_date)}</td>
-            <td>${stopsCell(d.stops, d.airline)}</td>
-            <td class="num">${fmt(d.current_price)} ${trendHtml(d.current_price, d.prev_price, false)}</td>
-            <td class="num">${fmt(d.avg_price)}</td>
-            <td class="num pct up">-${d.discount_pct}%</td>
-          </tr>
-        `;
-        }).join('');
-        return header + rows;
-      }).join('');
     }
 
     // ===================== 스파크라인 =====================
@@ -2200,11 +2080,10 @@
           `<div class="dest-detail-foot">${esc(reason)}</div></div></td></tr>`;
       }
 
-      // displayPair는 연차 상한 때문에 최저가와 다른 일정을 가리킬 수 있어, 비교 막대/최저
-      // 배지도 '화면에 보이는 가격'(= displayPair.price) 기준으로 다시 잡는다 — 안 그러면
-      // 막대 길이·최저 배지가 실제로 보여주는 가격과 다른 값(원래 최저가) 기준이 되어 어긋난다.
+      // displayPair는 연차 상한 때문에 최저가와 다른 일정을 가리킬 수 있어, 최저 배지도
+      // '화면에 보이는 가격'(= displayPair.price) 기준으로 다시 잡는다 — 안 그러면 배지가
+      // 실제로 보여주는 가격과 다른 값(원래 최저가) 기준이 되어 어긋난다.
       const winsWithB = info.wins.map(w => ({ w, b: displayPair(w.cell) }));
-      const maxPrice = winsWithB.reduce((mx, x) => Math.max(mx, x.b.price), 0) || 1;
       const minPrice = winsWithB.reduce((mn, x) => Math.min(mn, x.b.price), Infinity);
       const byNet = !!dayValueWon();
       const rows = winsWithB.map(({ w, b }, i) => {
@@ -2214,8 +2093,6 @@
         const period = `${fmtDateYY(b.depart_date, b.depart_weekday)} ~ ${fmtDateYY(b.return_date, b.return_weekday)}`;
         const sched = `${period} · ${schedText(b)}${capSwapped ? '' : recommendedAltNote(w.cell)}`;
         const strip = `<span class="gv-strip-row">${tripStrip(b.depart_date, b.return_date)}${climateBadge(g.route.destination, b.depart_date)}</span>`;
-        const pct = Math.max(4, Math.round(b.price / maxPrice * 100));
-        const barTitle = isCheapest ? '이 여행지에서 가장 싼 연휴' : `가장 싼 연휴보다 ${fmt(b.price - minPrice)}원 비쌈`;
         // 배지: 휴일 가치가 켜져 있으면 '실질 최적'과 '최저가'를 구분해 각각 표시한다.
         const badges = (byNet && isTop && !isCheapest ? '<span class="badge-min badge-net" title="휴일 가치를 반영한 실질비용이 가장 낮은 연휴">실질 최적</span>' : '')
           + (isCheapest ? '<span class="badge-min">최저</span>' : '');
@@ -2239,7 +2116,7 @@
             <td>${gvDealBadge(w.cell, b.price)}</td>
             <td class="period-cell">${sched}${strip}</td>
             <td>${stopsCell(b.stops, b.airline)}${altHtml}</td>
-            <td title="${esc(barTitle)}"><span class="pbar${isCheapest ? ' is-min' : ''}"><i style="width:${pct}%"></i></span></td>
+            <td>${trendHtml(b.price, b.prev_price, true)}</td>
           </tr>`;
       }).join('');
 
@@ -2262,9 +2139,9 @@
                 <th style="width:18%">연휴</th>
                 <th style="width:10%">최저가</th>
                 <th style="width:13%">특가율</th>
-                <th style="width:34%">추천 일정</th>
+                <th style="width:33%">추천 일정</th>
                 <th style="width:12%">직항/경유</th>
-                <th style="width:9%">연휴 간 비교</th>
+                <th style="width:10%" title="직전 수집 때의 가격과 비교한 등락. 관측이 한 번뿐이면 '—'">등락</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -2539,10 +2416,8 @@
         }
         pendingMarkRemoved(key); // 새로고침해도 다시 나타나지 않도록 tombstone 기록
         state.routesStatus = state.routesStatus.filter(x => rk(x) !== key);
-        state.deals = state.deals.filter(d => rk(d.route) !== key);
         renderChips();
-        renderDeals();
-        renderDestBoard();
+          renderDestBoard();
         renderGvBoard(); // 삭제된 노선이 가성비 보드에 남지 않도록
       } catch (e) {
         usingProxy() ? handleProxyError(e) : handleGhError(e);
@@ -2868,11 +2743,6 @@
         if (e.target === e.currentTarget) closeRouteEdit();
       });
 
-      ['deal-sort', 'deal-max-price', 'deal-max-leave'].forEach(id => {
-        const el = document.getElementById(id);
-        el.addEventListener('change', renderDeals);
-        if (el.tagName === 'INPUT' && el.type === 'number') el.addEventListener('input', renderDeals);
-      });
       document.getElementById('gv-sort').addEventListener('change', renderGvBoard);
       document.getElementById('dest-sort').addEventListener('change', renderDestBoard);
 
@@ -2887,7 +2757,6 @@
       // 기본 접힘(길어서 스크롤 방해). 어느 쪽이든 사용자가 바꾼 상태는 브라우저에 기억된다.
       wireSimpleToggle('gv-h2', 'gv-body', true);
       wireSimpleToggle('dest-h2', 'dest-body', true);
-      wireSimpleToggle('deals-h2', 'deals-body', false);
 
       // 실시간 채팅 접기/펼치기 — 펼쳐져 있을 때만 폴링 (숨겨진 동안 불필요한 요청 방지)
       // 드래그로 창을 옮긴 직후의 click은 무시(안 그러면 옮길 때마다 접혀버림).
@@ -2967,15 +2836,13 @@
       calYear = calCenter.getFullYear();
       calMonth = calCenter.getMonth();
 
-      const [deals, routesStatus, history, meta, holidays, matrix] = await Promise.all([
-        fetchJson('data/deals.json', []),
+      const [routesStatus, history, meta, holidays, matrix] = await Promise.all([
         fetchJson('data/routes_status.json', []),
         fetchJson('data/history.json', {}),
         fetchJson('data/meta.json', null),
         fetchJson('data/holidays.json', []),
         fetchJson('data/matrix.json', null)
       ]);
-      state.deals = Array.isArray(deals) ? deals : [];
       state.routesStatus = Array.isArray(routesStatus) ? routesStatus : [];
       state.history = (history && typeof history === 'object' && !Array.isArray(history)) ? history : {};
       state.meta = meta;
@@ -2996,7 +2863,6 @@
       renderCalendar();
       renderChips();
       renderGvBoard();
-      renderDeals();
       renderDestBoard();
       renderMeta();
       setInterval(renderMeta, 60000);

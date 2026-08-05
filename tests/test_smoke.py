@@ -170,55 +170,52 @@ def test_build_matrix_deal():
     assert cell_c["tier"] == "C" and cell_c["min_price"] == 500000
 
 
-def test_deal_baseline_excludes_other_windows():
-    """deals.json 기준값은 같은 연휴 윈도우끼리만 평균 내야 한다.
+def test_matrix_pairs_keep_all_candidates_with_prev_price():
+    """셀은 후보를 미리 추리지 않고 전부 싣고, 날짜쌍별 직전 관측가를 함께 준다.
 
-    다른(더 저렴한) 연휴의 관측치가 섞여 들어가 기준값을 끌어내리면, 정작 이
-    연휴 안에서의 진짜 하락(17.7%)이 가짜로 희석되어(옛 로직대로면 4.6%로 계산돼
-    15% 임계값 미달) 특가로 안 잡히는 회귀를 방지한다.
+    거르는 일은 프론트(연차 상한/직항·경유)가 사용자 선택을 받은 뒤에 하므로,
+    빌드 단계에서 줄이면 필터가 찾을 대상 자체가 사라진다. 예전 (가격, 덤휴일)
+    파레토 프런티어는 '가장 싼 일정이 덤 휴일도 최대'인 칸에서 나머지를 전부
+    버려, 연차를 적게 쓰는 짧은 일정이 필터에 걸리지 않는 회귀가 있었다.
     """
-    from scripts.build_dashboard_data import build_route_deals
+    from scripts.build_dashboard_data import build_matrix_cell
 
-    today = date(2026, 7, 23)
-    lookback_start = today - timedelta(days=30)
-    w_chuseok = {"id": "2026-09-24", "start": date(2026, 9, 23), "end": date(2026, 9, 28)}
-    w_newyear = {"id": "2027-01-01", "start": date(2026, 12, 31), "end": date(2027, 1, 3)}
-    windows = [w_chuseok, w_newyear]
-    known_window_ids = frozenset(w["id"] for w in windows)
-    route = {"origin": "ICN", "destination": "NRT"}
-    max_stops = 1
-    D1, D2 = "2026-07-21T01:00:00+00:00", "2026-07-22T01:00:00+00:00"
-
-    mk = lambda dd, rd, price, wid, ts: {
-        "origin": "ICN", "destination": "NRT", "depart_date": dd, "return_date": rd,
+    w = {"id": "2026-10-05", "start": date(2026, 10, 3), "end": date(2026, 10, 12)}
+    today = date(2026, 8, 5)
+    route = {"origin": "ICN", "destination": "KHH"}
+    D1, D2 = "2026-08-03T01:00:00+00:00", "2026-08-04T01:00:00+00:00"
+    mk = lambda dd, rd, price, ts: {
+        "origin": "ICN", "destination": "KHH", "depart_date": dd, "return_date": rd,
         "price": price, "is_holiday_window": True, "collected_at": ts,
-        "dep_time": "", "arr_time": "", "stops": "0", "window_id": wid,
+        "dep_time": "", "arr_time": "", "stops": "0", "window_id": "2026-10-05",
     }
-
     rows = [
-        # 추석(훨씬 저렴한 연휴) - 같은 3박이지만 다른 윈도우 -> 신정 기준값에 섞이면 안 됨
-        mk("2026-09-23", "2026-09-26", 500000, "2026-09-24", D1),
-        mk("2026-09-24", "2026-09-27", 480000, "2026-09-24", D1),
-        mk("2026-09-25", "2026-09-28", 520000, "2026-09-24", D1),
-        # 신정 - 3박, 통상 시세 ~80만원
-        mk("2026-12-31", "2027-01-03", 820000, "2027-01-01", D1),
-        mk("2027-01-01", "2027-01-04", 800000, "2027-01-01", D1),
-        mk("2027-01-02", "2027-01-05", 780000, "2027-01-01", D1),
-        # 신정, 진짜 특가 후보: 90만원 -> 65만원으로 하락(17.7%, 임계값 15% 충족)
-        mk("2027-01-03", "2027-01-06", 900000, "2027-01-01", D1),
-        mk("2027-01-03", "2027-01-06", 650000, "2027-01-01", D2),
+        # 최저가이면서 덤 휴일도 최대인 일정 — 옛 로직에선 이 하나만 남았다
+        mk("2026-10-03", "2026-10-12", 380000, D1),
+        mk("2026-10-03", "2026-10-12", 370830, D2),
+        # 더 비싸고 덤 휴일도 적지만, 연차를 1개만 쓰는 일정
+        mk("2026-10-03", "2026-10-06", 398730, D2),
+        # 관측이 한 번뿐인 일정 -> prev_price 는 None
+        mk("2026-10-04", "2026-10-08", 413011, D2),
     ]
-    deals = build_route_deals(
-        rows, rows, max_stops, route, today, lookback_start, windows, known_window_ids,
+    cell = build_matrix_cell(
+        rows, [], 1, w, route, today,
+        today - timedelta(days=30), today - timedelta(days=60),
     )
-    assert len(deals) == 1, f"특가 1건이어야 하는데 {len(deals)}건: {deals}"
-    d = deals[0]
-    assert (d["depart_date"], d["return_date"]) == ("2027-01-03", "2027-01-06")
-    assert d["current_price"] == 650000
-    # 신정 안의 5개 관측치 평균(79만원)이어야 한다. 추석까지 섞이면 68만 1250원으로
-    # 끌어내려져(하락률이 4.6%로 계산돼) 특가 판정에서 빠졌을 것이다.
-    assert d["avg_price"] == 790000, f"기준값이 다른 연휴와 섞인 것으로 보임: {d['avg_price']}"
-    assert abs(d["discount_pct"] - 17.7) < 0.1
+    pairs = {(p["depart_date"], p["return_date"]): p for p in cell["pairs"]}
+    assert len(pairs) == 3, f"후보 3개가 다 남아야 하는데 {len(pairs)}개"
+
+    # 연차 1개짜리 일정이 살아남아야 프론트의 연차 상한 필터가 찾을 수 있다
+    short = pairs[("2026-10-03", "2026-10-06")]
+    assert short["leave_days"] == 1
+
+    # pairs[0] 은 여전히 최저가 (min_price/best/특가율 기준이 흔들리면 안 됨)
+    assert cell["pairs"][0]["price"] == cell["min_price"] == 370830
+    assert cell["best"]["return_date"] == "2026-10-12"
+
+    # 직전 관측가: 두 번 관측된 일정만 값이 있고, 한 번뿐이면 None
+    assert pairs[("2026-10-03", "2026-10-12")]["prev_price"] == 380000
+    assert pairs[("2026-10-04", "2026-10-08")]["prev_price"] is None
 
 
 def test_group_routes_nights_variants():
