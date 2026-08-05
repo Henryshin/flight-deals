@@ -43,9 +43,10 @@ TIER_A_MIN_WINDOW = 2
 WEEKDAY_KO = ["월", "화", "수", "목", "금", "토", "일"]
 HOLIDAY_DATES = {date.fromisoformat(d) for days in KOREAN_HOLIDAYS.values() for d in days}
 
-# 셀당 내보내는 일정 후보(파레토 프런티어) 상한. 어느 '휴일 하루 가치'에서도 최적 일정은
-# 프런티어 위에만 있으므로 소수만 실어도 충분하다 (matrix.json 크기 억제).
-MAX_PAIRS_PER_CELL = 6
+# 셀당 내보내는 일정 후보 상한 — 폭주 방지용 안전판이지 선별 기준이 아니다.
+# 실제 수집량은 칸당 많아야 10개 안팎이라 평소엔 걸리지 않는다. 여기서 더 줄이면
+# 프론트 필터(연차 상한·직항/경유)가 고를 대상이 사라지므로 넉넉하게 둔다.
+MAX_PAIRS_PER_CELL = 24
 
 
 def _day(row):
@@ -232,24 +233,25 @@ def _pair_entry(row, route):
 
 
 def _pareto_pairs(rows, route):
-    """날짜쌍별 현재 최저가 행들 -> (가격↑, 덤 휴일↑) 파레토 프런티어.
+    """날짜쌍별 현재 최저가 행들 -> 가격 오름차순 일정 후보 전부.
 
-    가격 오름차순으로 훑으며 '덤 휴일이 지금까지 최대보다 큰' 일정만 남긴다.
-    첫 항목은 항상 전체 최저가(= 셀의 min_price 와 동일한 일정). 더 비싼 일정은
-    덤 휴일이 더 많을 때만 실려, 프론트의 실질 비용 계산(가격 - 가치 x 덤)이
-    어떤 가치값에서도 이 목록 안에서 최적을 찾을 수 있다.
+    거르는 일은 프론트(연차 상한·직항/경유 칩)가 사용자 선택을 받은 뒤에 한다.
+    여기서 미리 줄이지 않는 이유: 무엇을 남길지 정하는 시점에는 사용자가 어떤
+    필터를 걸지 알 수 없어서, 미리 버리면 필터가 찾을 대상 자체가 사라진다.
+
+    예전엔 (가격↑, 덤 휴일↑) 파레토 프런티어만 남겼는데, 그 규칙에는 '연차를
+    적게 쓴다'는 장점이 빠져 있었다. 그래서 '가장 싼 일정이 덤 휴일도 최대'인
+    칸(전체의 27%)은 후보가 1개로 뭉개졌고, 연차 상한을 낮게 걸면 실제로는 연차
+    1개짜리 일정이 있는데도 "연차 N개 필요(상한 초과)"로 연휴가 통째로 사라졌다.
+    (ICN-KHH 2026-10-05: 일정 8개 중 9박10일/연차4 하나만 남고, 연차 1개로 갈 수
+     있는 10-03~10-06 이 버려졌다.)
+
+    칸당 일정은 많아야 10개 남짓이라 전부 실어도 matrix.json 은 gzip 기준 120KB
+    수준이다. 첫 항목은 여전히 전체 최저가(= 셀의 min_price, best 와 동일).
     """
     entries = [_pair_entry(r, route) for r in rows]
     entries.sort(key=lambda e: (e["price"], -e["bonus_days"], e["nights"]))
-    out, best_bonus = [], None
-    for e in entries:
-        if best_bonus is not None and e["bonus_days"] <= best_bonus:
-            continue
-        out.append(e)
-        best_bonus = e["bonus_days"]
-        if len(out) >= MAX_PAIRS_PER_CELL:
-            break
-    return out
+    return entries[:MAX_PAIRS_PER_CELL]
 
 
 def _latest_min(obs):
