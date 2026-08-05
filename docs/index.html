@@ -2140,7 +2140,8 @@
       // (연차 상한을 못 만족하는 연휴는 destWindowCells가 이미 걸러서 넘기므로 여기선
       // 신경 쓸 필요 없다.)
       const wins = destWindowCells(g.items).sort((a, b) =>
-        (dayValueWon() ? (cellNetCost(a.cell) - cellNetCost(b.cell)) : 0)
+        (a.win < b.win ? -1 : a.win > b.win ? 1 : 0)  // 가장 가까운 일정순 (연휴 ID 기준)
+        || (dayValueWon() ? (cellNetCost(a.cell) - cellNetCost(b.cell)) : 0)
         || (a.cell.min_price - b.cell.min_price)
         || (cellBetter(a.cell, b.cell) ? -1 : cellBetter(b.cell, a.cell) ? 1 : 0));
       // 연차 상한 때문에 다 걸러진 것인지(원본 데이터는 있음), 애초에 데이터가 없는 것인지
