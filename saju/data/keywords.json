@@ -1,0 +1,26 @@
+{
+  "_comment": [
+    "수집 대상 검색어. data/routes.json 에 대응하는 파일이다.",
+    "mode: keyword(Threads 전문검색) | tag(Threads 토픽태그) | hashtag(Instagram)",
+    "priority 오름차순으로 수집한다. Threads 는 7일 500쿼리, Instagram 은",
+    "7일 '고유 해시태그 30개'가 한도이므로 hashtag 항목 수를 30개 아래로 유지할 것.",
+    "Instagram recent_media 는 최근 24시간만 돌려주므로 매일 돌려야 누락이 없다."
+  ],
+  "queries": [
+    { "value": "사주", "mode": "keyword", "priority": 1 },
+    { "value": "사주팔자", "mode": "keyword", "priority": 1 },
+    { "value": "명리학", "mode": "keyword", "priority": 1 },
+    { "value": "십신", "mode": "keyword", "priority": 2 },
+    { "value": "일간", "mode": "keyword", "priority": 2 },
+    { "value": "용신", "mode": "keyword", "priority": 2 },
+    { "value": "대운", "mode": "keyword", "priority": 2 },
+    { "value": "격국", "mode": "keyword", "priority": 3 },
+    { "value": "신살", "mode": "keyword", "priority": 3 },
+    { "value": "오행", "mode": "keyword", "priority": 3 },
+    { "value": "지장간", "mode": "keyword", "priority": 4 },
+    { "value": "십이운성", "mode": "keyword", "priority": 4 },
+    { "value": "사주", "mode": "hashtag", "priority": 5 },
+    { "value": "명리학", "mode": "hashtag", "priority": 5 },
+    { "value": "사주공부", "mode": "hashtag", "priority": 6 }
+  ]
+}

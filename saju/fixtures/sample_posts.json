@@ -1,0 +1,153 @@
+{
+  "_comment": [
+    "자격증명 없이 전 파이프라인을 검증하기 위한 샘플. 실제 한국 사주 소셜의 형태를",
+    "본떴다 — 해설글, 해설+말미홍보(가장 흔한 형태), 순수 광고, 오늘의 운세 피드,",
+    "'제 사주 봐주세요' 질문글, 이미지 한 줄 캡션, 타계정 복붙, 오탐 함정글.",
+    "expected_label 은 tests/test_saju.py 의 골든 테스트가 검증한다.",
+    "NFD(자모 분리) 케이스는 이 파일에 담지 않고 테스트가 프로그램적으로 만든다."
+  ],
+  "posts": [
+    {
+      "id": "1001",
+      "platform": "sample",
+      "author": "myeongri_note",
+      "posted_at": "2026-08-10T02:00:00Z",
+      "permalink": "https://example.invalid/p/1001",
+      "media_type": "TEXT_POST",
+      "expected_label": "knowledge",
+      "text": "편관(偏官)은 나를 극하는 오행 중 음양이 같은 것을 말합니다.\n칠살이라고도 부르는데, 정관이 질서와 규범이라면 편관은 압박과 도전에 가깝습니다.\n편관이 강한 사주는 위기 상황에서 추진력이 뛰어나지만, 신약할 경우 스트레스에 취약해집니다.\n그래서 편관을 볼 때는 일간의 강약을 먼저 확인해야 합니다.\n예를 들어 일간이 신강하면 편관은 오히려 큰 자산이 됩니다."
+    },
+    {
+      "id": "1002",
+      "platform": "sample",
+      "author": "saju_study",
+      "posted_at": "2026-08-11T05:30:00Z",
+      "permalink": "https://example.invalid/p/1002",
+      "media_type": "TEXT_POST",
+      "expected_label": "knowledge",
+      "text": "일간이 목(木)이면 어떤 특징이 있을까요.\n목 기운은 위로 뻗어나가려는 성질이라 성장과 시작을 의미합니다.\n갑목은 큰 나무라 곧고 강직한 반면, 을목은 덩굴처럼 유연하게 상황에 맞춥니다.\n목생화라 목이 강하면 화를 잘 살려주고, 금극목이라 경금이 많으면 목이 상합니다.\n그래서 목 일간은 사주에 금이 얼마나 있는지를 반드시 같이 봅니다."
+    },
+    {
+      "id": "1003",
+      "platform": "sample",
+      "author": "unse_lab",
+      "posted_at": "2026-08-11T23:10:00Z",
+      "permalink": "https://example.invalid/p/1003",
+      "media_type": "TEXT_POST",
+      "expected_label": "mixed",
+      "text": "도화살이 있으면 무조건 바람난다는 말은 틀렸습니다.\n도화살은 본래 사람을 끄는 매력과 표현력을 뜻합니다.\n연예인이나 강사처럼 남 앞에 서는 직업에서는 오히려 크게 도움이 됩니다.\n다만 대운에서 도화가 겹치고 관성이 약하면 구설이 따를 수 있어 조심해야 합니다.\n\n내 사주에 도화살이 있는지 궁금하시면 상담 문의 주세요.\n프로필 링크에서 예약 가능합니다.\n\n#사주 #도화살 #명리학"
+    },
+    {
+      "id": "1004",
+      "platform": "sample",
+      "author": "jeomsul_master",
+      "posted_at": "2026-08-12T01:00:00Z",
+      "permalink": "https://example.invalid/p/1004",
+      "media_type": "IMAGE",
+      "expected_label": "promo",
+      "text": "🔮 하반기 신년운세 선착순 이벤트 🔮\n지금 예약하시면 할인가로 보실 수 있어요!\nDM 주세요 💌 카톡 상담도 가능합니다\n마감임박!!\n\n#사주 #신점 #点 #운세 #사주상담 #신년운세 #오늘의운세 #타로 #점집 #용한곳 #사주잘보는곳 #강남사주 #띠별운세 #재물운 #연애운"
+    },
+    {
+      "id": "1005",
+      "platform": "sample",
+      "author": "daily_unse_bot",
+      "posted_at": "2026-08-12T21:00:00Z",
+      "permalink": "https://example.invalid/p/1005",
+      "media_type": "TEXT_POST",
+      "tags": "사주 오늘의운세 띠별운세",
+      "expected_label": "fortune_feed",
+      "text": "오늘의 띠별 운세\n\n쥐띠 - 재물운이 좋습니다. 투자에 관심을 가져보세요.\n소띠 - 대인관계에서 오해가 생길 수 있으니 말을 아끼세요.\n호랑이띠 - 건강에 유의하시고 무리한 일정은 피하세요.\n토끼띠 - 뜻밖의 소식이 들려올 수 있습니다.\n용띠 - 관성이 살아나는 날, 윗사람의 도움이 있겠습니다."
+    },
+    {
+      "id": "1006",
+      "platform": "sample",
+      "author": "curious_person",
+      "posted_at": "2026-08-13T04:20:00Z",
+      "permalink": "https://example.invalid/p/1006",
+      "media_type": "TEXT_POST",
+      "expected_label": "question",
+      "text": "제 사주 좀 봐주세요 ㅠㅠ\n1995년 3월생 여자입니다. 일간이 병화라고 하는데 신약이래요.\n요즘 이직 고민 중인데 대운이 어떤지 궁금합니다. 알려주세요."
+    },
+    {
+      "id": "1007",
+      "platform": "sample",
+      "author": "saju_card",
+      "posted_at": "2026-08-13T06:00:00Z",
+      "permalink": "https://example.invalid/p/1007",
+      "media_type": "CAROUSEL_ALBUM",
+      "expected_label": "thin",
+      "text": "십신 정리표 저장해두세요 📌"
+    },
+    {
+      "id": "1008",
+      "platform": "sample",
+      "author": "copy_account",
+      "posted_at": "2026-08-14T08:00:00Z",
+      "permalink": "https://example.invalid/p/1008",
+      "media_type": "TEXT_POST",
+      "expected_label": "mixed",
+      "text": "✨✨✨\n편관(偏官)은 나를 극하는 오행 중 음양이 같은 것을 말합니다.\n칠살이라고도 부르는데, 정관이 질서와 규범이라면 편관은 압박과 도전에 가깝습니다.\n편관이 강한 사주는 위기 상황에서 추진력이 뛰어나지만, 신약할 경우 스트레스에 취약해집니다.\n그래서 편관을 볼 때는 일간의 강약을 먼저 확인해야 합니다.\n예를 들어 일간이 신강하면 편관은 오히려 큰 자산이 됩니다.\n\n상담 예약은 프로필 링크 참고해주세요\n\n#편관 #칠살 #사주 #십신 #명리"
+    },
+    {
+      "id": "1009",
+      "platform": "sample",
+      "author": "just_a_person",
+      "posted_at": "2026-08-14T09:15:00Z",
+      "permalink": "https://example.invalid/p/1009",
+      "media_type": "TEXT_POST",
+      "expected_label": "thin",
+      "text": "이번 주 목요일에 수업이 있고 금요일에는 회의가 있어요. 토요일에 봐요! 수업 자료는 미리 보내드릴게요."
+    },
+    {
+      "id": "1010",
+      "platform": "sample",
+      "author": null,
+      "posted_at": "2026-08-14T11:00:00Z",
+      "permalink": "https://example.invalid/p/1010",
+      "media_type": "IMAGE",
+      "api_fields_missing": ["author"],
+      "expected_label": "knowledge",
+      "text": "지장간이란 지지 속에 숨어 있는 천간을 말합니다.\n예를 들어 인목 안에는 무토, 병화, 갑목이 들어 있습니다.\n겉으로 드러난 천간만 보면 놓치는 부분이 많아, 지장간까지 봐야 사주의 실제 힘을 알 수 있습니다.\n특히 용신을 잡을 때 지장간에 통근했는지가 중요한 판단 기준이 됩니다."
+    },
+    {
+      "id": "1011",
+      "platform": "sample",
+      "author": "inline_tagger",
+      "posted_at": "2026-08-14T13:00:00Z",
+      "permalink": "https://example.invalid/p/1011",
+      "media_type": "TEXT_POST",
+      "expected_label": "knowledge",
+      "text": "#정관 이 강한 사람은 규범을 잘 지키고 조직 생활에 잘 맞습니다.\n반대로 #상관 이 강하면 틀에 갇히는 걸 답답해하고 자기 표현 욕구가 큽니다.\n둘 다 있으면 상관견관이라 하여 갈등이 생기는데, 이 경우 인성이 중간에서 조율해줍니다.\n그래서 관성과 식상의 균형을 보는 것이 중요합니다.\n\n#사주 #십신 #명리학 #사주공부 #정관 #상관"
+    },
+    {
+      "id": "1012",
+      "platform": "sample",
+      "author": "filter_dodger",
+      "posted_at": "2026-08-14T15:00:00Z",
+      "permalink": "https://example.invalid/p/1012",
+      "media_type": "IMAGE",
+      "expected_label": "promo",
+      "text": "용한 곳 찾으시는 분들 보세요\n상​담​문​의 는 아래로\n오픈채팅 열어두었습니다 선착순 마감\n\n#사주 #점집 #용한무당 #신점 #사주풀이 #운세 #타로카드 #사주보는곳 #점 #무속"
+    },
+    {
+      "id": "1013",
+      "platform": "sample",
+      "author": "gyeokguk_note",
+      "posted_at": "2026-08-15T00:30:00Z",
+      "permalink": "https://example.invalid/p/1013",
+      "media_type": "TEXT_POST",
+      "expected_label": "knowledge",
+      "text": "격국을 정할 때는 월지를 기준으로 봅니다.\n월지의 지장간 중에서 천간에 투출한 것이 있으면 그것으로 격을 잡습니다.\n예를 들어 월지가 인목이고 천간에 갑목이 투간했다면 건록격이 됩니다.\n투출한 것이 없으면 월지 본기로 격을 정하는 것이 원칙입니다.\n격국이 정해져야 용신을 어디서 찾을지 방향이 잡히기 때문에, 명리학에서 가장 먼저 하는 작업입니다."
+    },
+    {
+      "id": "1014",
+      "platform": "sample",
+      "author": "near_dup_account",
+      "posted_at": "2026-08-15T02:00:00Z",
+      "permalink": "https://example.invalid/p/1014",
+      "media_type": "TEXT_POST",
+      "expected_label": "knowledge",
+      "text": "편관(偏官)은 나를 극하는 오행 중 음양이 같은 것을 말합니다.\n칠살이라고도 부르는데, 정관이 질서와 규범이라면 편관은 압박과 도전에 가깝습니다.\n참고로 편관은 여자 사주에서 남편으로 보기도 합니다.\n편관이 강한 사주는 위기 상황에서 추진력이 뛰어나지만, 신약할 경우 스트레스에 취약해집니다.\n그래서 편관을 볼 때는 일간의 강약을 먼저 확인해야 합니다.\n예를 들어 일간이 신강하면 편관은 오히려 큰 자산이 됩니다."
+    }
+  ]
+}

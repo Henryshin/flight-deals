@@ -135,3 +135,19 @@ python scripts/build_dashboard_data.py
 - 구글 플라이트 화면 크롤링이므로 사이트 구조가 바뀌면 `collector/google_flights_crawler.py`의 파싱 로직을 갱신해야 함
 - GitHub Actions 무료 크레딧은 public 저장소 기준 무제한이지만, 실제 실행 간격은 GitHub의 스케줄 지연으로 정확히 4시간이 아닐 수 있음
 - 가격 이력은 `data/prices.csv`에 쌓이지만, 매 수집 직후 `scripts/prune_prices.py`가 계산에 안 쓰이는 90일 초과분(`PRUNE_RETENTION_DAYS`)을 자동으로 잘라내 무한정 커지지 않음
+
+## 별도 서브시스템: 사주 지식 코퍼스 (`saju/`)
+
+인스타그램·스레드의 사주 게시물을 모아 검색/RAG용 코퍼스로 만드는 파이프라인이
+`saju/` 아래에 독립적으로 들어 있다. 항공권 수집·대시보드와는 데이터도 워크플로도
+공유하지 않으며, 의존성도 추가하지 않는다(표준 라이브러리만 사용).
+
+Meta API 토큰이 아직 없어 실수집은 대기 상태이고, 정규화·용어 태깅·품질 판정·중복
+처리 전 구간은 픽스처로 검증되어 있다. 자세한 내용과 한계는 [`saju/README.md`](saju/README.md) 참고.
+
+```bash
+python saju/tests/test_saju.py                          # 자격증명 없이 실행 가능
+python saju/scripts/collect_saju.py --collector sample
+python saju/scripts/build_corpus.py
+python saju/scripts/inspect_corpus.py --label knowledge
+```

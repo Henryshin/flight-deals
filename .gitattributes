@@ -6,3 +6,18 @@ data/prices.csv merge=union
 # 주의: 'ours' 는 내장 low-level 드라이버가 아니므로 사용하는 쪽에서
 #       `git config merge.ours.driver true` 설정이 필요 (collect.yml 이 수행).
 data/collect_status.json merge=ours
+
+# ---- 사주 코퍼스 (saju/) ----
+# 쿼터 원장. Threads(7일 500쿼리)/Instagram(7일 고유 해시태그 30개) 한도를 런 사이에
+# 이어서 세려면 이 파일이 반드시 살아남아야 한다. collect_status.json 처럼 'ours' 로
+# 두면 동시 런에서 한쪽 기록이 통째로 사라져 한도를 초과하고, 그 대가는 Meta 앱 제재다.
+# 그래서 append-only JSONL 로 두고 union merge 로 기록 손실을 막는다.
+saju/data/quota.jsonl merge=union
+# 쿼리별 상태는 매 런 다시 쓰는 값이라 어느 쪽이 남아도 무방하다.
+saju/data/collect_status.json merge=ours
+# 아래 둘은 현재 .gitignore 대상(원문 저작권)이라 실제로는 커밋되지 않는다.
+# 레포를 private 으로 돌려 커밋하기로 한다면 이 설정이 그때 적용된다.
+# JSONL 은 레코드 1건 = 1줄이라(본문의 줄바꿈은 \n 두 글자로 이스케이프됨)
+# union merge 가 레코드를 반토막 낼 수 없다 — CSV 로는 성립하지 않는 안전성이다.
+saju/data/posts.jsonl merge=union
+saju/data/corpus.jsonl merge=union
