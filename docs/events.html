@@ -98,6 +98,8 @@
   .badge-confirmed { display: inline-block; background: #0b5cab; color: #fff; font-size: 13.5px; padding: 1px 5px; border-radius: 2px; margin-left: 4px; font-weight: 700; }
   .badge-confirmed.badge-open { background: #217346; }
   .badge-openat { display: inline-block; background: #b3261e; color: #fff; font-size: 13.5px; padding: 1px 5px; border-radius: 2px; margin-left: 4px; font-weight: 700; font-family: Consolas, monospace; }
+  /* 확정 일정은 없지만 과거 회차 이력상 이번 달에 열릴 수 있는 이벤트 */
+  .badge-due { display: inline-block; background: #b3261e; color: #fff; font-size: 13.5px; padding: 1px 5px; border-radius: 2px; margin-left: 4px; font-weight: 700; }
 
   /* 엑셀처럼 셀 안에서 여러 줄로 표시 (세로 정렬 위쪽) */
   table.sheet td { vertical-align: top; }
@@ -113,6 +115,9 @@
   table.sheet tbody tr.confirmed:hover td { background: var(--sel); }
   table.sheet tbody tr.confirmed td:first-child { box-shadow: inset 3px 0 0 #e8a500; }
   table.sheet tbody tr.confirmed.status-open td:first-child { box-shadow: inset 3px 0 0 #217346; }
+  table.sheet tbody tr.status-due td { background: #fff1e8; }
+  table.sheet tbody tr.status-due:hover td { background: var(--sel); }
+  table.sheet tbody tr.status-due td:first-child { box-shadow: inset 3px 0 0 #b3261e; }
 
   .conf { font-weight: 700; white-space: nowrap; cursor: help; }
   .conf.high { color: #217346; }
@@ -533,7 +538,8 @@
     // rec.day_of_week: 0=월요일 … 6=일요일 (promos.json 컨벤션)
     // confirmed: { start: 'YYYY-MM-DD', end: 'YYYY-MM-DD', source? } — 뉴스·공식 발표로 확인된 가장 최근 회차의 실제 판매 기간.
     //   과거·현재·미래 회차 모두 이 필드로 표현하며(지나간 회차라도 지우지 않음), 상태는 오늘 날짜와 비교해 그때그때 판정한다.
-    // 반환: { text, date, dday, confirmed, status: 'open'|'confirmed'|'past'|null, sortKey }
+    // 반환: { text, date, dday, confirmed, status: 'open'|'confirmed'|'due'|'past'|null, sortKey }
+    //   'due' = 확정 일정은 없지만 과거 회차 이력상 이번 달이 후보 달인 경우
     //   sortKey: 예상 다음 회차의 타임스탬프(ms). 정렬(예상 시계열 순)에 사용. 미상은 Infinity.
     function nextOccurrence(rec, lastSeen, now, confirmed) {
       const base = now || new Date();
@@ -611,6 +617,11 @@
           out.text = `이번 회차 종료(${pastConfirmed.start}~${pastConfirmed.end}) · 다음 ${out.text}`;
         } else if (months.indexOf(m) >= 0) {
           out.text = `이번 달(${m}월) 진행 가능 · 다음 ${out.text}`;
+          // 이번 달이 후보 달이면 '다음 회차'는 이듬해가 아니라 이번 달이다.
+          // sortKey 를 이듬해 회차로 두면 몇 달 뒤 이벤트보다 아래로 밀려서
+          // 정작 이번 주에 열릴 수도 있는 이벤트를 표 맨 끝에서 찾아야 했다.
+          out.status = 'due';
+          out.sortKey = new Date(y, m - 1, 1).getTime();
         }
         if (hasDow) {
           // 요일 정보가 있으면 예상일(해당 월 첫 목표 요일)로 D-day 계산
@@ -706,6 +717,9 @@
         const confirmedBadge = nx.status === 'open'
           ? ' <span class="badge-confirmed badge-open" title="현재 판매 중">오픈중</span>'
           : (nx.status === 'confirmed' ? ' <span class="badge-confirmed" title="공식 발표로 일정 확정">확정</span>' : '');
+        const dueBadge = nx.status === 'due'
+          ? ' <span class="badge-due" title="과거 회차 이력상 이번 달이 후보입니다. 항공사 공지/이벤트 페이지를 직접 확인하세요.">🔔 이번 달 후보</span>'
+          : '';
         // 정확한 오픈 일시(권역별 순차 오픈)를 한 줄씩 분리 표시. 특가는 오픈 즉시 매진되므로 시각까지.
         let opensLines = '', nextOpenBadge = '';
         if (cp && Array.isArray(cp.opens) && cp.opens.length) {
@@ -729,7 +743,7 @@
         const textParts = String(nx.text).split(' · ');
         const nextCell = textParts.map((t, i) =>
           i === 0
-            ? `<span class="line-main">${esc(t)}${confirmedBadge}${nextOpenBadge}${dday}</span>`
+            ? `<span class="line-main">${esc(t)}${confirmedBadge}${dueBadge}${nextOpenBadge}${dday}</span>`
             : `<span class="next-line">${esc(t)}</span>`
         ).join('') + opensLines;
         // 할인 수준: 요약 + 노선별 여러 줄
@@ -751,8 +765,11 @@
           links.push(`<a href="${esc(s)}" target="_blank" rel="noopener" title="${esc(s)}">📎</a>`);
         }
         if (nx.confirmed && cp && cp.source) links.push(`<a href="${esc(cp.source)}" target="_blank" rel="noopener" title="일정 확정 출처: ${esc(cp.source)}">✓</a>`);
+        const rowCls = nx.confirmed
+          ? `confirmed${nx.status === 'open' ? ' status-open' : ''}`
+          : (nx.status === 'due' ? 'status-due' : '');
         rows.push(`
-            <tr${nx.confirmed ? ` class="confirmed${nx.status === 'open' ? ' status-open' : ''}"` : ''}>
+            <tr${rowCls ? ` class="${rowCls}"` : ''}>
               <td title="${esc(al.airline)}">${esc(al.airline)}<span class="cell-sub">${esc(al.iata || '')}</span></td>
               <td title="${esc(ev.notes || ev.name)}">${esc(ev.name)}</td>
               <td title="${esc(ev.cadence_text || '')}">${esc(ev.cadence_text || '—')}</td>
