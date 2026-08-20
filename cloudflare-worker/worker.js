@@ -20,6 +20,10 @@
  * (자세한 단계는 cloudflare-worker/README.md 참고):
  *   - COUNTER_KV : Workers KV 네임스페이스 바인딩 (등록/삭제와 무관, SHARE_PASS 불필요.
  *                  동시접속자 카운터와 실시간 채팅이 같은 바인딩을 공유한다)
+ *
+ * 임시 외부 접근 차단:
+ *   - MAINTENANCE_MODE : "true" 로 설정하면 모든 외부 요청을 503 Service Unavailable 로 거절.
+ *                       비우면 정상 운영.                                        [Secret]
  */
 
 const REPO = "Henryshin/flight-deals";
@@ -29,6 +33,12 @@ const IATA = /^[A-Z]{3}$/;
 
 export default {
   async fetch(request, env) {
+    // 임시 외부 접근 차단
+    if (env.MAINTENANCE_MODE === "true") {
+      const cors = corsHeaders(request, env);
+      return json({ error: "사이트 점검 중입니다. 잠시 후 다시 시도해주세요." }, 503, cors);
+    }
+
     const cors = corsHeaders(request, env);
     if (request.method === "OPTIONS") return new Response(null, { headers: cors });
     if (request.method !== "POST") return json({ error: "POST only" }, 405, cors);
