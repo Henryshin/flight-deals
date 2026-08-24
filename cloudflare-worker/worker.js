@@ -15,11 +15,13 @@
  * docs/index.html 의 PROXY_URL 에 넣으면 페이지가 이 프록시를 통해 동작한다.
  *
  * 동시접속자 카운터(선택 기능, heartbeat 액션. 누적 조회수는 별도의 abacus 위젯이
- * 담당하므로 이 Worker의 몫이 아님)와 실시간 채팅(chat_poll/chat_send 액션)을
- * 쓰려면 KV 네임스페이스를 하나 만들어 아래 바인딩을 추가해야 한다
- * (자세한 단계는 cloudflare-worker/README.md 참고):
+ * 담당하므로 이 Worker의 몫이 아님), 실시간 채팅(chat_poll/chat_send 액션 — 기록은
+ * KST 자정 기준으로 매일 리셋됨. chat_delete 액션은 CHAT_ADMIN_PASS 로 게이트된
+ * 관리자 전용 메시지 삭제), 여행지 제안 투표(dest_suggest/dest_vote 액션 — 이쪽은
+ * 리셋되지 않고 계속 누적됨)를 쓰려면 KV 네임스페이스를 하나 만들어 아래
+ * 바인딩을 추가해야 한다 (자세한 단계는 cloudflare-worker/README.md 참고):
  *   - COUNTER_KV : Workers KV 네임스페이스 바인딩 (등록/삭제와 무관, SHARE_PASS 불필요.
- *                  동시접속자 카운터와 실시간 채팅이 같은 바인딩을 공유한다)
+ *                  동시접속자 카운터·실시간 채팅·여행지 제안 투표가 같은 바인딩을 공유한다)
  */
 
 const REPO = "Henryshin/flight-deals";
@@ -48,14 +50,19 @@ export default {
       }
     }
 
-    // 실시간 채팅: 동시접속자 카운터와 마찬가지로 누구나 읽고 쓸 수 있어야 하므로
-    // 공유 암호 게이트/GH_TOKEN 앞에서 처리한다 (GitHub 쓰기와 무관한 별개 기능).
-    if (action === "chat_poll" || action === "chat_send" || action === "chat_set_name") {
+    // 실시간 채팅 + 여행지 제안 투표: 동시접속자 카운터와 마찬가지로 누구나 읽고
+    // 쓸 수 있어야 하므로 공유 암호 게이트/GH_TOKEN 앞에서 처리한다
+    // (GitHub 쓰기와 무관한 별개 기능).
+    if (action === "chat_poll" || action === "chat_send" || action === "chat_set_name" ||
+        action === "chat_delete" || action === "dest_suggest" || action === "dest_vote") {
       if (!env.COUNTER_KV) return json({ error: "서버에 COUNTER_KV 가 설정되지 않았습니다." }, 500, cors);
       try {
         const clientId = String(body.clientId || "");
         if (action === "chat_poll") return json(await chatPoll(env, request, clientId), 200, cors);
         if (action === "chat_set_name") return json(await chatSetName(env, request, clientId, body.name, body.adminPass), 200, cors);
+        if (action === "chat_delete") return json(await chatDelete(env, Number(body.seq), body.adminPass), 200, cors);
+        if (action === "dest_suggest") return json(await destSuggest(env, clientId, body.text), 200, cors);
+        if (action === "dest_vote") return json(await destVote(env, clientId, String(body.id || "")), 200, cors);
         return json(await chatSend(env, request, clientId, body.text), 200, cors);
       } catch (e) {
         return json({ error: String((e && e.message) || e) }, (e && e.status) || 500, cors);
@@ -261,7 +268,10 @@ async function countPresence(env) {
 // 진짜 실시간(Durable Objects/WebSocket)은 아니고, 클라이언트가 주기적으로
 // chat_poll을 호출해 최근 메시지를 다시 받아오는 방식이다. KV는 최종 일관성이라
 // 동시에 여러 명이 보내면 드물게 유실될 수 있지만, 소규모 사용에는 충분하다.
+// 채팅 기록은 계속 쌓아두지 않고 KST(한국시간) 자정 기준으로 매일 리셋된다 —
+// 어제 이전 메시지는 readChatList()에서 조용히 걸러진다.
 const CHAT_KEY = "chat:messages";
+const CHAT_TZ_OFFSET_MS = 9 * 60 * 60 * 1000; // 리셋 기준 시간대: KST(UTC+9)
 const CHAT_MAX = 200;             // KV에 보관하는 최대 메시지 수(오래된 것부터 삭제)
 const CHAT_POLL_LIMIT = 50;       // 한 번의 poll로 내려주는 최근 메시지 수
 const CHAT_TEXT_MAX = 300;
@@ -328,12 +338,23 @@ async function deriveChatName(request) {
   return [...adjectives, persona, rank].join(" ");
 }
 
+// KST 기준 "그 날짜"(YYYY-MM-DD, KST) 문자열. 리셋 판단에만 쓰는 내부 키라
+// 정식 타임존 처리(Intl 등) 없이 오프셋만 더해 계산한다.
+function chatDayKey(ms) {
+  return new Date(ms + CHAT_TZ_OFFSET_MS).toISOString().slice(0, 10);
+}
+
 async function readChatList(env) {
   const raw = await env.COUNTER_KV.get(CHAT_KEY);
   if (!raw) return [];
   try {
     const arr = JSON.parse(raw);
-    return Array.isArray(arr) ? arr : [];
+    if (!Array.isArray(arr)) return [];
+    // 오늘(KST) 이전 메시지는 걸러낸다 — 매 poll마다 KV 쓰기를 늘리고 싶지 않으므로
+    // 여기서는 읽기만 필터링하고, 실제 삭제는 다음 chatSend가 이 필터링된 목록을
+    // 그대로 저장할 때 자연히 이뤄진다(추가 쓰기 없음).
+    const today = chatDayKey(Date.now());
+    return arr.filter((m) => chatDayKey(m.t) === today);
   } catch (e) { return []; }
 }
 
@@ -354,6 +375,7 @@ async function chatPoll(env, request, clientId) {
     messages: list.slice(-CHAT_POLL_LIMIT),
     you: await resolveChatName(env, request, clientId),
     youCid: clientId ? await hashClientId(clientId) : null,
+    destSuggestions: await destSuggestionsFor(env, clientId),
   };
 }
 
@@ -419,6 +441,102 @@ async function chatSend(env, request, clientId, text) {
   await env.COUNTER_KV.put(CHAT_KEY, JSON.stringify(list.slice(-CHAT_MAX)));
 
   return { ok: true };
+}
+
+// 메시지 하나 삭제(관리자 전용) — "관리자" 닉네임 예약과 같은 CHAT_ADMIN_PASS 로 게이트한다.
+// 프론트는 채팅 말풍선의 ✕ 버튼(관리자에게만 보임)으로 이 액션을 호출한다.
+async function chatDelete(env, seq, adminPass) {
+  if (!Number.isFinite(seq)) throw fail("seq 값 오류", 400);
+  if (!env.CHAT_ADMIN_PASS || String(adminPass || "") !== env.CHAT_ADMIN_PASS) {
+    throw fail("관리자 암호가 올바르지 않습니다.", 403);
+  }
+  const list = await readChatList(env); // 오늘 메시지만(어제 이전은 이미 걸러짐)
+  const next = list.filter((m) => m.seq !== seq);
+  if (next.length === list.length) throw fail("해당 메시지를 찾을 수 없습니다.", 404);
+  await env.COUNTER_KV.put(CHAT_KEY, JSON.stringify(next));
+  return { ok: true };
+}
+
+// ---------- 여행지 제안 투표 (Workers KV, 채팅 패널과 같은 바인딩) ----------
+// "이런 곳 가고 싶다"를 자유 텍스트로 제안하고 서로 투표(찜하기 토글)만 하는 간단한
+// 게시판. 실제 노선 등록(add)과는 무관 — 득표 결과를 보고 운영자가 data/routes.json에
+// 수동으로 반영한다. 채팅과 달리 하루 단위로 리셋되지 않고 계속 누적된다.
+const DEST_KEY = "dest:suggestions";
+const DEST_MAX = 60;                    // 보관할 최대 제안 수(초과 시 최저 득표 제거)
+const DEST_TEXT_MAX = 40;               // 제안 텍스트 길이 상한
+const DEST_ADD_MIN_INTERVAL_MS = 5000;  // 같은 clientId의 최소 "새 제안" 간격(도배 방지)
+const DEST_VOTE_MIN_INTERVAL_MS = 1000; // 같은 clientId의 최소 투표(클릭) 간격
+
+async function readDestList(env) {
+  const raw = await env.COUNTER_KV.get(DEST_KEY);
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) { return []; }
+}
+
+// 클라이언트에 보낼 형태로 변환 + 득표순 정렬(동률이면 먼저 제안된 순).
+function publicDestList(list, myCid) {
+  return list
+    .map((s) => ({ id: s.id, text: s.text, votes: s.voters.length, mine: myCid ? s.voters.includes(myCid) : false }))
+    .sort((a, b) => b.votes - a.votes || 0);
+}
+
+async function destSuggestionsFor(env, clientId) {
+  const list = await readDestList(env);
+  const myCid = clientId ? await hashClientId(clientId) : null;
+  return publicDestList(list, myCid);
+}
+
+async function checkDestRate(env, key, minIntervalMs) {
+  const last = await env.COUNTER_KV.get(key);
+  const now = Date.now();
+  if (last && now - Number(last) < minIntervalMs) throw fail("너무 빠릅니다. 잠시 후 다시 시도하세요.", 429);
+  await env.COUNTER_KV.put(key, String(now), { expirationTtl: 60 });
+}
+
+async function destSuggest(env, clientId, text) {
+  if (!CLIENT_ID_RE.test(clientId)) throw fail("clientId 형식 오류", 400);
+  const cleaned = String(text || "").trim().replace(/[\x00-\x1f\x7f]/g, "").slice(0, DEST_TEXT_MAX);
+  if (!cleaned) throw fail("여행지를 입력하세요.", 400);
+  await checkDestRate(env, "dest:addrate:" + clientId, DEST_ADD_MIN_INTERVAL_MS);
+
+  const myCid = await hashClientId(clientId);
+  const list = await readDestList(env);
+  // 이미 같은(대소문자/공백 무시) 제안이 있으면 새로 만들지 않고 그 항목에 투표만 더한다.
+  const dup = list.find((s) => s.text.localeCompare(cleaned, undefined, { sensitivity: "base" }) === 0);
+  if (dup) {
+    if (!dup.voters.includes(myCid)) dup.voters.push(myCid);
+  } else {
+    list.push({ id: crypto.randomUUID().slice(0, 8), text: cleaned, t: Date.now(), voters: [myCid] });
+    while (list.length > DEST_MAX) {
+      // 최저 득표(동률이면 가장 오래된 것) 하나를 제거해 상한을 지킨다.
+      let worst = 0;
+      for (let i = 1; i < list.length; i++) {
+        if (list[i].voters.length < list[worst].voters.length ||
+            (list[i].voters.length === list[worst].voters.length && list[i].t < list[worst].t)) worst = i;
+      }
+      list.splice(worst, 1);
+    }
+  }
+  await env.COUNTER_KV.put(DEST_KEY, JSON.stringify(list));
+  return { suggestions: publicDestList(list, myCid) };
+}
+
+async function destVote(env, clientId, id) {
+  if (!CLIENT_ID_RE.test(clientId)) throw fail("clientId 형식 오류", 400);
+  if (!id) throw fail("id 누락", 400);
+  await checkDestRate(env, "dest:voterate:" + clientId, DEST_VOTE_MIN_INTERVAL_MS);
+
+  const myCid = await hashClientId(clientId);
+  const list = await readDestList(env);
+  const target = list.find((s) => s.id === id);
+  if (!target) throw fail("해당 제안을 찾을 수 없습니다.", 404);
+  const idx = target.voters.indexOf(myCid);
+  if (idx >= 0) target.voters.splice(idx, 1); else target.voters.push(myCid);
+  await env.COUNTER_KV.put(DEST_KEY, JSON.stringify(list));
+  return { suggestions: publicDestList(list, myCid) };
 }
 
 async function dispatchCollect(env, only) {

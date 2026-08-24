@@ -360,8 +360,15 @@
      초록 박스가 계속 왼쪽에 붙어있던) 버그가 있었다 — 여기(#chat-list)로 옮김. */
   #chat-list { display: flex; flex-direction: column; gap: 8px; min-height: 100%; }
   .chat-empty-msg { margin: auto; color: var(--muted); text-align: center; padding: 16px; font-style: italic; font-size: 14.5px; }
-  .chat-bubble { max-width: 82%; align-self: flex-start; }
+  .chat-bubble { position: relative; max-width: 82%; align-self: flex-start; }
   .chat-bubble.mine { align-self: flex-end; }
+  /* 관리자에게만 보이는 메시지 삭제 버튼 (우측상단 ✕, 말풍선 밖으로 살짝 걸치게) */
+  .chat-bubble-del {
+    position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; padding: 0;
+    line-height: 14px; border-radius: 50%; border: 1px solid var(--grid); background: #fff;
+    color: #b3261e; font-size: 10px; cursor: pointer; font-family: inherit;
+  }
+  .chat-bubble-del:hover { background: #fdecea; border-color: #b3261e; }
   .chat-bubble-meta { display: flex; gap: 6px; font-size: 12px; color: var(--muted); margin-bottom: 2px; }
   .chat-bubble.mine .chat-bubble-meta { justify-content: flex-end; }
   .chat-bubble-meta .chat-name { font-weight: 700; color: #14532d; }
@@ -392,6 +399,28 @@
     flex: 1; min-width: 0; font-family: Calibri, "맑은 고딕", Arial, sans-serif; font-size: 14px; padding: 4px 7px;
     border: 1px solid var(--grid); border-radius: 2px; background: #fff; color: var(--text);
   }
+  /* 여행지 제안 투표: 채팅 패널 위쪽에 붙는 칩 목록. 채팅과 같은 KV(COUNTER_KV)를
+     쓰므로 채팅이 숨겨지면 이것도 같이 숨겨진다(별도 게이팅 불필요). */
+  .dest-vote-panel { border-bottom: 1px solid var(--grid); background: #fafafa; }
+  .dest-vote-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px 2px; }
+  .dest-vote-title { font-size: 13px; font-weight: 700; color: var(--text); }
+  .dest-vote-add-btn {
+    background: none; border: none; cursor: pointer; padding: 0;
+    color: #0b5cab; font-size: 12.5px; font-family: inherit;
+  }
+  .dest-vote-add-btn:hover { text-decoration: underline; }
+  .dest-vote-add-row { display: flex; gap: 6px; padding: 4px 10px; align-items: center; }
+  .dest-vote-add-row input {
+    flex: 1; min-width: 0; font-family: Calibri, "맑은 고딕", Arial, sans-serif; font-size: 14px; padding: 4px 7px;
+    border: 1px solid var(--grid); border-radius: 2px; background: #fff; color: var(--text);
+  }
+  .dest-vote-list {
+    display: flex; flex-wrap: wrap; gap: 5px; padding: 6px 10px 8px;
+    max-height: 92px; overflow-y: auto;
+  }
+  .dest-chip { font-size: 12.5px; padding: 2px 8px; }
+  .dest-chip .dest-chip-votes { font-weight: 700; margin-left: 3px; }
+  .dest-vote-empty { font-size: 12.5px; color: var(--muted); font-style: italic; padding: 2px 0; }
   .chat-note { position: relative; padding-right: 26px; }
   .chat-note-close {
     position: absolute; top: 2px; right: 4px; background: none; border: none; cursor: pointer;
@@ -515,6 +544,18 @@
           <button id="chat-note-close" class="chat-note-close" title="다시 보지 않기">✕</button>
         </div>
         <div class="chat-panel">
+          <div class="dest-vote-panel">
+            <div class="dest-vote-head">
+              <span class="dest-vote-title">🗳️ 다음에 가고 싶은 곳</span>
+              <button type="button" class="dest-vote-add-btn" id="dest-vote-add-btn">+ 제안</button>
+            </div>
+            <div class="dest-vote-add-row" id="dest-vote-add-row" hidden>
+              <input id="dest-vote-input" maxlength="40" placeholder="여행지 이름 (예: 보라카이)" />
+              <button type="button" class="apply-btn" id="dest-vote-submit">등록</button>
+              <button type="button" class="apply-btn" id="dest-vote-cancel">취소</button>
+            </div>
+            <div class="dest-vote-list" id="dest-vote-list"></div>
+          </div>
           <div class="chat-msgs-wrap">
             <div class="chat-msgs" id="chat-scroll">
               <div id="chat-list"></div>
@@ -851,6 +892,10 @@
       const prevScrollTop = scrollBox.scrollTop;
       const isFirstRender = chatLastSeq === 0;
 
+      // "관리자" 닉네임을 쓰는 사람에게만 말풍선 우측상단에 삭제(✕) 버튼을 보여준다.
+      // 실제 삭제는 서버가 CHAT_ADMIN_PASS 로 다시 검증하므로, 이건 그냥 버튼 노출 여부일 뿐이다.
+      const isAdmin = myChatName === '관리자';
+
       // 카카오톡처럼: 내 메시지는 오른쪽, 남의 메시지는 왼쪽 말풍선으로
       listEl.innerHTML = messages.map(m => {
         const d = new Date(m.t);
@@ -858,7 +903,8 @@
         // cid(clientId 해시)로 비교하면 닉네임을 바꿔도 과거 내 메시지가 계속 오른쪽에
         // 정렬된다. cid가 없는(이 기능 배포 전에 저장된) 옛 메시지만 이름으로 폴백.
         const mine = m.cid ? m.cid === myChatCid : m.name === myChatName;
-        return `<div class="chat-bubble${mine ? ' mine' : ''}">` +
+        const delBtn = isAdmin ? `<button type="button" class="chat-bubble-del" data-chatdel="${m.seq}" title="메시지 삭제 (관리자)">✕</button>` : '';
+        return `<div class="chat-bubble${mine ? ' mine' : ''}">${delBtn}` +
           `<div class="chat-bubble-meta"><span class="chat-name">${esc(m.name)}</span><span class="chat-time">${time}</span></div>` +
           `<div class="chat-bubble-text">${highlightMentions(esc(m.text))}</div></div>`;
       }).join('');
@@ -912,12 +958,31 @@
         else toast('닉네임 변경 실패: ' + ((e && e.message) || '네트워크 오류'), 'err');
       }
     }
+    // 관리자 암호는 로그인 개념이 없어 매번 다시 물으면 메시지를 여러 개 지울 때 번거로우므로,
+    // 한 번 입력하면 이 탭을 새로고침하기 전까지(메모리에만) 재사용한다. localStorage에는 저장하지 않는다.
+    let chatAdminPass = '';
+    async function deleteChatMessage(seq) {
+      if (!chatAdminPass) {
+        chatAdminPass = window.prompt('관리자 암호를 입력하세요.') || '';
+        if (!chatAdminPass) return;
+      }
+      try {
+        await proxyCall('chat_delete', { seq, adminPass: chatAdminPass });
+        chatLastSeq = 0; // 삭제된 메시지가 빠진 목록으로 강제 재렌더
+        chatPollOnce();
+      } catch (e) {
+        if (e && e.status === 403) { chatAdminPass = ''; toast('관리자 암호가 틀렸습니다.', 'err'); }
+        else if (e && e.status === 404) { chatLastSeq = 0; chatPollOnce(); } // 이미 지워짐 -> 조용히 새로고침
+        else toast('삭제 실패: ' + ((e && e.message) || '네트워크 오류'), 'err');
+      }
+    }
     async function chatPollOnce() {
       try {
         // clientId를 보내야 서버가 이 브라우저가 설정해 둔 커스텀 닉네임(you)과
         // clientId 해시(youCid, 말풍선 좌/우 정렬용)를 찾아 돌려준다.
-        const { messages, you, youCid } = await proxyCall('chat_poll', { clientId: getChatClientId() });
+        const { messages, you, youCid, destSuggestions } = await proxyCall('chat_poll', { clientId: getChatClientId() });
         updateChatView(messages, you, youCid);
+        renderDestVotes(destSuggestions);
       } catch (e) {
         // 첫 로딩부터 실패한 경우(예: COUNTER_KV 미설정)에만 안내 문구 표시,
         // 이미 목록을 보여준 뒤의 일시적 실패는 화면을 그대로 유지한다.
@@ -990,6 +1055,59 @@
       renderChatQueueHint();
       scheduleChatQueueSend();
     }
+
+    // ===================== 여행지 제안 투표 =====================
+    // 채팅과 같은 clientId/proxyCall을 쓰는 부가 기능. 별도 폴링 없이 chat_poll
+    // 응답에 얹혀 오므로(destSuggestions) 채팅 갱신 주기(CHAT_POLL_MS)를 그대로 탄다.
+    function renderDestVotes(suggestions) {
+      const el = document.getElementById('dest-vote-list');
+      if (!el) return;
+      if (!suggestions || !suggestions.length) {
+        el.innerHTML = '<div class="dest-vote-empty">아직 제안이 없습니다. "+ 제안"으로 가고 싶은 곳을 남겨보세요.</div>';
+        return;
+      }
+      el.innerHTML = suggestions.map(s =>
+        `<button type="button" class="chip dest-chip${s.mine ? ' active' : ''}" data-destvote="${esc(s.id)}" title="눌러서 투표/취소">` +
+        `${esc(s.text)}<span class="dest-chip-votes">${s.votes}</span></button>`
+      ).join('');
+    }
+    function openDestVoteAdd() {
+      const row = document.getElementById('dest-vote-add-row');
+      const input = document.getElementById('dest-vote-input');
+      if (!row || !input) return;
+      row.hidden = false;
+      input.value = '';
+      input.focus();
+    }
+    function closeDestVoteAdd() {
+      const row = document.getElementById('dest-vote-add-row');
+      if (row) row.hidden = true;
+    }
+    async function submitDestVote() {
+      const input = document.getElementById('dest-vote-input');
+      if (!input) return;
+      const text = input.value.trim();
+      if (!text) { toast('여행지 이름을 입력하세요', 'err'); return; }
+      try {
+        const { suggestions } = await proxyCall('dest_suggest', { clientId: getChatClientId(), text });
+        renderDestVotes(suggestions);
+        closeDestVoteAdd();
+      } catch (e) {
+        if (e && e.status === 429) toast('너무 빠르게 제안했습니다. 잠시 후 다시 시도하세요.', 'err');
+        else toast('제안 등록 실패: ' + ((e && e.message) || '네트워크 오류'), 'err');
+      }
+    }
+    async function toggleDestVote(id) {
+      try {
+        const { suggestions } = await proxyCall('dest_vote', { clientId: getChatClientId(), id });
+        renderDestVotes(suggestions);
+      } catch (e) {
+        if (e && e.status === 429) toast('너무 빠르게 눌렀습니다. 잠시 후 다시 시도하세요.', 'err');
+        else if (e && e.status === 404) { toast('이미 사라진 제안입니다', 'err'); chatPollOnce(); }
+        else toast('투표 실패: ' + ((e && e.message) || '네트워크 오류'), 'err');
+      }
+    }
+
     // ---- 채팅창 드래그(창 안의 창처럼 옮기기) ----
     // position:absolute라 페이지 스크롤에 같이 따라가며, 제목표시줄(#chat-h2)을
     // 누른 채 끌면 위치가 바뀐다. 위치는 브라우저별로 기억(localStorage)된다.
@@ -2353,7 +2471,7 @@
     // 한 달치 미니 워크시트 블록 HTML (isCenter면 헤더에 월 선택 드롭다운)
     function monthBlock(year, month, isCenter) {
       const first = new Date(year, month, 1);
-      const startDow = (first.getDay() + 6) % 7; // 월요일 시작
+      const startDow = first.getDay(); // 일요일 시작 (getDay()가 이미 0=일..6=토)
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const today = new Date();
       const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
@@ -2364,8 +2482,8 @@
         const dateStr = `${year}-${pad(month + 1)}-${pad(d)}`;
         const dow = (startDow + d - 1) % 7;
         const classes = ['day'];
-        if (dow === 5) classes.push('sat');
-        if (dow === 6) classes.push('sun');
+        if (dow === 6) classes.push('sat');
+        if (dow === 0) classes.push('sun');
         if (holidaySet.has(dateStr)) classes.push('holiday');
         if (isCurrentMonth && d === today.getDate()) classes.push('today');
         cells += `<div class="${classes.join(' ')}">${d}</div>`;
@@ -2377,8 +2495,8 @@
         <div class="cal-month">
           ${head}
           <div class="cal-grid">
-            <div class="dow">월</div><div class="dow">화</div><div class="dow">수</div>
-            <div class="dow">목</div><div class="dow">금</div><div class="dow">토</div><div class="dow">일</div>
+            <div class="dow">일</div><div class="dow">월</div><div class="dow">화</div>
+            <div class="dow">수</div><div class="dow">목</div><div class="dow">금</div><div class="dow">토</div>
             ${cells}
           </div>
         </div>
@@ -2789,6 +2907,15 @@
         else if (e.key === 'Escape') { e.preventDefault(); closeChatNameEdit(); }
       });
 
+      document.getElementById('dest-vote-add-btn').addEventListener('click', openDestVoteAdd);
+      document.getElementById('dest-vote-cancel').addEventListener('click', closeDestVoteAdd);
+      document.getElementById('dest-vote-submit').addEventListener('click', submitDestVote);
+      document.getElementById('dest-vote-input').addEventListener('keydown', e => {
+        if (e.isComposing || e.keyCode === 229) return;
+        if (e.key === 'Enter') { e.preventDefault(); submitDestVote(); }
+        else if (e.key === 'Escape') { e.preventDefault(); closeDestVoteAdd(); }
+      });
+
       // 동적 요소 이벤트 위임
       document.addEventListener('click', e => {
         const copyBtn = e.target.closest('[data-copy]');
@@ -2815,6 +2942,10 @@
         if (destBtn) { toggleDest(destBtn.getAttribute('data-dest')); return; }
         const chipBtn = e.target.closest('[data-chip]');
         if (chipBtn) { onChipClick(chipBtn); return; }
+        const destVoteBtn = e.target.closest('[data-destvote]');
+        if (destVoteBtn) { toggleDestVote(destVoteBtn.getAttribute('data-destvote')); return; }
+        const chatDelBtn = e.target.closest('[data-chatdel]');
+        if (chatDelBtn) { deleteChatMessage(Number(chatDelBtn.getAttribute('data-chatdel'))); return; }
       });
       document.addEventListener('change', e => {
         const calSel = e.target.closest('#cal-center-select');
