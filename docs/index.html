@@ -337,8 +337,29 @@
   @media (max-width: 460px) {
     #chat-section { width: calc(100vw - 24px); }
   }
-  #chat-h2 { margin: 0; cursor: move; }
+  #chat-h2 { margin: 0; cursor: move; position: relative; }
   .chat-live-badge { font-weight: 400; font-size: 12.5px; opacity: 0.85; margin-left: 2px; }
+  /* 참여자 탭: 제목표시줄 우측상단에 얹는 작은 버튼. 드래그 핸들(#chat-h2) 안에 있어서
+     클릭이 접기/펼치기로 새지 않게 JS에서 stopPropagation 한다. */
+  .chat-participants-tab {
+    position: absolute; top: 50%; right: 8px; transform: translateY(-50%);
+    font-family: inherit; font-size: 12px; padding: 2px 8px; cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.4); border-radius: 20px;
+    background: rgba(255,255,255,0.12); color: inherit;
+  }
+  .chat-participants-tab:hover { background: rgba(255,255,255,0.22); }
+  .chat-participants-panel {
+    position: absolute; top: 34px; right: 8px; z-index: 5; width: 190px; max-height: 220px;
+    overflow-y: auto; background: var(--sheet); border: 1px solid var(--grid); border-radius: 3px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25); padding: 6px 0;
+  }
+  .chat-participants-title {
+    font-size: 12px; font-weight: 700; color: var(--muted); padding: 2px 12px 6px;
+    border-bottom: 1px solid var(--grid); margin-bottom: 4px;
+  }
+  .chat-participant-row { font-size: 13.5px; padding: 4px 12px; display: flex; align-items: center; gap: 6px; }
+  .chat-participant-row::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--excel-green); flex-shrink: 0; }
+  .chat-participants-empty { font-size: 12.5px; color: var(--muted); font-style: italic; padding: 4px 12px; }
   #chat-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
   .chat-panel {
     width: 100%; flex: 1; min-height: 0; display: flex; flex-direction: column;
@@ -537,7 +558,13 @@
     <!-- 실시간 채팅: 별도 창처럼 떠 있는(드래그 가능) 패널. position:absolute라
          페이지와 함께 스크롤되며(고정 아님), 제목표시줄(#chat-h2)을 끌어 옮길 수 있다. -->
     <div id="chat-section" hidden>
-      <h2 class="collapsible" id="chat-h2"><span class="collapse-caret">▼</span> 실시간 채팅 <span class="chat-live-badge" id="chat-live-count"></span> <span class="collapse-hint">(클릭해서 접기 · 끌어서 이동)</span></h2>
+      <h2 class="collapsible" id="chat-h2"><span class="collapse-caret">▼</span> 실시간 채팅 <span class="chat-live-badge" id="chat-live-count"></span> <span class="collapse-hint">(클릭해서 접기 · 끌어서 이동)</span>
+        <button type="button" class="chat-participants-tab" id="chat-participants-tab" title="지금 접속 중인 사람 보기">👥 <span id="chat-participants-count">0</span></button>
+      </h2>
+      <div class="chat-participants-panel" id="chat-participants-panel" hidden>
+        <div class="chat-participants-title">지금 접속 중</div>
+        <div id="chat-participants-list"></div>
+      </div>
       <div id="chat-body">
         <div class="note chat-note" id="chat-note" style="margin-bottom:0">
           이 시트를 보는 사람들과 실시간으로 대화할 수 있습니다. 닉네임은 접속 위치별로 자동 배정되어 계속 유지됩니다.
@@ -807,14 +834,45 @@
       const chatEl = document.getElementById('chat-live-count');
       if (chatEl) chatEl.textContent = concurrent == null ? '' : `⚡ ${fmt(concurrent)}명`;
     }
+    // 참여자 목록: heartbeat 응답에 실려 오는 이름 배열을 그냥 저장해 뒀다가, 탭을
+    // 눌러 패널을 열 때(또는 열려 있는 동안 새 heartbeat가 올 때) 그걸로 다시 그린다.
+    let lastParticipants = [];
+    function renderParticipants(participants) {
+      lastParticipants = Array.isArray(participants) ? participants : [];
+      const countEl = document.getElementById('chat-participants-count');
+      if (countEl) countEl.textContent = fmt(lastParticipants.length);
+      const panel = document.getElementById('chat-participants-panel');
+      if (panel && !panel.hidden) renderParticipantsList();
+    }
+    function renderParticipantsList() {
+      const listEl = document.getElementById('chat-participants-list');
+      if (!listEl) return;
+      if (!lastParticipants.length) {
+        listEl.innerHTML = '<div class="chat-participants-empty">지금 접속 중인 사람이 없습니다</div>';
+        return;
+      }
+      // 같은 사람이 탭을 여러 개 열어도(같은 chatClientId) 목록에는 한 번만 표시.
+      const unique = [...new Set(lastParticipants)];
+      listEl.innerHTML = unique.map(n => `<div class="chat-participant-row">${esc(n)}</div>`).join('');
+    }
+    function toggleParticipantsPanel(e) {
+      e.stopPropagation(); // #chat-h2의 접기/펼치기 클릭으로 새지 않게
+      const panel = document.getElementById('chat-participants-panel');
+      if (!panel) return;
+      panel.hidden = !panel.hidden;
+      if (!panel.hidden) renderParticipantsList();
+    }
     async function initLiveCounter() {
       if (!usingProxy()) return; // 프록시(Worker) 미연결이면 카운터도 표시하지 않음
       const clientId = getLiveClientId();
       let timer = null;
       async function beat() {
         try {
-          const { concurrent } = await proxyCall('heartbeat', { clientId });
+          // chatClientId(브라우저별, 채팅과 공유)를 같이 보내야 커스텀 닉네임이 참여자
+          // 목록에도 정확히 반영된다. clientId(탭별)는 동시접속자 수 집계용으로 그대로 둔다.
+          const { concurrent, participants } = await proxyCall('heartbeat', { clientId, chatClientId: getChatClientId() });
           renderLiveCounter(concurrent);
+          renderParticipants(participants);
         } catch (e) { /* COUNTER_KV 미설정 등 실패는 무시, 다음 하트비트에서 재시도 */ }
       }
       // 백그라운드(다른 탭으로 전환·최소화)에서는 하트비트를 완전히 멈춰 KV 쓰기 낭비를
@@ -2906,6 +2964,14 @@
         if (e.key === 'Enter') { e.preventDefault(); saveChatName(); }
         else if (e.key === 'Escape') { e.preventDefault(); closeChatNameEdit(); }
       });
+
+      document.getElementById('chat-participants-tab').addEventListener('click', toggleParticipantsPanel);
+      // 패널 바깥을 클릭하면 닫기 (탭/패널 자체 클릭은 각자 stopPropagation으로 걸러짐)
+      document.addEventListener('click', () => {
+        const panel = document.getElementById('chat-participants-panel');
+        if (panel && !panel.hidden) panel.hidden = true;
+      });
+      document.getElementById('chat-participants-panel').addEventListener('click', e => e.stopPropagation());
 
       document.getElementById('dest-vote-add-btn').addEventListener('click', openDestVoteAdd);
       document.getElementById('dest-vote-cancel').addEventListener('click', closeDestVoteAdd);

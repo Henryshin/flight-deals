@@ -44,7 +44,7 @@ export default {
     if (action === "heartbeat") {
       if (!env.COUNTER_KV) return json({ error: "서버에 COUNTER_KV 가 설정되지 않았습니다." }, 500, cors);
       try {
-        return json(await heartbeat(env, String(body.clientId || "")), 200, cors);
+        return json(await heartbeat(env, request, String(body.clientId || ""), String(body.chatClientId || "")), 200, cors);
       } catch (e) {
         return json({ error: String((e && e.message) || e) }, (e && e.status) || 500, cors);
       }
@@ -246,22 +246,39 @@ const PRESENCE_PREFIX = "presence:";
 const PRESENCE_TTL_SEC = 180; // 클라이언트 하트비트 주기(90초)보다 넉넉히 잡은 만료 시간
 const CLIENT_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 
-async function heartbeat(env, clientId) {
+// clientId(탭별, sessionStorage 기준)로 "동시접속자 수"를 세고, 이름은 chatClientId
+// (브라우저별, localStorage 기준 — 채팅에서 쓰는 것과 같은 id)로 따로 붙인다. 탭을 여러 개
+// 열어도 접속자 수는 탭 단위로 정확히 세면서, 참여자 이름은 커스텀 닉네임까지 정확히
+// 반영하려면 두 id가 서로 다를 수 있기 때문 — chatClientId가 없으면(구버전 클라이언트)
+// IP 기반 자동 배정 이름으로 폴백한다.
+async function heartbeat(env, request, clientId, chatClientId) {
   if (!CLIENT_ID_RE.test(clientId)) throw fail("clientId 형식 오류", 400);
-  await env.COUNTER_KV.put(PRESENCE_PREFIX + clientId, "1", { expirationTtl: PRESENCE_TTL_SEC });
-  return { concurrent: await countPresence(env) };
+  const name = CLIENT_ID_RE.test(chatClientId)
+    ? await resolveChatName(env, request, chatClientId)
+    : await deriveChatName(request);
+  // 이름은 KV 값이 아니라 메타데이터로 저장 — list() 한 번으로 접속자 수와 이름을
+  // 동시에 얻을 수 있어(키마다 get() 안 해도 됨) 읽기 횟수를 늘리지 않는다.
+  await env.COUNTER_KV.put(PRESENCE_PREFIX + clientId, "1", { expirationTtl: PRESENCE_TTL_SEC, metadata: { name } });
+  return await listPresence(env);
 }
 
 // presence: 접두사 키 개수 = 최근 PRESENCE_TTL_SEC 초 안에 하트비트를 보낸 탭 수
 // (= 근사 동시접속자수). 만료된 키는 KV가 자동으로 지워주므로 별도 정리가 필요 없다.
-async function countPresence(env) {
-  let count = 0, cursor;
+// 각 키의 메타데이터에 실린 이름을 모으면 "지금 접속 중" 참여자 목록도 함께 나온다.
+async function listPresence(env) {
+  let count = 0;
+  const participants = [];
+  let cursor;
   do {
     const page = await env.COUNTER_KV.list({ prefix: PRESENCE_PREFIX, cursor });
     count += page.keys.length;
+    for (const k of page.keys) {
+      const name = k.metadata && k.metadata.name;
+      if (name) participants.push(name);
+    }
     cursor = page.list_complete ? undefined : page.cursor;
   } while (cursor);
-  return count;
+  return { concurrent: count, participants };
 }
 
 // ---------- 실시간 채팅 (Workers KV 폴링 방식) ----------
