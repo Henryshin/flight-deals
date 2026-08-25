@@ -434,9 +434,9 @@
       <td class="c-name" title="${esc(label)}">${esc(label)}</td>
       <td class="win-name" data-label="연휴">${esc(winLabel)}</td>
       <td class="num c-price" data-label="최저가"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(b.price)}</a></td>
-      <td data-label="특가율">${gvDealBadge(r.cell, b.price)}</td>
+      <td class="c-deal" data-label="특가율">${gvDealBadge(r.cell, b.price)}</td>
       <td class="period-cell" data-label="추천 일정">${sched}${strip}</td>
-      <td data-label="직항/경유">${stopsCell(b.stops, b.airline)}</td>
+      <td class="c-stops" data-label="직항/경유">${stopsCell(b.stops, b.airline)}</td>
     </tr>`;
   }
 
