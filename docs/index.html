@@ -493,7 +493,7 @@
 
 </style>
 <!-- 휴대폰 레이아웃. <style> 뒤에 와야 같은 특이도의 규칙(줄무늬 배경 등)을 덮어쓴다. -->
-<link rel="stylesheet" href="mobile.css" />
+<link rel="stylesheet" href="mobile.css?v=2026-08-25f" />
 </head>
 <body>
   <div class="ribbon-tabs">
@@ -784,7 +784,7 @@
     const cacheBust = `?t=${Date.now()}`;
     // 코드가 바뀔 때마다 올리는 페이지 버전. 화면 맨 아래에 표시되므로, 사용자가 보고 있는
     // 것이 최신 배포본인지(=브라우저 캐시가 아닌지) 바로 확인할 수 있다.
-    const PAGE_BUILD = '2026-08-25e';
+    const PAGE_BUILD = '2026-08-25f';
     // 모바일 판정. mobile.css 의 카드 레이아웃 분기(max-width:700px)와 반드시 같은 값이어야
     // "화면엔 안 보이는데 폴링만 계속 도는" 상태가 생기지 않는다.
     const MOBILE_MQ = '(max-width: 700px)';
@@ -1977,37 +1977,22 @@
       if (leaveOk && pairMatchesStops(min)) return min;
       return pickPair(cell) || min;
     }
-    // 휴일 가치 반영 추천 일정이 최저가 일정과 다르면(더 비싸지만 실질 비용이 낮음),
-    // 그 일정의 날짜·가격·트레이드오프를 별도 줄로 보여준다. 최저가 줄과 절대 같은
-    // 자리에서 날짜만 바꿔치기하지 않는다 (가격-날짜 불일치로 오해하는 것을 방지).
+    // 일정 칸에 덧붙이는 한 줄.
+    //
+    // 예전에는 '💡 대신 추천: (다른 날짜) · (가격) (+차액 · 휴일 +N일)' 줄로 최저가와
+    // 다른 실질비용 최적 일정을 함께 보여줬는데, 카드 한 장에서 가장 긴 부분이라(모바일
+    // 카드 높이의 3분의 1 이상) 요청에 따라 뺐다. 대표 일정 자체가 이미 설정(휴일 가치·
+    // 연차 범위)을 반영해 골라지므로 정보가 사라지는 것은 아니다 — displayPair 참고.
+    //
+    // 다만 '갈 수 없는 일정'을 알리는 ⚠ 줄은 남긴다. 이건 대안 제시가 아니라, 화면에
+    // 보이는 일정이 설정한 연차 범위를 못 지킨다는 경고라 없애면 오해를 부른다.
     function recommendedAltNote(cell) {
       const min = primaryPair(cell);
       const rec = pickPair(cell);
-      // 최저가 일정 자체가 연차 상한을 넘고, 상한 안에 대안도 없으면 그 사실을 알린다
-      // (상한 안에서 갈 수 없는 일정을 아무 표시 없이 추천처럼 두지 않도록).
       if (min && !rec) {
-        return `<div class="cell-sub eff-note" title="이 연휴에서 찾은 일정은 모두 설정한 연차 상한(${leaveCap()}개)을 넘습니다 — 상한을 늘리면 후보가 보입니다">⚠ 연차 ${min.leave_days}개 필요 (상한 ${leaveCap()}개 초과)</div>`;
+        return `<div class="cell-sub eff-note" title="이 연휴에서 찾은 일정은 모두 설정한 연차 범위(${esc(leaveRangeText())})를 벗어납니다 — 범위를 넓히면 후보가 보입니다">⚠ 연차 ${min.leave_days}개 필요 (설정 ${esc(leaveRangeText())})</div>`;
       }
-      if (!min || !rec || rec === min || rec.depart_date === min.depart_date && rec.return_date === min.return_date) return '';
-      const diff = rec.price - min.price;
-      const dBonus = (rec.bonus_days || 0) - (min.bonus_days || 0);
-      const dLeave = (rec.leave_days || 0) - (min.leave_days || 0);
-      const period = `${fmtDateYY(rec.depart_date, rec.depart_weekday)} ~ ${fmtDateYY(rec.return_date, rec.return_weekday)}`;
-      // 최저가가 연차 상한에 걸려 밀린 경우와, 순수하게 실질비용이 더 낮은 경우를 구분해 설명.
-      const capped = (min.leave_days || 0) > leaveCap();
-      const title = capped
-        ? `최저가 일정(${fmt(min.price)}원)은 연차 ${min.leave_days}개가 필요해 상한(${leaveCap()}개)을 넘습니다. `
-          + `연차 ${rec.leave_days}개로 갈 수 있는 일정 중 실질 부담이 가장 낮은 것입니다`
-        : `최저가 일정(${fmt(min.price)}원, ${min.depart_date}~${min.return_date})보다 ${fmt(diff)}원 비싸지만 `
-          + `덤 휴일이 ${dBonus}일 더 많아, 휴일 하루 ${fmt(dayValueWon())}원 기준 실질 부담이 더 낮은 일정입니다`
-          + (dLeave > 0 ? ` (연차는 ${dLeave}개 더 씁니다)` : '');
-      const priceHtml = rec.booking_url
-        ? `<a class="price-link" href="${esc(rec.booking_url)}" target="_blank" rel="noopener">${fmt(rec.price)}원</a>`
-        : `${fmt(rec.price)}원`;
-      const delta = capped
-        ? `연차 ${min.leave_days}→${rec.leave_days}개`
-        : `+${fmt(diff)} · 휴일 +${dBonus}일${dLeave > 0 ? ` · 연차 +${dLeave}개` : ''}`;
-      return `<div class="cell-sub eff-note" title="${esc(title)}">💡 대신 추천: ${esc(period)} · ${schedText(rec)} · ${priceHtml} (${delta})</div>`;
+      return '';
     }
     // 이 연휴에 신뢰할 만한 특가율이 있으면 그 값, 아니면 null (tier C/무데이터).
     function gvDealVal(cell) {
@@ -2633,7 +2618,15 @@
       if (isNaN(dt.getTime())) return;
       // 페이지(코드) 버전도 같이 찍는다. 브라우저가 옛 index.html 을 캐시해서 쓰고 있는지
       // 사용자가 눈으로 바로 확인할 수 있어야, '고쳤는데 그대로'인 상황을 구분할 수 있다.
-      if (el) el.textContent = `Last sync: ${dt.toLocaleString('ko-KR')} · 페이지 버전 ${PAGE_BUILD}`;
+      // mobile.css 는 <link> 라 HTML 과 따로 캐시되므로 그쪽 버전도 같이 읽어 비교한다.
+      let cssBuild = '';
+      try {
+        cssBuild = getComputedStyle(document.documentElement)
+          .getPropertyValue('--mobile-css-build').trim().replace(/^["']|["']$/g, '');
+      } catch (e) {}
+      const cssNote = cssBuild === PAGE_BUILD ? ''
+        : ` · ⚠ 스타일 캐시 ${cssBuild || '구버전'} (새로고침 필요)`;
+      if (el) el.textContent = `Last sync: ${dt.toLocaleString('ko-KR')} · 페이지 버전 ${PAGE_BUILD}${cssNote}`;
     }
 
     // ===================== 미니 달력 =====================
