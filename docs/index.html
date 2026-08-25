@@ -2699,7 +2699,9 @@
       document.getElementById('settings-help-token').hidden = proxy;
       document.getElementById('settings-help-pass').hidden = !proxy;
       document.getElementById('btn-token-test').hidden = proxy; // 프록시 모드엔 GitHub 연결 테스트 없음
-      document.getElementById('token-input').placeholder = proxy ? '공유 암호' : 'github_pat_...';
+      const saved = credVal();
+      document.getElementById('token-input').placeholder =
+        proxy ? (saved ? '새 공유 암호 입력' : '공유 암호') : (saved ? '새 토큰 입력' : 'github_pat_...');
       const noticeEl = document.getElementById('settings-notice');
       if (notice) { noticeEl.textContent = notice; noticeEl.hidden = false; }
       else noticeEl.hidden = true;
@@ -2707,8 +2709,12 @@
       tr.textContent = '';
       tr.className = '';
       refreshTokenState();
-      // 이미 저장된 값이 있으면 입력칸에 채워 "저장돼 있음"을 분명히 한다.
-      document.getElementById('token-input').value = credVal();
+      // 입력칸은 항상 비워 둔다. 저장된 값을 미리 채워 넣으면 커서가 그 뒤에 놓여,
+      // 새 암호를 타이핑할 때 기존 값에 덧붙어(예: 'oldpass' + '1234') 엉뚱한 값이
+      // 저장된다 — 게다가 autoSaveToken 이 매 입력마다 그 합쳐진 값을 바로 저장해서,
+      // 사용자는 '1234 를 넣었는데 계속 틀리다고 나온다'는 상황을 겪게 된다.
+      // 저장 여부는 옆의 '저장됨: ...' 배지가 알려주므로 미리 채울 이유가 없다.
+      document.getElementById('token-input').value = '';
       document.getElementById('settings-backdrop').hidden = false;
       document.getElementById('token-input').focus();
     }
@@ -2729,6 +2735,9 @@
       try { localStorage.setItem(credKey(), v); } catch (e) { toast('저장 실패 (localStorage 사용 불가)', 'err'); return; }
       document.getElementById('token-input').value = '';
       refreshTokenState();
+      // '암호가 맞지 않습니다' 같은 안내는 이 창을 열 때의 상황이라 새로 저장하면 낡은 정보가 된다.
+      // 그대로 두면 방금 올바른 암호를 넣고도 계속 틀린 것처럼 보인다.
+      document.getElementById('settings-notice').hidden = true;
       toast(usingProxy() ? '공유 암호 저장 완료 ✓' : '토큰 저장 완료 ✓');
       // 401 때문에 이 모달이 뜬 것이었다면, 방금 저장한 암호로 원래 하려던 작업을 바로 재시도한다.
       if (pendingAuthRetry) {
@@ -2740,7 +2749,11 @@
     }
     function deleteTokenClicked() {
       try { localStorage.removeItem(credKey()); } catch (e) {}
+      // 입력칸도 같이 비운다. 남겨두면 이어서 타이핑할 때 그 값 뒤에 덧붙어(autoSaveToken)
+      // 방금 지운 값이 그대로 되살아난다 — '삭제하고 다시 입력'이 통하지 않게 된다.
+      document.getElementById('token-input').value = '';
       refreshTokenState();
+      document.getElementById('token-input').focus();
       toast(usingProxy() ? '공유 암호를 삭제했습니다' : '토큰을 삭제했습니다');
     }
     async function testConnection() {
