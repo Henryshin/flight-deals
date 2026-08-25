@@ -37,7 +37,7 @@
   table.sheet.wide > tbody > tr {
     display: block; background: var(--sheet); position: relative;
     border: 1px solid var(--grid); border-radius: 4px;
-    margin: 0 0 8px; padding: 9px 11px;
+    margin: 0 0 6px; padding: 6px 9px;
   }
   /* 카드 제목이 오른쪽 위 ✕ 아래로 들어가지 않게, 삭제 버튼이 실제로 있는 카드에서만
      자리를 비워 둔다. :has 가 없는 구형 브라우저에선 이 줄만 무시되고(제목이 ✕ 밑으로
@@ -51,9 +51,18 @@
   table.sheet.wide > tbody > tr.zebra > td,
   table.sheet.wide > tbody > tr.dest-open > td,
   table.sheet.wide > tbody > tr:nth-child(even) > td {
-    display: block; border: none; padding: 2px 0; background: transparent;
+    display: block; border: none; padding: 1px 0; background: transparent;
     white-space: normal; overflow: visible; text-overflow: clip;
   }
+
+  /* 최저가와 특가율은 둘 다 짧아서 한 줄을 통째로 쓰면 아깝다 — 나란히 놓아 한 줄 아낀다.
+     (카드 70장 기준으로는 이 한 줄이 1,400px 넘는 차이가 된다.) */
+  table.sheet.wide > tbody > tr > td.c-price,
+  table.sheet.wide > tbody > tr > td.c-deal {
+    display: inline-block; width: auto; vertical-align: baseline;
+  }
+  table.sheet.wide > tbody > tr > td.c-deal { margin-left: 10px; }
+  table.sheet.wide > tbody > tr > td.c-deal::before { min-width: 0; margin-right: 4px; }
   table.sheet.wide > tbody > tr.zebra,
   table.sheet.wide:not(.dest-sheet) > tbody > tr:nth-child(even) { background: #f8faf9; }
   table.sheet.wide > tbody > tr.dest-open { background: #eef6f1; }
@@ -78,6 +87,13 @@
     margin-bottom: 4px; padding-bottom: 5px;
   }
   table.sheet.wide > tbody > tr > td.c-name .cell-sub { font-weight: 400; }
+  /* 항공사 이름은 직항/경유 배지 옆으로 (별도 줄을 쓰지 않게) */
+  table.sheet.wide > tbody > tr > td.c-stops .cell-sub,
+  table.dest-tbl > tbody > tr > td.c-stops .cell-sub { display: inline; margin-left: 5px; }
+  /* 일정 칸은 줄 수가 많은 곳이라 행간을 조금만 좁혀도 카드가 눈에 띄게 짧아진다 */
+  table.sheet.wide > tbody > tr > td.period-cell,
+  table.dest-tbl > tbody > tr > td.period-cell { line-height: 1.38; }
+  .gv-strip-row { margin-top: 1px; }
   /* 최저가는 카드에서 가장 중요한 숫자라 크게 */
   table.sheet.wide > tbody > tr > td.c-price { text-align: left; }
   table.sheet.wide > tbody > tr > td.c-price .price-link { font-size: 19px; font-weight: 700; }
@@ -118,6 +134,19 @@
     vertical-align: top; font-size: 16px; font-weight: 700; margin-bottom: 3px;
   }
   table.dest-tbl > tbody > tr > td.c-price .price-link { font-size: 18px; font-weight: 700; }
+  /* 중첩 카드도 바깥 카드와 같은 이유로 최저가·특가율을 한 줄에 */
+  table.dest-tbl > tbody > tr > td.c-price,
+  table.dest-tbl > tbody > tr > td.c-deal { display: inline-block; width: auto; vertical-align: baseline; }
+  table.dest-tbl > tbody > tr > td.c-deal { margin-left: 10px; }
+  table.dest-tbl > tbody > tr > td.c-deal::before { min-width: 0; margin-right: 4px; }
+
+  /* 섹션 머리말·툴바의 여백도 줄인다 (화면마다 반복해서 나오는 자리) */
+  h2 { margin-top: 12px; padding: 4px 9px; font-size: 15px; }
+  .collapse-hint { display: none; }          /* "(클릭해서 접기)" — 좁은 화면에선 군더더기 */
+  .toolbar-row { margin: 6px 0; gap: 6px; }
+  .chip-bar { margin-top: 8px; padding: 6px 8px; gap: 6px; }
+  .note { margin-bottom: 8px; padding: 5px 8px; }
+  h1 { font-size: 17px; }
 
   /* 손가락으로 누를 수 있는 크기 확보 (데스크톱에선 촘촘한 게 낫다).
      가격 링크는 '추천 일정' 문장 안에도 섞여 나오므로 전역으로 키우면 줄바꿈이
@@ -131,7 +160,12 @@
     min-height: 34px; display: inline-flex; align-items: center;
   }
   .x-btn, .fav-btn, .copy-btn { min-width: 34px; justify-content: center; }
-  .chip { min-height: 34px; display: inline-flex; align-items: center; }
+  /* 칩은 개수가 많아(연휴·국가 합쳐 수십 개) 높이 1px 차이가 화면 한 뼘으로 돌아온다.
+     손가락으로 누를 수 있는 최소선은 지키되(30px) 좌우 여백과 줄 간격은 조인다. */
+  .chip { min-height: 30px; display: inline-flex; align-items: center; padding: 2px 8px; }
+  .chip-row { gap: 4px; }
+  .chip-line { gap: 6px; row-gap: 4px; }
+  .chip-line .chip-sub, .chip-bar .chip-cap { font-size: 13.5px; padding-top: 6px; }
   .toolbar-row select, .toolbar-row button, .day-value-wrap input,
   .day-value-wrap .apply-btn, .cal-select { min-height: 34px; }
   .page-nav a { padding: 9px 14px; }
@@ -139,27 +173,38 @@
   /* '전체' 버튼들은 모바일에서 뺀다. 국가/연휴 칩은 다중 선택 토글이라 고른 걸 다시
      눌러 끄면 '전체'와 같은 상태가 되므로, 좁은 화면에서 자리만 차지한다. */
   .chip-row-all,                                   /* 국가 필터의 '전체' */
-  #gv-windows .chip-line:first-child,              /* 연휴 필터의 '전체' */
+  .win-panel > .chip-line:first-child,             /* 연휴 필터의 '전체' */
   #btn-dest-expand, #btn-dest-collapse {           /* 전체 펼치기 / 전체 접기 */
     display: none !important;
   }
 
-  /* 휴일 가치 · 연차 상한 입력은 모바일에서 감춘다. 저장된 값 자체는 그대로 쓰이므로
-     추천 결과는 데스크톱과 같다 — 좁은 화면에서 조절 UI만 덜어내는 것. */
-  #day-value-line, #max-leave-line, #apply-box { display: none !important; }
+  /* 연휴 필터: 요약 칩 하나로 접어 두고, 눌렀을 때만 연도별 칩을 펼친다 */
+  .win-toggle { font-weight: 600; }
+  .win-toggle.has-sel { border-color: var(--excel-green); color: #14532d; }
+  .win-panel { margin-top: 5px; }
 
-  /* 대륙 → 국가 → 지역 3단 드릴다운 (renderChips 가 모바일에서 이 구조로 그린다) */
-  .chip-region-row.region-drill { display: block; margin-bottom: 4px; }
-  .region-chip { font-weight: 600; }
+  /* 휴일 가치 입력만 감춘다 (저장된 값은 그대로 쓰이므로 추천 결과는 데스크톱과 같다).
+     연차 범위는 모바일에서도 직접 조절할 수 있어야 해서 남기고, 대신 한 줄에 들어가도록
+     입력칸을 줄인다. */
+  #day-value-line { display: none !important; }
+  #max-leave-line .day-value-wrap { gap: 3px; }
+  #max-leave-line input { width: 46px; padding: 2px 4px; }
+  #max-leave-hint { display: block; flex-basis: 100%; margin-top: 2px; }
+
+  /* 대륙 → 국가 → 지역 3단 드릴다운 (renderChips 가 모바일에서 이 구조로 그린다).
+     대륙 칩은 한 줄로 흐르다가 넘칠 때만 다음 줄로 내려간다 — 대륙마다 한 줄씩
+     세로로 쌓으면 그것만으로 화면 200px를 쓴다. */
+  .region-tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+  .region-chip { font-weight: 600; padding: 3px 7px; }
   .region-chip.open { background: var(--sel); border-color: var(--excel-green); }
   .region-chip.has-sel { border-color: var(--excel-green); color: #14532d; }
-  .region-caret { display: inline-block; width: 1em; color: var(--muted); }
+  .region-caret { display: inline-block; margin-right: 2px; font-size: 10px; color: var(--muted); }
   .region-chip.open .region-caret { color: inherit; }
-  /* 펼친 국가 칩은 대륙 칩보다 한 칸 들여써서 상하 관계가 눈에 보이게 */
-  .region-countries { margin: 5px 0 8px 14px; }
+  /* 펼친 국가 칩은 한 칸 들여써서 대륙 아래 단계임이 드러나게 */
+  .region-countries { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 2px 12px; }
 
   /* 지역(도시) 칩도 같은 들여쓰기로 이어 붙여, 국가 아래 단계임이 드러나게 */
-  #chip-region-line { padding-left: 14px; }
+  #chip-region-line { padding-left: 12px; }
 
   /* 필터/설정 줄: 세로로 쌓아 가로 폭을 넘기지 않게.
      flex:0 0 auto 이면 폭이 '내용 최대폭'(긴 안내 문구 한 줄)으로 잡혀 페이지를
@@ -172,9 +217,13 @@
   .chip-line, .day-value-wrap { min-width: 0; max-width: 100%; }
   .day-value-wrap .cell-sub { display: block; flex-basis: 100%; min-width: 0; overflow-wrap: anywhere; }
 
-  /* 달력은 한 달만 꽉 차게 (3개월 가로 스크롤은 손가락으로 다루기 어렵다) */
-  .calendar { justify-content: flex-start; scroll-snap-type: x mandatory; }
-  .cal-month { width: min(100%, 300px); scroll-snap-align: start; }
+  /* 달력은 한 달만, 가로를 꽉 채워서 (3개월 가로 스크롤은 손가락으로 다루기 어렵다).
+     width:min(100%,300px) 는 폭이 부모(.calendar)에 달려 있고 부모 폭은 다시 자식에
+     달려 있는 순환이라, 실제로는 111px 짜리로 쪼그라들었다. .calendar 를 블록으로 펴고
+     달 블록이 남는 폭을 차지하게 해서 끊어 준다. */
+  .topbar { display: block; margin-bottom: 10px; }
+  .calendar { display: block; width: 100%; overflow: visible; }
+  .cal-month { width: 100%; max-width: 340px; flex-shrink: 1; }
 
   /* 떠 있는 채팅창은 모바일에서 본문을 가리므로 문서 흐름 안으로 되돌린다 */
   #chat-section { position: static !important; width: auto !important; left: auto !important; top: auto !important; margin: 12px 0; }

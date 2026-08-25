@@ -544,9 +544,10 @@
             </div>
           </div>
           <div class="chip-line" id="max-leave-line">
-            <span class="chip-sub">연차 상한</span>
-            <div class="day-value-wrap" title="이 여행 하나에 쓸 연차의 상한. 실질비용 공식은 덤 휴일만 편익으로 보므로 상한이 없으면 '연차 9개 쓰는 14박'처럼 연차를 태우는 일정이 추천으로 올라옵니다. 비워 두면 무제한.">
-              최대 <input id="max-leave" type="number" min="0" step="1" inputmode="numeric" placeholder="무제한" /> 개
+            <span class="chip-sub">연차</span>
+            <div class="day-value-wrap" title="이 여행 하나에 쓸 연차의 범위. 상한은 '연차 9개 쓰는 14박'처럼 연차를 태우는 일정이 추천으로 올라오는 걸 막고(실질비용 공식은 덤 휴일만 편익으로 보므로 상한이 없으면 그렇게 됩니다), 하한은 반대로 너무 짧은 일정만 추천되는 걸 막습니다. 각각 비워 두면 제한 없음.">
+              <input id="min-leave" type="number" min="0" step="1" inputmode="numeric" placeholder="최소" /> ~
+              <input id="max-leave" type="number" min="0" step="1" inputmode="numeric" placeholder="최대" /> 개
               <button type="button" class="apply-btn" id="max-leave-apply" title="이 값으로 두 보드의 추천을 다시 계산합니다 (Enter 로도 적용)">적용</button>
               <span class="cell-sub" id="max-leave-hint"></span>
             </div>
@@ -783,7 +784,7 @@
     const cacheBust = `?t=${Date.now()}`;
     // 코드가 바뀔 때마다 올리는 페이지 버전. 화면 맨 아래에 표시되므로, 사용자가 보고 있는
     // 것이 최신 배포본인지(=브라우저 캐시가 아닌지) 바로 확인할 수 있다.
-    const PAGE_BUILD = '2026-08-25d';
+    const PAGE_BUILD = '2026-08-25e';
     // 모바일 판정. mobile.css 의 카드 레이아웃 분기(max-width:700px)와 반드시 같은 값이어야
     // "화면엔 안 보이는데 폴링만 계속 도는" 상태가 생기지 않는다.
     const MOBILE_MQ = '(max-width: 700px)';
@@ -1335,6 +1336,9 @@
     // 추천으로 올라온다. 이 사이트의 전제(연차 아껴 쓰기)를 지키는 예산 제약.
     const MAX_LEAVE_KEY = 'fd_max_leave';
     const MAX_LEAVE_DEFAULT = 5;
+    // 연차 하한. 짧은 일정만 잔뜩 추천되는 걸 막고 "이왕 쓰는 김에 N개는 쓰겠다"를
+    // 표현하는 쪽. 비워 두면(null) 하한 없음 = 0개부터.
+    const MIN_LEAVE_KEY = 'fd_min_leave';
 
     const state = {
       routesStatus: [],
@@ -1349,6 +1353,7 @@
       selStops: new Set(),     // 직항/경유 필터: 'direct'/'via' (다중선택, OR. 비어있으면 = 전체)
       // 모바일 드릴다운에서 펼쳐 놓은 대륙 하나 (null = 전부 접힘). 필터가 아니라 표시 상태다.
       openRegion: null,
+      openWindows: false, // 모바일에서 연휴 칩 목록을 펼쳐 놨는지 (기본 접힘)
       // 휴일 하루의 가치(만원). 추천 일정 = (가격 - 가치 x 덤휴일) 최소인 일정.
       dayValue: (function () {
         try {
@@ -1364,6 +1369,15 @@
           const v = parseInt(raw, 10);
           return isNaN(v) || v < 0 ? MAX_LEAVE_DEFAULT : v;
         } catch (e) { return MAX_LEAVE_DEFAULT; }
+      })(),
+      // 연차 하한(개). null = 하한 없음. 기본은 하한 없이 두어 기존 동작과 같게 시작한다.
+      minLeave: (function () {
+        try {
+          const raw = localStorage.getItem(MIN_LEAVE_KEY);
+          if (raw == null || raw === '') return null;
+          const v = parseInt(raw, 10);
+          return isNaN(v) || v < 0 ? null : v;
+        } catch (e) { return null; }
       })()
     };
     let holidaySet = new Set();
@@ -1701,7 +1715,15 @@
     // 일정 단위 필터(연차 상한 or 직항/경유)가 하나라도 걸려 있는가 — 켜져 있을 때만
     // '조건에 맞는 일정이 하나도 없는 칸'을 목록에서 걸러낸다.
     function pairFilterActive() {
-      return leaveCap() !== Infinity || state.selStops.size > 0;
+      return leaveCap() !== Infinity || leaveFloor() > 0 || state.selStops.size > 0;
+    }
+    // 연차 범위를 사람이 읽는 문구로 ("3~5개" / "5개 이하" / "3개 이상")
+    function leaveRangeText() {
+      const lo = leaveFloor(), hi = leaveCap();
+      if (lo > 0 && hi !== Infinity) return `${lo}~${hi}개`;
+      if (hi !== Infinity) return `${hi}개 이하`;
+      if (lo > 0) return `${lo}개 이상`;
+      return '무제한';
     }
 
     // 선택 국가에 속하지 않게 된 도시 선택은 제거 (드릴다운 정합성 유지)
@@ -1741,19 +1763,27 @@
         // 한꺼번에 깔면 필터만으로 화면이 다 차므로, 대륙 칩만 먼저 보이고 누른 대륙의
         // 국가 칩만 그 아래로 펼친다. 대륙 칩 자체는 필터가 아니라 '펼치기' 스위치다
         // (그래서 접어도 이미 고른 국가는 그대로 살아 있고, 칩에 개수로 표시한다).
+        // 대륙 칩은 한 줄로 흐르게 두고(넘치면 자연스럽게 다음 줄로), 펼친 대륙의 국가
+        // 칩만 그 아래에 한 덩어리로 붙인다. 대륙마다 한 줄씩 세로로 쌓으면 필터만으로
+        // 화면 200px가 날아간다 (7개 × 28px).
+        const tabs = [];
         for (const key of REGION_ORDER) {
           const list = byRegion.get(key);
           if (!list.length) continue;
           const open = state.openRegion === key;
           const picked = list.filter(c => state.selCountries.has(c)).length;
           const label = (REGION_LABELS[key] || '기타') + (picked ? ` (${picked})` : '');
-          html += `<div class="chip-region-row region-drill${open ? ' open' : ''}">` +
-            `<button class="chip region-chip${open ? ' open' : ''}${picked ? ' has-sel' : ''}"` +
+          tabs.push(`<button class="chip region-chip${open ? ' open' : ''}${picked ? ' has-sel' : ''}"` +
             ` data-region="${esc(key)}" aria-expanded="${open}">` +
             // 캐럿은 여행지 펼침(dest-caret)과 같은 글자를 쓴다 — ▾/▸ 는 이 폰트 스택에서
             // 빈 네모로 떨어지는 경우가 있었다.
-            `<span class="region-caret">${open ? '▼' : '▶'}</span> ${esc(label)}</button>` +
-            (open ? `<div class="chip-row region-countries">${list.map(c => chip('country', c, c, state.selCountries.has(c))).join('')}</div>` : '') +
+            `<span class="region-caret">${open ? '▼' : '▶'}</span>${esc(label)}</button>`);
+        }
+        html += `<div class="chip-row region-tabs">${tabs.join('')}</div>`;
+        const openList = state.openRegion ? (byRegion.get(state.openRegion) || []) : [];
+        if (openList.length) {
+          html += `<div class="chip-row region-countries">` +
+            openList.map(c => chip('country', c, c, state.selCountries.has(c))).join('') +
             `</div>`;
         }
       } else {
@@ -1863,6 +1893,17 @@
         const row = byYear.get(y).map(chipBtn).join('');
         html += `<div class="chip-line"><span class="chip-sub">${esc(label)}</span><div class="chip-row">${row}</div></div>`;
       }
+      // 모바일: 연휴가 20개 가까이라 다 펼치면 그것만으로 화면 3분의 1이 찬다.
+      // 기본값이 '전체'라 평소엔 볼 일이 없으므로, 현재 선택을 요약한 칩 하나로 접어 둔다.
+      if (isMobileLayout()) {
+        const open = state.openWindows;
+        const summary = state.gvWindows.size ? `${state.gvWindows.size}개 선택` : '전체';
+        el.innerHTML =
+          `<button class="chip win-toggle${state.gvWindows.size ? ' has-sel' : ''}" data-wintoggle="1" aria-expanded="${open}">` +
+          `<span class="region-caret">${open ? '▼' : '▶'}</span>${esc(summary)}</button>` +
+          (open ? `<div class="win-panel">${html}</div>` : '');
+        return;
+      }
       el.innerHTML = html;
     }
     // ===================== 휴일 하루 가치 (비용-편익) =====================
@@ -1879,15 +1920,20 @@
     }
     function effCost(p) { return p.price - dayValueWon() * (p.bonus_days || 0); }
     function leaveCap() { return state.maxLeave == null ? Infinity : state.maxLeave; }
-    // 연차 상한을 만족하는 후보만. 상한을 넘겨 하나도 없으면 빈 배열(추천 없음)을 돌려주고,
-    // 최저가 칸(primaryPair)은 그대로 유지한다 — 최저가는 cell.min_price 와 묶여 있어
-    // 여기서 바꾸면 특가율/정렬 기준까지 어긋난다.
+    function leaveFloor() { return state.minLeave == null ? 0 : state.minLeave; }
+    // 연차 범위(하한~상한)를 만족하는 후보만. 범위 안에 하나도 없으면 빈 배열(추천 없음)을
+    // 돌려주고, 최저가 칸(primaryPair)은 그대로 유지한다 — 최저가는 cell.min_price 와
+    // 묶여 있어 여기서 바꾸면 특가율/정렬 기준까지 어긋난다.
     function eligiblePairs(cell) {
       // 직항/경유 칩이 걸려 있으면 실제 항공편 기준으로 일정을 먼저 거른다.
       const ps = cellPairs(cell).filter(pairMatchesStops);
       const cap = leaveCap();
-      if (cap === Infinity) return ps;
-      return ps.filter(p => (p.leave_days || 0) <= cap);
+      const floor = leaveFloor();
+      if (cap === Infinity && floor === 0) return ps;
+      return ps.filter(p => {
+        const n = p.leave_days || 0;
+        return n >= floor && n <= cap;
+      });
     }
     function pickPair(cell) {
       const ps = eligiblePairs(cell);
@@ -1920,12 +1966,15 @@
     // 아예 없는 칸'은 걸러 놓으므로, 여기 도달했다면 pickPair는 항상 값이 있다.
     function displayPair(cell) {
       const min = primaryPair(cell);
-      const cap = leaveCap();
       if (!min) return min;
-      const capOk = cap === Infinity || (min.leave_days || 0) <= cap;
-      // 최저가 일정이 연차 상한을 넘거나 직항/경유 칩 조건에 안 맞으면(예: 직항 필터인데
+      // 연차 범위는 위아래 양쪽을 다 봐야 한다. 상한만 보던 때는 하한이 없었으니 문제가
+      // 없었지만, 하한이 생긴 뒤로는 '연차 1개짜리 최저가'가 하한 3개를 무시하고 대표
+      // 자리에 그대로 남는다 (아래 recommendedAltNote 만 범위 안 일정을 가리키는 모순).
+      const n = min.leave_days || 0;
+      const leaveOk = n >= leaveFloor() && n <= leaveCap();
+      // 최저가 일정이 연차 범위를 벗어나거나 직항/경유 칩 조건에 안 맞으면(예: 직항 필터인데
       // 최저가는 경유편), 조건에 맞는 일정 중 실질비용 최적으로 통째로 바꿔친다.
-      if (capOk && pairMatchesStops(min)) return min;
+      if (leaveOk && pairMatchesStops(min)) return min;
       return pickPair(cell) || min;
     }
     // 휴일 가치 반영 추천 일정이 최저가 일정과 다르면(더 비싸지만 실질 비용이 낮음),
@@ -1993,11 +2042,11 @@
     // 빠졌을 때의 안내 문구. (데이터가 아예 없는 것과 구분되는 별도 사유 — gvEmptyReason과
     // 나란히 쓰인다.) 어떤 필터 때문인지에 따라 문구를 고른다.
     function capOverReason() {
-      const capOn = leaveCap() !== Infinity;
+      const leaveOn = leaveCap() !== Infinity || leaveFloor() > 0;
       const stopsOn = state.selStops.size > 0;
-      if (capOn && stopsOn) return `연차 상한(${leaveCap()}개)과 직항/경유 조건에 맞는 일정이 없습니다 — 조건을 조정해 보세요`;
+      if (leaveOn && stopsOn) return `연차 ${leaveRangeText()}와 직항/경유 조건에 맞는 일정이 없습니다 — 조건을 조정해 보세요`;
       if (stopsOn) return '직항/경유 조건에 맞는 일정이 없습니다 — 필터를 조정해 보세요';
-      return `연차 상한(${leaveCap()}개) 안에서 갈 수 있는 연휴가 없습니다 — 상한을 늘리면 후보가 보입니다`;
+      return `연차 ${leaveRangeText()} 범위에서 갈 수 있는 연휴가 없습니다 — 범위를 넓히면 후보가 보입니다`;
     }
     // 이 연휴에 데이터가 없는 노선의 사유 (막연한 '—' 대신 이유를 보여준다)
     function gvEmptyReason(monitors) {
@@ -2181,9 +2230,9 @@
             <td class="gv-rank">${rank}</td>
             <td class="c-name">${nameCell}</td>
             <td class="num c-price" data-label="최저가"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(b.price)}</a></td>
-            <td data-label="특가율">${gvDealBadge(r.cell, b.price)}</td>
+            <td class="c-deal" data-label="특가율">${gvDealBadge(r.cell, b.price)}</td>
             <td class="period-cell" data-label="추천 일정">${scheduleLine}${stripRow}</td>
-            <td data-label="직항/경유">${stopsCell(b.stops, b.airline)}</td>
+            <td class="c-stops" data-label="직항/경유">${stopsCell(b.stops, b.airline)}</td>
           </tr>
         `;
       }).join('');
@@ -2369,9 +2418,9 @@
             <td class="c-fav" style="text-align:center"><button class="fav-btn${favOn ? ' on' : ''}" data-fav="${esc(favKey)}" title="즐겨찾기에 담기/빼기">★</button></td>
             <td class="win-name c-name">${esc(w.label)}${badges}</td>
             <td class="num c-price" data-label="최저가"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(b.price)}</a></td>
-            <td data-label="특가율">${gvDealBadge(w.cell, b.price)}</td>
+            <td class="c-deal" data-label="특가율">${gvDealBadge(w.cell, b.price)}</td>
             <td class="period-cell" data-label="추천 일정">${sched}${strip}</td>
-            <td data-label="직항/경유">${stopsCell(b.stops, b.airline)}${altHtml}</td>
+            <td class="c-stops" data-label="직항/경유">${stopsCell(b.stops, b.airline)}${altHtml}</td>
             <td data-label="등락">${trendHtml(b.price, b.prev_price, true)}</td>
           </tr>`;
       }).join('');
@@ -2523,9 +2572,9 @@
         const stripRow = `<span class="gv-strip-row">${tripStrip(b.depart_date, b.return_date)}${climateBadge(g.route.destination, b.depart_date)}</span>`;
         const row = head + `
             <td class="num c-price" data-label="최저가"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(b.price)}</a></td>
-            <td data-label="특가율">${gvDealBadge(info.best.cell, b.price)}</td>
+            <td class="c-deal" data-label="특가율">${gvDealBadge(info.best.cell, b.price)}</td>
             <td class="period-cell" data-label="추천 일정">${scheduleLine}${stripRow}</td>
-            <td data-label="직항/경유">${stopsCell(b.stops, b.airline)}</td>` + tail;
+            <td class="c-stops" data-label="직항/경유">${stopsCell(b.stops, b.airline)}</td>` + tail;
         return row + (open ? destDetailRowHtml(g, info) : '');
       }).join('');
     }
@@ -2972,7 +3021,7 @@
     function showApplyBox(changedLabel, changed, total) {
       const box = document.getElementById('apply-box');
       if (!box) return;
-      const settings = `휴일 가치 <b>하루 ${fmt(state.dayValue)}만원</b> · 연차 상한 <b>${state.maxLeave == null ? '무제한' : state.maxLeave + '개'}</b>`;
+      const settings = `휴일 가치 <b>하루 ${fmt(state.dayValue)}만원</b> · 연차 <b>${esc(leaveRangeText())}</b>`;
       const effect = changed > 0
         ? `전체 <b>${total}개</b> 여행지 중 <b>${changed}개</b>의 추천 연휴·일정이 바뀌었습니다.`
         : `추천 결과는 이전과 같습니다 (바뀐 여행지 0개). 값을 더 크게/작게 바꾸면 달라집니다.`;
@@ -2987,13 +3036,15 @@
     function wireSettingApply() {
       const dvEl = document.getElementById('day-value');
       const mlEl = document.getElementById('max-leave');
+      const nlEl = document.getElementById('min-leave');
       const dvBtn = document.getElementById('day-value-apply');
       const mlBtn = document.getElementById('max-leave-apply');
 
       const renderHints = () => {
         // 입력값이 아직 확정되지 않았으면(대기) 버튼을 강조해 '눌러야 반영된다'를 알린다.
         const dvPending = parseDayValueInput(dvEl.value) !== state.dayValue;
-        const mlPending = parseMaxLeaveInput(mlEl.value) !== state.maxLeave;
+        const mlPending = parseMaxLeaveInput(mlEl.value) !== state.maxLeave
+          || parseMaxLeaveInput(nlEl.value) !== state.minLeave;
         dvBtn.classList.toggle('pending', dvPending);
         mlBtn.classList.toggle('pending', mlPending);
         document.getElementById('day-value-hint').textContent = dvPending
@@ -3001,9 +3052,9 @@
           : (state.dayValue > 0 ? `· 적용됨 — 비싸도 휴일이 많이 끼는 연휴·일정을 추천` : '· 적용됨 — 0이라 항상 최저가 일정');
         document.getElementById('max-leave-hint').textContent = mlPending
           ? '· 적용 버튼을 눌러야 반영됩니다'
-          : (state.maxLeave == null
-            ? '· 적용됨 — 무제한 (연차 많이 쓰는 긴 일정도 추천될 수 있음)'
-            : `· 적용됨 — 연차 ${state.maxLeave}개 이내 일정만 추천`);
+          : (state.minLeave == null && state.maxLeave == null
+            ? '· 적용됨 — 제한 없음 (연차 많이 쓰는 긴 일정도 추천될 수 있음)'
+            : `· 적용됨 — 연차 ${leaveRangeText()} 일정만 추천`);
       };
 
       const apply = (which) => {
@@ -3019,23 +3070,35 @@
             document.getElementById('dest-sort').value = 'net';
           }
         } else {
-          state.maxLeave = parseMaxLeaveInput(mlEl.value);
-          mlEl.value = state.maxLeave == null ? '' : state.maxLeave;
-          try { localStorage.setItem(MAX_LEAVE_KEY, state.maxLeave == null ? '' : String(state.maxLeave)); } catch (e) {}
+          let lo = parseMaxLeaveInput(nlEl.value);   // 같은 파서 (빈 값 -> null, 음수 -> null)
+          let hi = parseMaxLeaveInput(mlEl.value);
+          // 최소가 최대보다 크면 아무 일정도 통과하지 못해 화면이 통째로 비어 버린다.
+          // 사용자가 뒤집어 넣은 것으로 보고 조용히 바꿔 넣는다.
+          if (lo != null && hi != null && lo > hi) { const t = lo; lo = hi; hi = t; }
+          state.minLeave = lo;
+          state.maxLeave = hi;
+          nlEl.value = lo == null ? '' : lo;
+          mlEl.value = hi == null ? '' : hi;
+          try {
+            localStorage.setItem(MIN_LEAVE_KEY, lo == null ? '' : String(lo));
+            localStorage.setItem(MAX_LEAVE_KEY, hi == null ? '' : String(hi));
+          } catch (e) {}
         }
         renderGvBoard();
         renderDestBoard();
         renderHints();
         const after = recommendationSnapshot();
-        showApplyBox(which === 'dayValue' ? '휴일 가치' : '연차 상한',
+        showApplyBox(which === 'dayValue' ? '휴일 가치' : '연차 범위',
           snapshotDiffCount(before, after), total);
       };
 
       dvEl.value = state.dayValue;
+      nlEl.value = state.minLeave == null ? '' : state.minLeave;
       mlEl.value = state.maxLeave == null ? '' : state.maxLeave;
       renderHints();
       dvEl.addEventListener('input', renderHints);
       mlEl.addEventListener('input', renderHints);
+      nlEl.addEventListener('input', renderHints);
       dvBtn.addEventListener('click', () => apply('dayValue'));
       mlBtn.addEventListener('click', () => apply('maxLeave'));
       // Enter 로도 확정 (IME 조합 중 Enter는 무시)
@@ -3046,6 +3109,7 @@
       });
       onEnter(dvEl, 'dayValue');
       onEnter(mlEl, 'maxLeave');
+      onEnter(nlEl, 'maxLeave');
     }
 
     // h2.collapsible + hidden 바디 하나를 접기/펼치기 토글로 연결 (기본 접힘인 섹션 공용).
@@ -3176,6 +3240,8 @@
         if (destBtn) { toggleDest(destBtn.getAttribute('data-dest')); return; }
         const calNav = e.target.closest('[data-cal-step]');
         if (calNav) { stepCalendarMonth(parseInt(calNav.getAttribute('data-cal-step'), 10)); return; }
+        const winToggle = e.target.closest('[data-wintoggle]');
+        if (winToggle) { state.openWindows = !state.openWindows; renderGvWindows(); return; }
         // 모바일 드릴다운의 대륙 칩: 필터가 아니라 펼치기 토글이라 보드는 다시 그리지 않는다.
         const regionBtn = e.target.closest('[data-region]');
         if (regionBtn) {
