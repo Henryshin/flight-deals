@@ -1,0 +1,150 @@
+/* 휴대폰(세로) 레이아웃 — index / favorites / events 세 페이지가 공유한다.
+ *
+ * 넓은 표(min-width 900~1080px)를 그대로 두면 휴대폰에서 화면 2~3개 폭을 가로로
+ * 밀어야 한 줄을 다 읽을 수 있다. 여기서는 각 행을 '카드'로 바꿔서 세로 스크롤만으로
+ * 읽히게 한다. 열 이름은 헤더 대신 각 칸의 data-label 로 붙는다.
+ *
+ * 선택자에 > 를 쓰는 이유: 펼침 패널 안의 중첩 표(.dest-tbl)까지 같은 규칙이 새어
+ * 들어가면 안 되므로 바깥 표와 중첩 표를 따로 다룬다.
+ *
+ * 이 파일은 각 페이지의 <style> 뒤에 링크한다 — 줄무늬/호버 배경처럼 특이도가 같은
+ * 규칙을 덮어써야 하므로 순서가 중요하다.
+ *
+ * 페이지 전용 선택자(#chat-section, .dest-tbl, .chip-col-side 등)는 해당 페이지에만
+ * 존재하므로 나머지 페이지에서는 그냥 아무것도 매치되지 않는다.
+ */
+@media (max-width: 700px) {
+  .sheet-wrap { padding: 10px 8px; }
+
+  /* 표를 감싼 가로 스크롤이 더는 필요 없다 (카드는 세로로 쌓인다) */
+  .tbl-wrap { overflow-x: visible; border-bottom: none; background: transparent; }
+  table.sheet.wide { min-width: 0; display: block; background: transparent; }
+  table.sheet.wide > thead { display: none; }
+  table.sheet.wide > tbody { display: block; }
+
+  /* 행 = 카드 */
+  table.sheet.wide > tbody > tr {
+    display: block; background: var(--sheet); position: relative;
+    border: 1px solid var(--grid); border-radius: 4px;
+    margin: 0 0 8px; padding: 9px 11px;
+  }
+  /* 카드 제목이 오른쪽 위 ✕ 아래로 들어가지 않게, 삭제 버튼이 실제로 있는 카드에서만
+     자리를 비워 둔다. :has 가 없는 구형 브라우저에선 이 줄만 무시되고(제목이 ✕ 밑으로
+     조금 파고들 뿐) 나머지 레이아웃은 그대로 동작한다. */
+  table.sheet.wide > tbody > tr:has(> td.c-del > button) > td.c-name { padding-right: 30px; }
+  /* 줄무늬/호버 배경은 칸(td) 단위라, 카드로 바꾸면 카드 안에 회색 상자가 조각조각
+     그려진다. 칸 배경은 모두 지우고 줄무늬는 카드(tr) 전체에 준다.
+     (:nth-child·:hover 를 함께 적어야 원본 규칙과 특이도가 같아져 뒤에 온 이 규칙이 이긴다) */
+  table.sheet.wide > tbody > tr > td,
+  table.sheet.wide > tbody > tr:hover > td,
+  table.sheet.wide > tbody > tr.zebra > td,
+  table.sheet.wide > tbody > tr.dest-open > td,
+  table.sheet.wide > tbody > tr:nth-child(even) > td {
+    display: block; border: none; padding: 2px 0; background: transparent;
+    white-space: normal; overflow: visible; text-overflow: clip;
+  }
+  table.sheet.wide > tbody > tr.zebra,
+  table.sheet.wide:not(.dest-sheet) > tbody > tr:nth-child(even) { background: #f8faf9; }
+  table.sheet.wide > tbody > tr.dest-open { background: #eef6f1; }
+  /* 라벨 있는 칸: 값 앞에 열 이름을 인라인 블록으로 붙인다.
+     flex 로 하면 칸 안의 텍스트·배지·막대가 제각각 flex 아이템이 되어 옆으로
+     늘어서고, text-indent 로 매달린 들여쓰기를 주면 칸 안의 inline-block 요소
+     (가격 링크·배지)가 라벨 위로 겹쳐 그려진다. 둘 다 겪은 뒤 가장 단순한 방식으로. */
+  table.sheet.wide > tbody > tr > td[data-label]::before {
+    content: attr(data-label);
+    display: inline-block; min-width: 4.9em;
+    color: var(--muted); font-size: 13px; vertical-align: top;
+  }
+
+  /* 카드 제목(여행지) + 순위 배지는 같은 줄에 */
+  table.sheet.wide > tbody > tr > td.gv-rank {
+    display: inline-block; min-width: 1.9em; padding: 0 4px 0 0;
+    color: var(--muted); font-weight: 700; font-size: 14px;
+  }
+  table.sheet.wide > tbody > tr > td.c-name {
+    display: inline-block; width: auto; max-width: calc(100% - 2.6em);
+    vertical-align: top; font-size: 16.5px; font-weight: 700;
+    margin-bottom: 4px; padding-bottom: 5px;
+  }
+  table.sheet.wide > tbody > tr > td.c-name .cell-sub { font-weight: 400; }
+  /* 최저가는 카드에서 가장 중요한 숫자라 크게 */
+  table.sheet.wide > tbody > tr > td.c-price { text-align: left; }
+  table.sheet.wide > tbody > tr > td.c-price .price-link { font-size: 19px; font-weight: 700; }
+  /* 삭제(✕)는 카드 오른쪽 위 모서리로. 이 칸은 행의 맨 마지막이라 float 로는
+     카드 아래쪽으로 흘러가 버리므로 카드를 기준으로 절대 배치한다. */
+  table.sheet.wide > tbody > tr > td.c-del {
+    position: absolute; top: 4px; right: 6px; margin: 0; padding: 0; width: auto;
+  }
+  table.sheet.wide > tbody > tr > td.c-del:empty { display: none; }
+  /* 사유 한 줄(데이터 없음)은 라벨 없이 그대로 */
+  table.sheet.wide > tbody > tr > td.gv-reason { padding-top: 4px; }
+
+  /* 펼침 패널: 카드 안쪽에 폭을 맞춰 넣는다 */
+  table.sheet.wide > tbody > tr.dest-detail-row { padding: 0; border-top: none; margin-top: -8px; }
+  table.sheet.wide > tbody > tr.dest-detail-row > td { padding: 0; }
+  .dest-detail { padding: 8px; }
+  .dest-detail-head { font-size: 13.5px; }
+
+  /* 중첩 표(연휴별 시세)도 같은 방식의 카드로 */
+  table.dest-tbl { display: block; min-width: 0; }
+  table.dest-tbl > thead { display: none; }
+  table.dest-tbl > tbody { display: block; }
+  table.dest-tbl > tbody > tr {
+    display: block; background: var(--sheet);
+    border: 1px solid var(--grid); border-radius: 4px; margin: 0 0 7px; padding: 8px 10px;
+  }
+  table.dest-tbl > tbody > tr > td {
+    display: block; border: none; padding: 2px 0; white-space: normal;
+  }
+  table.dest-tbl > tbody > tr > td[data-label]::before {
+    content: attr(data-label);
+    display: inline-block; min-width: 4.9em;
+    color: var(--muted); font-size: 13px; vertical-align: top;
+  }
+  table.dest-tbl > tbody > tr > td.c-fav { display: inline-block; width: auto; padding: 0 6px 0 0; text-align: left !important; }
+  table.dest-tbl > tbody > tr > td.c-name {
+    display: inline-block; width: auto; max-width: calc(100% - 2.4em);
+    vertical-align: top; font-size: 16px; font-weight: 700; margin-bottom: 3px;
+  }
+  table.dest-tbl > tbody > tr > td.c-price .price-link { font-size: 18px; font-weight: 700; }
+
+  /* 손가락으로 누를 수 있는 크기 확보 (데스크톱에선 촘촘한 게 낫다).
+     가격 링크는 '추천 일정' 문장 안에도 섞여 나오므로 전역으로 키우면 줄바꿈이
+     흐트러지고 점선 밑줄(클릭 가능 표시)이 글자에서 떨어져 뜬다. 카드에서 단독으로
+     크게 보여주는 최저가만 키운다. */
+  table.sheet.wide > tbody > tr > td.c-price .price-link,
+  table.dest-tbl > tbody > tr > td.c-price .price-link {
+    display: inline-block; padding: 7px 2px 3px;
+  }
+  .dest-toggle, .policy-edit, .x-btn, .fav-btn, .copy-btn {
+    min-height: 34px; display: inline-flex; align-items: center;
+  }
+  .x-btn, .fav-btn, .copy-btn { min-width: 34px; justify-content: center; }
+  .chip { min-height: 34px; display: inline-flex; align-items: center; }
+  .toolbar-row select, .toolbar-row button, .day-value-wrap input,
+  .day-value-wrap .apply-btn, .cal-select { min-height: 34px; }
+  .page-nav a { padding: 9px 14px; }
+
+  /* 필터/설정 줄: 세로로 쌓아 가로 폭을 넘기지 않게.
+     flex:0 0 auto 이면 폭이 '내용 최대폭'(긴 안내 문구 한 줄)으로 잡혀 페이지를
+     가로로 넓히므로, 화면 폭을 채우되 넘지 않도록 1 1 100% + max-width 로 바꾼다. */
+  .chip-col-side {
+    flex: 1 1 100%; min-width: 0; max-width: 100%;
+    border-left: none; padding-left: 0; border-top: 1px dashed var(--grid); padding-top: 8px;
+  }
+  .chip-col-country, .chip-groups { min-width: 0; max-width: 100%; }
+  .chip-line, .day-value-wrap { min-width: 0; max-width: 100%; }
+  .day-value-wrap .cell-sub { display: block; flex-basis: 100%; min-width: 0; overflow-wrap: anywhere; }
+
+  /* 달력은 한 달만 꽉 차게 (3개월 가로 스크롤은 손가락으로 다루기 어렵다) */
+  .calendar { justify-content: flex-start; scroll-snap-type: x mandatory; }
+  .cal-month { width: min(100%, 300px); scroll-snap-align: start; }
+
+  /* 떠 있는 채팅창은 모바일에서 본문을 가리므로 문서 흐름 안으로 되돌린다 */
+  #chat-section { position: static !important; width: auto !important; left: auto !important; top: auto !important; margin: 12px 0; }
+  #chat-h2 { cursor: pointer; }
+
+  .modal-backdrop { padding: 6vh 8px 0; }
+  .excel-dialog { width: 100%; }
+  .dlg-btns button { min-height: 38px; }
+}

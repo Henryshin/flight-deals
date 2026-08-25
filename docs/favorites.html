@@ -123,6 +123,8 @@
     .sheet-wrap { padding: 12px 10px; }
   }
 </style>
+<!-- 휴대폰 레이아웃. <style> 뒤에 와야 같은 특이도의 규칙(줄무늬 배경 등)을 덮어쓴다. -->
+<link rel="stylesheet" href="mobile.css" />
 </head>
 <body>
   <div class="ribbon-tabs">
@@ -416,9 +418,9 @@
         ? '이 연휴는 아직 시세 데이터가 없습니다 — 다음 자동 수집에서 채워집니다.'
         : '노선 정보를 찾을 수 없습니다 (삭제된 노선일 수 있습니다).';
       return `<tr>
-        <td style="text-align:center"><button class="fav-btn on" data-fav="${esc(r.key)}" title="즐겨찾기에서 빼기">★</button></td>
-        <td title="${esc(label)}">${esc(label)}</td>
-        <td class="win-name">${esc(winLabel)}</td>
+        <td class="c-fav" style="text-align:center"><button class="fav-btn on" data-fav="${esc(r.key)}" title="즐겨찾기에서 빼기">★</button></td>
+        <td class="c-name" title="${esc(label)}">${esc(label)}</td>
+        <td class="win-name" data-label="연휴">${esc(winLabel)}</td>
         <td colspan="4" class="gv-reason">${esc(reason)}</td>
       </tr>`;
     }
@@ -428,13 +430,13 @@
     const sched = `${period} · ${schedText(b)}${capSwapped ? '' : recommendedAltNote(r.cell)}`;
     const strip = `<span class="gv-strip-row">${tripStrip(b.depart_date, b.return_date)}${climateBadge(r.route.destination, b.depart_date)}</span>`;
     return `<tr>
-      <td style="text-align:center"><button class="fav-btn on" data-fav="${esc(r.key)}" title="즐겨찾기에서 빼기">★</button></td>
-      <td title="${esc(label)}">${esc(label)}</td>
-      <td class="win-name">${esc(winLabel)}</td>
-      <td class="num"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(b.price)}</a></td>
-      <td>${gvDealBadge(r.cell, b.price)}</td>
-      <td class="period-cell">${sched}${strip}</td>
-      <td>${stopsCell(b.stops, b.airline)}</td>
+      <td class="c-fav" style="text-align:center"><button class="fav-btn on" data-fav="${esc(r.key)}" title="즐겨찾기에서 빼기">★</button></td>
+      <td class="c-name" title="${esc(label)}">${esc(label)}</td>
+      <td class="win-name" data-label="연휴">${esc(winLabel)}</td>
+      <td class="num c-price" data-label="최저가"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(b.price)}</a></td>
+      <td data-label="특가율">${gvDealBadge(r.cell, b.price)}</td>
+      <td class="period-cell" data-label="추천 일정">${sched}${strip}</td>
+      <td data-label="직항/경유">${stopsCell(b.stops, b.airline)}</td>
     </tr>`;
   }
 
