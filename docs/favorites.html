@@ -124,7 +124,7 @@
   }
 </style>
 <!-- 휴대폰 레이아웃. <style> 뒤에 와야 같은 특이도의 규칙(줄무늬 배경 등)을 덮어쓴다. -->
-<link rel="stylesheet" href="mobile.css" />
+<link rel="stylesheet" href="mobile.css?v=2026-08-25f" />
 </head>
 <body>
   <div class="ribbon-tabs">
@@ -324,31 +324,15 @@
     if (!min || cap === Infinity || (min.leave_days || 0) <= cap) return min;
     return pickPair(cell) || min;
   }
+  // 💡 대신 추천 줄은 요청에 따라 제거 (index.html 쪽 같은 함수의 주석 참고).
+  // 갈 수 없는 일정을 알리는 ⚠ 경고만 남긴다.
   function recommendedAltNote(cell) {
     const min = primaryPair(cell);
     const rec = pickPair(cell);
     if (min && !rec) {
       return `<div class="cell-sub eff-note" title="이 연휴에서 찾은 일정은 모두 설정한 연차 상한(${leaveCap()}개)을 넘습니다 — 상한을 늘리면 후보가 보입니다">⚠ 연차 ${min.leave_days}개 필요 (상한 ${leaveCap()}개 초과)</div>`;
     }
-    if (!min || !rec || rec === min || rec.depart_date === min.depart_date && rec.return_date === min.return_date) return '';
-    const diff = rec.price - min.price;
-    const dBonus = (rec.bonus_days || 0) - (min.bonus_days || 0);
-    const dLeave = (rec.leave_days || 0) - (min.leave_days || 0);
-    const period = `${fmtDateYY(rec.depart_date, rec.depart_weekday)} ~ ${fmtDateYY(rec.return_date, rec.return_weekday)}`;
-    const capped = (min.leave_days || 0) > leaveCap();
-    const title = capped
-      ? `최저가 일정(${fmt(min.price)}원)은 연차 ${min.leave_days}개가 필요해 상한(${leaveCap()}개)을 넘습니다. `
-        + `연차 ${rec.leave_days}개로 갈 수 있는 일정 중 실질 부담이 가장 낮은 것입니다`
-      : `최저가 일정(${fmt(min.price)}원, ${min.depart_date}~${min.return_date})보다 ${fmt(diff)}원 비싸지만 `
-        + `덤 휴일이 ${dBonus}일 더 많아, 휴일 하루 ${fmt(dayValueWon())}원 기준 실질 부담이 더 낮은 일정입니다`
-        + (dLeave > 0 ? ` (연차는 ${dLeave}개 더 씁니다)` : '');
-    const priceHtml = rec.booking_url
-      ? `<a class="price-link" href="${esc(rec.booking_url)}" target="_blank" rel="noopener">${fmt(rec.price)}원</a>`
-      : `${fmt(rec.price)}원`;
-    const delta = capped
-      ? `연차 ${min.leave_days}→${rec.leave_days}개`
-      : `+${fmt(diff)} · 휴일 +${dBonus}일${dLeave > 0 ? ` · 연차 +${dLeave}개` : ''}`;
-    return `<div class="cell-sub eff-note" title="${esc(title)}">💡 대신 추천: ${esc(period)} · ${schedText(rec)} · ${priceHtml} (${delta})</div>`;
+    return '';
   }
   function gvDealVal(cell) {
     return (cell && cell.tier !== 'C' && cell.deal_pct != null) ? cell.deal_pct : null;
