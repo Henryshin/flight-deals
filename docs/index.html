@@ -776,7 +776,7 @@
     const cacheBust = `?t=${Date.now()}`;
     // 코드가 바뀔 때마다 올리는 페이지 버전. 화면 맨 아래에 표시되므로, 사용자가 보고 있는
     // 것이 최신 배포본인지(=브라우저 캐시가 아닌지) 바로 확인할 수 있다.
-    const PAGE_BUILD = '2026-08-25a';
+    const PAGE_BUILD = '2026-08-25b';
     const GITHUB_REPO = 'Henryshin/flight-deals';
     const GH_API = 'https://api.github.com';
     const TOKEN_KEY = 'fd_gh_token';
@@ -808,15 +808,26 @@
     let pendingAuthRetry = null;
     function handleProxyError(e, retry) {
       const s = e && e.status;
-      if (s === 401) {
+      const msg = (e && e.message) || '';
+      // 401 에는 원인이 두 가지 섞여 있다:
+      //  (1) 공유 암호가 틀림 — 서버가 '공유 암호가 틀렸습니다.' 를 준다.
+      //  (2) 서버(Worker)의 GitHub 토큰 만료 — GitHub 이 401 을 주고 구버전 Worker 가
+      //      그 상태코드를 그대로 넘긴다.
+      // 메시지로 구분하지 않으면 (2) 를 '암호가 틀렸다'로 잘못 안내해, 맞는 암호를 계속
+      // 다시 넣게 만든다 (암호 확인은 통과하는데 수정만 안 되는 상황).
+      if (s === 401 && /공유 암호/.test(msg)) {
         pendingAuthRetry = retry || null;
         // 이미 저장된 암호가 있는데도 401이면 '안 넣었다'가 아니라 '틀렸다'는 뜻이다.
-        // 둘을 같은 문구로 안내하면 틀린 암호를 계속 다시 저장하게 되므로 구분해서 알린다.
         openSettings(getSharePass()
           ? '저장된 공유 암호가 서버와 맞지 않습니다. 올바른 암호로 다시 저장해 주세요.'
           : '공유 암호를 입력하세요 (한 번만 저장하면 계속 사용됩니다)');
+        return;
       }
-      else toast('요청 실패: ' + ((e && e.message) || '네트워크 오류'), 'err');
+      if (s === 401 || s === 403 || s === 502) {
+        toast('서버의 GitHub 토큰 문제로 보입니다 — Cloudflare Worker 의 GH_TOKEN 을 갱신하세요. (' + (msg || 'HTTP ' + s) + ')', 'err');
+        return;
+      }
+      toast('요청 실패: ' + (msg || '네트워크 오류'), 'err');
     }
 
     // ===================== 동시접속자 카운터 =====================
@@ -2789,10 +2800,20 @@
       if (res.status === 401) {
         out.textContent = `암호가 서버와 다릅니다 (지금 확인한 암호는 ${pass.length}자)`;
         out.className = 'fail';
-      } else if (res.status === 400) {
-        // 암호 게이트를 통과했다는 뜻 — ping 은 서버가 모르는 액션이라 400이 정상 응답.
-        out.textContent = '암호 확인 ✓ 서버와 일치합니다';
-        out.className = 'ok';
+      } else if (res.status === 400 || res.ok) {
+        // 여기까지 왔다는 건 암호 게이트를 통과했다는 뜻. 400 은 ping 을 모르는 구버전
+        // Worker 의 '알 수 없는 요청' 응답이고, 200 이면 새 Worker 가 진단 결과까지 준 것.
+        if (res.ok && data && data.github === false) {
+          // 암호는 맞지만 서버 토큰이 죽은 상태 — 수정/삭제만 401 로 실패하는 원인이다.
+          out.textContent = '암호는 맞습니다 ✓ 그러나 서버의 GitHub 토큰이 만료/권한부족입니다' +
+            (data.github_status ? ` (GitHub HTTP ${data.github_status})` : '') +
+            ' — Worker 의 GH_TOKEN 을 갱신하세요.';
+          out.className = 'fail';
+        } else {
+          out.textContent = '암호 확인 ✓ 서버와 일치합니다' +
+            (data && data.github === true ? ' · GitHub 토큰도 정상' : '');
+          out.className = 'ok';
+        }
       } else {
         out.textContent = `예상치 못한 응답: HTTP ${res.status}${data.error ? ' — ' + data.error : ''}`;
         out.className = 'fail';

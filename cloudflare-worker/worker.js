@@ -73,6 +73,9 @@ export default {
     if (env.SHARE_PASS && String(body.pass || "") !== String(env.SHARE_PASS)) {
       return json({ error: "공유 암호가 틀렸습니다." }, 401, cors);
     }
+    // 진단용. 노선을 건드리지 않고 "암호가 맞는지 + 서버 토큰이 아직 쓸 만한지"만 확인한다.
+    // GH_TOKEN 미설정/만료도 여기서 500 으로 끊지 않고 결과에 담아 알려준다.
+    if (action === "ping") return json(await ping(env), 200, cors);
     if (!env.GH_TOKEN) return json({ error: "서버에 GH_TOKEN 이 설정되지 않았습니다." }, 500, cors);
 
     try {
@@ -116,6 +119,32 @@ function ghHeaders(env) {
 }
 function fail(msg, status) { const e = new Error(msg); e.status = status || 400; return e; }
 
+// GitHub 이 준 상태코드를 그대로 방문자에게 돌려주면 안 된다. 특히 401/403 은 프런트가
+// "공유 암호가 틀렸다"로 해석해, 실제로는 서버 토큰이 만료됐을 뿐인데 방문자에게 암호를
+// 다시 입력하라고 잘못 안내하게 된다 (맞는 암호를 넣어도 계속 같은 창이 뜬다).
+// 서버 쪽 설정 문제임이 드러나도록 502 로 바꾸고, 무엇을 고쳐야 하는지 문구에 담는다.
+function ghFail(what, status) {
+  if (status === 401 || status === 403) {
+    return fail(
+      `${what} 실패: 서버의 GitHub 토큰이 만료되었거나 권한이 부족합니다 (GitHub HTTP ${status}). ` +
+      `Worker 의 GH_TOKEN 을 새 토큰으로 갱신하세요.`, 502);
+  }
+  return fail(`${what} 실패 (HTTP ${status})`, status);
+}
+
+// 진단용: 여기까지 왔다는 것 자체가 공유 암호가 맞다는 증거이고, 더해서 서버의 GitHub
+// 토큰이 아직 쓸 수 있는지 함께 알려준다. 토큰 만료는 방문자 눈에 '암호가 틀렸다'처럼
+// 보이는 대표적인 원인이라, 이 둘을 나눠서 보여줄 수 있어야 한다.
+async function ping(env) {
+  if (!env.GH_TOKEN) return { ok: true, github: false, github_status: 0, detail: "GH_TOKEN 미설정" };
+  let status = 0;
+  try {
+    const res = await fetch(`${GH}/repos/${REPO}/contents/${ROUTES_PATH}?ref=main`, { headers: ghHeaders(env) });
+    status = res.status;
+  } catch (e) { status = 0; }
+  return { ok: true, github: status === 200, github_status: status };
+}
+
 function stopsTag(maxStops) {
   if (maxStops === 0) return "d";
   if (maxStops == null) return "any";
@@ -125,7 +154,7 @@ function monitorId(r) { return r.id || (r.origin + "-" + r.destination); }
 
 async function ghGetRoutes(env) {
   const res = await fetch(`${GH}/repos/${REPO}/contents/${ROUTES_PATH}?ref=main`, { headers: ghHeaders(env) });
-  if (!res.ok) throw fail(`routes.json 조회 실패 (HTTP ${res.status})`, res.status);
+  if (!res.ok) throw ghFail("routes.json 조회", res.status);
   const j = await res.json();
   const decoded = decodeURIComponent(escape(atob(String(j.content || "").replace(/\s/g, ""))));
   return { routes: JSON.parse(decoded), sha: j.sha };
@@ -149,7 +178,7 @@ async function commitRoutes(env, mutate, message) {
     const res = await ghPutRoutes(env, next, sha, message);
     if (res.ok) return { ok: true };
     if (res.status === 409 || res.status === 422) continue; // sha 충돌 -> 재시도
-    throw fail(`저장 실패 (HTTP ${res.status})`, res.status);
+    throw ghFail("저장", res.status);
   }
   throw fail("동시 등록이 많아 저장에 실패했습니다. 잠시 후 다시 시도하세요.", 409);
 }
@@ -563,6 +592,6 @@ async function dispatchCollect(env, only) {
     headers: ghHeaders(env),
     body: JSON.stringify({ ref: "main", inputs }),
   });
-  if (res.status !== 204) throw fail(`수집 실행 실패 (HTTP ${res.status})`, res.status);
+  if (res.status !== 204) throw ghFail("수집 실행", res.status);
   return { ok: true };
 }
