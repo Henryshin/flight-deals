@@ -783,7 +783,13 @@
     const cacheBust = `?t=${Date.now()}`;
     // 코드가 바뀔 때마다 올리는 페이지 버전. 화면 맨 아래에 표시되므로, 사용자가 보고 있는
     // 것이 최신 배포본인지(=브라우저 캐시가 아닌지) 바로 확인할 수 있다.
-    const PAGE_BUILD = '2026-08-25c';
+    const PAGE_BUILD = '2026-08-25d';
+    // 모바일 판정. mobile.css 의 카드 레이아웃 분기(max-width:700px)와 반드시 같은 값이어야
+    // "화면엔 안 보이는데 폴링만 계속 도는" 상태가 생기지 않는다.
+    const MOBILE_MQ = '(max-width: 700px)';
+    function isMobileLayout() {
+      try { return window.matchMedia(MOBILE_MQ).matches; } catch (e) { return false; }
+    }
     const GITHUB_REPO = 'Henryshin/flight-deals';
     const GH_API = 'https://api.github.com';
     const TOKEN_KEY = 'fd_gh_token';
@@ -897,6 +903,10 @@
     }
     async function initLiveCounter() {
       if (!usingProxy()) return; // 프록시(Worker) 미연결이면 카운터도 표시하지 않음
+      // 접속자 수·참여자 목록을 보여줄 자리(#chat-live-count, 👥 탭)가 채팅 헤더 안에만
+      // 있으므로, 채팅을 끈 모바일에서는 하트비트가 아무것도 그리지 못한 채 90초마다
+      // KV 쓰기만 소비한다 (무료 플랜 하루 1,000회). 그래서 같이 건너뛴다.
+      if (isMobileLayout()) return;
       const clientId = getLiveClientId();
       let timer = null;
       async function beat() {
@@ -1301,6 +1311,10 @@
     }
     function initChat() {
       const section = document.getElementById('chat-section');
+      // 모바일에선 채팅 패널을 아예 두지 않는다 (좁은 화면에서 본문을 밀어내기만 함).
+      // CSS 로 숨기기만 하면 3초마다 도는 chat_poll 이 그대로 살아 있어, 보이지도 않는
+      // 패널 때문에 요청과 배터리만 쓴다 — 그래서 초기화 자체를 건너뛴다.
+      if (isMobileLayout()) { section.hidden = true; return; }
       if (!usingProxy()) { section.hidden = true; return; } // 프록시 미연결이면 섹션 자체를 숨김
       section.hidden = false;
       placeChatWindow();
@@ -1333,6 +1347,8 @@
       selCountries: new Set(), // 1차 필터: 선택된 국가들 (다중선택)
       selCities: new Set(),    // 2차 필터: 선택된 지역(도착 도시)들 (다중선택, 선택 국가에 종속)
       selStops: new Set(),     // 직항/경유 필터: 'direct'/'via' (다중선택, OR. 비어있으면 = 전체)
+      // 모바일 드릴다운에서 펼쳐 놓은 대륙 하나 (null = 전부 접힘). 필터가 아니라 표시 상태다.
+      openRegion: null,
       // 휴일 하루의 가치(만원). 추천 일정 = (가격 - 가치 x 덤휴일) 최소인 일정.
       dayValue: (function () {
         try {
@@ -1712,19 +1728,45 @@
         if (!countries.has(c)) countries.set(c, r.flag || (findAirport(r.destination) || {}).flag || '');
       }
       const noSel = state.selCountries.size === 0 && state.selCities.size === 0 && state.selStops.size === 0;
+      const REGION_ORDER = ['동아시아', '동남기타아시아', '서유럽', '남유럽', '동유럽', '미주', '그외'];
+      const byRegion = new Map(REGION_ORDER.map(k => [k, []]));
+      for (const [c] of countries) byRegion.get(countryRegion(c)).push(c);
+
       // 전체는 최상단 행, 그 아래 대륙별로 국가 칩을 행으로 나누고 왼쪽에 지역 라벨을 붙인다.
-      let html = `<div class="chip-row">${chip('all', '', '전체', noSel)}</div>`;
-      const buckets = { 동아시아: [], 동남기타아시아: [], 서유럽: [], 남유럽: [], 동유럽: [], 미주: [], 그외: [] };
-      for (const [c, flag] of countries) {
-        buckets[countryRegion(c)].push(chip('country', c, c, state.selCountries.has(c)));
-      }
-      // 라벨 + 칩 묶음을 좌우 2열(chip-region-row)로 나눠서, 칩이 좁은 화면에서 줄바꿈돼도
-      // 항상 라벨 오른쪽(칩 칸의 왼쪽 끝)에서부터 시작하도록(행잉 인덴트) 만든다.
-      for (const key of ['동아시아', '동남기타아시아', '서유럽', '남유럽', '동유럽', '미주', '그외']) {
-        if (!buckets[key].length) continue;
-        const label = REGION_LABELS[key];
-        const labelHtml = label ? `<span class="chip-region-label">${esc(label)}</span>` : '';
-        html += `<div class="chip-region-row">${labelHtml}<div class="chip-row">${buckets[key].join('')}</div></div>`;
+      // ('전체' 칩은 모바일에서 CSS로 숨긴다 — 선택을 하나씩 눌러 끄면 같은 상태가 된다.)
+      let html = `<div class="chip-row chip-row-all">${chip('all', '', '전체', noSel)}</div>`;
+
+      if (isMobileLayout()) {
+        // 모바일: 대륙 → 국가 → 지역(도시) 3단 드릴다운. 좁은 화면에 국가 칩 30여 개를
+        // 한꺼번에 깔면 필터만으로 화면이 다 차므로, 대륙 칩만 먼저 보이고 누른 대륙의
+        // 국가 칩만 그 아래로 펼친다. 대륙 칩 자체는 필터가 아니라 '펼치기' 스위치다
+        // (그래서 접어도 이미 고른 국가는 그대로 살아 있고, 칩에 개수로 표시한다).
+        for (const key of REGION_ORDER) {
+          const list = byRegion.get(key);
+          if (!list.length) continue;
+          const open = state.openRegion === key;
+          const picked = list.filter(c => state.selCountries.has(c)).length;
+          const label = (REGION_LABELS[key] || '기타') + (picked ? ` (${picked})` : '');
+          html += `<div class="chip-region-row region-drill${open ? ' open' : ''}">` +
+            `<button class="chip region-chip${open ? ' open' : ''}${picked ? ' has-sel' : ''}"` +
+            ` data-region="${esc(key)}" aria-expanded="${open}">` +
+            // 캐럿은 여행지 펼침(dest-caret)과 같은 글자를 쓴다 — ▾/▸ 는 이 폰트 스택에서
+            // 빈 네모로 떨어지는 경우가 있었다.
+            `<span class="region-caret">${open ? '▼' : '▶'}</span> ${esc(label)}</button>` +
+            (open ? `<div class="chip-row region-countries">${list.map(c => chip('country', c, c, state.selCountries.has(c))).join('')}</div>` : '') +
+            `</div>`;
+        }
+      } else {
+        // 라벨 + 칩 묶음을 좌우 2열(chip-region-row)로 나눠서, 칩이 좁은 화면에서 줄바꿈돼도
+        // 항상 라벨 오른쪽(칩 칸의 왼쪽 끝)에서부터 시작하도록(행잉 인덴트) 만든다.
+        for (const key of REGION_ORDER) {
+          const list = byRegion.get(key);
+          if (!list.length) continue;
+          const label = REGION_LABELS[key];
+          const labelHtml = label ? `<span class="chip-region-label">${esc(label)}</span>` : '';
+          const chips = list.map(c => chip('country', c, c, state.selCountries.has(c))).join('');
+          html += `<div class="chip-region-row">${labelHtml}<div class="chip-row">${chips}</div></div>`;
+        }
       }
       document.getElementById('chip-country').innerHTML = html;
 
@@ -2581,9 +2623,17 @@
         if (isCurrentMonth && d === today.getDate()) classes.push('today');
         cells += `<div class="${classes.join(' ')}">${d}</div>`;
       }
-      const head = isCenter
-        ? `<div class="cal-head"><select id="cal-center-select" class="cal-select" title="가운데 달 선택 — 바꾸면 3개월이 함께 이동합니다">${monthOptions(year, month)}</select></div>`
-        : `<div class="cal-head"><div class="cal-title">${year}.${pad(month + 1)}</div></div>`;
+      // 모바일은 한 달만 보여주므로, 좌우 화살표로 앞뒤 달을 넘긴다
+      // (3개월이 늘어서 있을 땐 화살표 없이 가운데 달 드롭다운으로 옮겼다).
+      const head = !isCenter
+        ? `<div class="cal-head"><div class="cal-title">${year}.${pad(month + 1)}</div></div>`
+        : isMobileLayout()
+          ? `<div class="cal-head">` +
+            `<button type="button" class="cal-nav" data-cal-step="-1" title="이전 달">‹</button>` +
+            `<select id="cal-center-select" class="cal-select" title="달 선택">${monthOptions(year, month)}</select>` +
+            `<button type="button" class="cal-nav" data-cal-step="1" title="다음 달">›</button>` +
+            `</div>`
+          : `<div class="cal-head"><select id="cal-center-select" class="cal-select" title="가운데 달 선택 — 바꾸면 3개월이 함께 이동합니다">${monthOptions(year, month)}</select></div>`;
       return `
         <div class="cal-month">
           ${head}
@@ -2596,14 +2646,29 @@
       `;
     }
 
-    // calYear/calMonth = 가운데 달. [가운데-1, 가운데, 가운데+1] 3개월을 표시.
+    // calYear/calMonth = 가운데 달. 데스크톱은 [가운데-1, 가운데, 가운데+1] 3개월,
+    // 모바일은 좁아서 가운데 달 하나만 (앞뒤는 머리말의 ‹ › 로 넘긴다).
     function renderCalendar() {
       let html = '';
-      for (let i = -1; i <= 1; i++) {
+      const offsets = isMobileLayout() ? [0] : [-1, 0, 1];
+      for (const i of offsets) {
         const d = new Date(calYear, calMonth + i, 1);
         html += monthBlock(d.getFullYear(), d.getMonth(), i === 0);
       }
       document.getElementById('calendar').innerHTML = html;
+    }
+    // 모바일 달력의 ‹ › — 가운데 달을 한 칸씩 옮긴다. monthOptions 가 '이번 달 +1 ~ +12'만
+    // 담고 있어 드롭다운으로는 과거로 갈 수 없으므로, 화살표도 같은 범위 안에서만 움직인다.
+    function stepCalendarMonth(delta) {
+      const today = new Date();
+      const cur = calYear * 12 + calMonth;
+      const min = today.getFullYear() * 12 + today.getMonth();          // 이번 달
+      const max = min + 12;                                             // 1년 뒤까지
+      const next = Math.min(max, Math.max(min, cur + delta));
+      if (next === cur) return;
+      calYear = Math.floor(next / 12);
+      calMonth = next % 12;
+      renderCalendar();
     }
 
     // ===================== 삭제 / 수집 실행 =====================
@@ -3109,6 +3174,16 @@
         // 여행지 행 클릭 -> 연휴별 시세 펼치기/접기 (행 안의 ★/✎/✕ 버튼이 먼저 잡히도록 뒤에 둔다)
         const destBtn = e.target.closest('[data-dest]');
         if (destBtn) { toggleDest(destBtn.getAttribute('data-dest')); return; }
+        const calNav = e.target.closest('[data-cal-step]');
+        if (calNav) { stepCalendarMonth(parseInt(calNav.getAttribute('data-cal-step'), 10)); return; }
+        // 모바일 드릴다운의 대륙 칩: 필터가 아니라 펼치기 토글이라 보드는 다시 그리지 않는다.
+        const regionBtn = e.target.closest('[data-region]');
+        if (regionBtn) {
+          const key = regionBtn.getAttribute('data-region');
+          state.openRegion = state.openRegion === key ? null : key;
+          renderChips();
+          return;
+        }
         const chipBtn = e.target.closest('[data-chip]');
         if (chipBtn) { onChipClick(chipBtn); return; }
         const destVoteBtn = e.target.closest('[data-destvote]');
@@ -3131,6 +3206,15 @@
           else if (!document.getElementById('settings-backdrop').hidden) closeSettings();
         }
       });
+
+      // 칩(대륙 드릴다운)과 달력(1개월/3개월)은 그리는 시점의 화면 폭으로 모양이 갈린다.
+      // 기기를 돌리거나 창을 줄여 경계를 넘으면 예전 모양이 그대로 남으므로 다시 그린다.
+      try {
+        const mq = window.matchMedia(MOBILE_MQ);
+        const onChange = () => { renderChips(); renderCalendar(); };
+        if (mq.addEventListener) mq.addEventListener('change', onChange);
+        else if (mq.addListener) mq.addListener(onChange); // 구형 사파리
+      } catch (e) {}
     }
 
     async function init() {

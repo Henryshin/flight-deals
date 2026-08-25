@@ -14,6 +14,17 @@
  * 존재하므로 나머지 페이지에서는 그냥 아무것도 매치되지 않는다.
  */
 @media (max-width: 700px) {
+  /* 전체 배율 축소 — 같은 화면에 약 1.2배의 내용이 들어온다.
+     이 대시보드의 글자·여백 값이 전부 px 로 박혀 있어 루트 font-size 를 바꿔도 따라오지
+     않으므로, 레이아웃 계산에 그대로 반영되는 zoom 으로 한 번에 줄인다
+     (transform:scale 은 레이아웃 폭을 그대로 둬서 가로 스크롤이 생긴다). */
+  body { zoom: 0.833; }
+
+  /* 채팅 패널은 모바일에서 통째로 뺀다 (좁은 화면에서 본문을 밀어내기만 한다).
+     JS 쪽에서도 initChat/initLiveCounter 를 건너뛰므로 폴링도 돌지 않는다 —
+     여기 규칙은 그 사이 잠깐이라도 보이지 않게 하는 이중 안전장치. */
+  #chat-section { display: none !important; }
+
   .sheet-wrap { padding: 10px 8px; }
 
   /* 표를 감싼 가로 스크롤이 더는 필요 없다 (카드는 세로로 쌓인다) */
@@ -124,6 +135,31 @@
   .toolbar-row select, .toolbar-row button, .day-value-wrap input,
   .day-value-wrap .apply-btn, .cal-select { min-height: 34px; }
   .page-nav a { padding: 9px 14px; }
+
+  /* '전체' 버튼들은 모바일에서 뺀다. 국가/연휴 칩은 다중 선택 토글이라 고른 걸 다시
+     눌러 끄면 '전체'와 같은 상태가 되므로, 좁은 화면에서 자리만 차지한다. */
+  .chip-row-all,                                   /* 국가 필터의 '전체' */
+  #gv-windows .chip-line:first-child,              /* 연휴 필터의 '전체' */
+  #btn-dest-expand, #btn-dest-collapse {           /* 전체 펼치기 / 전체 접기 */
+    display: none !important;
+  }
+
+  /* 휴일 가치 · 연차 상한 입력은 모바일에서 감춘다. 저장된 값 자체는 그대로 쓰이므로
+     추천 결과는 데스크톱과 같다 — 좁은 화면에서 조절 UI만 덜어내는 것. */
+  #day-value-line, #max-leave-line, #apply-box { display: none !important; }
+
+  /* 대륙 → 국가 → 지역 3단 드릴다운 (renderChips 가 모바일에서 이 구조로 그린다) */
+  .chip-region-row.region-drill { display: block; margin-bottom: 4px; }
+  .region-chip { font-weight: 600; }
+  .region-chip.open { background: var(--sel); border-color: var(--excel-green); }
+  .region-chip.has-sel { border-color: var(--excel-green); color: #14532d; }
+  .region-caret { display: inline-block; width: 1em; color: var(--muted); }
+  .region-chip.open .region-caret { color: inherit; }
+  /* 펼친 국가 칩은 대륙 칩보다 한 칸 들여써서 상하 관계가 눈에 보이게 */
+  .region-countries { margin: 5px 0 8px 14px; }
+
+  /* 지역(도시) 칩도 같은 들여쓰기로 이어 붙여, 국가 아래 단계임이 드러나게 */
+  #chip-region-line { padding-left: 14px; }
 
   /* 필터/설정 줄: 세로로 쌓아 가로 폭을 넘기지 않게.
      flex:0 0 auto 이면 폭이 '내용 최대폭'(긴 안내 문구 한 줄)으로 잡혀 페이지를
