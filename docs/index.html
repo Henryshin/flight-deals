@@ -206,12 +206,18 @@
   .chip-region-row .chip-row { flex: 1; min-width: 0; }
   .chip-region-label { color: var(--muted); font-size: 15px; padding-top: 3px; min-width: 70px; flex-shrink: 0; }
   .day-value-wrap { display: flex; align-items: center; gap: 4px; font-size: 15px; flex-wrap: wrap; }
-  #day-value, #max-leave {
-    width: 48px; font-family: Consolas, monospace; font-size: 15px; text-align: right;
+  /* 연차 최소/최대는 나란히 놓이므로 폭이 같아야 한다 — #min-leave 를 빼먹으면 그 칸만
+     브라우저 기본 폭(약 170px)이라 좌우가 크게 어긋난다. */
+  #day-value, #min-leave, #max-leave {
+    width: 66px; font-family: Consolas, monospace; font-size: 15px; text-align: right;
     border: 1px solid var(--grid); background: #fff; padding: 2px 4px; border-radius: 2px; color: var(--text);
   }
-  #max-leave { width: 60px; }  /* placeholder '무제한' 이 들어갈 폭 */
-  #day-value:focus, #max-leave:focus { border-color: var(--excel-green); outline: none; }
+  #day-value:focus, #min-leave:focus, #max-leave:focus { border-color: var(--excel-green); outline: none; }
+  /* 위/아래 화살표(스피너)를 항상 보이게. 크롬 계열은 기본적으로 hover 중일 때만 그려서,
+     마우스를 올리기 전에는 숫자를 직접 타이핑해야 하는 줄 알기 쉽다. */
+  #day-value::-webkit-inner-spin-button,
+  #min-leave::-webkit-inner-spin-button,
+  #max-leave::-webkit-inner-spin-button { opacity: 1; height: 18px; }
   /* 적용 버튼: 확정 전(pending)에는 초록으로 채워 '눌러야 반영된다'를 드러낸다. */
   .apply-btn {
     font-family: inherit; font-size: 14px; padding: 2px 10px; cursor: pointer; margin-left: 2px;
@@ -348,12 +354,27 @@
   /* 참여자 탭: 제목표시줄 우측상단에 얹는 작은 버튼. 드래그 핸들(#chat-h2) 안에 있어서
      클릭이 접기/펼치기로 새지 않게 JS에서 stopPropagation 한다. */
   .chat-participants-tab {
-    position: absolute; top: 50%; right: 8px; transform: translateY(-50%);
+    position: absolute; top: 50%; right: 34px; transform: translateY(-50%);
     font-family: inherit; font-size: 12px; padding: 2px 8px; cursor: pointer;
     border: 1px solid rgba(255,255,255,0.4); border-radius: 20px;
     background: rgba(255,255,255,0.12); color: inherit;
   }
   .chat-participants-tab:hover { background: rgba(255,255,255,0.22); }
+  /* 채팅 끄기(✕): 참여자 탭 오른쪽 끝. 제목표시줄이 드래그 핸들이라 클릭이 접기/이동으로
+     새지 않도록 JS 에서 stopPropagation 한다 (참여자 탭과 같은 이유). */
+  .chat-off-btn {
+    position: absolute; top: 50%; right: 7px; transform: translateY(-50%);
+    font-family: inherit; font-size: 15px; line-height: 1; padding: 2px 5px; cursor: pointer;
+    border: none; background: none; color: inherit; opacity: 0.75; border-radius: 3px;
+  }
+  .chat-off-btn:hover { opacity: 1; background: rgba(255,255,255,0.2); }
+  /* 채팅을 켜는 버튼 — 수식 표시줄 오른쪽 끝 */
+  .chat-on-btn {
+    margin-left: auto; font-family: inherit; font-size: 14px; padding: 1px 9px; cursor: pointer;
+    border: 1px solid var(--grid); border-radius: 3px; background: #fff; color: var(--text);
+    white-space: nowrap;
+  }
+  .chat-on-btn:hover { background: var(--sel); border-color: var(--excel-green); }
   .chat-participants-panel {
     position: absolute; top: 34px; right: 8px; z-index: 5; width: 190px; max-height: 220px;
     overflow-y: auto; background: var(--sheet); border: 1px solid var(--grid); border-radius: 3px;
@@ -493,7 +514,7 @@
 
 </style>
 <!-- 휴대폰 레이아웃. <style> 뒤에 와야 같은 특이도의 규칙(줄무늬 배경 등)을 덮어쓴다. -->
-<link rel="stylesheet" href="mobile.css?v=2026-08-25f" />
+<link rel="stylesheet" href="mobile.css?v=2026-08-25g" />
 </head>
 <body>
   <div class="ribbon-tabs">
@@ -508,6 +529,9 @@
     <span class="cellref">A1</span>
     <span class="fx">fx</span>
     <span class="formula-text">=PROJECT_SCHEDULE_v4()</span>
+    <!-- 채팅을 끈 상태에서만 보이는 되돌리기 버튼. X로 끄기만 되고 켤 방법이 없으면
+         한 번 누르는 순간 다시는 못 켜는 기능이 된다. -->
+    <button type="button" class="chat-on-btn" id="chat-on" hidden title="실시간 채팅 다시 켜기">💬 채팅 켜기</button>
   </div>
 
   <div class="sheet-wrap">
@@ -570,6 +594,7 @@
     <div id="chat-section" hidden>
       <h2 class="collapsible" id="chat-h2"><span class="collapse-caret">▼</span> 실시간 채팅 <span class="chat-live-badge" id="chat-live-count"></span> <span class="collapse-hint">(클릭해서 접기 · 끌어서 이동)</span>
         <button type="button" class="chat-participants-tab" id="chat-participants-tab" title="지금 접속 중인 사람 보기">👥 <span id="chat-participants-count">0</span></button>
+        <button type="button" class="chat-off-btn" id="chat-off" title="채팅 끄기 — 상단 수식 표시줄의 '채팅 켜기'로 다시 켤 수 있습니다">✕</button>
       </h2>
       <div class="chat-participants-panel" id="chat-participants-panel" hidden>
         <div class="chat-participants-title">지금 접속 중</div>
@@ -784,7 +809,7 @@
     const cacheBust = `?t=${Date.now()}`;
     // 코드가 바뀔 때마다 올리는 페이지 버전. 화면 맨 아래에 표시되므로, 사용자가 보고 있는
     // 것이 최신 배포본인지(=브라우저 캐시가 아닌지) 바로 확인할 수 있다.
-    const PAGE_BUILD = '2026-08-25f';
+    const PAGE_BUILD = '2026-08-25g';
     // 모바일 판정. mobile.css 의 카드 레이아웃 분기(max-width:700px)와 반드시 같은 값이어야
     // "화면엔 안 보이는데 폴링만 계속 도는" 상태가 생기지 않는다.
     const MOBILE_MQ = '(max-width: 700px)';
@@ -902,12 +927,14 @@
       panel.hidden = !panel.hidden;
       if (!panel.hidden) renderParticipantsList();
     }
+    // 하트비트를 바깥(채팅 끄기)에서도 멈출 수 있도록 start/stop 을 내보내 둔다.
+    let liveCounterCtl = null;
     async function initLiveCounter() {
       if (!usingProxy()) return; // 프록시(Worker) 미연결이면 카운터도 표시하지 않음
       // 접속자 수·참여자 목록을 보여줄 자리(#chat-live-count, 👥 탭)가 채팅 헤더 안에만
-      // 있으므로, 채팅을 끈 모바일에서는 하트비트가 아무것도 그리지 못한 채 90초마다
-      // KV 쓰기만 소비한다 (무료 플랜 하루 1,000회). 그래서 같이 건너뛴다.
-      if (isMobileLayout()) return;
+      // 있으므로, 채팅을 끈 모바일/채팅 OFF 상태에서는 하트비트가 아무것도 그리지 못한 채
+      // 90초마다 KV 쓰기만 소비한다 (무료 플랜 하루 1,000회). 그래서 같이 건너뛴다.
+      if (isMobileLayout() || isChatOff()) return;
       const clientId = getLiveClientId();
       let timer = null;
       async function beat() {
@@ -923,8 +950,10 @@
       // 막는다 — 화면을 보고 있지 않으면 "지금 접속 중"이라는 정보도 어차피 덜 중요하다.
       function start() { if (!timer) { beat(); timer = setInterval(beat, HEARTBEAT_MS); } }
       function stop() { if (timer) { clearInterval(timer); timer = null; } }
+      liveCounterCtl = { start, stop };
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') start(); else stop();
+        // 채팅을 꺼 둔 동안에는 탭으로 돌아와도 다시 켜지 않는다.
+        if (document.visibilityState === 'visible' && !isChatOff()) start(); else stop();
       });
       if (document.visibilityState === 'visible') start();
     }
@@ -1310,6 +1339,41 @@
         try { localStorage.setItem(CHAT_NOTE_DISMISSED_KEY, '1'); } catch (e) {}
       });
     }
+    // ── 채팅 켜기/끄기 (제목표시줄 ✕ ↔ 수식 표시줄 '💬 채팅 켜기') ──
+    // 접기(#chat-h2 클릭)와는 다르다. 접기는 창만 줄어들고 폴링은 펼칠 때만 도는 반면,
+    // 끄기는 창을 없애고 하트비트까지 멈춰 이 브라우저에 계속 기억된다.
+    const CHAT_OFF_KEY = 'fd_chat_off';
+    function isChatOff() {
+      try { return localStorage.getItem(CHAT_OFF_KEY) === '1'; } catch (e) { return false; }
+    }
+    function setChatOff(off) {
+      try { localStorage.setItem(CHAT_OFF_KEY, off ? '1' : '0'); } catch (e) {}
+      applyChatOnOff();
+      toast(off ? '채팅을 껐습니다 — 상단 “💬 채팅 켜기”로 다시 켤 수 있습니다' : '채팅을 켰습니다');
+    }
+    // 현재 on/off 상태를 화면과 타이머에 반영. init 에서도, 버튼에서도 이 하나를 부른다.
+    function applyChatOnOff() {
+      const section = document.getElementById('chat-section');
+      const onBtn = document.getElementById('chat-on');
+      // 모바일은 애초에 채팅이 없으므로 '채팅 켜기' 버튼도 내보내지 않는다.
+      const available = usingProxy() && !isMobileLayout();
+      if (!available) { section.hidden = true; if (onBtn) onBtn.hidden = true; return; }
+      if (isChatOff()) {
+        section.hidden = true;
+        if (onBtn) onBtn.hidden = false;
+        stopChatPolling();
+        if (liveCounterCtl) liveCounterCtl.stop();
+        return;
+      }
+      section.hidden = false;
+      if (onBtn) onBtn.hidden = true;
+      // 꺼진 채로 페이지를 열었다면 initLiveCounter 가 일찍 빠져나가 컨트롤러 자체가 없다.
+      // 그때는 지금 만들어 준다 (없으면 다시 켜도 접속자 수가 영영 안 도는 상태가 된다).
+      if (!liveCounterCtl) initLiveCounter();
+      else if (document.visibilityState === 'visible') liveCounterCtl.start();
+      // 펼쳐진 상태였다면 폴링도 다시 돈다 (접혀 있으면 펼칠 때 시작).
+      if (!document.getElementById('chat-body').hidden) startChatPolling();
+    }
     function initChat() {
       const section = document.getElementById('chat-section');
       // 모바일에선 채팅 패널을 아예 두지 않는다 (좁은 화면에서 본문을 밀어내기만 함).
@@ -1323,6 +1387,7 @@
       wireChatNoteClose();
       startChatCooldownTicker();
       setChatExpanded(false); // 기본으로 접힌 상태 (필요할 때 펼쳐서 폴링 시작)
+      applyChatOnOff();       // 지난번에 꺼 뒀으면 그대로 꺼진 채로 시작
     }
 
     // 즐겨찾기(브라우저별): "여행지-연휴"(origin-destination::windowId) 키 집합.
@@ -3191,6 +3256,12 @@
       });
 
       document.getElementById('chat-participants-tab').addEventListener('click', toggleParticipantsPanel);
+      // ✕ 는 드래그 핸들(#chat-h2) 안에 있어서, 막지 않으면 클릭이 접기/펼치기로도 샌다.
+      document.getElementById('chat-off').addEventListener('click', e => {
+        e.stopPropagation();
+        setChatOff(true);
+      });
+      document.getElementById('chat-on').addEventListener('click', () => setChatOff(false));
       // 패널 바깥을 클릭하면 닫기 (탭/패널 자체 클릭은 각자 stopPropagation으로 걸러짐)
       document.addEventListener('click', () => {
         const panel = document.getElementById('chat-participants-panel');

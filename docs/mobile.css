@@ -18,7 +18,7 @@
    찍힌다. HTML 은 새로 받았는데 이 CSS 만 브라우저 캐시에 남아 있으면 두 값이 어긋나
    "고쳤다는데 화면은 그대로"인 상황을 눈으로 바로 구분할 수 있다.
    (<link> 에 ?v=... 를 붙여 애초에 그런 일이 잘 생기지 않게 해 두었다.) */
-:root { --mobile-css-build: "2026-08-25f"; }
+:root { --mobile-css-build: "2026-08-25g"; }
 @media (max-width: 700px) {
   /* 전체 배율 축소 — 같은 화면에 약 1.2배의 내용이 들어온다.
      이 대시보드의 글자·여백 값이 전부 px 로 박혀 있어 루트 font-size 를 바꿔도 따라오지
@@ -194,7 +194,8 @@
      입력칸을 줄인다. */
   #day-value-line { display: none !important; }
   #max-leave-line .day-value-wrap { gap: 3px; }
-  #max-leave-line input { width: 46px; padding: 2px 4px; }
+  /* 스피너(위/아래 화살표)가 들어갈 자리까지 감안한 폭. 더 좁히면 화살표가 숫자를 덮는다. */
+  #max-leave-line input { width: 60px; padding: 2px 3px; }
   #max-leave-hint { display: block; flex-basis: 100%; margin-top: 2px; }
 
   /* 대륙 → 국가 → 지역 3단 드릴다운 (renderChips 가 모바일에서 이 구조로 그린다).
