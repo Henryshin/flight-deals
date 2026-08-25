@@ -238,6 +238,8 @@
     #generated-at { padding: 0 10px 16px; }
   }
 </style>
+<!-- 휴대폰 레이아웃. <style> 뒤에 와야 같은 특이도의 규칙(줄무늬 배경 등)을 덮어쓴다. -->
+<link rel="stylesheet" href="mobile.css" />
 </head>
 <body>
   <div class="ribbon-tabs">
@@ -753,15 +755,15 @@
         if (nx.confirmed && cp && cp.source) links.push(`<a href="${esc(cp.source)}" target="_blank" rel="noopener" title="일정 확정 출처: ${esc(cp.source)}">✓</a>`);
         rows.push(`
             <tr${nx.confirmed ? ` class="confirmed${nx.status === 'open' ? ' status-open' : ''}"` : ''}>
-              <td title="${esc(al.airline)}">${esc(al.airline)}<span class="cell-sub">${esc(al.iata || '')}</span></td>
-              <td title="${esc(ev.notes || ev.name)}">${esc(ev.name)}</td>
-              <td title="${esc(ev.cadence_text || '')}">${esc(ev.cadence_text || '—')}</td>
-              <td title="${esc(nx.text)}">${nextCell}</td>
-              <td title="${esc(ev.discount_text || '')}">${discCell}</td>
-              <td title="${esc(ev.requirements || '')}">${esc(ev.requirements || '—')}</td>
-              <td><span class="conf ${cf[0]}" title="${esc(srcTitle)}">${cf[1]}</span></td>
-              <td>${links.join(' ') || '<span class="cell-sub">—</span>'}</td>
-              <td style="text-align:center"><button class="x-btn" data-del-air="${esc(al.airline)}" data-del-evt="${esc(ev.name)}" title="이벤트 삭제">✕</button></td>
+              <td class="c-name" title="${esc(al.airline)}">${esc(al.airline)}<span class="cell-sub">${esc(al.iata || '')}</span></td>
+              <td data-label="이벤트" title="${esc(ev.notes || ev.name)}">${esc(ev.name)}</td>
+              <td data-label="주기" title="${esc(ev.cadence_text || '')}">${esc(ev.cadence_text || '—')}</td>
+              <td data-label="다음 시기" title="${esc(nx.text)}">${nextCell}</td>
+              <td data-label="할인" title="${esc(ev.discount_text || '')}">${discCell}</td>
+              <td data-label="조건" title="${esc(ev.requirements || '')}">${esc(ev.requirements || '—')}</td>
+              <td data-label="신뢰도"><span class="conf ${cf[0]}" title="${esc(srcTitle)}">${cf[1]}</span></td>
+              <td data-label="링크">${links.join(' ') || '<span class="cell-sub">—</span>'}</td>
+              <td class="c-del" style="text-align:center"><button class="x-btn" data-del-air="${esc(al.airline)}" data-del-evt="${esc(ev.name)}" title="이벤트 삭제">✕</button></td>
             </tr>
           `);
       }

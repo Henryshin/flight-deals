@@ -139,7 +139,9 @@
   .spark-none { color: var(--muted); }
 
   /* calendar styled as a mini worksheet — 3개월 한 번에 표시(항상 한 줄, 넘치면 가로 스크롤) */
-  .calendar { display: flex; gap: 8px; flex-wrap: nowrap; justify-content: flex-end; overflow-x: auto; }
+  /* max-width가 없으면 flex 아이템이 3개월치 내용폭(약 700px)까지 늘어나, 자기 안에서
+     스크롤되지 않고 페이지 전체를 가로로 넓혀 버린다 (좁은 화면에서 본문이 밀림). */
+  .calendar { display: flex; gap: 8px; flex-wrap: nowrap; justify-content: flex-end; overflow-x: auto; max-width: 100%; min-width: 0; }
   .cal-month { background: var(--sheet); border: 1px solid var(--grid); width: 228px; flex-shrink: 0; }
   .cal-select {
     font-family: inherit; font-size: 15.5px; font-weight: 700; color: #14532d;
@@ -190,7 +192,9 @@
     flex: 0 0 auto; min-width: 260px; display: flex; flex-direction: column; gap: 6px;
     border-left: 1px dashed var(--grid); padding-left: 14px;
   }
-  .chip-line { display: flex; align-items: flex-start; gap: 8px; }
+  /* 줄바꿈을 허용해야 '휴일 가치'/'연차 상한'의 긴 안내 문구가 한 줄로 뻗어 나가
+     좁은 화면에서 페이지를 가로로 넓히는 일이 없다. */
+  .chip-line { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; min-width: 0; }
   .chip-line .chip-sub { color: var(--muted); font-size: 15px; padding-top: 3px; min-width: 28px; flex-shrink: 0; }
   #chip-region, #chip-stops { display: flex; flex-wrap: wrap; gap: 6px; }
   /* 국가 칩은 대륙별로, 연휴 칩은 연도별로 행을 나눈다 */
@@ -486,7 +490,10 @@
     .sheet-wrap { padding: 12px 10px; }
     #generated-at { padding: 0 10px 16px; }
   }
+
 </style>
+<!-- 휴대폰 레이아웃. <style> 뒤에 와야 같은 특이도의 규칙(줄무늬 배경 등)을 덮어쓴다. -->
+<link rel="stylesheet" href="mobile.css" />
 </head>
 <body>
   <div class="ribbon-tabs">
@@ -776,7 +783,7 @@
     const cacheBust = `?t=${Date.now()}`;
     // 코드가 바뀔 때마다 올리는 페이지 버전. 화면 맨 아래에 표시되므로, 사용자가 보고 있는
     // 것이 최신 배포본인지(=브라우저 캐시가 아닌지) 바로 확인할 수 있다.
-    const PAGE_BUILD = '2026-08-25b';
+    const PAGE_BUILD = '2026-08-25c';
     const GITHUB_REPO = 'Henryshin/flight-deals';
     const GH_API = 'https://api.github.com';
     const TOKEN_KEY = 'fd_gh_token';
@@ -2130,11 +2137,11 @@
         return `
           <tr>
             <td class="gv-rank">${rank}</td>
-            <td>${nameCell}</td>
-            <td class="num"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(b.price)}</a></td>
-            <td>${gvDealBadge(r.cell, b.price)}</td>
-            <td class="period-cell">${scheduleLine}${stripRow}</td>
-            <td>${stopsCell(b.stops, b.airline)}</td>
+            <td class="c-name">${nameCell}</td>
+            <td class="num c-price" data-label="최저가"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(b.price)}</a></td>
+            <td data-label="특가율">${gvDealBadge(r.cell, b.price)}</td>
+            <td class="period-cell" data-label="추천 일정">${scheduleLine}${stripRow}</td>
+            <td data-label="직항/경유">${stopsCell(b.stops, b.airline)}</td>
           </tr>
         `;
       }).join('');
@@ -2317,13 +2324,13 @@
         const favOn = favs.has(favKey);
         return `
           <tr${isTop ? ' class="is-min"' : ''}>
-            <td style="text-align:center"><button class="fav-btn${favOn ? ' on' : ''}" data-fav="${esc(favKey)}" title="즐겨찾기에 담기/빼기">★</button></td>
-            <td class="win-name">${esc(w.label)}${badges}</td>
-            <td class="num"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(b.price)}</a></td>
-            <td>${gvDealBadge(w.cell, b.price)}</td>
-            <td class="period-cell">${sched}${strip}</td>
-            <td>${stopsCell(b.stops, b.airline)}${altHtml}</td>
-            <td>${trendHtml(b.price, b.prev_price, true)}</td>
+            <td class="c-fav" style="text-align:center"><button class="fav-btn${favOn ? ' on' : ''}" data-fav="${esc(favKey)}" title="즐겨찾기에 담기/빼기">★</button></td>
+            <td class="win-name c-name">${esc(w.label)}${badges}</td>
+            <td class="num c-price" data-label="최저가"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(b.price)}</a></td>
+            <td data-label="특가율">${gvDealBadge(w.cell, b.price)}</td>
+            <td class="period-cell" data-label="추천 일정">${sched}${strip}</td>
+            <td data-label="직항/경유">${stopsCell(b.stops, b.airline)}${altHtml}</td>
+            <td data-label="등락">${trendHtml(b.price, b.prev_price, true)}</td>
           </tr>`;
       }).join('');
 
@@ -2453,9 +2460,9 @@
         const cls = [gi % 2 === 1 ? 'zebra' : '', open ? 'dest-open' : ''].filter(Boolean).join(' ');
         const rowTag = `<tr data-dest-row="${esc(gk)}" class="${cls}">`;
         const head = `${rowTag}
-            <td title="${esc(label)}">${nameCell}</td>`;
+            <td class="c-name" title="${esc(label)}">${nameCell}</td>`;
         const tail = `
-            <td style="text-align:center">${delCell}</td>
+            <td class="c-del" style="text-align:center">${delCell}</td>
           </tr>`;
 
         // 데이터가 없으면 특가 보드처럼 '이유' 한 칸으로 합쳐서 보여준다.
@@ -2473,10 +2480,10 @@
         const scheduleLine = `<span class="win-name">${esc(info.best.label)}</span> · ${period} · ${schedText(b)}${capSwapped ? '' : recommendedAltNote(info.best.cell)}`;
         const stripRow = `<span class="gv-strip-row">${tripStrip(b.depart_date, b.return_date)}${climateBadge(g.route.destination, b.depart_date)}</span>`;
         const row = head + `
-            <td class="num"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(b.price)}</a></td>
-            <td>${gvDealBadge(info.best.cell, b.price)}</td>
-            <td class="period-cell">${scheduleLine}${stripRow}</td>
-            <td>${stopsCell(b.stops, b.airline)}</td>` + tail;
+            <td class="num c-price" data-label="최저가"><a class="price-link" href="${esc(b.booking_url)}" target="_blank" rel="noopener" title="예약 페이지로 이동 (최저가 일정)">${fmt(b.price)}</a></td>
+            <td data-label="특가율">${gvDealBadge(info.best.cell, b.price)}</td>
+            <td class="period-cell" data-label="추천 일정">${scheduleLine}${stripRow}</td>
+            <td data-label="직항/경유">${stopsCell(b.stops, b.airline)}</td>` + tail;
         return row + (open ? destDetailRowHtml(g, info) : '');
       }).join('');
     }
