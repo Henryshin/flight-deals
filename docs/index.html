@@ -774,6 +774,9 @@
   <script>
     // ===================== 상수 / 공통 헬퍼 =====================
     const cacheBust = `?t=${Date.now()}`;
+    // 코드가 바뀔 때마다 올리는 페이지 버전. 화면 맨 아래에 표시되므로, 사용자가 보고 있는
+    // 것이 최신 배포본인지(=브라우저 캐시가 아닌지) 바로 확인할 수 있다.
+    const PAGE_BUILD = '2026-08-25a';
     const GITHUB_REPO = 'Henryshin/flight-deals';
     const GH_API = 'https://api.github.com';
     const TOKEN_KEY = 'fd_gh_token';
@@ -2519,7 +2522,9 @@
       if (!/(Z|[+-]\d{2}:?\d{2})$/.test(iso)) iso += 'Z';
       const dt = new Date(iso);
       if (isNaN(dt.getTime())) return;
-      if (el) el.textContent = `Last sync: ${dt.toLocaleString('ko-KR')}`;
+      // 페이지(코드) 버전도 같이 찍는다. 브라우저가 옛 index.html 을 캐시해서 쓰고 있는지
+      // 사용자가 눈으로 바로 확인할 수 있어야, '고쳤는데 그대로'인 상황을 구분할 수 있다.
+      if (el) el.textContent = `Last sync: ${dt.toLocaleString('ko-KR')} · 페이지 버전 ${PAGE_BUILD}`;
     }
 
     // ===================== 미니 달력 =====================
@@ -2698,7 +2703,8 @@
       document.getElementById('settings-title').textContent = proxy ? '공유 암호' : '연결 설정';
       document.getElementById('settings-help-token').hidden = proxy;
       document.getElementById('settings-help-pass').hidden = !proxy;
-      document.getElementById('btn-token-test').hidden = proxy; // 프록시 모드엔 GitHub 연결 테스트 없음
+      // 프록시 모드에선 GitHub 연결 대신 '공유 암호가 맞는지'를 확인한다 (버튼은 항상 보인다).
+      document.getElementById('btn-token-test').textContent = proxy ? '암호 확인' : '연결 테스트';
       const saved = credVal();
       document.getElementById('token-input').placeholder =
         proxy ? (saved ? '새 공유 암호 입력' : '공유 암호') : (saved ? '새 토큰 입력' : 'github_pat_...');
@@ -2756,8 +2762,44 @@
       document.getElementById('token-input').focus();
       toast(usingProxy() ? '공유 암호를 삭제했습니다' : '토큰을 삭제했습니다');
     }
+    // 프록시 모드의 '암호 확인': 지금 입력/저장된 암호가 서버와 맞는지만 따로 확인한다.
+    // 노선을 실제로 고치지 않고 판별할 수 있게, 암호 게이트는 통과하지만 처리 대상은 없는
+    // 액션(ping)을 보낸다 — 서버는 암호가 틀리면 401, 맞으면 '알 수 없는 요청'(400)을 준다.
+    // (이게 없으면 '수정이 안 된다'가 암호 문제인지 다른 문제인지 사용자가 알 수 없다.)
+    async function testSharePass() {
+      const out = document.getElementById('test-result');
+      const typed = document.getElementById('token-input').value.trim();
+      const pass = typed || getSharePass();
+      if (!pass) { out.textContent = '공유 암호를 먼저 입력하세요'; out.className = 'fail'; return; }
+      out.textContent = '확인 중…';
+      out.className = '';
+      let res, data = {};
+      try {
+        res = await fetch(PROXY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'ping', pass })
+        });
+        try { data = await res.json(); } catch (e) {}
+      } catch (e) {
+        out.textContent = '실패: 서버에 연결할 수 없습니다 (네트워크/차단 확인)';
+        out.className = 'fail';
+        return;
+      }
+      if (res.status === 401) {
+        out.textContent = `암호가 서버와 다릅니다 (지금 확인한 암호는 ${pass.length}자)`;
+        out.className = 'fail';
+      } else if (res.status === 400) {
+        // 암호 게이트를 통과했다는 뜻 — ping 은 서버가 모르는 액션이라 400이 정상 응답.
+        out.textContent = '암호 확인 ✓ 서버와 일치합니다';
+        out.className = 'ok';
+      } else {
+        out.textContent = `예상치 못한 응답: HTTP ${res.status}${data.error ? ' — ' + data.error : ''}`;
+        out.className = 'fail';
+      }
+    }
     async function testConnection() {
-      if (usingProxy()) return; // 프록시 모드엔 GitHub 연결 테스트 없음
+      if (usingProxy()) return testSharePass(); // 프록시 모드에선 공유 암호를 확인한다
       const t = document.getElementById('token-input').value.trim() || getToken();
       const out = document.getElementById('test-result');
       if (!t) { out.textContent = '토큰을 먼저 입력/저장하세요'; out.className = 'fail'; return; }
