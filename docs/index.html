@@ -293,6 +293,8 @@
     position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 100;
     display: flex; align-items: flex-start; justify-content: center; padding: 10vh 12px 0;
   }
+  /* 다른 다이얼로그(노선 수정 등)가 열린 채로 401 때문에 이 dialog가 뜰 수 있으므로 항상 최상단 */
+  #settings-backdrop { z-index: 200; }
   .excel-dialog {
     background: #f3f2f1; border: 1px solid #8a8886; box-shadow: 0 6px 22px rgba(0,0,0,0.35);
     width: 460px; max-width: 96vw; font-size: 15.5px;
@@ -798,9 +800,19 @@
       }
       return data;
     }
-    function handleProxyError(e) {
+    // 401로 끊긴 작업을 암호 저장 뒤 자동으로 재시도하기 위한 보류 콜백.
+    // (그냥 두면 사용자가 암호만 저장하고 원래 하려던 수정/삭제는 다시 시도하지 않아 "저장해도 안 바뀜"처럼 보임)
+    let pendingAuthRetry = null;
+    function handleProxyError(e, retry) {
       const s = e && e.status;
-      if (s === 401) { openSettings('공유 암호를 입력하세요 (한 번만 저장하면 계속 사용됩니다)'); }
+      if (s === 401) {
+        pendingAuthRetry = retry || null;
+        // 이미 저장된 암호가 있는데도 401이면 '안 넣었다'가 아니라 '틀렸다'는 뜻이다.
+        // 둘을 같은 문구로 안내하면 틀린 암호를 계속 다시 저장하게 되므로 구분해서 알린다.
+        openSettings(getSharePass()
+          ? '저장된 공유 암호가 서버와 맞지 않습니다. 올바른 암호로 다시 저장해 주세요.'
+          : '공유 암호를 입력하세요 (한 번만 저장하면 계속 사용됩니다)');
+      }
       else toast('요청 실패: ' + ((e && e.message) || '네트워크 오류'), 'err');
     }
 
@@ -2601,7 +2613,7 @@
           renderDestBoard();
         renderGvBoard(); // 삭제된 노선이 가성비 보드에 남지 않도록
       } catch (e) {
-        usingProxy() ? handleProxyError(e) : handleGhError(e);
+        usingProxy() ? handleProxyError(e, () => deleteRoute(key)) : handleGhError(e);
       }
     }
 
@@ -2666,7 +2678,7 @@
         closeRouteEdit();
         renderDestBoard();
       } catch (e) {
-        usingProxy() ? handleProxyError(e) : handleGhError(e);
+        usingProxy() ? handleProxyError(e, saveRouteEdit) : handleGhError(e);
       }
     }
 
@@ -2703,6 +2715,7 @@
     function closeSettings() {
       document.getElementById('token-input').value = '';
       document.getElementById('settings-backdrop').hidden = true;
+      pendingAuthRetry = null; // 암호 저장 없이 닫으면 대기 중이던 재시도는 버린다 (나중에 엉뚱하게 재실행되지 않도록)
     }
     // 붙여넣거나 입력하는 즉시 자동 저장 -> "저장" 클릭을 잊어도 다음부터 다시 입력 불필요.
     function autoSaveToken() {
@@ -2717,6 +2730,13 @@
       document.getElementById('token-input').value = '';
       refreshTokenState();
       toast(usingProxy() ? '공유 암호 저장 완료 ✓' : '토큰 저장 완료 ✓');
+      // 401 때문에 이 모달이 뜬 것이었다면, 방금 저장한 암호로 원래 하려던 작업을 바로 재시도한다.
+      if (pendingAuthRetry) {
+        const retry = pendingAuthRetry;
+        pendingAuthRetry = null;
+        closeSettings();
+        retry();
+      }
     }
     function deleteTokenClicked() {
       try { localStorage.removeItem(credKey()); } catch (e) {}
