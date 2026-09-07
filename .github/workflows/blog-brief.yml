@@ -1,0 +1,62 @@
+name: Blog brief
+
+# 매일 아침 '오늘 쓸 만한 글감' 후보를 골라 posts/_brief/ 에 커밋한다.
+# 글 자체는 쓰지 않는다 — 글은 Claude Code 세션에서 사람이 명령할 때 쓴다
+# (.claude/skills/blog-post/SKILL.md).
+#
+# 이 잡의 커밋은 posts/** 만 건드린다. build.yml 의 push 트리거는 data/** 만
+# 보므로 대시보드 재빌드를 유발하지 않는다 (워크플로별 커밋 경로 분리 관례).
+
+on:
+  schedule:
+    - cron: "0 22 * * *"   # 22:00 UTC = 07:00 KST
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "기준 날짜(YYYY-MM-DD). 비우면 오늘(KST)."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: blog-brief
+  cancel-in-progress: false
+
+jobs:
+  brief:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # 브리핑 자체는 표준 라이브러리만 쓴다 (playwright 불필요).
+      - name: Build brief
+        run: |
+          if [ -n "${{ inputs.date }}" ]; then
+            python scripts/blog_brief.py --date "${{ inputs.date }}"
+          else
+            python scripts/blog_brief.py
+          fi
+
+      - name: Commit and push posts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add posts
+          git diff --cached --quiet || git commit -m "chore: 오늘의 블로그 소재 브리핑"
+          for i in 1 2 3; do
+            if git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push; then
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            echo "push 경합 -> 재시도 ($i/3)"
+            sleep $((i * 3))
+          done
+          echo "::error::재시도 후에도 push 실패"
+          exit 1

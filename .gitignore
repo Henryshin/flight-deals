@@ -2,3 +2,14 @@ __pycache__/
 *.pyc
 .DS_Store
 collect_run.log
+
+# 세션별 로컬 권한 설정 (공유 대상 아님)
+.claude/settings.local.json
+
+# 네이버 발행기 (publisher/README.md 참고)
+publisher/profile/        # 로그인 세션 — 사실상 자격증명. 절대 커밋 금지
+publisher/state.json
+publisher/diagnostics/
+publisher/logs/
+publisher/config.json
+publisher/config.local.json

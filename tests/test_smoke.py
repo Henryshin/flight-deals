@@ -333,6 +333,359 @@ def test_destmeta_covers_all_destinations():
         assert len(m.group(2)) == 12, f"{m.group(1)}: r 문자열이 {len(m.group(2))}자 (12자여야 함)"
 
 
+# =============================================================================
+# 블로그 파이프라인 (blog/, scripts/blog_*.py)
+# =============================================================================
+
+def _cell(min_price=277300, typical=585400, n_obs=41, n_pairs=5, deal=52.6,
+          depart="2026-11-01", ret="2026-11-05", price=None, **extra):
+    """손으로 만든 matrix 셀. build_matrix_cell 의 출력 모양을 흉내낸다."""
+    pair = {
+        "price": price if price is not None else min_price,
+        "prev_price": min_price, "depart_date": depart, "return_date": ret,
+        "depart_weekday": "토", "return_weekday": "수", "nights": 4, "days": 5,
+        "leave_days": 2, "bonus_days": 1, "stops": "0", "airline": "에어서울",
+        "dep_time": "08:45", "arr_time": "10:30", "booking_url": "https://x/",
+    }
+    cell = {
+        "min_price": min_price, "typical": typical, "deal_pct": deal,
+        "tier": "A", "n_obs": n_obs, "n_pairs": n_pairs,
+        "offpeak_baseline": 509250, "offpeak_ratio": 0.54,
+        "pairs": [pair], "best": pair,
+    }
+    cell.update(extra)
+    return cell
+
+
+def test_blog_rejects_implausible_prices():
+    """실제 버그의 회귀 테스트.
+
+    data/prices.csv 에 ₩333 같은 통화/렌더 아티팩트가 15행 들어와 있어서
+    matrix.json 에 '밀라노 왕복 755원 (tier A, 할증률 99.9%)' 셀이 만들어져 있다.
+    저장소 상류에는 하한선 검사가 없으므로 블로그 쪽에서 반드시 걸러야 한다.
+    """
+    from blog import data as D
+
+    assert D.is_plausible_price(291300, typical=615582)   # 실제 추석 특가
+    assert D.is_plausible_price(277300, typical=585400)
+    assert not D.is_plausible_price(755, typical=1293800)  # 밀라노 아티팩트
+    assert not D.is_plausible_price(1161, typical=598600)  # 울란바토르 아티팩트
+    assert not D.is_plausible_price(337)
+    assert not D.is_plausible_price(0)
+    assert not D.is_plausible_price(None)
+    # 하한선 자체
+    assert not D.is_plausible_price(D.PRICE_FLOOR_KRW - 1)
+    assert D.is_plausible_price(D.PRICE_FLOOR_KRW + 1)
+
+    today = date(2026, 10, 1)
+    assert D.is_usable_cell(_cell(), today=today)
+    assert not D.is_usable_cell(_cell(min_price=755, typical=1293800, price=755),
+                                today=today)
+
+
+def test_blog_thin_data_guardrail():
+    """관측이 얇거나 출발이 코앞이면 글감으로 쓰지 않는다."""
+    from blog import data as D
+
+    today = date(2026, 10, 1)
+    assert not D.is_usable_cell(_cell(n_obs=2), today=today)
+    assert not D.is_usable_cell(_cell(n_pairs=1), today=today)
+    assert not D.is_usable_cell(_cell(deal=99.9), today=today)   # 말이 안 되는 할증률
+    # 출발이 리드타임 안쪽이면 그 일정은 빠지고, 남는 게 없으면 셀도 못 쓴다
+    soon = _cell(depart="2026-10-03", ret="2026-10-07")
+    assert D.usable_pairs(soon, today=today) == []
+    assert not D.is_usable_cell(soon, today=today)
+
+
+def test_blog_stale_data_guardrail():
+    from datetime import datetime, timezone
+    from blog import data as D
+
+    now = datetime(2026, 9, 7, 12, 0, tzinfo=timezone.utc)
+    fresh = {"generated_at": "2026-09-07T06:00:00+00:00"}
+    stale = {"generated_at": "2026-09-05T06:00:00+00:00"}
+    assert D.assert_fresh(fresh, now) < D.MAX_DATA_AGE_HOURS
+    try:
+        D.assert_fresh(stale, now)
+        raise AssertionError("오래된 데이터인데 통과했다")
+    except D.StaleDataError:
+        pass
+
+
+def test_blog_wow_needs_enough_points():
+    """주간 비교는 양쪽에 관측이 충분할 때만. 아니면 '내렸다'를 쓸 근거가 없다."""
+    from blog import data as D
+
+    today = date(2026, 9, 14)
+
+    def series(days_prices):
+        return [{"t": (today - timedelta(days=d)).isoformat(), "min": p}
+                for d, p in days_prices]
+
+    assert D.wow_change(series([(0, 300000), (1, 310000)]), today) is None
+    full = series([(0, 300000), (2, 305000), (4, 310000),
+                   (7, 400000), (9, 410000), (11, 420000)])
+    w = D.wow_change(full, today)
+    assert w["now"] == 300000 and w["prev"] == 400000
+    assert w["pct"] == -25.0
+    # 아티팩트 포인트는 계산에서 빠진다
+    dirty = full + [{"t": today.isoformat(), "min": 755}]
+    assert D.wow_change(dirty, today)["now"] == 300000
+
+
+def test_blog_climate_matches_destmeta():
+    """감성 문장도 destmeta 값을 벗어나면 안 되므로, 파서가 정확해야 한다."""
+    from blog import data as D
+
+    dm = D.parse_destmeta()
+    # KMI: 'ddmmwwwwmmdd' -> 1월 건기, 7월 우기, 12월 건기
+    assert D.climate_for("KMI", 1, dm)["rain"] == "건기"
+    assert D.climate_for("KMI", 7, dm)["rain"] == "우기"
+    assert D.climate_for("KMI", 12, dm)["rain"] == "건기"
+    assert D.climate_for("KMI", 12, dm)["temp"] == 14
+    assert D.climate_for("없는공항", 5, dm) is None
+
+
+def test_blog_destmeta_parser_matches_smoke_regex():
+    """blog/data.py 의 파서와 이 파일의 기존 정규식이 같은 목적지를 봐야 한다."""
+    import re
+    from blog import data as D
+
+    root = Path(__file__).parent.parent
+    js = (root / "docs" / "destmeta.js").read_text(encoding="utf-8")
+    legacy = set(re.findall(r"d\('([A-Z]{3})',\s*'[^']+'", js))
+    assert set(D.parse_destmeta()) == legacy
+
+
+def test_blog_slug_is_filesystem_safe():
+    import re as _re
+    from blog import store as S
+
+    assert S.slugify("인천→도쿄 🇯🇵", "route") == "route"   # 한글은 ASCII 로 못 옮긴다
+    assert S.slugify("ICN-KMI") == "icn-kmi"
+    assert S.slugify("2026-09-24") == "2026-09-24"
+    assert S.slugify("con") == "post"                       # Windows 예약 장치명
+    assert S.slugify("  ") == "post"
+    slug = S.post_slug(date(2026, 9, 7), "ICN-KMI", "2026-09-24")
+    assert slug == "2026-09-07-icn-kmi-2026-09-24"
+    assert _re.match(r"^[a-z0-9][a-z0-9-]{0,80}$", slug)
+    assert not set(slug) & set('<>:"/\\|?*')
+
+
+def test_blog_ledger_roundtrip():
+    import json
+    import tempfile
+    from blog import store as S
+
+    tmp = Path(tempfile.mktemp(suffix=".json"))
+    orig = S.LEDGER_FILE
+    try:
+        S.LEDGER_FILE = tmp
+        assert S.load_ledger() == {"version": 1, "posts": []}   # 파일 없음
+        led = S.load_ledger()
+        for i in range(S.LEDGER_KEEP + 5):
+            S.append_entry(led, {"slug": f"s{i}", "date": "2026-09-07", "dest": "KMI"})
+        S.save_ledger(led)
+        again = S.load_ledger()
+        assert len(again["posts"]) == S.LEDGER_KEEP     # 오래된 것부터 잘린다
+        assert again["posts"][-1]["slug"] == f"s{S.LEDGER_KEEP + 4}"
+        assert "updated_at" in again
+
+        today = date(2026, 9, 7)
+        recent = {"posts": [
+            {"date": "2026-09-05", "dest": "KMI"},
+            {"date": "2026-08-01", "dest": "NRT"},
+        ]}
+        assert S.recent_dests(recent, today, 21) == {"KMI"}
+    finally:
+        S.LEDGER_FILE = orig
+        tmp.unlink(missing_ok=True)
+
+
+def test_blog_render_parses_draft():
+    from blog import render as R
+
+    draft = (
+        "---\n"
+        "title: 추석 다카마쓰 항공권\n"
+        "tags: [다카마쓰항공권, 다카마쓰여행]\n"
+        "monitor_id: ICN-TAK\n"
+        "window_id: 2026-09-24\n"
+        "---\n\n"
+        "첫 줄이에요.\n둘째 줄이에요.\n\n"
+        "## 소제목\n\n"
+        "**볼드**와 [링크](https://example.com/a) 예요.\n\n"
+        "> 가는 편: 08:45\n> 오는 편: 12:30\n\n"
+        "- 하나\n- 둘\n\n"
+        "| 항공사 | 가격 |\n|---|---|\n| 에어서울 | 277,300원 |\n\n"
+        "[[CARD:price]]\n\n"
+        "[[PHOTO: 리츠린 공원]]\n"
+    )
+    meta, body = R.parse_front_matter(draft)
+    assert meta["title"] == "추석 다카마쓰 항공권"
+    assert meta["tags"] == ["다카마쓰항공권", "다카마쓰여행"]
+    assert meta["monitor_id"] == "ICN-TAK"
+
+    blocks = R.parse_body(body)
+    kinds = [b["type"] for b in blocks]
+    assert kinds == ["html", "card", "photo"], kinds
+    h = blocks[0]["content"]
+    assert "<p>첫 줄이에요.<br>둘째 줄이에요.</p>" in h
+    assert "<h3>소제목</h3>" in h
+    assert "<strong>볼드</strong>" in h
+    assert '<a href="https://example.com/a">링크</a>' in h
+    assert "<blockquote>가는 편: 08:45<br>오는 편: 12:30</blockquote>" in h
+    assert "<ul><li>하나</li><li>둘</li></ul>" in h
+    assert "<th>항공사</th>" in h and "<td>277,300원</td>" in h
+    assert "|---|" not in h                       # 표 구분선은 행이 아니다
+    assert blocks[1]["card"] == "price"
+    assert blocks[2]["hint"] == "리츠린 공원"
+
+
+def test_blog_render_uses_allowed_tags_only():
+    """SmartEditor 가 지우는 태그·속성이 본문에 들어가면 안 된다."""
+    from blog import render as R
+
+    body = ("<script>alert(1)</script> 와 <b onclick='x'>주입</b> 시도\n\n"
+            "## 제목 & 기호\n\n[[PHOTO: x]]\n")
+    blocks = R.parse_body(body)
+    assert R.used_tags(blocks) <= R.ALLOWED_TAGS, R.used_tags(blocks)
+    joined = "".join(b.get("content", "") for b in blocks)
+    # 태그로 살아남은 게 없어야 한다. "onclick" 이라는 글자 자체는 이스케이프된
+    # 본문 텍스트로 남는 게 정상이므로, 여는 꺾쇠가 붙은 형태만 본다.
+    assert "<script" not in joined
+    assert "<b " not in joined and "<b>" not in joined
+    assert "&lt;script&gt;" in joined              # 이스케이프되어 텍스트로 남는다
+    assert "&amp;" in joined
+
+
+def test_blog_front_matter_requires_delimiters():
+    from blog import render as R
+
+    for bad in ("제목만 있는 글", "---\ntitle: x\n본문"):
+        try:
+            R.parse_front_matter(bad)
+            raise AssertionError(f"머리말이 잘못됐는데 통과했다: {bad!r}")
+        except R.DraftError:
+            pass
+
+
+def test_blog_validate_rejects_unbacked_price():
+    """본문 금액은 자료에 있는 값(또는 값들의 차이)이어야 한다."""
+    import importlib
+    from blog import render as R
+
+    bs = importlib.import_module("scripts.blog_save")
+    mat = {
+        "cell": _cell(), "best": _cell()["best"], "alternatives": [],
+        "airlines": [{"price": 529500, "airline": "ANA", "stops": "1",
+                      "dep_time": "19:55", "arr_time": "21:25"}],
+        "history": {"min_30d": 262300, "avg_30d": None, "wow": {"now": 1, "prev": 2}},
+        "climate": {"rain": "우기", "temp": 28, "humidity": 73, "concepts": ["도시"]},
+    }
+    ok = bs.known_prices(mat)
+    assert 277300 in ok and 585400 in ok and 529500 in ok
+    assert (585400 - 277300) in ok            # 차이도 글에 자주 쓴다
+    assert 999999 not in ok
+
+    meta = {"title": "제목", "monitor_id": "ICN-TAK", "window_id": "2026-09-24",
+            "tags": ["a", "b", "c"]}
+    blocks = R.parse_body("본문 277,300원 이에요.\n\n[[PHOTO: x]]\n")
+    assert bs.validate(meta, blocks, "본문 277,300원 이에요.", mat) == []
+
+    errs = bs.validate(meta, blocks, "본문 999,999원 이에요.", mat)
+    assert any("자료에 없는 금액" in e for e in errs), errs
+
+
+def test_blog_validate_rejects_hype_and_missing_photo():
+    import importlib
+    from blog import render as R
+
+    bs = importlib.import_module("scripts.blog_save")
+    mat = {
+        "cell": _cell(), "best": _cell()["best"], "alternatives": [], "airlines": [],
+        "history": {"min_30d": None, "avg_30d": None, "wow": None},
+        "climate": None,
+    }
+    meta = {"title": "제목", "monitor_id": "ICN-TAK", "window_id": "2026-09-24",
+            "tags": ["a", "b", "c"]}
+
+    errs = bs.validate(meta, R.parse_body("역대급 특가예요\n\n[[PHOTO: x]]\n"),
+                       "역대급 특가예요", mat)
+    assert any("과장 표현" in e for e in errs), errs
+
+    errs = bs.validate(meta, R.parse_body("담백한 글이에요\n"), "담백한 글이에요", mat)
+    assert any("PHOTO" in e for e in errs), errs
+
+    # 주간 관측이 없는데 '내렸다'를 쓰면 막는다
+    errs = bs.validate(meta, R.parse_body("가격이 내렸어요\n\n[[PHOTO: x]]\n"),
+                       "가격이 내렸어요", mat)
+    assert any("내렸다" in e for e in errs), errs
+
+    # 기후 자료가 없는데 날씨를 쓰면 막는다
+    errs = bs.validate(meta, R.parse_body("건기라 좋아요\n\n[[PHOTO: x]]\n"),
+                       "건기라 좋아요", mat)
+    assert any("기후" in e for e in errs), errs
+
+    # 태그 개수/형식
+    bad = dict(meta, tags=["a b", "#c"])
+    errs = bs.validate(bad, R.parse_body("글\n\n[[PHOTO: x]]\n"), "글", mat)
+    assert any("태그" in e for e in errs), errs
+
+
+def test_blog_airline_compare_uses_one_snapshot():
+    """여러 날의 최저가를 섞으면 표가 본문 최저가보다 싸져서 독자가 혼란스럽다."""
+    import tempfile
+    from blog import brief as B
+
+    root = Path(tempfile.mkdtemp())
+    (root / "data").mkdir()
+    (root / "data" / "prices.csv").write_text(
+        "origin,destination,depart_date,return_date,price,is_holiday_window,"
+        "collected_at,dep_time,arr_time,stops,window_id,airline\r\n"
+        # 지난주(더 쌌던) 수집 — 표에 들어오면 안 된다
+        "ICN,TAK,2026-11-01,2026-11-05,262300,1,2026-09-01T00:00:00+00:00,"
+        "08:45,10:30,0,2026-11-01,에어서울\r\n"
+        # 최신 수집
+        "ICN,TAK,2026-11-01,2026-11-05,277300,1,2026-09-06T00:00:00+00:00,"
+        "08:45,10:30,0,2026-11-01,에어서울\r\n"
+        "ICN,TAK,2026-11-01,2026-11-05,529500,1,2026-09-06T00:00:00+00:00,"
+        "19:55,21:25,1,2026-11-01,전일본공수\r\n"
+        # 아티팩트는 아예 안 보인다
+        "ICN,TAK,2026-11-01,2026-11-05,333,1,2026-09-06T00:00:00+00:00,"
+        "08:45,10:30,0,2026-11-01,진에어\r\n"
+        # 다른 일정은 비교 대상이 아니다
+        "ICN,TAK,2026-11-02,2026-11-06,199000,1,2026-09-06T00:00:00+00:00,"
+        "08:45,10:30,0,2026-11-01,진에어\r\n",
+        encoding="utf-8",
+    )
+    rows = B.airline_compare(root, "ICN", "TAK", "2026-11-01", "2026-11-05",
+                             today=date(2026, 9, 7))
+    assert [r["airline"] for r in rows] == ["에어서울", "전일본공수"]
+    assert rows[0]["price"] == 277300          # 지난주의 262,300 이 아니다
+    assert all(r["collected_at"] == "2026-09-06T00:00:00+00:00" for r in rows)
+
+
+def test_blog_posts_match_ledger():
+    """posts/ 의 글과 원장이 어긋나지 않아야 한다 (실제 파일 정합성)."""
+    import json
+    from blog import store as S
+
+    if not S.POSTS_DIR.exists():
+        return
+    dirs = {d.name for d in S.POSTS_DIR.iterdir()
+            if d.is_dir() and not d.name.startswith("_")}
+    led = {p["slug"] for p in S.load_ledger().get("posts", [])}
+    assert dirs <= led, f"원장에 없는 글: {sorted(dirs - led)}"
+    for d in dirs:
+        post = json.loads((S.POSTS_DIR / d / "post.json").read_text(encoding="utf-8"))
+        assert post["slug"] == d
+        assert post["title"] and post["blocks"]
+        for b in post["blocks"]:
+            if b["type"] == "card":
+                assert (S.POSTS_DIR / d / b["file"]).exists(), f"{d}: {b['file']} 없음"
+
+
 def main():
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     failed = 0
