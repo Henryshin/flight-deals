@@ -13,6 +13,7 @@ assert_not_publish() 가 '발행/공개/게시' 가 붙은 버튼 클릭을 코�
 """
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -38,13 +39,15 @@ DEFAULT_CONFIG = {
     "slow_mo_ms": 120,
     "timeout_ms": 30000,
     "with_tags": False,
+    # 기본값은 네이버. 가짜 에디터로 동작을 검증할 때만 바꾼다
+    # (publisher/mock_editor.html 참고).
+    "write_url": "https://blog.naver.com/{blog_id}?Redirect=Write",
 }
 
 EXIT_OK = 0
 EXIT_FAIL = 1
 EXIT_NEEDS_LOGIN = 2
 
-WRITE_URL = "https://blog.naver.com/{blog_id}?Redirect=Write"
 LOGIN_URL = "https://nid.naver.com/nidlogin.login"
 
 
@@ -167,6 +170,11 @@ def open_context(pw, cfg, headless=False):
         # 본문을 서식째 넣으려면 클립보드 쓰기 권한이 필요하다
         permissions=["clipboard-read", "clipboard-write"],
     )
+    # 크로미움이 미리 깔린 환경(컨테이너 등)에서는 실행 파일을 직접 지정할 수 있다.
+    # 사용자 PC 에서는 playwright install 로 맞는 빌드가 깔리므로 필요 없다.
+    exe = os.environ.get("BLOG_CHROMIUM_PATH")
+    if exe:
+        return pw.chromium.launch_persistent_context(executable_path=exe, **kwargs)
     try:
         return pw.chromium.launch_persistent_context(channel="chrome", **kwargs)
     except Exception:
@@ -334,7 +342,7 @@ def do_login(cfg):
         print(" 로그인이 끝나면 여기서 Enter 를 누르세요.")
         print("=" * 58)
         input()
-        page.goto(WRITE_URL.format(blog_id=cfg["blog_id"]))
+        page.goto(cfg["write_url"].format(blog_id=cfg["blog_id"]))
         try:
             editor_frame(page, cfg)
             log("로그인 확인됨. 세션이 프로필에 저장되었다.")
@@ -370,11 +378,11 @@ def do_draft(cfg, args):
         return EXIT_OK
 
     with sync_playwright() as pw:
-        ctx = open_context(pw, cfg)
+        ctx = open_context(pw, cfg, headless=args.headless)
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
         page.on("dialog", lambda d: d.dismiss())   # 네이티브 confirm 대비
         try:
-            page.goto(WRITE_URL.format(blog_id=cfg["blog_id"]),
+            page.goto(cfg["write_url"].format(blog_id=cfg["blog_id"]),
                       wait_until="domcontentloaded")
             frame = editor_frame(page, cfg)
             dismiss_popups(page, frame)
@@ -439,6 +447,8 @@ def main(argv=None):
     ap.add_argument("--no-pull", action="store_true", help="git pull 생략")
     ap.add_argument("--with-tags", action="store_true", help="태그도 입력 시도(비권장)")
     ap.add_argument("--force", action="store_true", help="이미 올린 글도 다시 올린다")
+    ap.add_argument("--headless", action="store_true",
+                    help="테스트용. 네이버 상대로는 쓰지 말 것 — 헤드리스는 탐지된다")
     args = ap.parse_args(argv)
 
     cfg = load_config()

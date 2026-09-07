@@ -27,6 +27,22 @@ python publisher\naver_draft.py --login
 (2단계 인증 포함) 콘솔에서 Enter 를 누르면 세션이 `publisher/profile/` 에 남는다.
 이후로는 재로그인이 없다.
 
+### 네이버에 붙기 전에 — 자체 점검
+
+네이버를 건드리지 않고 발행기 메커니즘만 먼저 확인할 수 있다.
+
+```bat
+start /b python -m http.server 8899 --directory publisher
+python publisher\test_against_mock.py
+```
+
+가짜 SmartEditor(`mock_editor.html`)를 띄우고 `naver_draft.py` 의 실제 함수를
+그대로 돌린다. 통과하면 클립보드 서식 붙여넣기·이미지 업로드·블록 순서·
+**발행 버튼 차단**이 정상이라는 뜻이다.
+
+여기서 통과했는데 실제 네이버에서 실패하면 원인은 거의 확실히 **셀렉터**다
+(로직이 아니라). 아래 "안 될 때" 로 간다.
+
 > 아이디·비밀번호는 이 스크립트에도, 저장소에도, GitHub Secrets 에도 저장되지
 > 않는다. 유일한 자격증명은 PC 에 남는 브라우저 프로필이고, 이건 `.gitignore`
 > 되어 있다. `git status` 에 `publisher/profile/` 이 보이면 **절대 커밋하지 말 것.**
