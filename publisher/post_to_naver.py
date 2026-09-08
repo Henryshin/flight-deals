@@ -48,6 +48,15 @@
 죽은 적이 있다. 재현되지 않았고 원인은 못 밝혔다. describe_popup() 이 다음에는
 그 팝업의 문구와 버튼을 에러에 실어 주므로, 또 나면 그 로그를 보고 판단할 것.
 
+링크
+----
+본문에 거는 링크는 **post.json 의 booking_url 하나뿐이다.** 그 조건이 조회되는
+구글 항공권 화면이고, 글에서 제일 중요한 링크다. 맨 끝 BOOKING_LINK_TEXT 문구에 건다.
+
+원문 HTML 안의 <a>(자체 사이트 링크 등)는 **평문으로 두는 것이 맞다.** 사용자가
+2026-09-08 에 그렇게 결정했다. 태그가 지워져서 생긴 사고가 아니라 의도된 동작이니
+"링크가 빠졌다"고 보고 되살리지 말 것. 무엇이 평문으로 갔는지는 로그에 남는다.
+
 사진
 ----
 photo 블록은 photo-credits.json 이 있으면 실제 사진을 넣고, 없으면 예전처럼
@@ -673,10 +682,10 @@ def fill_post(page, post, post_dir, align=ALIGN_DEFAULT, tags=True):
             lines = html_to_paragraphs(b["content"])
             log(f"{head} 문단 {len(lines)}개")
             insert_paragraphs(frame, page, lines)
-            # html_to_paragraphs 는 태그를 전부 지우므로 <a> 도 같이 사라진다.
-            # 조용히 없어지면 안 되니 무엇이 빠졌는지 남긴다.
+            # 원문 <a> 는 평문으로 둔다 — 의도된 동작이다(docstring '링크' 참조).
+            # 그래도 무엇이 그렇게 됐는지는 보이게 남긴다.
             for href in re.findall(r'<a[^>]+href="([^"]+)"', b["content"]):
-                log(f"{head} 원문 링크는 평문으로 들어갔다(수동 확인): {href[:60]}")
+                log(f"{head} 원문 <a> 는 평문으로 둠(의도): {href[:55]}")
         elif b["type"] == "card":
             f = post_dir / b.get("file", f"images/card-{b['card']}.png")
             if not f.exists():
