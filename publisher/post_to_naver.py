@@ -128,6 +128,19 @@ ALIGN_OPTION = {
     "justify": ".se-toolbar-option-align-justify-button",
 }
 ALIGN_DEFAULT = "center"
+# 글자 크기. 드롭다운 옵션 순서가 곧 이 목록이다.
+FONT_SIZE_BUTTON = ".se-font-size-code-toolbar-button"
+FONT_SIZE_OPTION = ".se-toolbar-option-text-button"
+FONT_SIZES = [11, 13, 15, 16, 19, 24, 28, 30, 34, 38]
+# 출처 문단은 본문과 달리 왼쪽 · 최소 크기로 둔다 (사용자 지정, 2026-09-08).
+CREDIT_ALIGN = "left"
+CREDIT_PT = 11
+# 발행 설정 패널. **패널을 여는 버튼과 진짜 발행 버튼이 둘 다 '발행' 이다.**
+# 텍스트로 고르면 안 되고 클래스로 갈라야 한다. confirm_btn 은 절대 누르지 않는다.
+PUBLISH_PANEL_BUTTON = "button[class*='publish_btn']"
+PUBLISH_CONFIRM_BUTTON = "button[class*='confirm_btn']"   # 누르지 말 것
+TAG_INPUT = 'input[placeholder*="태그"]'
+TAG_ITEMS = "[class*='tag_textarea'] [class*='tag__']"
 # text=취소 는 화면에 안 보이는 스크린리더용 span 을 먼저 잡아 타임아웃된다.
 RECOVERY_CANCEL = ".se-popup-alert-confirm button:has-text('취소')"
 
@@ -432,6 +445,100 @@ def set_body_align(frame, page, align):
     log(f"  본문 정렬 {align} 적용 확인")
 
 
+def set_font_size(frame, page, pt):
+    """선택 영역의 글자 크기를 바꾼다.
+
+    캐럿이 제목칸에 있으면 드롭다운이 제목용 3종만 띄운다. 그 상태로 본문 기준
+    인덱스를 누르면 엉뚱한 크기가 잡히거나 타임아웃난다 — 옵션 개수를 세서 다르면
+    조용히 넘어가지 않고 멈춘다.
+    """
+    frame.click(FONT_SIZE_BUTTON)
+    page.wait_for_timeout(300)
+    opts = frame.locator(FONT_SIZE_OPTION)
+    if opts.count() != len(FONT_SIZES):
+        page.keyboard.press("Escape")
+        raise Failed(
+            f"글자 크기 옵션이 {opts.count()}개다 (본문 기준 {len(FONT_SIZES)}개). "
+            "캐럿이 본문에 있지 않다."
+        )
+    opts.nth(FONT_SIZES.index(pt)).click()
+    page.wait_for_timeout(300)
+
+
+def insert_credits(frame, page, lines):
+    """글 끝에 사진 출처를 붙인다. 본문(가운데)과 달리 왼쪽 · 최소 크기다.
+
+    **이미 넣은 문단을 골라 서식을 바꾸는 방식은 쓰지 않는다.** 그러려면 첫 줄
+    맨 앞부터 마지막 줄 맨 끝까지 정확히 선택해야 하는데(글자 크기는 문단이
+    아니라 글자 단위라 부분 선택이면 일부만 작아진다), 마지막 줄의 오른쪽 끝은
+    오른쪽 사이드바(.se-sidebar-interaction)에 덮여 클릭이 가로채인다.
+    실물에서 그렇게 죽었다 (2026-09-08).
+
+    대신 본문 정렬을 끝낸 뒤 **빈 문단을 하나 만들고 거기에 서식을 먼저 걸어**
+    놓고 쓴다. 정렬·글자 크기는 '현재 서식'으로 이어지므로 그 뒤에 넣는 줄이
+    전부 그 서식으로 들어간다. 선택할 일이 없다.
+    """
+    log(f"  사진 출처 {len(lines)}줄 ({CREDIT_ALIGN} · {CREDIT_PT}pt)")
+    page.keyboard.press("Enter")
+    page.wait_for_timeout(ENTER_SETTLE_MS)
+    frame.click(ALIGN_DROPDOWN)
+    page.wait_for_timeout(300)
+    frame.click(ALIGN_OPTION[CREDIT_ALIGN])
+    page.wait_for_timeout(300)
+    set_font_size(frame, page, CREDIT_PT)
+    insert_paragraphs(frame, page, lines)
+
+    bad = frame.evaluate(
+        """([n, a, fs]) => {
+             const ps = Array.from(document.querySelectorAll(
+                 '.se-component.se-text .se-text-paragraph')).slice(-n);
+             return ps.filter(p => !p.classList.contains(a)
+                 || !p.querySelector('span[class*="' + fs + '"]')).length;
+           }""",
+        [len(lines), "se-text-paragraph-align-" + CREDIT_ALIGN, "se-fs%d" % CREDIT_PT],
+    )
+    if bad:
+        raise Failed(f"출처 서식이 {bad}줄에 적용되지 않았다")
+    log(f"  출처 서식 확인: {CREDIT_ALIGN} · {CREDIT_PT}pt")
+
+
+def fill_tags(frame, page, tags):
+    """발행 설정 패널을 열고 태그를 넣는다. **발행 버튼은 누르지 않는다.**
+
+    패널을 여는 버튼(publish_btn)과 진짜 발행 버튼(confirm_btn)이 둘 다 '발행'
+    이라고 쓰여 있다. 텍스트로 찾으면 발행이 눌린다 — 반드시 클래스로 가른다.
+    """
+    if not tags:
+        return
+    opener = frame.locator(PUBLISH_PANEL_BUTTON).first
+    if opener.count() == 0 or not opener.is_visible():
+        raise Failed("발행 설정 패널을 여는 버튼을 못 찾았다")
+    opener.click()
+    page.wait_for_timeout(1800)
+
+    box = frame.locator(TAG_INPUT).first
+    if box.count() == 0 or not box.is_visible():
+        raise Failed("태그 입력칸을 못 찾았다")
+    box.click()
+    page.wait_for_timeout(400)
+    for t in tags:
+        page.keyboard.type(t, delay=12)
+        page.wait_for_timeout(200)
+        page.keyboard.press("Enter")
+        page.wait_for_timeout(400)
+
+    got = frame.evaluate(
+        """(sel) => Array.from(document.querySelectorAll(sel))
+                        .map(e => (e.getAttribute('aria-label') || '').trim())
+                        .filter(Boolean)""",
+        TAG_ITEMS,
+    )
+    missing = [t for t in tags if t not in got]
+    if missing:
+        raise Failed(f"태그가 들어가지 않았다: {missing} (현재 {got})")
+    log(f"  태그 {len(tags)}개 입력 확인: {' '.join(got)}")
+
+
 def load_photos(post_dir):
     """photo-credits.json 을 읽어 (hint -> 파일 절대경로, 매니페스트) 를 돌려준다.
 
@@ -452,7 +559,7 @@ def load_photos(post_dir):
 
 # --- 본체 --------------------------------------------------------------------
 
-def fill_post(page, post, post_dir, align=ALIGN_DEFAULT):
+def fill_post(page, post, post_dir, align=ALIGN_DEFAULT, tags=True):
     frame = page.frame(name=FRAME_NAME)
     if frame is None:
         raise Failed(
@@ -503,16 +610,16 @@ def fill_post(page, post, post_dir, align=ALIGN_DEFAULT):
             page.keyboard.press("Enter")
 
     used = [m for m in manifest if m["hint"] in photos]
+    # 본문 정렬을 먼저 끝내고 그 뒤에 출처를 붙인다. 순서를 바꾸면 전체 선택
+    # 가운데정렬이 출처 서식까지 덮어쓴다.
+    set_body_align(frame, page, align)
     if used:
         # CC BY / BY-SA 는 저작자 표시가 의무다. 사진을 실제로 넣었을 때만 붙인다.
-        page.keyboard.press("Enter")
-        page.wait_for_timeout(ENTER_SETTLE_MS)
-        lines = credit_lines(used)
-        log(f"  사진 출처 {len(lines)}줄")
-        insert_paragraphs(frame, page, lines)
-
-    set_body_align(frame, page, align)
+        insert_credits(frame, page, credit_lines(used))
     verify_whole(frame, post, photos, used)
+    # 태그는 맨 마지막에. 발행 설정 패널이 열리면 본문을 가려서 대조를 못 한다.
+    if tags:
+        fill_tags(frame, page, post.get("tags") or [])
     return photos, used
 
 
@@ -565,7 +672,9 @@ def find_editor_page(ctx, match):
     URL 부분일치로 고르면 안 된다. 네이버 로그인 페이지의 url= 파라미터에
     'blog.naver.com' 이 그대로 들어 있어서 로그인 탭이 먼저 잡힌다 —
     실물에서 그렇게 mainFrame 을 못 찾고 죽었다 (2026-09-08).
-    mainFrame 안에 제목칸이 있는지까지 봐야 확실하다.
+
+    제목칸(.se-title-text)만 보면 안 된다. **발행된 글을 읽는 화면에도 같은
+    클래스가 그대로 있다.** 편집 가능한 화면에만 있는 툴바까지 봐야 가른다.
     """
     for p in ctx.pages:
         if match and match not in p.url:
@@ -574,7 +683,7 @@ def find_editor_page(ctx, match):
         if f is None:
             continue
         try:
-            if f.locator(TITLE_TEXT).count() > 0:
+            if f.locator(TITLE_TEXT).count() > 0 and f.locator(IMAGE_BUTTON).count() > 0:
                 return p
         except Exception:
             continue
@@ -591,6 +700,8 @@ def main(argv=None):
     ap.add_argument("--align", default=ALIGN_DEFAULT,
                     choices=["center", "left", "right", "justify", "keep"],
                     help=f"본문 정렬 (기본 {ALIGN_DEFAULT}). keep 은 손대지 않는다")
+    ap.add_argument("--no-tags", action="store_true",
+                    help="태그를 넣지 않는다 (발행 설정 패널을 열지 않음)")
     ap.add_argument("--fresh", action="store_true",
                     help="채우기 전에 글쓰기 화면을 다시 열어 빈 글로 만든다 "
                          "(쓰던 내용은 버려진다)")
@@ -641,12 +752,19 @@ def main(argv=None):
                 print("--fresh 인데 블로그 ID 를 알아낼 수 없다. --blog-id 를 줄 것.",
                       file=sys.stderr)
                 return 1
+            # 찾은 탭이 글쓰기 화면이 아니면(예: 발행글 수정 중) 거기서 이동하면
+            # 사용자가 하던 작업이 날아간다. 그럴 땐 새 탭에서 연다.
+            if "Redirect=Write" not in page.url:
+                log("찾은 탭이 글쓰기 화면이 아니다. 새 탭에서 연다.")
+                page = ctx.new_page()
             log(f"글쓰기 화면 새로 열기: {blog_id}")
             page.goto(WRITE_URL.format(blog_id=blog_id), wait_until="load")
             page.wait_for_timeout(2500)
+            page.bring_to_front()
 
         try:
-            photos, used = fill_post(page, post, post_dir, args.align)
+            photos, used = fill_post(page, post, post_dir, args.align,
+                                     tags=not args.no_tags)
         except Failed as e:
             print(f"\n중단: {e}", file=sys.stderr)
             return 1
@@ -654,7 +772,11 @@ def main(argv=None):
 
     print()
     log("채우기 완료. 저장도 발행도 하지 않았다.")
-    print(f"  태그(직접 입력): {' '.join(post.get('tags', []))}")
+    tag_list = " ".join(post.get("tags", []))
+    if args.no_tags:
+        print(f"  태그(직접 입력하세요): {tag_list}")
+    else:
+        print(f"  태그 입력됨: {tag_list}")
     if used:
         print(f"  사진 {len(used)}장을 넣고 글 끝에 출처를 붙였다.")
         print("  출처 문단은 지우지 말 것 — CC BY / BY-SA 의 저작자 표시 의무다.")
@@ -664,7 +786,7 @@ def main(argv=None):
     if empty:
         print("  남은 자리를 채우고 한 번 읽어본 뒤 직접 발행하세요.")
     else:
-        print("  한 번 읽어본 뒤 직접 발행하세요.")
+        print("  한 번 읽어본 뒤 예약 시각을 잡고 직접 발행하세요.")
     return 0
 
 
