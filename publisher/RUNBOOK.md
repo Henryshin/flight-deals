@@ -1,4 +1,4 @@
-# 네이버 블로그 발행 런북 `v1.0`
+# 네이버 블로그 발행 런북 `v1.1`
 
 > flight-deals 글 하나를 네이버 블로그에 올리기까지. **실물 SmartEditor 로 검증한 내용만** 적었다.
 > 2026-09-08 첫 실물 발행(개천절 코타키나발루)에서 확인했다.
@@ -107,7 +107,40 @@ python publisher\post_to_naver.py posts\<슬러그> --fresh --blog-id iamyuhyun
 닫힌 걸 확인하지 않고 진행하면 **이전 초안 위에 덮어쓴다.** 입력 전에 빈 글인지 확인한다
 (빈 글 기준: 제목 `제목`, 본문 문단 1개, 이미지 0개).
 
-### 2-11. 팝업이 툴바를 덮는 일이 있다
+### 2-11. 에디터 안에서 링크는 `<a>` 가 아니다 ★
+글자에 링크를 걸면 **`<a>` 가 아니라 `span.se-link` 의 `data-href`** 로 들어간다.
+`<a>` 는 발행된 뒤에야 생긴다. `document.querySelectorAll('a')` 로 확인하면 멀쩡히 걸린 링크를
+'안 걸렸다'고 오판한다 — 그것 때문에 같은 링크를 네 번 다시 걸었다.
+
+```js
+Array.from(document.querySelectorAll('span.se-link'))
+     .some(s => (s.getAttribute('data-href')||'').includes(url))
+```
+
+링크 버튼은 두 개다. `se-oglink-toolbar-button`("링크 추가")은 **카드 컴포넌트**를 넣는 것이고,
+글자에 링크를 거는 것은 `se-link-toolbar-button`("링크 입력")이다.
+
+선택은 **트리플클릭**으로 한다. `Shift+Home` 으로는 선택이 안 잡혔다. 여기서 트리플클릭은
+맞는 용법이다 — 선택에 링크를 거는 것이고 뒤에 `insert_text` 를 하지 않아 덮어쓸 위험이 없다.
+
+확정 버튼(`se-custom-layer-link-apply-button`)은 오른쪽 **사이드바 패널 헤더에 가려** 클릭이
+가로채이는 경우가 있다. Enter 로 먼저 시도하고, 안 되면 히트테스트를 건너뛰는 JS 클릭으로 누른다.
+
+### 2-12. 글감 검색 패널이 본문 클릭을 전부 가로챈다
+링크 레이어에는 입력칸이 **두 개**다. URL 칸은 `input.se-custom-layer-link-input`(placeholder
+"URL을 입력하세요.")이고, 다른 하나는 글감 검색칸(`se-flayer-unified-search-input`)이다.
+`input[type='text']` 로 뭉뚱그려 잡으면 글감칸에 URL 이 들어가고, **검색 결과 패널이 열려
+본문 클릭을 전부 가로챈다.**
+
+이 패널은 **Escape 로 안 닫힌다.** 전용 닫기 버튼 `.se-flayer-unified-result-close` 만 먹는다.
+
+### 2-13. `html_to_paragraphs` 는 `<a>` 도 지운다
+`re.sub(r"<[^>]+>", "", s)` 가 태그를 전부 지우므로 **원문의 링크가 조용히 사라진다.**
+2026-09-08 발행글에서 사이트 링크가 통째로 빠진 채 올라갔다.
+
+지금은 빠진 링크를 로그로 남긴다. 자동으로 걸어 주지는 않으니 필요하면 사람이 확인한다.
+
+### 2-14. 팝업이 툴바를 덮는 일이 있다
 한 번 `.se-popup-alert` 가 사진 버튼 클릭을 30초 재시도하다 죽였다. **재현되지 않았고 원인 미상.**
 지금은 팝업 문구를 에러에 실어 주므로, 또 나면 그 로그를 보고 판단한다.
 
@@ -130,6 +163,10 @@ python publisher\post_to_naver.py posts\<슬러그> --fresh --blog-id iamyuhyun
 | 발행 **패널 열기** | `button[class*='publish_btn']` |
 | 발행 **진짜 실행** | `button[class*='confirm_btn']` ← **누르지 말 것** |
 | 태그 입력 | `input[placeholder*="태그"]` |
+| 링크(글자에 걸기) | `.se-link-toolbar-button` → `input.se-custom-layer-link-input` → `.se-custom-layer-link-apply-button` |
+| 링크(카드 삽입) | `.se-oglink-toolbar-button` ← 용도가 다름 |
+| 걸린 링크 확인 | `span.se-link` 의 `data-href` (`<a>` 아님) |
+| 글감 패널 닫기 | `.se-flayer-unified-result-close` (Escape 안 먹음) |
 | 입력된 태그 | `[class*='tag_textarea'] [class*='tag__']` (aria-label 에 태그명) |
 
 **정렬 드롭다운을 여는 버튼은 현재 정렬 상태에 따라 자기 클래스가 바뀐다**
@@ -193,6 +230,16 @@ python publisher\post_to_naver.py posts\<슬러그> --fresh --blog-id iamyuhyun
 
 ---
 
+## 6-1. 예약 링크
+
+`post.json` 의 `booking_url`(그 조건이 조회되는 구글 항공권 화면)을 본문 맨 끝
+`구글 항공권에서 이 조건 그대로 보기` 문구에 걸어 넣는다. **글에서 제일 중요한 링크다.**
+
+원문 HTML 안의 `<a>`(예: 자체 사이트 링크)는 평문으로 들어간다. 로그에 남으니 필요하면
+사람이 직접 건다.
+
+---
+
 ## 7. 아직 사람이 하는 것
 
 - **가독성용 빈 줄.** 2026-09-08 발행 때 사용자가 **폭 없는 공백(U+200B) 문단 23개**를 손으로
@@ -224,5 +271,6 @@ Array.from(document.querySelectorAll('.se-component')).map(...)   # 텍스트·�
 | 버전 | 날짜 | 변경 내용 |
 |---|---|---|
 | v1.0 | 2026-09-08 | 최초 작성. 첫 실물 발행(개천절 코타키나발루)에서 확인한 함정 11가지, 셀렉터 표, 서식·사진·태그 규칙, 남은 수동 작업 정리 |
+| v1.1 | 2026-09-08 | 링크 관련 함정 3가지 추가(에디터 안 링크는 `span.se-link[data-href]`, 글감 패널이 클릭 가로챔, `html_to_paragraphs` 가 `<a>` 를 지움). 예약 링크(`booking_url`) 자동 삽입 절 신설, 셀렉터 표에 링크·글감 항목 추가 |
 
-<sub>네이버 블로그 발행 런북 v1.0 · 2026-09-08 · flight-deals `publisher/`</sub>
+<sub>네이버 블로그 발행 런북 v1.1 · 2026-09-08 · flight-deals `publisher/`</sub>

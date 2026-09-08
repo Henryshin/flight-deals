@@ -141,6 +141,16 @@ PUBLISH_PANEL_BUTTON = "button[class*='publish_btn']"
 PUBLISH_CONFIRM_BUTTON = "button[class*='confirm_btn']"   # 누르지 말 것
 TAG_INPUT = 'input[placeholder*="태그"]'
 TAG_ITEMS = "[class*='tag_textarea'] [class*='tag__']"
+# 링크. '링크 추가'(se-oglink) 는 카드 컴포넌트를 넣는 것이고, 글자에 링크를
+# 거는 것은 '링크 입력'(se-link) 쪽이다.
+LINK_BUTTON = ".se-link-toolbar-button"
+LINK_INPUT = "input.se-custom-layer-link-input"
+LINK_APPLY = ".se-custom-layer-link-apply-button"
+# 글감 검색 결과 패널. 열려 있으면 본문 클릭을 전부 가로챈다. Escape 로는 안 닫힌다.
+MATERIAL_PANEL = ".se-popup-unified-result-flayer--visible"
+MATERIAL_CLOSE = ".se-flayer-unified-result-close"
+# 예약 링크를 거는 문구. post.json 의 booking_url 로 연결한다.
+BOOKING_LINK_TEXT = "구글 항공권에서 이 조건 그대로 보기"
 # text=취소 는 화면에 안 보이는 스크린리더용 span 을 먼저 잡아 타임아웃된다.
 RECOVERY_CANCEL = ".se-popup-alert-confirm button:has-text('취소')"
 
@@ -502,6 +512,81 @@ def insert_credits(frame, page, lines):
     log(f"  출처 서식 확인: {CREDIT_ALIGN} · {CREDIT_PT}pt")
 
 
+def close_material_panel(frame, page):
+    """글감 검색 결과 패널을 닫는다. Escape 는 듣지 않고 전용 닫기 버튼만 먹는다."""
+    for _ in range(3):
+        if not frame.evaluate("(s) => !!document.querySelector(s)", MATERIAL_PANEL):
+            return
+        btn = frame.locator(MATERIAL_CLOSE).first
+        if btn.count() == 0 or not btn.is_visible():
+            return
+        btn.click()
+        page.wait_for_timeout(700)
+
+
+def apply_link(frame, page, text, url):
+    """`text` 와 정확히 같은 문단 전체에 링크를 건다.
+
+    여기서는 트리플클릭이 **맞는 용법**이다. 선택에 링크를 거는 것이고 뒤에
+    insert_text 를 하지 않으므로 선택을 덮어쓸 위험이 없다. Shift+Home 으로는
+    선택이 잡히지 않았다 (실물, 2026-09-08).
+
+    확인할 때 <a> 를 찾으면 안 된다. **에디터 안에서 링크는 <a> 가 아니라
+    span.se-link 의 data-href 로 들어간다.** <a> 는 발행된 뒤에야 생긴다.
+    이걸 몰라서 '안 걸렸다'고 오판하고 여러 번 다시 걸었다.
+    """
+    close_material_panel(frame, page)
+    idx = frame.evaluate(
+        """([sel, t]) => Array.from(document.querySelectorAll(sel))
+                          .findIndex(p => p.textContent.trim() === t)""",
+        [BODY_INNER, text],
+    )
+    if idx < 0:
+        raise Failed(f"링크를 걸 문단을 못 찾았다: {text!r}")
+    target = frame.locator(BODY_INNER).nth(idx)
+    target.scroll_into_view_if_needed()
+    page.wait_for_timeout(300)
+    target.click(click_count=3)
+    page.wait_for_timeout(500)
+
+    box = frame.locator(LINK_INPUT).first
+    if box.count() == 0 or not box.is_visible():
+        frame.click(LINK_BUTTON)
+        page.wait_for_timeout(1200)
+        box = frame.locator(LINK_INPUT).first
+    if not box.is_visible():
+        raise Failed("링크 입력칸이 열리지 않았다")
+    box.click()
+    page.wait_for_timeout(250)
+    box.fill("")
+    page.keyboard.type(url, delay=3)
+    page.wait_for_timeout(500)
+
+    def applied():
+        return frame.evaluate(
+            """([t, u]) => Array.from(document.querySelectorAll('span.se-link'))
+                 .some(s => s.textContent.trim() === t
+                            && (s.getAttribute('data-href') || '').includes(u))""",
+            [text, url.split("?")[0]],
+        )
+
+    # 확정 버튼은 오른쪽 사이드바 패널 헤더에 가려 클릭이 가로채이는 경우가 있다.
+    # Enter 로 먼저 시도하고, 그래도 안 되면 히트테스트를 건너뛰는 JS 클릭으로 누른다.
+    page.keyboard.press("Enter")
+    page.wait_for_timeout(1500)
+    close_material_panel(frame, page)
+    if not applied():
+        frame.evaluate(
+            """(sel) => { const b = document.querySelector(sel); if (b) b.click(); }""",
+            LINK_APPLY,
+        )
+        page.wait_for_timeout(1800)
+        close_material_panel(frame, page)
+    if not applied():
+        raise Failed(f"링크가 걸리지 않았다: {text!r} -> {url[:60]}")
+    log(f"  링크 확인: {text} -> {url[:52]}...")
+
+
 def fill_tags(frame, page, tags):
     """발행 설정 패널을 열고 태그를 넣는다. **발행 버튼은 누르지 않는다.**
 
@@ -588,6 +673,10 @@ def fill_post(page, post, post_dir, align=ALIGN_DEFAULT, tags=True):
             lines = html_to_paragraphs(b["content"])
             log(f"{head} 문단 {len(lines)}개")
             insert_paragraphs(frame, page, lines)
+            # html_to_paragraphs 는 태그를 전부 지우므로 <a> 도 같이 사라진다.
+            # 조용히 없어지면 안 되니 무엇이 빠졌는지 남긴다.
+            for href in re.findall(r'<a[^>]+href="([^"]+)"', b["content"]):
+                log(f"{head} 원문 링크는 평문으로 들어갔다(수동 확인): {href[:60]}")
         elif b["type"] == "card":
             f = post_dir / b.get("file", f"images/card-{b['card']}.png")
             if not f.exists():
@@ -609,6 +698,14 @@ def fill_post(page, post, post_dir, align=ALIGN_DEFAULT, tags=True):
         if i < len(blocks):
             page.keyboard.press("Enter")
 
+    booking = post.get("booking_url")
+    if booking:
+        page.keyboard.press("Enter")
+        page.wait_for_timeout(ENTER_SETTLE_MS)
+        log("  예약 링크 한 줄")
+        insert_paragraphs(frame, page, [BOOKING_LINK_TEXT])
+        apply_link(frame, page, BOOKING_LINK_TEXT, booking)
+
     used = [m for m in manifest if m["hint"] in photos]
     # 본문 정렬을 먼저 끝내고 그 뒤에 출처를 붙인다. 순서를 바꾸면 전체 선택
     # 가운데정렬이 출처 서식까지 덮어쓴다.
@@ -624,6 +721,7 @@ def fill_post(page, post, post_dir, align=ALIGN_DEFAULT, tags=True):
 
 
 def verify_whole(frame, post, photos, used):
+    # 주의: verify_whole 은 post 를 읽어 booking 줄까지 기대 목록에 넣는다.
     """전부 넣고 나서 통째로 대조한다.
 
     조각마다 확인해도 '순서가 뒤집혔다'나 '중간 문단이 통째로 사라졌다'는
@@ -637,6 +735,8 @@ def verify_whole(frame, post, photos, used):
             want += html_to_paragraphs(b["content"])
         elif b["type"] == "photo" and b["hint"] not in photos:
             want.append(f"[여기에 사진: {b['hint']}]")
+    if post.get("booking_url"):
+        want.append(BOOKING_LINK_TEXT)
     if used:
         want += credit_lines(used)
 
