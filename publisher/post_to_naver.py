@@ -61,7 +61,12 @@
 ----
 photo 블록은 photo-credits.json 이 있으면 실제 사진을 넣고, 없으면 예전처럼
 '[여기에 사진: ...]' 자리 표시만 넣는다. 그 파일은 publisher/fetch_photos.py 가
-위키미디어 커먼즈에서 라이선스를 확인하고 만든다. 사진을 실제로 넣었을 때는
+위키미디어 커먼즈에서 라이선스를 확인하고 만든다.
+
+**photos.json 은 있는데 아직 안 받았으면 이 스크립트가 알아서 받는다.** 따로
+fetch_photos.py 를 돌릴 필요가 없다 (--no-fetch 로 끌 수 있다). 받는 것은 에디터를
+건드리기 전에 끝낸다 — 받다가 실패하면 반쯤 채워진 글이 남는 것보다 아무것도 안 한
+상태로 죽는 게 낫다. 사진을 실제로 넣었을 때는
 글 끝에 저작자·라이선스 출처 문단을 붙인다 — CC BY / BY-SA 의 표시 의무이므로
 사람이 지우면 안 된다.
 
@@ -102,7 +107,7 @@ from html import unescape
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from fetch_photos import credit_lines
+from fetch_photos import credit_lines, fetch as fetch_commons_photos
 
 # Windows 콘솔(cp949)에서 한글 로그가 깨지거나 UnicodeEncodeError 로 죽는다.
 if sys.stdout.encoding is None or sys.stdout.encoding.lower() != "utf-8":
@@ -633,6 +638,34 @@ def fill_tags(frame, page, tags):
     log(f"  태그 {len(tags)}개 입력 확인: {' '.join(got)}")
 
 
+def ensure_photos(post_dir, allow_fetch=True):
+    """photos.json 은 있는데 사진이 아직 없으면 받아 둔다.
+
+    **에디터를 건드리기 전에** 부른다. 받다가 실패하면 반쯤 채워진 글이 남는 것보다
+    아무것도 안 한 상태로 죽는 편이 낫다.
+
+    photos.json 자체는 사람이(또는 Claude 가) 커먼즈에서 후보를 보고 고른 결과다.
+    그건 자동화 대상이 아니다 — 여기서는 이미 고른 것을 받아 오기만 한다.
+    """
+    if not (post_dir / "photos.json").exists():
+        return
+    credits = post_dir / "photo-credits.json"
+    need = True
+    if credits.exists():
+        try:
+            manifest = json.loads(credits.read_text(encoding="utf-8"))
+            need = any(not (post_dir / m["file"]).exists() for m in manifest)
+        except Exception:
+            need = True
+    if not need:
+        return
+    if not allow_fetch:
+        log("  사진이 아직 없다. --no-fetch 라 받지 않는다 (자리 표시만 들어간다)")
+        return
+    log("사진을 커먼즈에서 받는다 (photos.json 은 있는데 아직 안 받았다)")
+    fetch_commons_photos(post_dir)
+
+
 def load_photos(post_dir):
     """photo-credits.json 을 읽어 (hint -> 파일 절대경로, 매니페스트) 를 돌려준다.
 
@@ -809,6 +842,8 @@ def main(argv=None):
     ap.add_argument("--align", default=ALIGN_DEFAULT,
                     choices=["center", "left", "right", "justify", "keep"],
                     help=f"본문 정렬 (기본 {ALIGN_DEFAULT}). keep 은 손대지 않는다")
+    ap.add_argument("--no-fetch", action="store_true",
+                    help="사진을 자동으로 받지 않는다 (photos.json 이 있어도)")
     ap.add_argument("--no-tags", action="store_true",
                     help="태그를 넣지 않는다 (발행 설정 패널을 열지 않음)")
     ap.add_argument("--fresh", action="store_true",
@@ -822,6 +857,9 @@ def main(argv=None):
         print(f"post.json 이 없다: {pj}", file=sys.stderr)
         return 1
     post = json.loads(pj.read_text(encoding="utf-8"))
+
+    # 브라우저를 건드리기 전에 사진부터 확보한다.
+    ensure_photos(post_dir, allow_fetch=not args.no_fetch)
 
     from playwright.sync_api import sync_playwright
 
