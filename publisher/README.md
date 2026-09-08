@@ -45,19 +45,26 @@ posts/<날짜>-<노선>-<연휴>/
 
 ## 연결 방법
 
-`scripts/blog_export.py` 가 `post.json` → `blocks.txt` 변환을 맡습니다
-(아직 미구현 — blocks.txt 형식을 받는 대로 추가).
+`post_to_naver.py` 가 `post.json` 을 읽어 에디터에 직접 채웁니다. CDP 로 사용자가
+띄워 둔 크롬에 붙는 방식이라 **크롬이 떠 있는 그 PC 에서** 돌려야 합니다.
 
 ```bat
-:: 1. 사용자 터미널 (PowerShell 5.1 은 && 안 됨, ; 를 쓸 것)
+:: 1. 크롬을 원격 디버깅 포트로 띄우고 직접 로그인
+::    (PowerShell 5.1 은 && 안 됨, ; 를 쓸 것)
 cd "...\98.네이버블로그자동화_v1.0"; python login.py
 
-:: 2. flight-deals 에서 블록 내보내기
-python scripts\blog_export.py posts\<슬러그> --out blocks.txt
-
-:: 3. 검증된 도구로 발행
-python post.py blocks.txt --title "..." --tags "..."
+:: 2. 네이버 블로그 글쓰기 화면을 연 상태에서
+cd C:\side_PJT\Blog_flight\flight-deals
+python publisher\post_to_naver.py posts\2026-09-08-icn-bki-2026-10-05
 ```
+
+> ⚠️ **실물 SmartEditor 로는 아직 한 번도 돌려보지 않았습니다.** 원격 컨테이너에서
+> 네이버가 막혀 있어 가짜 에디터로 배선만 확인했습니다. 첫 실행은 로그를 보면서
+> 하시고, 멈추는 지점을 알려주시면 고칩니다. 셀렉터는 `post_to_naver.py` 상단
+> 상수 몇 개에 모여 있습니다.
+
+작성 방식(문단 삽입·표 처리)은 이 저장소 것이고, **구동 방식(CDP·insert_text·
+커서 처리)만** 검증된 도구에서 가져왔습니다.
 
 ## 지키는 것
 
