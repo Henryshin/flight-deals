@@ -10,21 +10,47 @@
 
 검증 상태 (2026-09-08)
 ----------------------
-**실물 SmartEditor 로는 한 번도 돌려보지 않았다.** 원격 컨테이너에서는
-naver.com 이 네트워크 정책상 막혀 있고 CDP 엔드포인트도 닿지 않는다.
+**실물 SmartEditor 에서 통과했다.** 사용자 크롬(CDP 9222)의 blog.naver.com 글쓰기
+화면에서 제목 · 문단 78개 · 카드 이미지 2장을 채웠고, 라이브 DOM 을 컴포넌트
+순서대로 덤프해 원문과 대조했다 — 항목 80개 전부 일치, 이미지도 제자리(14 · 45).
 
-가짜 에디터로 확인한 것: CDP 연결 · page.frame(name=...) · 복구 대화상자 닫기 ·
-제목 삽입 후 대조 · 파일 선택기 이미지 업로드.
+첫 실물 실행에서 잡은 것. 전부 가짜 에디터로는 안 보이던 것들이다.
 
-가짜 에디터가 **실제로 잡아낸 버그** (고쳐서 반영함):
-  트리플클릭 + ArrowRight 로 커서를 옮기면 문단이 통째로 사라지고 순서가
-  뒤집힌다. 트리플클릭은 '선택' 연산이라, collapse 되기 전에 insert_text 가
-  들어가면 선택된 문단을 덮어쓴다. -> Selection API 로 끝점에 collapse (caret_to_end).
+1. 탭 선택이 로그인 페이지를 집었다. 네이버 로그인 URL 의 url= 파라미터에
+   'blog.naver.com' 이 그대로 들어 있어서 URL 부분일치가 거기 먼저 걸린다.
+   -> find_editor_page: mainFrame 안에 제목칸이 있는 탭만 고른다.
 
-**아직 못 가른 것**: 마지막 실행에서 insert_paragraphs 의 대조가 걸렸는데,
-진짜 버그인지 가짜 에디터가 실물과 달라서인지 구분할 수 없었다. 가짜 쪽은
-contenteditable 이 문단마다 .se-text-paragraph 를 만들지 않아 커서 동작이 다르다.
-=> 실물에서 한 번 돌려보고 판단할 것. 로그가 어디서 멈추는지가 답을 준다.
+2. BODY_CONTAINER = '.se-component-content' 가 틀렸다. 이 클래스는 **제목
+   컴포넌트에도 있어서** 빈 글에서도 2개가 잡힌다. querySelector 의 첫 매치가
+   제목이라 캐럿이 제목칸으로 가고, locator(...).inner_text() 는 매치가 여러 개라
+   strict mode 위반으로 죽는다. -> 본문은 '.se-component.se-text' 로 스코프한다.
+
+3. Selection API 로 캐럿을 옮기는 방식은 실물에서 동작하지 않는다. 본문 문단에는
+   contenteditable 조상이 아예 없고(closest('[contenteditable=true]') -> null),
+   에디터는 숨은 input buffer 로 입력을 받아 자기 캐럿 모델을 따로 굴린다.
+   <p>.focus() 는 무효라 document.getSelection() 을 옮겨도 에디터가 안 따라온다.
+   -> 검증된 도구(lib.py focus_body_tail)와 같이 '마지막 문단 클릭'으로 바꿨다.
+   이 함수를 부르는 시점의 마지막 문단은 항상 비어 있어서 클릭만으로 캐럿이
+   끝에 놓인다. 비어 있지 않으면 문장 중간을 찍을 수 있으므로 그 자리에서 멈춘다.
+   트리플클릭도 End 키도 여전히 쓰지 않는다.
+
+4. **줄이 조용히 사라진다.** insert_text 직후 Enter 를 바로 치면 에디터가 아직
+   입력을 처리하는 중이라 줄이 통째로 씹힌다. 30줄 블록에서 5줄, 18줄 블록에서
+   5줄이 유실됐는데, 블록 단위 대조는 마지막 줄만 확인해서 그대로 통과했다.
+   맨 끝 verify_whole 에서야 걸렸다. -> 줄마다 마지막 문단을 읽어 대조하고,
+   비어 있으면 다시 넣는다. Enter 도 같은 방식으로 확인한다(씹히면 한 번 더).
+
+5. 빈 문단에는 '.se-placeholder' span 이 실제 DOM 노드로 들어 있다
+   ('글감과 함께 나의 일상을 기록해보세요!'). 그냥 읽으면 본문 텍스트로 섞인다.
+   -> 대조 전에 걷어낸다.
+
+한 번은 팝업(.se-popup-alert)이 툴바를 덮어 사진 버튼 클릭이 30초 재시도하다
+죽은 적이 있다. 재현되지 않았고 원인은 못 밝혔다. describe_popup() 이 다음에는
+그 팝업의 문구와 버튼을 에러에 실어 주므로, 또 나면 그 로그를 보고 판단할 것.
+
+이어서 실행할 때는 --fresh 를 준다. 글쓰기 화면을 다시 열고 복구 대화상자를 닫아
+빈 글에서 시작한다(쓰던 내용은 버려진다). --fresh 없이 돌리면 assert_blank 가
+빈 글이 아닌 것을 보고 덮어쓰지 않고 멈춘다.
 
 왜 CDP 인가
 -----------
@@ -42,6 +68,7 @@ CDP 엔드포인트는 브라우저가 떠 있는 그 컴퓨터의 localhost 다
 - '발행'/'저장' 클릭 — 이 스크립트는 채우기만 한다.
 """
 import argparse
+import io
 import json
 import re
 import sys
@@ -49,21 +76,38 @@ import time
 from html import unescape
 from pathlib import Path
 
-CDP_URL = "http://localhost:9222"
+# Windows 콘솔(cp949)에서 한글 로그가 깨지거나 UnicodeEncodeError 로 죽는다.
+if sys.stdout.encoding is None or sys.stdout.encoding.lower() != "utf-8":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
+
+# localhost 는 IPv6(::1) 로 먼저 붙으려다 실패할 수 있어 127.0.0.1 로 고정한다.
+CDP_URL = "http://127.0.0.1:9222"
 WRITE_URL = "https://blog.naver.com/{blog_id}?Redirect=Write"
 
 # 에디터는 iframe 안이다. 최상위 page 에서 찾으면 전부 빈 결과가 나온다.
 FRAME_NAME = "mainFrame"
 
+TITLE_TEXT = ".se-title-text"
 TITLE_INNER = ".se-title-text .se-text-paragraph"
-BODY_CONTAINER = ".se-component-content"
-BODY_INNER = ".se-component-content .se-text-paragraph"
+# 본문은 반드시 .se-component.se-text 로 스코프한다. .se-component-content 는
+# **제목 컴포넌트에도 있어서** 빈 글에서도 2개가 잡힌다. 그걸 쓰면 (1) querySelector
+# 첫 매치가 제목이라 커서가 제목칸으로 가고 (2) locator 는 매치가 여러 개라
+# strict mode 위반으로 죽는다. 실물 에디터에서 확인했다 (2026-09-08).
+BODY_COMPONENT = ".se-component.se-text"
+BODY_INNER = ".se-component.se-text .se-text-paragraph"
 IMAGE_BUTTON = ".se-image-toolbar-button"
-IMAGE_COMPONENT = ".se-image"
+IMAGE_COMPONENT = ".se-component.se-image"
+HELP_CLOSE = ".se-help-panel-close-button"
 # text=취소 는 화면에 안 보이는 스크린리더용 span 을 먼저 잡아 타임아웃된다.
 RECOVERY_CANCEL = ".se-popup-alert-confirm button:has-text('취소')"
 
 FOCUS_SETTLE_MS = 400
+# insert_text 직후 Enter 를 바로 치면 에디터가 입력을 아직 처리 중이라 줄이
+# 통째로 씹힌다. 실측: settle 없이 30줄 블록에서 5줄, 18줄 블록에서 5줄 유실
+# (2026-09-08). 대기만으로는 못 믿으므로 줄마다 읽어 대조하고 재시도한다.
+INSERT_SETTLE_MS = 80
+ENTER_SETTLE_MS = 80
 
 
 def log(msg):
@@ -93,56 +137,125 @@ def html_to_paragraphs(html):
 
 # --- 커서 --------------------------------------------------------------------
 
-def caret_to_end(frame):
-    """본문 맨 끝(이미지 뒤 포함)으로 커서를 옮긴다.
+def body_text(frame):
+    """본문 문단만 이어붙여 돌려준다 (제목·이미지 캡션 제외).
 
-    End 키는 문단 끝이 아니라 **화면 줄 끝**으로 가므로 쓰면 안 된다.
-    트리플클릭 + ArrowRight 도 쓰지 않는다 — 트리플클릭은 문단을 '선택'하는
-    연산이라, collapse 되기 전에 insert_text 가 들어가면 그 문단을 통째로
-    덮어쓴다. 실제로 그렇게 문단이 사라지고 순서가 뒤집히는 것을 확인했다.
-
-    Selection API 로 콘텐츠 끝에 caret 을 collapse 시키는 것이 유일하게
-    비파괴적이다. 선택 영역이 남지 않는다.
+    locator(...).inner_text() 를 쓰면 매치가 여러 개일 때 strict mode 로 죽으므로
+    evaluate 로 직접 모은다.
     """
-    frame.evaluate(
-        """(sel) => {
-            const el = document.querySelector(sel);
-            if (!el) return false;
-            el.focus();
-            const r = document.createRange();
-            r.selectNodeContents(el);
-            r.collapse(false);          // false = 끝점
-            const s = getSelection();
-            s.removeAllRanges();
-            s.addRange(r);
-            return true;
-        }""",
-        BODY_CONTAINER,
+    return chr(10).join(body_paragraphs(frame))
+
+
+def body_paragraphs(frame):
+    """본문 문단 텍스트 목록. 플레이스홀더 span 은 뺀다.
+
+    빈 문단에는 `.se-placeholder` span 이 실제 DOM 노드로 들어 있어서
+    ('글감과 함께 나의 일상을 기록해보세요!') 그냥 읽으면 본문 텍스트로 섞인다.
+    """
+    return frame.evaluate(
+        """(sel) => Array.from(document.querySelectorAll(sel)).map(el => {
+               const c = el.cloneNode(true);
+               c.querySelectorAll('.se-placeholder, .__se_placeholder')
+                .forEach(n => n.remove());
+               return c.textContent.trim();
+           })""",
+        BODY_INNER,
     )
+
+
+def last_body_paragraph(frame):
+    """마지막 본문 문단의 텍스트. 줄 단위 대조용이라 전체를 훑지 않는다."""
+    return frame.evaluate(
+        """(sel) => {
+               const ps = document.querySelectorAll(sel);
+               if (!ps.length) return "";
+               const c = ps[ps.length - 1].cloneNode(true);
+               c.querySelectorAll('.se-placeholder, .__se_placeholder')
+                .forEach(n => n.remove());
+               return c.textContent;
+           }""",
+        BODY_INNER,
+    )
+
+
+def norm(s):
+    """대조용 공백 정규화. 에디터가 공백을 NBSP 로 바꾸는 경우가 있다."""
+    return " ".join(s.replace(chr(0xA0), " ").split())
+
+
+def caret_to_end(frame, page):
+    """본문 마지막 문단을 클릭해 캐럿을 그 끝에 둔다.
+
+    End 키는 문단 끝이 아니라 **화면 줄 끝**으로 가므로 쓰지 않는다.
+    트리플클릭도 쓰지 않는다 — 문단을 '선택'하는 연산이라 collapse 되기 전에
+    insert_text 가 들어가면 그 문단을 통째로 덮어쓴다.
+
+    Selection API 로 collapse 하는 방법도 **실물에서는 안 된다.** 본문 문단에는
+    contenteditable 조상이 아예 없고(실측: closest('[contenteditable=true]') -> null),
+    SmartEditor 는 숨은 input buffer 로 입력을 받아 자기 캐럿 모델을 따로 굴린다.
+    <p>.focus() 는 무효라 document.getSelection() 을 옮겨도 에디터가 안 따라온다.
+
+    남는 것은 검증된 도구가 쓰는 방식 — 마지막 문단을 그냥 클릭하는 것이다.
+    이 스크립트가 이 함수를 부르는 시점(이미지 앞뒤)의 마지막 본문 문단은 항상
+    비어 있다. 직전에 Enter 를 쳤거나, 이미지 삽입 후 에디터가 새 빈 문단을
+    만들기 때문이다. 빈 문단은 어디를 눌러도 캐럿이 끝에 놓인다.
+
+    비어 있지 않으면 클릭 지점이 문장 중간이 될 수 있으므로 그 자리에서 멈춘다.
+    """
+    paras = body_paragraphs(frame)
+    if not paras:
+        raise Failed("본문 문단을 찾지 못해 커서를 옮기지 못했다")
+    if paras[-1]:
+        raise Failed(
+            "마지막 본문 문단이 비어 있지 않다: " + repr(paras[-1][:30]) + ". "
+            "여기를 클릭하면 캐럿이 문장 중간에 놓인다. 흐름이 예상과 다르므로 멈춘다."
+        )
+    last = frame.locator(BODY_INNER).last
+    last.scroll_into_view_if_needed()
+    page.wait_for_timeout(150)
+    last.click()
+    page.wait_for_timeout(250)
 
 
 # --- 입력 --------------------------------------------------------------------
 
 def insert_paragraphs(frame, page, lines, verify=True):
-    """새 문단을 넣는다.
+    """새 문단을 넣는다. **한 줄마다 읽어서 대조하고, 씹히면 다시 넣는다.**
 
     반드시 insert_text (CDP Input.insertText) 를 쓴다. type() 으로 실제 키를 치면
     "1. 회사 개요" 처럼 숫자+마침표로 시작하는 줄에서 자동 번호매기기가 발동해
     그 줄부터 끝까지 순서 목록이 되어 버린다.
 
-    insert_text 는 실패해도 **예외를 던지지 않는다.** 넣고 나서 읽어 대조하지
-    않으면 조용한 실패가 그대로 발행까지 간다.
+    insert_text 는 실패해도 **예외를 던지지 않는다.** 예전에는 블록의 마지막 줄만
+    대조했는데, 그러면 블록 중간에서 사라진 줄을 못 잡는다 — 실물 첫 실행에서
+    30줄 블록과 18줄 블록이 각각 5줄씩 조용히 유실됐다(2026-09-08). 블록 단위
+    대조는 통과했고 맨 끝 verify_whole 에서야 걸렸다. 그래서 줄 단위로 내린다.
+
+    Enter 도 같이 씹힌다. Enter 뒤 마지막 문단이 비어 있지 않으면 새 문단이 안
+    생긴 것이므로 한 번 더 친다.
     """
     for i, line in enumerate(lines):
-        page.keyboard.insert_text(line)
+        for attempt in range(3):
+            page.keyboard.insert_text(line)
+            page.wait_for_timeout(INSERT_SETTLE_MS)
+            got = last_body_paragraph(frame)
+            if norm(got) == norm(line):
+                break
+            if norm(got) == "":
+                continue            # 통째로 씹혔다. 그대로 다시 넣는다.
+            raise Failed(
+                "문단이 예상과 다르게 들어갔다. 중복 입력 위험이 있어 멈춘다."
+                + " 기대=" + repr(line[:40]) + " 실제=" + repr(got[:40])
+            )
+        else:
+            raise Failed("문단을 세 번 넣었는데 반영되지 않았다: " + repr(line[:40]))
+
         if i < len(lines) - 1:
             page.keyboard.press("Enter")
-    page.wait_for_timeout(150)
-    if verify and lines:
-        probe = lines[-1][:20]
-        body = frame.locator(BODY_CONTAINER).inner_text()
-        if probe and probe not in body:
-            raise Failed(f"본문 삽입이 반영되지 않았다: {probe!r}")
+            page.wait_for_timeout(ENTER_SETTLE_MS)
+            if norm(last_body_paragraph(frame)) != "":
+                page.keyboard.press("Enter")   # Enter 가 씹혔다
+                page.wait_for_timeout(ENTER_SETTLE_MS)
 
 
 def set_title(frame, page, title):
@@ -154,7 +267,7 @@ def set_title(frame, page, title):
     page.keyboard.insert_text(title)
     page.wait_for_timeout(200)
 
-    got = frame.locator(".se-title-text").inner_text().strip()
+    got = frame.locator(TITLE_TEXT).inner_text().strip()
     if title.strip() not in got:
         raise Failed(
             f"제목이 들어가지 않았다. 기대 {title!r}, 실제 {got!r}\n"
@@ -164,10 +277,19 @@ def set_title(frame, page, title):
 
 
 def upload_image(frame, page, path):
-    caret_to_end(frame)
+    caret_to_end(frame, page)
+    pop = describe_popup(frame)
+    if pop:
+        raise Failed("사진 버튼을 누르기 전에 팝업이 떠 있다." + pop)
     before = frame.locator(IMAGE_COMPONENT).count()
-    with page.expect_file_chooser(timeout=15000) as fc:
-        frame.click(IMAGE_BUTTON)
+    try:
+        with page.expect_file_chooser(timeout=15000) as fc:
+            frame.click(IMAGE_BUTTON, timeout=10000)
+    except Exception as e:
+        raise Failed(
+            "사진 버튼 클릭이 실패했다: " + str(e).strip().splitlines()[0]
+            + describe_popup(frame)
+        )
     fc.value.set_files([str(Path(path).resolve())])
     for _ in range(60):
         if frame.locator(IMAGE_COMPONENT).count() > before:
@@ -177,15 +299,74 @@ def upload_image(frame, page, path):
     raise Failed(f"이미지 업로드가 끝나지 않았다: {path}")
 
 
+def visible_popup(frame):
+    """화면에 떠 있는 SmartEditor 팝업을 읽는다. 없으면 None.
+
+    팝업이 떠 있으면 툴바 클릭이 전부 가로채여 Playwright 가 30초 재시도하다
+    죽는데, 에러에는 '무엇이 가로챘는지'만 나오고 팝업이 뭐라고 하는지는
+    안 나온다. 그래서 직접 읽어 메시지에 실어 준다.
+    """
+    return frame.evaluate(
+        """() => {
+            for (const el of document.querySelectorAll('.se-popup')) {
+                const shown = !!(el.offsetWidth || el.offsetHeight
+                                 || el.getClientRects().length);
+                if (!shown) continue;
+                return {
+                    name: el.getAttribute('data-name'),
+                    text: (el.innerText || '').trim().slice(0, 300),
+                    buttons: Array.from(el.querySelectorAll('button'))
+                        .filter(b => b.offsetWidth || b.offsetHeight)
+                        .map(b => (b.innerText || '').trim().slice(0, 30)),
+                };
+            }
+            return null;
+        }"""
+    )
+
+
+def describe_popup(frame):
+    pop = visible_popup(frame)
+    if not pop:
+        return ""
+    return (" 떠 있는 팝업[" + str(pop.get("name")) + "] "
+            + repr(pop.get("text")) + " 버튼=" + repr(pop.get("buttons")))
+
+
 def dismiss_recovery(frame, page):
+    """'작성 중인 글이 있습니다' 를 취소로 닫는다. 없으면 조용히 지나간다."""
     try:
-        btn = frame.locator(RECOVERY_CANCEL).first
-        if btn.is_visible(timeout=2500):
-            btn.click()
-            log("  복구 대화상자 닫음")
-            page.wait_for_timeout(400)
+        frame.click(RECOVERY_CANCEL, timeout=3000)
+        log("  복구 대화상자 닫음")
+        page.wait_for_timeout(400)
     except Exception:
         pass
+
+
+def close_help_panel(frame, page):
+    try:
+        frame.click(HELP_CLOSE, timeout=2000)
+        page.wait_for_timeout(200)
+    except Exception:
+        pass
+
+
+def assert_blank(frame):
+    """빈 글인지 확인한다.
+
+    복구 대화상자를 못 닫았으면 이전 초안 위에 그대로 덮어써진다. 검증된 도구가
+    같은 이유로 이 확인을 본문 입력 전에 강제한다. 빈 글 기준(실측): 제목이
+    플레이스홀더 '제목', 본문 문단 1개, 이미지 0개.
+    """
+    title = frame.locator(TITLE_TEXT).inner_text().strip()
+    n_para = frame.locator(BODY_INNER).count()
+    n_img = frame.locator(IMAGE_COMPONENT).count()
+    if n_img != 0 or n_para > 3 or title not in ("제목", ""):
+        raise Failed(
+            f"빈 글이 아니다 (제목={title[:20]!r}, 본문 문단={n_para}, 이미지={n_img}). "
+            "복구 대화상자가 안 닫혔거나 이미 쓰던 글이다. 덮어쓰지 않고 멈춘다."
+        )
+    log(f"  빈 글 확인: 문단 {n_para}개 · 이미지 {n_img}장")
 
 
 # --- 본체 --------------------------------------------------------------------
@@ -198,6 +379,8 @@ def fill_post(page, post, post_dir):
             f"  현재 URL: {page.url}"
         )
     dismiss_recovery(frame, page)
+    close_help_panel(frame, page)
+    assert_blank(frame)
 
     log("제목 입력")
     set_title(frame, page, post["title"])
@@ -220,7 +403,7 @@ def fill_post(page, post, post_dir):
             log(f"{head} 카드 업로드 {f.name}")
             upload_image(frame, page, f)
             # 업로드 후 에디터가 포커스를 옮기므로 여기서만 커서를 되돌린다
-            caret_to_end(frame)
+            caret_to_end(frame, page)
         elif b["type"] == "photo":
             log(f"{head} 사진 자리")
             insert_paragraphs(frame, page, [f"[여기에 사진: {b['hint']}]"])
@@ -238,7 +421,7 @@ def verify_whole(frame, post, post_dir):
     안 잡힌다. 실제로 커서를 잘못 옮겨 그렇게 깨지는 것을 확인했으므로,
     마지막에 원문 문단이 모두 살아 있는지와 순서가 맞는지를 본다.
     """
-    body = frame.locator(BODY_CONTAINER).inner_text()
+    body = body_text(frame)
     want = []
     for b in post["blocks"]:
         if b["type"] == "html":
@@ -272,6 +455,28 @@ def verify_whole(frame, post, post_dir):
     log(f"  검증 통과: 문단 {len(want)}개 · 이미지 {got_img}장 · 순서 일치")
 
 
+def find_editor_page(ctx, match):
+    """에디터가 실제로 살아 있는 탭을 고른다.
+
+    URL 부분일치로 고르면 안 된다. 네이버 로그인 페이지의 url= 파라미터에
+    'blog.naver.com' 이 그대로 들어 있어서 로그인 탭이 먼저 잡힌다 —
+    실물에서 그렇게 mainFrame 을 못 찾고 죽었다 (2026-09-08).
+    mainFrame 안에 제목칸이 있는지까지 봐야 확실하다.
+    """
+    for p in ctx.pages:
+        if match and match not in p.url:
+            continue
+        f = p.frame(name=FRAME_NAME)
+        if f is None:
+            continue
+        try:
+            if f.locator(TITLE_TEXT).count() > 0:
+                return p
+        except Exception:
+            continue
+    return None
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="post.json 을 네이버 에디터에 채운다")
     ap.add_argument("post_dir", help="posts/<슬러그> 경로")
@@ -279,6 +484,9 @@ def main(argv=None):
     ap.add_argument("--blog-id", help="글쓰기 페이지가 안 열려 있을 때 직접 연다")
     ap.add_argument("--match", default="blog.naver.com",
                     help="채울 탭을 고를 URL 부분 문자열 (기본 blog.naver.com)")
+    ap.add_argument("--fresh", action="store_true",
+                    help="채우기 전에 글쓰기 화면을 다시 열어 빈 글로 만든다 "
+                         "(쓰던 내용은 버려진다)")
     args = ap.parse_args(argv)
 
     post_dir = Path(args.post_dir).resolve()
@@ -305,17 +513,30 @@ def main(argv=None):
             return 1
 
         ctx = browser.contexts[0]
-        page = next((p for p in ctx.pages if args.match in p.url), None)
+        page = find_editor_page(ctx, args.match)
         if page is None:
             if not args.blog_id:
-                print("글쓰기 페이지가 안 열려 있다. --blog-id 를 주거나 직접 열 것.",
+                print("에디터가 열린 탭이 없다. 글쓰기 화면을 열거나 --blog-id 를 줄 것.", file=sys.stderr)
+                print("  열린 탭: " + ", ".join(p.url[:70] for p in ctx.pages),
                       file=sys.stderr)
                 return 1
             page = ctx.new_page()
             page.goto(WRITE_URL.format(blog_id=args.blog_id),
                       wait_until="domcontentloaded")
+            page.wait_for_timeout(2500)
         page.bring_to_front()
         log(f"대상 탭: {page.url}")
+
+        if args.fresh:
+            from urllib.parse import urlsplit
+            blog_id = args.blog_id or urlsplit(page.url).path.strip("/")
+            if not blog_id:
+                print("--fresh 인데 블로그 ID 를 알아낼 수 없다. --blog-id 를 줄 것.",
+                      file=sys.stderr)
+                return 1
+            log(f"글쓰기 화면 새로 열기: {blog_id}")
+            page.goto(WRITE_URL.format(blog_id=blog_id), wait_until="load")
+            page.wait_for_timeout(2500)
 
         try:
             fill_post(page, post, post_dir)
