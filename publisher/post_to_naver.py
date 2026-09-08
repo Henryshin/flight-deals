@@ -48,6 +48,14 @@
 죽은 적이 있다. 재현되지 않았고 원인은 못 밝혔다. describe_popup() 이 다음에는
 그 팝업의 문구와 버튼을 에러에 실어 주므로, 또 나면 그 로그를 보고 판단할 것.
 
+사진
+----
+photo 블록은 photo-credits.json 이 있으면 실제 사진을 넣고, 없으면 예전처럼
+'[여기에 사진: ...]' 자리 표시만 넣는다. 그 파일은 publisher/fetch_photos.py 가
+위키미디어 커먼즈에서 라이선스를 확인하고 만든다. 사진을 실제로 넣었을 때는
+글 끝에 저작자·라이선스 출처 문단을 붙인다 — CC BY / BY-SA 의 표시 의무이므로
+사람이 지우면 안 된다.
+
 이어서 실행할 때는 --fresh 를 준다. 글쓰기 화면을 다시 열고 복구 대화상자를 닫아
 빈 글에서 시작한다(쓰던 내용은 버려진다). --fresh 없이 돌리면 assert_blank 가
 빈 글이 아닌 것을 보고 덮어쓰지 않고 멈춘다.
@@ -75,6 +83,9 @@ import sys
 import time
 from html import unescape
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from fetch_photos import credit_lines
 
 # Windows 콘솔(cp949)에서 한글 로그가 깨지거나 UnicodeEncodeError 로 죽는다.
 if sys.stdout.encoding is None or sys.stdout.encoding.lower() != "utf-8":
@@ -369,6 +380,24 @@ def assert_blank(frame):
     log(f"  빈 글 확인: 문단 {n_para}개 · 이미지 {n_img}장")
 
 
+def load_photos(post_dir):
+    """photo-credits.json 을 읽어 (hint -> 파일 절대경로, 매니페스트) 를 돌려준다.
+
+    이 파일이 없으면 사진 없이 예전처럼 '[여기에 사진: ...]' 자리 표시만 넣는다.
+    publisher/fetch_photos.py 가 커먼즈에서 라이선스를 확인하고 만든다.
+    """
+    f = post_dir / "photo-credits.json"
+    if not f.exists():
+        return {}, []
+    manifest = json.loads(f.read_text(encoding="utf-8"))
+    found = {}
+    for m in manifest:
+        path = post_dir / m["file"]
+        if path.exists():
+            found[m["hint"]] = path
+    return found, manifest
+
+
 # --- 본체 --------------------------------------------------------------------
 
 def fill_post(page, post, post_dir):
@@ -384,6 +413,10 @@ def fill_post(page, post, post_dir):
 
     log("제목 입력")
     set_title(frame, page, post["title"])
+
+    photos, manifest = load_photos(post_dir)
+    if photos:
+        log(f"  사진 {len(photos)}장 확인 (photo-credits.json)")
 
     log("본문 입력")
     frame.locator(BODY_INNER).first.click()
@@ -405,16 +438,32 @@ def fill_post(page, post, post_dir):
             # 업로드 후 에디터가 포커스를 옮기므로 여기서만 커서를 되돌린다
             caret_to_end(frame, page)
         elif b["type"] == "photo":
-            log(f"{head} 사진 자리")
-            insert_paragraphs(frame, page, [f"[여기에 사진: {b['hint']}]"])
+            f = photos.get(b["hint"])
+            if f is None:
+                log(f"{head} 사진 자리 (파일 없음)")
+                insert_paragraphs(frame, page, [f"[여기에 사진: {b['hint']}]"])
+            else:
+                log(f"{head} 사진 업로드 {f.name}")
+                upload_image(frame, page, f)
+                caret_to_end(frame, page)
         # 텍스트 삽입 뒤에는 caret 이 이미 끝에 있다. 건드리지 않는다.
         if i < len(blocks):
             page.keyboard.press("Enter")
 
-    verify_whole(frame, post, post_dir)
+    used = [m for m in manifest if m["hint"] in photos]
+    if used:
+        # CC BY / BY-SA 는 저작자 표시가 의무다. 사진을 실제로 넣었을 때만 붙인다.
+        page.keyboard.press("Enter")
+        page.wait_for_timeout(ENTER_SETTLE_MS)
+        lines = credit_lines(used)
+        log(f"  사진 출처 {len(lines)}줄")
+        insert_paragraphs(frame, page, lines)
+
+    verify_whole(frame, post, photos, used)
+    return photos, used
 
 
-def verify_whole(frame, post, post_dir):
+def verify_whole(frame, post, photos, used):
     """전부 넣고 나서 통째로 대조한다.
 
     조각마다 확인해도 '순서가 뒤집혔다'나 '중간 문단이 통째로 사라졌다'는
@@ -426,8 +475,10 @@ def verify_whole(frame, post, post_dir):
     for b in post["blocks"]:
         if b["type"] == "html":
             want += html_to_paragraphs(b["content"])
-        elif b["type"] == "photo":
+        elif b["type"] == "photo" and b["hint"] not in photos:
             want.append(f"[여기에 사진: {b['hint']}]")
+    if used:
+        want += credit_lines(used)
 
     missing = [w for w in want if w not in body]
     if missing:
@@ -447,7 +498,7 @@ def verify_whole(frame, post, post_dir):
             f"문단 순서가 원문과 다르다. 예: {out_of_order[:3]}"
         )
 
-    n_img = sum(1 for b in post["blocks"] if b["type"] == "card")
+    n_img = sum(1 for b in post["blocks"] if b["type"] == "card") + len(used)
     got_img = frame.locator(IMAGE_COMPONENT).count()
     if got_img < n_img:
         raise Failed(f"이미지가 {n_img}장이어야 하는데 {got_img}장이다")
@@ -539,7 +590,7 @@ def main(argv=None):
             page.wait_for_timeout(2500)
 
         try:
-            fill_post(page, post, post_dir)
+            photos, used = fill_post(page, post, post_dir)
         except Failed as e:
             print(f"\n중단: {e}", file=sys.stderr)
             return 1
@@ -548,9 +599,16 @@ def main(argv=None):
     print()
     log("채우기 완료. 저장도 발행도 하지 않았다.")
     print(f"  태그(직접 입력): {' '.join(post.get('tags', []))}")
-    for h in post.get("photo_hints", []):
-        print(f"  사진 자리: {h}")
-    print("  사진을 넣고 한 번 읽어본 뒤 직접 발행하세요.")
+    if used:
+        print(f"  사진 {len(used)}장을 넣고 글 끝에 출처를 붙였다.")
+        print("  출처 문단은 지우지 말 것 — CC BY / BY-SA 의 저작자 표시 의무다.")
+    empty = [h for h in post.get("photo_hints", []) if h not in photos]
+    for h in empty:
+        print(f"  아직 빈 사진 자리: {h}")
+    if empty:
+        print("  남은 자리를 채우고 한 번 읽어본 뒤 직접 발행하세요.")
+    else:
+        print("  한 번 읽어본 뒤 직접 발행하세요.")
     return 0
 
 

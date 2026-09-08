@@ -40,8 +40,10 @@ posts/<날짜>-<노선>-<연휴>/
 - `html` — SmartEditor 가 보존하는 태그만 씁니다
   (`p br h3 strong em ul ol li table thead tbody tr th td a blockquote`)
 - `card` — 자동 생성된 가격 카드 PNG. 절대경로로 업로드하면 됩니다
-- `photo` — **사용자가 직접 넣을 사진 자리.** 여행 사진은 저작권 때문에
-  자동으로 못 넣습니다. 초안에 자리 표시만 남기고, 발행 전에 사람이 채웁니다
+- `photo` — 여행 사진 자리. 두 가지로 채웁니다.
+  - `posts/<슬러그>/photos.json` 에 커먼즈 파일을 적고 `fetch_photos.py` 를 돌리면
+    라이선스를 확인해 받아 두고, `post_to_naver.py` 가 자리마다 넣습니다
+  - 그 파일이 없으면 예전처럼 `[여기에 사진: ...]` 자리 표시만 넣고, 사람이 채웁니다
 
 ## 연결 방법
 
@@ -56,6 +58,9 @@ cd "...\98.네이버블로그자동화_v1.0"; python login.py
 :: 2. 네이버 블로그 글쓰기 화면을 연 상태에서
 cd C:\side_PJT\Blog_flight\flight-deals
 python publisher\post_to_naver.py posts\2026-09-08-icn-bki-2026-10-05
+
+:: (선택) 커먼즈 사진을 먼저 받아 둔다 — photos.json 이 있을 때만
+python publisher\fetch_photos.py posts\2026-09-08-icn-bki-2026-10-05
 
 :: 이미 뭔가 써 있는 화면에서 다시 돌릴 때
 python publisher\post_to_naver.py posts\2026-09-08-icn-bki-2026-10-05 --fresh
