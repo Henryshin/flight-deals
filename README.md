@@ -20,7 +20,7 @@ blog/                  # 블로그 글감 추출·검증·카드 렌더 (표준 
 scripts/blog_brief.py  # 오늘 쓸 만한 소재 브리핑 / 소재별 상세 자료
 scripts/blog_save.py   # 세션에서 쓴 초안 → posts/ 저장 + 가격 카드 PNG
 posts/                 # 생성된 글과 브리핑 (blog-brief.yml 이 커밋하는 유일한 경로)
-publisher/             # 네이버 임시저장 발행기 (사용자 PC 에서 실행)
+publisher/README.md    # 발행은 별도 검증 도구가 담당 — 여기 자동화 코드 없음
 .claude/skills/blog-post/  # 글을 쓸 때 따르는 문체·구조 규칙
 .github/workflows/blog-brief.yml  # 매일 07:00 KST 소재 브리핑 (posts/ 만 커밋)
 ```
@@ -108,41 +108,42 @@ publisher/             # 네이버 임시저장 발행기 (사용자 PC 에서 �
 
 ## 네이버 블로그 자동 포스팅
 
-수집한 가격 데이터로 네이버 블로그 글을 만듭니다.
-**임시저장까지만 자동이고, 발행 버튼은 사람이 누릅니다.**
+수집한 가격 데이터로 네이버 블로그 **글을 만드는 데까지**가 이 저장소의 범위입니다.
+네이버에 올리는 일은 검증된 별도 도구가 하고, 발행 버튼은 사람이 누릅니다.
 
 ### 자동화되는 것 / 사람이 하는 것
 
 ```
-[GitHub Actions]                        [Claude Code 세션]          [Windows PC]
+[GitHub Actions]                    [Claude Code 세션]         [PC — 별도 검증된 도구]
 
 blog-brief.yml (매일 07:00 KST)
   └ scripts/blog_brief.py
-      └ posts/_brief/YYYY-MM-DD.md  ──▶  "오늘 이거 써줘"
-         (오늘 쓸 만한 소재 8건)            └ 데이터 읽고 글 작성
-                                            └ scripts/blog_save.py
-                                                └ posts/<날짜>-<노선>-<연휴>/
-                                                                    │
-                                                                    ▼
-                                                          run_draft.bat (08:30)
-                                                            └ naver_draft.py
-                                                                └ 네이버 임시저장
-                                                                        │
-                                                    사람: 사진 넣고 · 읽어보고 · 발행
+      └ posts/_brief/YYYY-MM-DD.md ──▶ "오늘 이거 써줘"
+         (오늘 쓸 만한 소재 8건)         └ 데이터 읽고 글 작성
+                                         └ scripts/blog_save.py
+                                             └ posts/<날짜>-<노선>-<연휴>/
+                                                                 │
+                                                                 ▼
+                                                    98.네이버블로그자동화_v1.0
+                                                      login.py (사람이 로그인)
+                                                      post.py  (제목·본문·태그)
+                                                                 │
+                                             사람: 사진 넣고 · 읽어보고 · 발행
 ```
 
 글은 매번 세션에서 새로 씁니다. 템플릿을 기계적으로 채우지 않습니다 —
 문체·구조 규칙은 `.claude/skills/blog-post/SKILL.md` 에 있습니다.
 
-### 왜 발행을 자동화하지 않는가
+### 발행 자동화는 이 저장소에 없습니다
 
 네이버 블로그 글쓰기 API 는 2020-05-06 종료됐고, 공식 자동 발행 경로가 없습니다.
-남은 방법은 SmartEditor 브라우저 자동화뿐인데, 네이버는 해외·데이터센터 IP
-로그인을 기기 인증으로 막습니다. 그래서 **글 생성은 Actions, 네이버 접속은
-국내 IP 인 PC** 로 나눴습니다. 자세한 세팅은 `publisher/README.md`.
+남은 방법은 SmartEditor 브라우저 자동화뿐인데, 그건 **이미 검증된 별도 도구**
+(`98.네이버블로그자동화_v1.0/`)가 담당합니다. 여기서 다시 만들지 마세요 —
+`publisher/README.md` 에 이유와 연결 방법이 있습니다.
 
-계정 정보는 저장소·GitHub Secrets 어디에도 두지 않습니다. 네이버 로그인은
-PC 에서 최초 1회 사람이 하고 브라우저 프로필로 유지됩니다.
+이 저장소는 `posts/<슬러그>/post.json` 까지만 책임집니다.
+
+계정 정보는 저장소·GitHub Secrets 어디에도 두지 않습니다.
 
 ### 쓰는 법
 
@@ -240,4 +241,4 @@ python -m blog.imagecard --selftest           # 한글 폰트 확인 (없으면 
 - GitHub Actions 무료 크레딧은 public 저장소 기준 무제한이지만, 실제 실행 간격은 GitHub의 스케줄 지연으로 정확히 4시간이 아닐 수 있음
 - 가격 이력은 `data/prices.csv`에 쌓이지만, 매 수집 직후 `scripts/prune_prices.py`가 계산에 안 쓰이는 90일 초과분(`PRUNE_RETENTION_DAYS`)을 자동으로 잘라내 무한정 커지지 않음
 - **가격 하한선 검사가 크롤러·빌더에는 아직 없음.** `PRICE_PATTERN`이 덜 렌더된 페이지에서 `₩333` 같은 값을 잡아 `prices.csv`에 들어온 행이 15개 있고, 그게 `matrix.json`·`routes_status.json`까지 흘러가 대시보드에 "밀라노 왕복 755원"으로 보임. 블로그 파이프라인은 자체 필터(`blog/data.py`)로 막지만, 상류 수정은 별도 작업 필요
-- 네이버 블로그 자동화는 계정 제재 위험이 0이 아님. 임시저장까지만 자동으로 하고, 사람이 사진을 넣고 문장을 손본 뒤 발행하는 흐름을 지킬 것 (`publisher/README.md`)
+- 네이버 발행 자동화 코드를 이 저장소에 만들지 말 것. 실물 SmartEditor 로 검증된 도구가 이미 따로 있고, 비슷한 걸 하나 더 두면 둘 다 썩는다 (`publisher/README.md`)

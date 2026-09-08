@@ -47,8 +47,11 @@ python scripts/blog_save.py draft.md             # 저장 + 카드 PNG 렌더
 ```
 
 저장하면 `posts/<날짜>-<노선>-<연휴>/` 에 `post.json` · `body.html` ·
-`body.txt` · `images/*.png` 가 생긴다. 그 다음은 사용자님 PC 의
-`publisher/naver_draft.py` 가 네이버 임시저장까지 가져간다.
+`body.txt` · `images/*.png` 가 생긴다.
+
+**발행은 이 저장소가 하지 않는다.** 검증된 별도 도구
+(`98.네이버블로그자동화_v1.0/post.py`)가 담당한다. 연결 방법은
+`publisher/README.md` 참고. 네이버 자동화 코드를 여기에 새로 만들지 말 것.
 
 ---
 
