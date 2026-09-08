@@ -56,6 +56,14 @@ photo 블록은 photo-credits.json 이 있으면 실제 사진을 넣고, 없으
 글 끝에 저작자·라이선스 출처 문단을 붙인다 — CC BY / BY-SA 의 표시 의무이므로
 사람이 지우면 안 된다.
 
+정렬
+----
+본문은 **기본이 가운데정렬**이다(--align 으로 바꾼다, keep 은 손대지 않음).
+문단마다 걸지 않고 다 채운 뒤 전체 선택해서 한 번만 누른다 — 정렬은 '현재 서식'
+으로 이어지는 성질이 있어서 중간에 걸면 이후 입력·이미지 삽입과 계속 얽힌다.
+누른 뒤에는 선택을 반드시 푼다. 전체 선택이 남아 있으면 다음 입력이 문서를
+통째로 덮어쓴다.
+
 이어서 실행할 때는 --fresh 를 준다. 글쓰기 화면을 다시 열고 복구 대화상자를 닫아
 빈 글에서 시작한다(쓰던 내용은 버려진다). --fresh 없이 돌리면 assert_blank 가
 빈 글이 아닌 것을 보고 덮어쓰지 않고 멈춘다.
@@ -110,6 +118,16 @@ BODY_INNER = ".se-component.se-text .se-text-paragraph"
 IMAGE_BUTTON = ".se-image-toolbar-button"
 IMAGE_COMPONENT = ".se-component.se-image"
 HELP_CLOSE = ".se-help-panel-close-button"
+# 정렬 드롭다운을 여는 버튼은 **현재 정렬 상태에 따라 자기 클래스가 바뀐다**
+# (se-align-left-toolbar-button 등). 상태를 안 타는 부모로 스코프한다.
+ALIGN_DROPDOWN = ".se-toolbar-item-align .se-property-toolbar-drop-down-button"
+ALIGN_OPTION = {
+    "left": ".se-toolbar-option-align-left-button",
+    "center": ".se-toolbar-option-align-center-button",
+    "right": ".se-toolbar-option-align-right-button",
+    "justify": ".se-toolbar-option-align-justify-button",
+}
+ALIGN_DEFAULT = "center"
 # text=취소 는 화면에 안 보이는 스크린리더용 span 을 먼저 잡아 타임아웃된다.
 RECOVERY_CANCEL = ".se-popup-alert-confirm button:has-text('취소')"
 
@@ -380,6 +398,40 @@ def assert_blank(frame):
     log(f"  빈 글 확인: 문단 {n_para}개 · 이미지 {n_img}장")
 
 
+def set_body_align(frame, page, align):
+    """본문 전체를 한 번에 정렬한다. 기본은 가운데.
+
+    문단마다 거는 대신 **다 채운 뒤 전체 선택해서 한 번만** 누른다. 정렬은 글자
+    크기처럼 '현재 서식'으로 이어지는 성질이 있어서, 중간에 걸면 이후 입력과
+    이미지 삽입에 계속 얽힌다. 마지막에 한 번이면 그 성질을 걱정할 일이 없다.
+
+    전체 선택을 남겨 두면 다음 입력이 문서를 통째로 덮어쓰므로 반드시 푼다.
+    """
+    if align == "keep":
+        return
+    frame.locator(BODY_INNER).last.click()
+    page.wait_for_timeout(FOCUS_SETTLE_MS)
+    page.keyboard.press("Control+a")
+    page.wait_for_timeout(300)
+    frame.click(ALIGN_DROPDOWN)
+    page.wait_for_timeout(300)
+    frame.click(ALIGN_OPTION[align])
+    page.wait_for_timeout(500)
+    page.keyboard.press("ArrowRight")      # 선택 해제. 남겨 두면 위험하다.
+    page.wait_for_timeout(200)
+
+    want = "se-text-paragraph-align-" + align
+    bad = frame.evaluate(
+        """(a) => Array.from(document.querySelectorAll(
+               '.se-component.se-text .se-text-paragraph'))
+             .filter(p => !p.classList.contains(a)).length""",
+        want,
+    )
+    if bad:
+        raise Failed(f"정렬이 문단 {bad}개에 적용되지 않았다 (기대 {align})")
+    log(f"  본문 정렬 {align} 적용 확인")
+
+
 def load_photos(post_dir):
     """photo-credits.json 을 읽어 (hint -> 파일 절대경로, 매니페스트) 를 돌려준다.
 
@@ -400,7 +452,7 @@ def load_photos(post_dir):
 
 # --- 본체 --------------------------------------------------------------------
 
-def fill_post(page, post, post_dir):
+def fill_post(page, post, post_dir, align=ALIGN_DEFAULT):
     frame = page.frame(name=FRAME_NAME)
     if frame is None:
         raise Failed(
@@ -459,6 +511,7 @@ def fill_post(page, post, post_dir):
         log(f"  사진 출처 {len(lines)}줄")
         insert_paragraphs(frame, page, lines)
 
+    set_body_align(frame, page, align)
     verify_whole(frame, post, photos, used)
     return photos, used
 
@@ -535,6 +588,9 @@ def main(argv=None):
     ap.add_argument("--blog-id", help="글쓰기 페이지가 안 열려 있을 때 직접 연다")
     ap.add_argument("--match", default="blog.naver.com",
                     help="채울 탭을 고를 URL 부분 문자열 (기본 blog.naver.com)")
+    ap.add_argument("--align", default=ALIGN_DEFAULT,
+                    choices=["center", "left", "right", "justify", "keep"],
+                    help=f"본문 정렬 (기본 {ALIGN_DEFAULT}). keep 은 손대지 않는다")
     ap.add_argument("--fresh", action="store_true",
                     help="채우기 전에 글쓰기 화면을 다시 열어 빈 글로 만든다 "
                          "(쓰던 내용은 버려진다)")
@@ -590,7 +646,7 @@ def main(argv=None):
             page.wait_for_timeout(2500)
 
         try:
-            photos, used = fill_post(page, post, post_dir)
+            photos, used = fill_post(page, post, post_dir, args.align)
         except Failed as e:
             print(f"\n중단: {e}", file=sys.stderr)
             return 1
