@@ -182,6 +182,31 @@ def _row_in_window(row, window, known_window_ids):
     return d1 <= window["end"] and d2 >= window["start"]
 
 
+# 같은-일정 할인율을 믿으려면 비교 대상(최저가를 뺀 나머지 직항)이 이만큼은 있어야 한다.
+MIN_SAME_ITIN_OTHERS = 2
+
+
+def same_itin_fields(row):
+    """할인율 = (같은 일정 나머지 직항 중앙값 - 이 항공권 가격) / 나머지 중앙값.
+
+    사용자 정의(2026-09-13). 연휴 전체 중앙값 대비인 deal_pct 와 다르다 — deal_pct 는
+    다른 날짜·다른 박수 가격이 섞여서 "같은 날 다른 항공권보다 싼가"를 말하지 못한다.
+    2026-09-13 이전 수집분에는 목록 통계가 없어 None 이다.
+    """
+    try:
+        n = int(row.get("nonstop_n") or 0)
+        med = int(float(row.get("nonstop_others_median") or 0))
+        price = int(float(row.get("price") or 0))
+    except (TypeError, ValueError):
+        n, med, price = 0, 0, 0
+    ok = str(row.get("stops")) == "0" and med > 0 and price > 0 and n - 1 >= MIN_SAME_ITIN_OTHERS
+    return {
+        "nonstop_n": n or None,
+        "nonstop_others_median": med or None,
+        "same_itin_deal_pct": round((med - price) / med * 100, 1) if ok else None,
+    }
+
+
 def _pair_entry(row, route, prev_price=None):
     """관측 행 하나 -> 프론트가 일정 하나를 그리는 데 필요한 값 묶음.
 
@@ -211,6 +236,14 @@ def _pair_entry(row, route, prev_price=None):
         "airline": row.get("airline", ""),
         "dep_time": row.get("dep_time", ""),
         "arr_time": row.get("arr_time", ""),
+        # 오는 편. 2026-09-08 이전 수집분에는 없어서 빈 문자열이다 — 쓰는 쪽에서
+        # '없으면 안 쓴다'로 다뤄야 한다.
+        "ret_dep_time": row.get("ret_dep_time", ""),
+        "ret_arr_time": row.get("ret_arr_time", ""),
+        "ret_airline": row.get("ret_airline", ""),
+        "multi_carrier": bool(int(row.get("multi_carrier") or 0)),
+        # 같은 일정 직항 비교 (할인율 정의, 사용자 확정 2026-09-13).
+        **same_itin_fields(row),
         "booking_url": build_booking_url(
             route["origin"], route["destination"], d1, d2,
             origin_city=route.get("origin_city"),
@@ -355,7 +388,8 @@ def main():
         row["price"] = int(row["price"])
         row["is_holiday_window"] = bool(int(row["is_holiday_window"]))
         # 구 스키마 행은 이 키들이 없을 수 있음 -> 빈 문자열로 정규화.
-        for k in ("dep_time", "arr_time", "stops", "window_id", "airline"):
+        for k in ("dep_time", "arr_time", "stops", "window_id", "airline",
+                  "ret_dep_time", "ret_arr_time", "ret_airline", "multi_carrier"):
             row.setdefault(k, "")
             if row.get(k) is None:
                 row[k] = ""
