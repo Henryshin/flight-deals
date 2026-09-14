@@ -597,7 +597,8 @@ def test_blog_render_parses_draft():
         "**볼드**와 [링크](https://example.com/a) 예요.\n\n"
         "> 가는 편: 08:45\n> 오는 편: 12:30\n\n"
         "- 하나\n- 둘\n\n"
-        "| 항공사 | 가격 |\n|---|---|\n| 에어서울 | 277,300원 |\n\n"
+        "| 항공사 | 가격 |\n|---|---|\n| **에어서울** | 277,300원 |\n\n"
+        "---\n\n"
         "[[CARD:price]]\n\n"
         "[[PHOTO: 리츠린 공원]]\n"
     )
@@ -608,7 +609,8 @@ def test_blog_render_parses_draft():
 
     blocks = R.parse_body(body)
     kinds = [b["type"] for b in blocks]
-    assert kinds == ["html", "card", "photo"], kinds
+    # 표는 이미지 카드, '---' 는 구분선 (2026-09-14: 붙여넣기로는 표가 평문이 된다)
+    assert kinds == ["html", "card", "divider", "card", "photo"], kinds
     h = blocks[0]["content"]
     assert "<p>첫 줄이에요.<br>둘째 줄이에요.</p>" in h
     assert "<h3>소제목</h3>" in h
@@ -616,10 +618,12 @@ def test_blog_render_parses_draft():
     assert '<a href="https://example.com/a">링크</a>' in h
     assert "<blockquote>가는 편: 08:45<br>오는 편: 12:30</blockquote>" in h
     assert "<ul><li>하나</li><li>둘</li></ul>" in h
-    assert "<th>항공사</th>" in h and "<td>277,300원</td>" in h
-    assert "|---|" not in h                       # 표 구분선은 행이 아니다
-    assert blocks[1]["card"] == "price"
-    assert blocks[2]["hint"] == "리츠린 공원"
+    assert "<table" not in h
+    assert blocks[1]["card"] == "table1"
+    assert blocks[1]["rows"] == [["항공사", "가격"], ["에어서울", "277,300원"]]   # 구분행·볼드 제거
+    assert "277,300원" in R.blocks_to_text(blocks)   # 금액 검증에 표 숫자가 들어간다
+    assert blocks[3]["card"] == "price"
+    assert blocks[4]["hint"] == "리츠린 공원"
 
 
 def test_blog_render_uses_allowed_tags_only():

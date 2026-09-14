@@ -21,6 +21,8 @@ draft.md 문법 (일부러 작게 유지)
     | a | b |                  -> table
     [[CARD:price]]             -> 자동 생성 가격 카드 PNG
     [[PHOTO: 아오시마 해안]]    -> 사용자가 직접 넣을 사진 자리
+    ---                        -> 구분선 (SmartEditor 구분선 컴포넌트)
+    표는 이미지 카드(table1, table2…)로 바뀐다 — 붙여넣기로는 평문이 되기 때문
 
 빈 줄이 문단 구분, 문단 안의 줄바꿈은 <br> 로 살린다 (예시 포스팅이 2~3줄씩
 끊어 쓰는 문체라 줄바꿈 자체가 스타일이다).
@@ -108,6 +110,13 @@ def parse_body(body):
             i += 1
             continue
 
+        # 구분선. SmartEditor 의 구분선 컴포넌트로 들어간다 (사용자 지정 2026-09-14).
+        if line == "---":
+            _flush(buf, blocks)
+            blocks.append({"type": "divider"})
+            i += 1
+            continue
+
         m = CARD_RE.match(line)
         if m:
             _flush(buf, blocks)
@@ -152,24 +161,21 @@ def parse_body(body):
                 i += 1
                 if TABLE_SEP_RE.match(cur):
                     continue
-                rows.append([c.strip() for c in cur[1:-1].split("|")])
+                rows.append([BOLD_RE.sub(r"\1", c.strip()) for c in cur[1:-1].split("|")])
             if rows:
-                head = "".join(f"<th>{_inline(c)}</th>" for c in rows[0])
-                body_rows = "".join(
-                    "<tr>" + "".join(f"<td>{_inline(c)}</td>" for c in r) + "</tr>"
-                    for r in rows[1:]
-                )
-                buf.append(
-                    f"<table><thead><tr>{head}</tr></thead>"
-                    f"<tbody>{body_rows}</tbody></table>"
-                )
+                # 표는 **이미지 카드**로 넣는다. SmartEditor 에 붙여넣으면 셀이 ' | ' 로
+                # 이어진 평문이 되어 표로 안 보인다 (2026-09-14 호치민 발행본, 사용자:
+                # "이런거 비교하려면 표로 만들어"). rows 는 저장 검증(금액 대조)에도 쓰인다.
+                _flush(buf, blocks)
+                n_tables = sum(1 for b in blocks if b.get("rows")) + 1
+                blocks.append({"type": "card", "card": f"table{n_tables}", "rows": rows})
             continue
 
         # 일반 문단: 빈 줄이 나올 때까지 모아서 <br> 로 잇는다
         para = []
         while i < n and lines[i].strip():
             cur = lines[i].strip()
-            if (cur.startswith(("## ", "- ", "> ", "|"))
+            if (cur.startswith(("## ", "- ", "> ", "|")) or cur == "---"
                     or CARD_RE.match(cur) or PHOTO_RE.match(cur)):
                 break
             para.append(_inline(cur))
@@ -190,9 +196,12 @@ def blocks_to_html(blocks, image_files=None):
             out.append(b["content"])
         elif b["type"] == "card":
             src = files.get(b["card"], f"images/card-{b['card']}.png")
-            out.append(f'<p><img src="{html.escape(src, quote=True)}" alt="가격 카드"></p>')
+            alt = "비교 표" if b.get("rows") else "가격 카드"
+            out.append(f'<p><img src="{html.escape(src, quote=True)}" alt="{alt}"></p>')
         elif b["type"] == "photo":
             out.append(f"<p><em>[사진 자리] {html.escape(b['hint'])}</em></p>")
+        elif b["type"] == "divider":
+            out.append("<hr>")
     return "\n".join(out)
 
 
@@ -205,6 +214,8 @@ def blocks_to_text(blocks):
             t = re.sub(r"</(p|h3|li|tr|blockquote)>", "\n", t)
             t = re.sub(r"<[^>]+>", "", t)
             out.append(html.unescape(t).strip())
+        elif b["type"] == "card" and b.get("rows"):
+            out.append("\n".join(" | ".join(r) for r in b["rows"]))
         elif b["type"] == "card":
             out.append(f"[가격 카드: {b['card']}]")
         elif b["type"] == "photo":

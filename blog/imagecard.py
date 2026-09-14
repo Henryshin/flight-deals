@@ -14,6 +14,7 @@ import datetime as _dt
 import html
 import json
 import os
+import re
 from datetime import date
 
 from blog import data as D
@@ -310,6 +311,32 @@ def airlines_card_html(mat):
         f"<div class='foot'>{_e(D.kst_str(mat['data_generated_at']))} 기준 "
         f"수집값이에요</div>"
     )
+
+
+# --- 카드 3-1: 본문 비교 표 -------------------------------------------------
+
+def table_card_html(rows):
+    """초안의 마크다운 표를 이미지 카드로. 첫 행이 머리글이다.
+
+    SmartEditor 붙여넣기로는 표가 평문으로 풀려서(2026-09-14) 이미지로 넣는다.
+    금액 칸(…원)은 오른쪽 정렬한다.
+    """
+    if not rows:
+        return None
+    money = re.compile(r"[0-9,]+원")
+    ncol = len(rows[0])
+    # 금액 열은 머리글까지 오른쪽 정렬 (머리글만 왼쪽이면 숫자와 어긋나 보인다)
+    num_col = [bool(rows[1:]) and all(len(r) > j and money.fullmatch(r[j]) for r in rows[1:])
+               for j in range(ncol)]
+    head = "".join(f"<th class='num'>{_e(c)}</th>" if num_col[j] else f"<th>{_e(c)}</th>"
+                   for j, c in enumerate(rows[0]))
+    body = []
+    for r in rows[1:]:
+        tds = "".join(
+            f"<td class='num'>{_e(c)}</td>" if j < ncol and num_col[j] else f"<td>{_e(c)}</td>"
+            for j, c in enumerate(r))
+        body.append(f"<tr>{tds}</tr>")
+    return _page(f"<table><thead><tr>{head}</tr></thead><tbody>{''.join(body)}</tbody></table>")
 
 
 # --- 카드 4: 일정 스트립 (어느 날이 공휴일·주말·연차인지) ---------------------

@@ -25,6 +25,13 @@ python publisher\post_to_naver.py posts\<슬러그> --fresh --blog-id iamyuhyun
 **`photos.json` 을 만드는 것은 자동화 대상이 아니다** — 커먼즈에서 후보를 검색하고 썸네일을
 눈으로 보고 고르는 일이다. 그건 Claude 가 한다. 사용자 손이 가는 명령은 1번과 2번 둘뿐이다.
 
+사용자가 손으로 고치던 글쓰기 탭이 있으면 `--fresh` 대신 **`--new-tab --blog-id iamyuhyun`** 을 쓴다.
+그 탭은 건드리지 않고 새 탭에서 빈 글로 채운다 (2026-09-14 추가 — 사용자가 구분선을 넣어 둔 탭을 보존).
+
+초안의 `---` 한 줄은 SmartEditor 기본 구분선(`se-l-default`)으로 들어간다 (`insert_divider`).
+표는 `blog_save` 가 이미지 카드(`card-table1.png`)로 바꿔 두므로 발행기는 이미지로 올린다.
+사진 업로드는 진행 팝업(`se-popup-progress`)이 사라질 때까지 기다린 뒤 다음으로 간다.
+
 `--fresh` 는 글쓰기 화면을 새로 열어 빈 글에서 시작한다(쓰던 내용은 버려진다).
 찾은 탭이 글쓰기 화면이 아니면 그 탭을 건드리지 않고 새 탭에서 연다.
 

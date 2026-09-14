@@ -431,6 +431,42 @@ def upload_image(frame, page, path):
     raise Failed(f"이미지 업로드가 끝나지 않았다: {path}")
 
 
+HR_COMPONENT = ".se-component.se-horizontalLine"
+HR_OPTION_BUTTON = "button.se-document-toolbar-select-option-button[data-name='horizontal-line']"
+HR_MAIN_BUTTON = "button.se-document-toolbar-icon-select-button[data-name='horizontal-line']"
+
+
+def insert_divider(frame, page):
+    """구분선(기본 모양) 한 줄. 사용자가 손으로 넣던 것과 같은 se-l-default 를 고른다.
+
+    툴바 본 버튼은 '마지막으로 고른 모양'을 넣으므로, 옵션 목록을 열어 default 를 누른다.
+    옵션을 못 찾으면 본 버튼으로 넣는다. 넣은 뒤 컴포넌트 수로 확인한다.
+    """
+    wait_upload_progress_gone(frame, page)
+    caret_to_end(frame, page)
+    before = frame.locator(HR_COMPONENT).count()
+    done = False
+    try:
+        frame.click(HR_OPTION_BUTTON, timeout=5000)
+        page.wait_for_timeout(400)
+        opt = frame.locator("button[data-name='horizontal-line'][data-value='default']")
+        if opt.count():
+            opt.first.click(timeout=5000)
+            done = True
+        else:
+            page.keyboard.press("Escape")
+    except Exception:
+        pass
+    if not done:
+        frame.click(HR_MAIN_BUTTON, timeout=10000)
+    for _ in range(20):
+        if frame.locator(HR_COMPONENT).count() > before:
+            page.wait_for_timeout(300)
+            return
+        page.wait_for_timeout(250)
+    raise Failed("구분선이 들어가지 않았다." + describe_popup(frame))
+
+
 def visible_popup(frame):
     """화면에 떠 있는 SmartEditor 팝업을 읽는다. 없으면 None.
 
@@ -868,6 +904,10 @@ def fill_post(page, post, post_dir, align=ALIGN_DEFAULT, tags=True,
             upload_image(frame, page, f)
             # 업로드 후 에디터가 포커스를 옮기므로 여기서만 커서를 되돌린다
             caret_to_end(frame, page)
+        elif b["type"] == "divider":
+            log(f"{head} 구분선")
+            insert_divider(frame, page)
+            caret_to_end(frame, page)
         elif b["type"] == "photo":
             f = photos.get(b["hint"])
             if f is None:
@@ -943,6 +983,11 @@ def verify_whole(frame, post, photos, used):
             f"문단 순서가 원문과 다르다. 예: {out_of_order[:3]}"
         )
 
+    n_hr = sum(1 for b in post["blocks"] if b["type"] == "divider")
+    got_hr = frame.locator(HR_COMPONENT).count()
+    if got_hr < n_hr:
+        raise Failed(f"구분선이 {n_hr}개여야 하는데 {got_hr}개다")
+
     n_img = sum(1 for b in post["blocks"] if b["type"] == "card") + len(used)
     got_img = frame.locator(IMAGE_COMPONENT).count()
     if got_img < n_img:
@@ -994,6 +1039,9 @@ def main(argv=None):
     ap.add_argument("--fresh", action="store_true",
                     help="채우기 전에 글쓰기 화면을 다시 열어 빈 글로 만든다 "
                          "(쓰던 내용은 버려진다)")
+    ap.add_argument("--new-tab", action="store_true",
+                    help="열려 있는 글쓰기 탭은 건드리지 않고 새 탭에서 빈 글로 채운다 "
+                         "(사용자가 손으로 고치던 탭을 보존할 때). --blog-id 필요")
     args = ap.parse_args(argv)
 
     post_dir = Path(args.post_dir).resolve()
@@ -1023,7 +1071,10 @@ def main(argv=None):
             return 1
 
         ctx = browser.contexts[0]
-        page = find_editor_page(ctx, args.match)
+        page = None if args.new_tab else find_editor_page(ctx, args.match)
+        if args.new_tab and not args.blog_id:
+            print("--new-tab 에는 --blog-id 가 필요하다.", file=sys.stderr)
+            return 1
         if page is None:
             if not args.blog_id:
                 print("에디터가 열린 탭이 없다. 글쓰기 화면을 열거나 --blog-id 를 줄 것.", file=sys.stderr)
@@ -1034,7 +1085,6 @@ def main(argv=None):
             page.goto(WRITE_URL.format(blog_id=args.blog_id),
                       wait_until="domcontentloaded")
             page.wait_for_timeout(2500)
-        page.bring_to_front()
         log(f"대상 탭: {page.url}")
 
         if args.fresh:
@@ -1052,7 +1102,6 @@ def main(argv=None):
             log(f"글쓰기 화면 새로 열기: {blog_id}")
             page.goto(WRITE_URL.format(blog_id=blog_id), wait_until="load")
             page.wait_for_timeout(2500)
-            page.bring_to_front()
 
         try:
             photos, used = fill_post(page, post, post_dir, args.align,

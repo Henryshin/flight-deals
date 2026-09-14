@@ -184,6 +184,8 @@ def build_post(draft_path, today=None, with_images=True):
         raise DraftInvalid("\n".join(f"  - {e}" for e in errs))
 
     cards = IC.build_cards(mat, inputs["history"].get(meta["monitor_id"], []))
+    # 본문 표는 render.parse_body 가 table1, table2… 카드 블록으로 바꿔 둔다.
+    cards += [(b["card"], IC.table_card_html(b["rows"])) for b in blocks if b.get("rows")]
     wanted = {b["card"] for b in blocks if b["type"] == "card"}
     have = {n for n, _ in cards}
     missing = wanted - have
