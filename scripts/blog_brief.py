@@ -40,7 +40,7 @@ PER_TABLE = 6
 
 def _rows(cands, start_no=1):
     L = [
-        "| # | 노선 | 연휴 | 추천 일정 | 최저가 일정 | 같은일정 직항대비 | 주간변동 | 점수 |",
+        "| # | 노선 | 연휴 | 추천 일정 | 최저가 일정 | 같은일정 2위 대비 | 주간변동 | 점수 |",
         "|---|---|---|---|---|---|---|---|",
     ]
     for i, c in enumerate(cands, start_no):
@@ -145,13 +145,14 @@ def render_material(mat):
         "## 핵심",
         "",
         f"- **왕복 최저가: {D.krw(c['min_price'])}** ({D.krw_man(c['min_price'])})",
-        # 할인율은 같은 일정 나머지 직항 중앙값 대비만 쓴다 (사용자 정의 2026-09-13).
+        # 할인율은 같은 일정 2위(다른 항공사 최저 직항) 대비만 쓴다 (사용자 정의 2026-09-14).
         # 연휴 전체 통상 시세는 다른 날짜가 섞인 참고값이라 '낮다'를 붙이지 않는다.
-        (f"- **할인율(같은 일정 직항 {best['nonstop_n'] - 1}편 중앙값 {D.krw(best['nonstop_others_median'])} 대비): "
-         f"{best['same_itin_deal_pct']:.0f}%**"
+        (f"- **할인율(같은 일정 직항 2위 {best.get('runnerup_airline') or '항공사 미상'} "
+         f"{D.krw(best['runnerup_price'])} 대비): {best['same_itin_deal_pct']:.0f}%**"
          if best.get("same_itin_deal_pct") is not None else
-         "- 할인율: **통계 없음** — 같은 일정 직항 목록을 구글 항공권에서 직접 세어 머리말 "
-         "nonstop_n / nonstop_others_median 으로 넣기 전에는 '특가'·'N% 싸다'를 쓰지 않는다"),
+         "- 할인율: **통계 없음** — 같은 일정 직항 목록에서 최저가와 다른 항공사 중 가장 싼 편을 "
+         "구글 항공권에서 직접 확인해 머리말 runnerup_price / runnerup_airline 으로 넣기 전에는 "
+         "'특가'·'N% 싸다'를 쓰지 않는다"),
         f"- (참고) 이 연휴 전체 관측가 중앙값: {D.krw(c['typical']) if c['typical'] else '-'} — 다른 날짜·박수가 섞인 값이라 할인 근거로 쓰지 않는다",
         f"- 평시(비연휴) 기준가: "
         f"{D.krw(c['offpeak_baseline']) if c['offpeak_baseline'] else '-'}",

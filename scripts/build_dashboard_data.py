@@ -182,28 +182,28 @@ def _row_in_window(row, window, known_window_ids):
     return d1 <= window["end"] and d2 >= window["start"]
 
 
-# 같은-일정 할인율을 믿으려면 비교 대상(최저가를 뺀 나머지 직항)이 이만큼은 있어야 한다.
-MIN_SAME_ITIN_OTHERS = 2
-
-
 def same_itin_fields(row):
-    """할인율 = (같은 일정 나머지 직항 중앙값 - 이 항공권 가격) / 나머지 중앙값.
+    """할인율 = (2위 항공권 가격 - 이 항공권 가격) / 2위 가격.
 
-    사용자 정의(2026-09-13). 연휴 전체 중앙값 대비인 deal_pct 와 다르다 — deal_pct 는
-    다른 날짜·다른 박수 가격이 섞여서 "같은 날 다른 항공권보다 싼가"를 말하지 못한다.
-    2026-09-13 이전 수집분에는 목록 통계가 없어 None 이다.
+    사용자 정의(2026-09-14). 2위 = 같은 출발·귀국일 직항 중 **최저가와 다른 항공사**의
+    최저가 (collector.same_itinerary_stats). 9/13 의 '나머지 직항 중앙값 대비'는 숫자가
+    너무 커 보인다고 반려돼 대체됐다. 연휴 전체 중앙값 대비인 deal_pct 와도 다르다.
+    2위 통계가 없는 수집분(2026-09-14 이전)은 None 이다 — 옛 중앙값으로 대신 채우지 않는다.
     """
     try:
         n = int(row.get("nonstop_n") or 0)
         med = int(float(row.get("nonstop_others_median") or 0))
+        ru = int(float(row.get("runnerup_price") or 0))
         price = int(float(row.get("price") or 0))
     except (TypeError, ValueError):
-        n, med, price = 0, 0, 0
-    ok = str(row.get("stops")) == "0" and med > 0 and price > 0 and n - 1 >= MIN_SAME_ITIN_OTHERS
+        n, med, ru, price = 0, 0, 0, 0
+    ok = str(row.get("stops")) == "0" and ru > 0 and price > 0 and ru >= price
     return {
         "nonstop_n": n or None,
         "nonstop_others_median": med or None,
-        "same_itin_deal_pct": round((med - price) / med * 100, 1) if ok else None,
+        "runnerup_price": ru or None,
+        "runnerup_airline": (row.get("runnerup_airline") or "") if ru else "",
+        "same_itin_deal_pct": round((ru - price) / ru * 100, 1) if ok else None,
     }
 
 

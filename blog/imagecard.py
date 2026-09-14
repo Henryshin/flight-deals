@@ -125,16 +125,18 @@ def price_card_html(mat):
     # 히어로 숫자는 **주인공 일정의 값**이다. 셀 최저가를 쓰면 연차 부담을 보고
     # 다른 일정을 고른 경우(brief.pick_pair) 본문·일정카드와 어긋난다.
     hero_price = best.get("price") or cell["min_price"]
-    # 배지는 **같은 일정 나머지 직항 중앙값 대비**만 보여준다 (사용자 정의 2026-09-13).
-    # 연휴 전체 중앙값(typical) 대비는 다른 날짜 가격이 섞여 할인이라고 부를 수 없다.
-    others = best.get("nonstop_others_median")
-    n = best.get("nonstop_n")
+    # 배지는 **같은 일정 2위(다른 항공사 최저 직항) 대비**만 보여준다 (사용자 정의 2026-09-14).
+    # 연휴 전체 중앙값(typical) 대비는 다른 날짜 가격이 섞여 할인이라고 부를 수 없고,
+    # 나머지 직항 중앙값 대비(9/13)는 숫자가 너무 커 보인다고 반려됐다.
+    ru = best.get("runnerup_price")
+    ru_airline = (best.get("runnerup_airline") or "").strip()
     badge = ""
-    if others and hero_price and str(best.get("stops")) == "0" and (n or 0) >= 3:
-        deal = (others - hero_price) / others * 100.0
-        if deal > 0:
-            badge = (f"<div class='badge'>▼ 같은 날짜 직항 {n - 1}편 중앙값 "
-                     f"{D.krw(others)}보다 {deal:.0f}% 낮아요</div>")
+    if ru and hero_price and str(best.get("stops")) == "0":
+        deal = (ru - hero_price) / ru * 100.0
+        if deal >= 0.5:
+            who = f"{ru_airline} " if ru_airline else ""
+            badge = (f"<div class='badge'>▼ 같은 날짜 직항 2위 {who}"
+                     f"{D.krw(ru)}보다 {deal:.0f}% 낮아요</div>")
 
     stops = "직항" if str(best.get("stops")) == "0" else "경유"
     nights = best.get("nights")

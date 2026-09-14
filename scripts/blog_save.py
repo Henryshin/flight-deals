@@ -47,8 +47,9 @@ def known_prices(mat):
             vals.add(int(p["price"]))
     for r in mat.get("airlines") or []:
         vals.add(int(r["price"]))
-    if mat["best"].get("nonstop_others_median"):
-        vals.add(int(mat["best"]["nonstop_others_median"]))
+    for k in ("nonstop_others_median", "runnerup_price"):
+        if mat["best"].get(k):
+            vals.add(int(mat["best"][k]))
     if h.get("wow"):
         vals.update({int(h["wow"]["now"]), int(h["wow"]["prev"])})
     # 두 값의 차이도 글에 자주 쓴다 ("21만원 더 싸다")
@@ -159,14 +160,18 @@ def build_post(draft_path, today=None, with_images=True):
             or D.kst_str(datetime.now(timezone.utc).isoformat())
         )
 
-    # nonstop_n / nonstop_others_median: 같은 일정 직항 목록을 **직접 조회한** 통계.
-    # 할인율(사용자 정의 2026-09-13)의 근거라 price 와 같은 규칙 — 화면을 보고 적는다.
-    for k in ("nonstop_n", "nonstop_others_median"):
+    # runnerup_price / runnerup_airline: 같은 일정 직항 목록에서 **직접 확인한** 2위
+    # (최저가와 다른 항공사 중 가장 싼 편). 할인율(사용자 정의 2026-09-14)의 근거라
+    # price 와 같은 규칙 — 화면을 보고 적는다. nonstop_n / nonstop_others_median 은 옛 정의 참고값.
+    for k in ("nonstop_n", "nonstop_others_median", "runnerup_price"):
         v = str(meta.get(k) or "").strip().strip("\"'").replace(",", "")
         if v:
             if not v.isdigit():
                 raise DraftInvalid(f"  - 머리말 {k} 는 숫자여야 한다: {meta[k]}")
             mat["best"][k] = int(v)
+    ra = str(meta.get("runnerup_airline") or "").strip().strip("\"'")
+    if ra:
+        mat["best"]["runnerup_airline"] = ra
 
     blocks = R.parse_body(body)
     plain = R.blocks_to_text(blocks)

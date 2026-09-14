@@ -68,11 +68,14 @@ NEW_HEADER = [
     # 같은 일정 직항 비교 (할인율 정의, 사용자 확정 2026-09-13). 직항 행에만 채운다.
     # nonstop_n = 그 검색 화면의 직항 항공권 수, nonstop_others_median = 최저가를 뺀 나머지 직항 중앙값.
     "nonstop_n", "nonstop_others_median",
+    # 2위 = 최저가와 다른 항공사 중 가장 싼 직항. 할인율의 기준 (사용자 정의 2026-09-14).
+    "runnerup_price", "runnerup_airline",
 ]
 # 과거 스키마들: 7열(초기) -> 10열(dep/arr/stops) -> 11열(window_id) -> 12열(airline)
-#              -> 16열(오는 편 3열 + multi_carrier)
+#              -> 16열(오는 편 3열 + multi_carrier) -> 18열(같은 일정 직항 통계)
+#              -> 20열(2위 가격·항공사)
 LEGACY_HEADERS = [NEW_HEADER[:7], NEW_HEADER[:10], NEW_HEADER[:11],
-                  NEW_HEADER[:12], NEW_HEADER[:16]]
+                  NEW_HEADER[:12], NEW_HEADER[:16], NEW_HEADER[:18]]
 
 
 def _base_window_pairs(window, min_nights, today):
@@ -615,6 +618,8 @@ def main():
                             int(bool(it.get("multi_carrier"))),
                             it.get("nonstop_n", ""),
                             it.get("nonstop_others_median") or "",
+                            it.get("runnerup_price") or "",
+                            it.get("runnerup_airline", ""),
                         ])
             except Exception as e:  # noqa: BLE001 - 한 노선의 예기치 못한 크래시(세션 재기동
                 # 실패 등)가 남은 노선 수집과 상태 기록 전체를 유실시키지 않도록 격리.
