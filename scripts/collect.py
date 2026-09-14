@@ -60,9 +60,19 @@ NEW_HEADER = [
     "origin", "destination", "depart_date", "return_date", "price",
     "is_holiday_window", "collected_at", "dep_time", "arr_time", "stops",
     "window_id", "airline",
+    # 오는 편. 구글 항공권 첫 화면에는 가는 편만 나와서 화면을 한 번 더 넘겨 받는다
+    # (collector/google_flights_crawler.py 의 _scan_return). 못 받으면 빈 값.
+    "ret_dep_time", "ret_arr_time", "ret_airline",
+    # 가는 편과 오는 편 항공사가 다른 조합권('다구간 항공권')이면 1.
+    "multi_carrier",
+    # 같은 일정 직항 비교 (할인율 정의, 사용자 확정 2026-09-13). 직항 행에만 채운다.
+    # nonstop_n = 그 검색 화면의 직항 항공권 수, nonstop_others_median = 최저가를 뺀 나머지 직항 중앙값.
+    "nonstop_n", "nonstop_others_median",
 ]
 # 과거 스키마들: 7열(초기) -> 10열(dep/arr/stops) -> 11열(window_id) -> 12열(airline)
-LEGACY_HEADERS = [NEW_HEADER[:7], NEW_HEADER[:10], NEW_HEADER[:11]]
+#              -> 16열(오는 편 3열 + multi_carrier)
+LEGACY_HEADERS = [NEW_HEADER[:7], NEW_HEADER[:10], NEW_HEADER[:11],
+                  NEW_HEADER[:12], NEW_HEADER[:16]]
 
 
 def _base_window_pairs(window, min_nights, today):
@@ -565,6 +575,10 @@ def main():
                         origin, destination, depart, return_,
                         origin_city=origin_city, dest_city=dest_city,
                         max_stops=max_stops,
+                        # 오는 편 수집은 끈다. 2026-09-14 실수집 검증에서 3개 노선 전부
+                        # 오는 편을 못 받았고(빈 값), 쿼리당 3~8초 -> 18~44초로 느려져
+                        # 시간 예산 안에 도는 노선 수가 크게 줄어든다. 고칠 때까지 비활성.
+                        with_return=False,
                     )
                     st = result["status"]
                     statuses[st] += 1
@@ -596,6 +610,11 @@ def main():
                             it.get("dep_time", ""), it.get("arr_time", ""),
                             it.get("stops", ""),
                             window_id, it.get("airline", ""),
+                            it.get("ret_dep_time", ""), it.get("ret_arr_time", ""),
+                            it.get("ret_airline", ""),
+                            int(bool(it.get("multi_carrier"))),
+                            it.get("nonstop_n", ""),
+                            it.get("nonstop_others_median") or "",
                         ])
             except Exception as e:  # noqa: BLE001 - 한 노선의 예기치 못한 크래시(세션 재기동
                 # 실패 등)가 남은 노선 수집과 상태 기록 전체를 유실시키지 않도록 격리.

@@ -39,6 +39,86 @@ def test_parse_itinerary():
     assert unknown["stops"] is None  # 직항/경유 문구 없으면 미상
 
 
+def test_parse_itinerary_multi_carrier():
+    """최저가가 '다구간 항공권'(가는편/오는편 항공사 다름)인 경우가 흔하다.
+
+    2026-09-08 실측: 하노이·나트랑 최저가가 둘 다 다구간이었다. 가는 편 항공사만
+    보고 "OO항공 직항 왕복"이라고 쓰면 사실과 달라져서 플래그로 남긴다.
+    """
+    solo = parse_itinerary("오전 9:05 – 오후 1:30 대한항공 직항 총 ₩487,681 왕복")
+    assert solo["multi_carrier"] is False
+
+    mixed = parse_itinerary(
+        "오후 11:30 – 오전 6:45+1 다구간 항공권 티웨이항공 직항 ₩360,093 왕복")
+    assert mixed["multi_carrier"] is True
+    assert mixed["airline"] == "티웨이항공"
+    assert mixed["dep_time"] == "23:30"
+    assert mixed["arr_time"] == "06:45+1"
+
+
+def test_prices_header_has_return_columns():
+    """오는 편 열이 스키마에 있고, 직전 12열 헤더가 마이그레이션 대상에 남아 있어야
+    기존 CSV 가 조용히 '알 수 없는 헤더'로 방치되지 않는다."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("collect_mod", "scripts/collect.py")
+    C = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(C)
+    for col in ("ret_dep_time", "ret_arr_time", "ret_airline", "multi_carrier"):
+        assert col in C.NEW_HEADER
+    assert C.NEW_HEADER[:12] in C.LEGACY_HEADERS
+
+
+def test_leave_score_and_pick_pair():
+    """연차 부담이 점수에 반영되고, itinerary 로 일정을 고를 수 있어야 한다.
+
+    2026-09-08: 연차를 안 보던 때는 상위 후보가 죄다 연차 4~8일짜리였다.
+    '연차를 아껴 쓰고 싶은 직장인' 블로그라 그건 정반대 결과다.
+    """
+    from blog import brief as B
+    from datetime import date
+    assert B._leave_score(0) == 1.0
+    assert B._leave_score(1) == 1.0
+    assert B._leave_score(6) == 0.0
+    assert B._leave_score(3) > B._leave_score(5)   # 적을수록 높다
+    assert B._leave_score(None) == 0.5             # 모르면 중립
+
+    today = date(2026, 9, 8)
+    cell = {"typical": 500000, "deal_pct": 40}
+    cheap_long = {"price": 300000, "leave_days": 5, "nights": 7, "stops": "0",
+                  "depart_date": "2026-10-01", "return_date": "2026-10-08"}
+    dear_short = {"price": 330000, "leave_days": 1, "nights": 3, "stops": "0",
+                  "depart_date": "2026-10-02", "return_date": "2026-10-05"}
+    pairs = [cheap_long, dear_short]
+
+    assert B.pick_pair(pairs, cell, today, None, "cheapest") is cheap_long
+    assert B.pick_pair(pairs, cell, today, None, "min_leave") is dear_short
+    # 3만원 차이면 연차 4일을 아끼는 쪽이 이겨야 한다
+    assert B.pick_pair(pairs, cell, today, None, "auto") is dear_short
+    assert B.pick_pair(pairs, cell, today, None,
+                       "2026-10-01:2026-10-08") is cheap_long
+    try:
+        B.pick_pair(pairs, cell, today, None, "2020-01-01:2020-01-02")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("자료에 없는 일정은 거부해야 한다")
+
+
+def test_airline_dict_covers_google_spellings():
+    """구글이 쓰는 철자를 그대로 사전에 넣어야 한다.
+
+    '스쿠트'만 있고 '스쿳항공'이 없어서 타이페이 관측의 51%가 '미상'으로 빠졌다
+    (2026-09-09 실측: 최근 2주 전체의 15%, 롬복은 100%).
+    """
+    from collector.google_flights_crawler import extract_airline
+    assert extract_airline("오후 11:00 스쿳항공 직항 ₩224,801 왕복") == "스쿠트항공"
+    assert extract_airline("스쿠트 직항 ₩224,801 왕복") == "스쿠트항공"    # 별칭 통합
+    assert extract_airline(
+        "오전 12:50 다구간 항공권 홍콩 익스프레스항공 직항 ₩276,002 왕복"
+    ) == "홍콩 익스프레스항공"
+    assert extract_airline("심천항공 ₩300,000 왕복") == "심천항공"
+
+
 def test_extract_airline():
     from collector.google_flights_crawler import extract_airline
     assert extract_airline("오전 8:00 대한항공 직항 ₩487,681 왕복") == "대한항공"
@@ -576,8 +656,12 @@ def test_blog_validate_rejects_unbacked_price():
     from blog import render as R
 
     bs = importlib.import_module("scripts.blog_save")
+    best = dict(_cell()["best"])
+    # 왕복 항공사는 둘 다 채워져야 저장된다 (2026-09-09 규칙). 없으면 validate 가
+    # 금액과 무관한 오류를 하나 더 얹어서 이 테스트의 == [] 가 깨진다.
+    best.update(airline="대한항공", ret_airline="대한항공")
     mat = {
-        "cell": _cell(), "best": _cell()["best"], "alternatives": [],
+        "cell": _cell(), "best": best, "alternatives": [],
         "airlines": [{"price": 529500, "airline": "ANA", "stops": "1",
                       "dep_time": "19:55", "arr_time": "21:25"}],
         "history": {"min_30d": 262300, "avg_30d": None, "wow": {"now": 1, "prev": 2}},
@@ -684,6 +768,34 @@ def test_blog_posts_match_ledger():
         for b in post["blocks"]:
             if b["type"] == "card":
                 assert (S.POSTS_DIR / d / b["file"]).exists(), f"{d}: {b['file']} 없음"
+
+
+def test_same_itinerary_stats_nonstop_only_excludes_cheapest():
+    """할인율 = 같은 일정 나머지 직항 중앙값 대비 (사용자 정의 2026-09-13). 경유편은 빠진다."""
+    from collector.google_flights_crawler import same_itinerary_stats
+    its = [
+        {"price": 474200, "stops": 0, "airline": "에어서울", "dep_time": "20:55", "arr_time": "23:40"},
+        {"price": 474200, "stops": 0, "airline": "에어서울", "dep_time": "20:55", "arr_time": "20:55"},  # 안쪽 li 중복(도착시각 오독)
+        {"price": 557600, "stops": 0, "airline": "진에어", "dep_time": "20:30", "arr_time": "23:15"},
+        {"price": 577200, "stops": 0, "airline": "티웨이항공", "dep_time": "21:35", "arr_time": "00:25+1"},
+        {"price": 672100, "stops": 0, "airline": "제주항공", "dep_time": "09:10", "arr_time": "12:10"},
+        {"price": 551400, "stops": 1, "airline": "필리핀항공", "dep_time": "20:30", "arr_time": "13:10+1"},
+    ]
+    st = same_itinerary_stats(its)
+    assert st == {"nonstop_n": 4, "nonstop_others_median": 577200}
+    assert same_itinerary_stats([its[0]]) == {"nonstop_n": 1, "nonstop_others_median": None}
+
+
+def test_same_itin_fields_needs_two_others_and_nonstop():
+    from scripts.build_dashboard_data import same_itin_fields
+    ok = same_itin_fields({"price": "474200", "stops": "0", "nonstop_n": "4", "nonstop_others_median": "577200"})
+    assert ok["same_itin_deal_pct"] == 17.8
+    thin = same_itin_fields({"price": "474200", "stops": "0", "nonstop_n": "2", "nonstop_others_median": "557600"})
+    assert thin["same_itin_deal_pct"] is None          # 비교 대상 1편뿐
+    old = same_itin_fields({"price": "474200", "stops": "0"})
+    assert old["same_itin_deal_pct"] is None           # 9/13 이전 수집분
+    via = same_itin_fields({"price": "551400", "stops": "1", "nonstop_n": "4", "nonstop_others_median": "577200"})
+    assert via["same_itin_deal_pct"] is None           # 경유 행은 대상 아님
 
 
 def main():

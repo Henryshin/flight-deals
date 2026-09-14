@@ -20,6 +20,7 @@ photos.json 형식 (사람이 고른 결과를 적어 두는 파일):
 hint 는 post.json 의 photo 블록과 **문자열이 정확히 같아야** 짝이 맞는다.
 """
 import argparse
+import html
 import json
 import re
 import sys
@@ -47,7 +48,9 @@ def get(url):
 
 
 def strip_html(s):
-    return re.sub(r"<[^>]+>", "", s or "").strip()
+    # 커먼즈 extmetadata 는 HTML 조각이다. 태그만 벗기면 &amp; 같은 엔티티가
+    # 남아서 저작자 표시에 그대로 찍힌다 (2026-09-11 "U.S. Fish &amp; Wildlife").
+    return html.unescape(re.sub(r"<[^>]+>", "", s or "")).strip()
 
 
 def fetch(post_dir):

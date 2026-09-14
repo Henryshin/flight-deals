@@ -32,45 +32,104 @@ def _pct(v):
     return f"{v:.0f}%" if isinstance(v, (int, float)) else "-"
 
 
-def render_brief(inputs, cands, today, age_hours):
+# 이 안쪽이면 '코앞 연휴'. 리드타임이 짧으면 싼 조합이 이미 빠져 있어서
+# 후보가 약해진다 — 그럴 때 먼 연휴를 같이 보라고 표를 둘로 나눈다.
+NEAR_DAYS = 60
+PER_TABLE = 6
+
+
+def _rows(cands, start_no=1):
     L = [
-        f"# 블로그 소재 브리핑 — {today.isoformat()}",
-        "",
-        f"- 데이터 기준: {D.kst_str(inputs['meta']['generated_at'])} "
-        f"({age_hours:.1f}시간 전)",
-        f"- 후보 {len(cands)}건. 아래 중 하나를 골라 세션에서 "
-        "`/blog-post <노선ID>` 로 글을 쓴다.",
-        "- 여기 실린 가격은 전부 신뢰 필터(5만원 하한·관측수·리드타임)를 통과한 값이다.",
-        "",
-        "| # | 노선 | 연휴 | 최저가 | 평시대비 | 직항 | 일정 | 주간변동 | 점수 |",
-        "|---|---|---|---|---|---|---|---|---|",
+        "| # | 노선 | 연휴 | 추천 일정 | 최저가 일정 | 같은일정 직항대비 | 주간변동 | 점수 |",
+        "|---|---|---|---|---|---|---|---|",
     ]
-    for i, c in enumerate(cands, 1):
+    for i, c in enumerate(cands, start_no):
         wow = c["wow"]
         wow_txt = "-"
         if wow:
             arrow = "▼" if wow["pct"] < 0 else ("▲" if wow["pct"] > 0 else "―")
             wow_txt = f"{arrow} {abs(wow['pct']):.0f}%"
+
+        # 점수는 **순서만** 매긴다. 어느 일정으로 쓸지는 사람이 고른다
+        # (사용자 지정 2026-09-08). 그래서 추천안과 최저가안을 나란히 보여준다.
+        def _opt(price, nights, leave, stops):
+            sched = f"{nights}박 {nights + 1}일" if isinstance(nights, int) else "-"
+            lv = f"연차 {leave}일" if isinstance(leave, int) else "연차 -"
+            # 직항/경유를 안 적으면 '더 싸고 더 짧은데 왜 추천이 아니지'로 읽힌다.
+            way = "직항" if str(stops) == "0" else "경유"
+            return f"{D.krw(price)} · {sched} · **{lv}** · {way}"
+
+        rec = _opt(c.get("price") or c["min_price"], c.get("nights"),
+                   c.get("leave_days"), c.get("stops"))
+        alt = c.get("cheapest")
+        alt_txt = "―"
+        if alt and alt.get("price") != c.get("price"):
+            alt_txt = _opt(alt.get("price"), alt.get("nights"),
+                           alt.get("leave_days"), alt.get("stops"))
         L.append(
             f"| {i} | {c['flag']} {c['dest_ko']} (`{c['monitor_id']}`) "
-            f"| {c['window_label']} | {D.krw(c['min_price'])} "
-            f"| {_pct(c['deal_pct'])} 싸다 | {'직항' if c['nonstop'] else '경유'} "
-            f"| {c['depart_date']}~{c['return_date']} | {wow_txt} | {c['score']} |"
+            f"| {c['window_label']}<br><sub>D-{c['lead_days']}</sub> | {rec}<br>"
+            f"<sub>{c['depart_date']}~{c['return_date']}</sub> "
+            f"| {alt_txt} | {(_pct(c['deal_pct_pair']) + ' 싸다') if c.get('deal_pct_pair') else '통계 없음'} | {wow_txt} | {c['score']} |"
         )
+    return L
+
+
+def _top(cands, keep):
+    """목적지 중복만 걷어내고 상위 N. 표 안에서만 걸러 다른 표를 가리지 않는다."""
+    seen, out = set(), []
+    for c in sorted(cands, key=lambda c: -c["score"]):
+        if c["dest"] in seen:
+            continue
+        seen.add(c["dest"])
+        out.append(c)
+        if len(out) >= keep:
+            break
+    return out
+
+
+def render_brief(inputs, cands, today, age_hours, per_table=PER_TABLE):
+    near = _top([c for c in cands if c["lead_days"] <= NEAR_DAYS], per_table)
+    far = _top([c for c in cands if c["lead_days"] > NEAR_DAYS], per_table)
+    L = [
+        f"# 블로그 소재 브리핑 — {today.isoformat()}",
+        "",
+        f"- 데이터 기준: {D.kst_str(inputs['meta']['generated_at'])} "
+        f"({age_hours:.1f}시간 전)",
+        "- **노선과 일정 둘 다 사람이 고른다.** 점수는 순서만 매긴 것이고,",
+        "  '추천 일정'은 연차 부담까지 본 제안일 뿐이다. 최저가 일정으로 갈지는 그때 정한다.",
+        "- 여기 실린 가격은 전부 신뢰 필터(5만원 하한·관측수·리드타임)를 통과한 값이다.",
+        "",
+        f"## 코앞 연휴 (D-{NEAR_DAYS} 이내)",
+        "",
+    ]
+    if near:
+        L += _rows(near)
+        L += ["", "> 리드타임이 짧으면 싼 조합이 이미 빠져 있는 경우가 많다.",
+              "> 마땅한 게 없으면 아래 여유 있는 연휴에서 고르는 편이 낫다.", ""]
+    else:
+        L += ["_해당 없음._", ""]
+
+    L += [f"## 여유 있는 연휴 (D-{NEAR_DAYS}~{B.MAX_LEAD_DAYS})", "",
+          f"> D-{B.MAX_LEAD_DAYS} 보다 먼 연휴는 뺐다. 검색 수요가 여행 두어 달 전에 생겨서,",
+          "> 지금 쓰면 그때까지 아무도 안 찾는다.", ""]
+    L += _rows(far, start_no=len(near) + 1) if far else ["_해당 없음._"]
+
+    first = (near or far or [None])[0]
     L += [
         "",
         "## 다음 단계",
         "",
         "```",
-        f"python scripts/blog_brief.py --material {cands[0]['monitor_id']} "
-        f"--window {cands[0]['window_id']}",
+        f"python scripts/blog_brief.py --material {first['monitor_id']} "
+        f"--window {first['window_id']}" if first else "(후보 없음)",
         "```",
         "",
         "상세 자료를 읽고 `.claude/skills/blog-post/SKILL.md` 의 문체 규칙에 맞춰",
         "초안을 쓴 뒤 `python scripts/blog_save.py <초안.md>` 로 저장한다.",
         "",
     ]
-    return "\n".join(L)
+    return chr(10).join(L)
 
 
 def render_material(mat):
@@ -86,8 +145,14 @@ def render_material(mat):
         "## 핵심",
         "",
         f"- **왕복 최저가: {D.krw(c['min_price'])}** ({D.krw_man(c['min_price'])})",
-        f"- 이 연휴의 통상 시세: {D.krw(c['typical']) if c['typical'] else '-'}"
-        + (f" → **{c['deal_pct']:.0f}% 낮다**" if c["deal_pct"] is not None else ""),
+        # 할인율은 같은 일정 나머지 직항 중앙값 대비만 쓴다 (사용자 정의 2026-09-13).
+        # 연휴 전체 통상 시세는 다른 날짜가 섞인 참고값이라 '낮다'를 붙이지 않는다.
+        (f"- **할인율(같은 일정 직항 {best['nonstop_n'] - 1}편 중앙값 {D.krw(best['nonstop_others_median'])} 대비): "
+         f"{best['same_itin_deal_pct']:.0f}%**"
+         if best.get("same_itin_deal_pct") is not None else
+         "- 할인율: **통계 없음** — 같은 일정 직항 목록을 구글 항공권에서 직접 세어 머리말 "
+         "nonstop_n / nonstop_others_median 으로 넣기 전에는 '특가'·'N% 싸다'를 쓰지 않는다"),
+        f"- (참고) 이 연휴 전체 관측가 중앙값: {D.krw(c['typical']) if c['typical'] else '-'} — 다른 날짜·박수가 섞인 값이라 할인 근거로 쓰지 않는다",
         f"- 평시(비연휴) 기준가: "
         f"{D.krw(c['offpeak_baseline']) if c['offpeak_baseline'] else '-'}",
         f"- 관측 수: {c['n_obs']}회 · 등급 {c['tier']}",
@@ -183,7 +248,7 @@ def main(argv=None):
     ap.add_argument("--date", help="기준 날짜 YYYY-MM-DD (기본: 오늘 KST)")
     ap.add_argument("--material", help="상세 자료를 볼 노선 ID (예: ICN-KMI)")
     ap.add_argument("--window", help="--material 과 함께 쓸 연휴 ID")
-    ap.add_argument("--limit", type=int, default=8, help="후보 개수")
+    ap.add_argument("--limit", type=int, default=6, help="표 하나당 후보 개수")
     ap.add_argument("--stdout", action="store_true", help="파일로 쓰지 않는다")
     ap.add_argument("--json", action="store_true", help="원시 JSON 출력")
     args = ap.parse_args(argv)
@@ -223,8 +288,11 @@ def main(argv=None):
         return EXIT_OK
 
     ledger = S.load_ledger()
+    # 표를 코앞/여유로 나눠 보여주므로 여기서 자르거나 중복을 걷지 않는다.
+    # 목적지 중복은 표 안에서 걸러야 같은 목적지의 먼 연휴 선택지가 안 가려진다.
     cands = B.candidates(
-        inputs, today, exclude_dests=S.recent_dests(ledger, today), limit=args.limit
+        inputs, today, exclude_dests=S.recent_dests(ledger, today),
+        limit=None, dedupe=False,
     )
     if not cands:
         print("::warning::쓸 만한 소재가 없다 (관측 부족 또는 최근 중복)",
@@ -235,7 +303,7 @@ def main(argv=None):
         print(json.dumps(cands, ensure_ascii=False, indent=1))
         return EXIT_OK
 
-    md = render_brief(inputs, cands, today, age)
+    md = render_brief(inputs, cands, today, age, per_table=args.limit)
     print(md)
     if not args.stdout:
         out = S.BRIEF_DIR / f"{today.isoformat()}.md"

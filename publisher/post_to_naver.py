@@ -103,6 +103,7 @@ import json
 import re
 import sys
 import time
+from datetime import datetime
 from html import unescape
 from pathlib import Path
 
@@ -149,11 +150,22 @@ FONT_SIZES = [11, 13, 15, 16, 19, 24, 28, 30, 34, 38]
 # 출처 문단은 본문과 달리 왼쪽 · 최소 크기로 둔다 (사용자 지정, 2026-09-08).
 CREDIT_ALIGN = "left"
 CREDIT_PT = 11
+# 본문 끝과 사진 출처 사이 빈 줄 수. 하노이 발행본 실측값(RUNBOOK §7).
+CREDIT_GAP = 8
 # 발행 설정 패널. **패널을 여는 버튼과 진짜 발행 버튼이 둘 다 '발행' 이다.**
 # 텍스트로 고르면 안 되고 클래스로 갈라야 한다. confirm_btn 은 절대 누르지 않는다.
 PUBLISH_PANEL_BUTTON = "button[class*='publish_btn']"
 PUBLISH_CONFIRM_BUTTON = "button[class*='confirm_btn']"   # 누르지 말 것
 TAG_INPUT = 'input[placeholder*="태그"]'
+# 게시글 카테고리. 기본이 '공지사항' 이라 안 고르면 공지로 나간다 (2026-09-08 실측).
+# 드롭다운을 열면 옵션이 label[class*=radio_label] 로 뜬다.
+CATEGORY_TRIGGER = "button[class*='selectbox_button']"
+CATEGORY_OPTION = "label[class*='radio_label']"
+# 예약 발행. 분은 **10분 단위**만 고를 수 있다 (00·10·20·30·40·50).
+TIME_RESERVE_RADIO = "input[name='radio_time'][value='pre']"
+TIME_DATE_INPUT = "input[class*='input_date']"
+TIME_HOUR_SELECT = "select[class*='hour_option']"
+TIME_MINUTE_SELECT = "select[class*='minute_option']"
 TAG_ITEMS = "[class*='tag_textarea'] [class*='tag__']"
 # 링크. '링크 추가'(se-oglink) 는 카드 컴포넌트를 넣는 것이고, 글자에 링크를
 # 거는 것은 '링크 입력'(se-link) 쪽이다.
@@ -199,6 +211,37 @@ def html_to_paragraphs(html):
     s = re.sub(r"<[^>]+>", "", s)
     s = unescape(s)
     return [ln.strip() for ln in s.split("\n") if ln.strip()]
+
+
+# 최상위 문단 단위. html_to_paragraphs 는 이 경계를 잃어버리므로 따로 훑는다.
+TOP_TAG = re.compile(r"<(p|h3|blockquote|table|ul|ol)\b[^>]*>.*?</\1>", re.S)
+
+
+def html_to_paragraphs_spaced(html):
+    """문단 경계에 **빈 문단**(빈 문자열)을 끼운 목록.
+
+    가독성용 빈 줄은 2026-09-08 까지 사람이 손으로 넣었다. 하노이 발행본을 실측해
+    규칙이 나왔으므로(RUNBOOK §7) 여기서 만든다.
+
+    - 문단(`<p>`·`<blockquote>`·표·목록) 경계마다 빈 줄
+    - **소제목 바로 뒤는 붙인다** (실측 0/5). 소제목 앞은 앞 문단 경계라 자동으로 들어간다
+    - 블록의 맨 앞·맨 뒤에는 넣지 않는다. 끝에 남기면 '이미지 앞에는 빈 줄 없음'
+      (실측 0/5) 규칙이 깨진다
+
+    사용자 기준은 "2~4줄, 이야기가 끝나는 지점마다"다. 초안 문단을 그 리듬으로
+    쓰면 `<p>` 경계가 곧 빈 줄 자리가 된다 — 그래서 경계를 그대로 쓴다.
+    """
+    out, prev = [], None
+    for m in TOP_TAG.finditer(html):
+        lines = html_to_paragraphs(m.group(0))
+        if not lines:
+            continue
+        if out and prev != "h3":
+            out.append("")
+        out += lines
+        prev = m.group(1)
+    # 최상위 태그로 안 잡히는 형태면 예전처럼 평평하게 (빈 줄 없이) 돌려준다
+    return out or html_to_paragraphs(html)
 
 
 # --- 커서 --------------------------------------------------------------------
@@ -301,20 +344,25 @@ def insert_paragraphs(frame, page, lines, verify=True):
     생긴 것이므로 한 번 더 친다.
     """
     for i, line in enumerate(lines):
-        for attempt in range(3):
-            page.keyboard.insert_text(line)
-            page.wait_for_timeout(INSERT_SETTLE_MS)
-            got = last_body_paragraph(frame)
-            if norm(got) == norm(line):
-                break
-            if norm(got) == "":
-                continue            # 통째로 씹혔다. 그대로 다시 넣는다.
-            raise Failed(
-                "문단이 예상과 다르게 들어갔다. 중복 입력 위험이 있어 멈춘다."
-                + " 기대=" + repr(line[:40]) + " 실제=" + repr(got[:40])
-            )
-        else:
-            raise Failed("문단을 세 번 넣었는데 반영되지 않았다: " + repr(line[:40]))
+        # 빈 문자열은 '가독성용 빈 문단'이다. 아무것도 넣지 않고 그대로 두면
+        # 아래 Enter 가 새 문단을 만들면서 이 문단이 빈 채로 남는다.
+        # (에디터의 빈 문단은 last_body_paragraph 에서 "" 로 읽히므로
+        #  Enter 씹힘 검사도 그대로 통과한다.)
+        if line != "":
+            for attempt in range(3):
+                page.keyboard.insert_text(line)
+                page.wait_for_timeout(INSERT_SETTLE_MS)
+                got = last_body_paragraph(frame)
+                if norm(got) == norm(line):
+                    break
+                if norm(got) == "":
+                    continue        # 통째로 씹혔다. 그대로 다시 넣는다.
+                raise Failed(
+                    "문단이 예상과 다르게 들어갔다. 중복 입력 위험이 있어 멈춘다."
+                    + " 기대=" + repr(line[:40]) + " 실제=" + repr(got[:40])
+                )
+            else:
+                raise Failed("문단을 세 번 넣었는데 반영되지 않았다: " + repr(line[:40]))
 
         if i < len(lines) - 1:
             page.keyboard.press("Enter")
@@ -503,8 +551,10 @@ def insert_credits(frame, page, lines):
     전부 그 서식으로 들어간다. 선택할 일이 없다.
     """
     log(f"  사진 출처 {len(lines)}줄 ({CREDIT_ALIGN} · {CREDIT_PT}pt)")
-    page.keyboard.press("Enter")
-    page.wait_for_timeout(ENTER_SETTLE_MS)
+    # 본문과 출처 사이 간격. 하노이 발행본 실측 8줄 (RUNBOOK §7).
+    for _ in range(CREDIT_GAP):
+        page.keyboard.press("Enter")
+        page.wait_for_timeout(ENTER_SETTLE_MS)
     frame.click(ALIGN_DROPDOWN)
     page.wait_for_timeout(300)
     frame.click(ALIGN_OPTION[CREDIT_ALIGN])
@@ -601,13 +651,79 @@ def apply_link(frame, page, text, url):
     log(f"  링크 확인: {text} -> {url[:52]}...")
 
 
-def fill_tags(frame, page, tags):
-    """발행 설정 패널을 열고 태그를 넣는다. **발행 버튼은 누르지 않는다.**
+def set_category(frame, page, name):
+    """게시글 카테고리를 고른다. 안 고르면 기본값 '공지사항' 으로 나간다."""
+    if not name:
+        return
+    trigger = frame.locator(CATEGORY_TRIGGER).first
+    if trigger.count() == 0:
+        raise Failed("카테고리 선택 버튼을 못 찾았다")
+    if trigger.inner_text().strip() == name:
+        log(f"  카테고리: {name} (이미 선택됨)")
+        return
+    trigger.click()
+    page.wait_for_timeout(1200)
+    opt = frame.locator(CATEGORY_OPTION).filter(has_text=name).first
+    if opt.count() == 0:
+        names = frame.locator(CATEGORY_OPTION).all_inner_texts()
+        raise Failed(f"카테고리 '{name}' 이 목록에 없다. 있는 것: {names}")
+    opt.click()
+    page.wait_for_timeout(900)
+    got = trigger.inner_text().strip()
+    if name not in got:
+        raise Failed(f"카테고리가 바뀌지 않았다: 기대 {name!r} 실제 {got!r}")
+    log(f"  카테고리: {got}")
+
+
+def set_schedule(frame, page, when):
+    """예약 발행 시각을 지정한다. **발행 버튼은 여전히 누르지 않는다.**
+
+    when 은 'YYYY-MM-DD HH:MM' (KST). 분은 10분 단위만 가능하다.
+    """
+    if not when:
+        return
+    try:
+        dt = datetime.strptime(when.strip(), "%Y-%m-%d %H:%M")
+    except ValueError as e:
+        raise Failed(f"publish_at 형식이 'YYYY-MM-DD HH:MM' 이 아니다: {when!r}") from e
+    if dt.minute % 10:
+        raise Failed(f"예약 분은 10분 단위만 된다: {when!r}")
+
+    frame.locator(TIME_RESERVE_RADIO).first.click(force=True)
+    page.wait_for_timeout(1200)
+
+    box = frame.locator(TIME_DATE_INPUT).first
+    if box.count() == 0:
+        raise Failed("예약 날짜 입력칸을 못 찾았다 ('예약'이 안 켜졌을 수 있다)")
+    want_date = dt.strftime("%Y. %m. %d")
+    if box.input_value().strip() != want_date:
+        box.click()
+        page.keyboard.press("Control+a")
+        page.keyboard.type(want_date, delay=20)
+        page.keyboard.press("Escape")     # 달력 팝업을 닫는다
+        page.wait_for_timeout(600)
+    frame.locator(TIME_HOUR_SELECT).first.select_option(dt.strftime("%H"))
+    frame.locator(TIME_MINUTE_SELECT).first.select_option(dt.strftime("%M"))
+    page.wait_for_timeout(500)
+
+    got = (box.input_value().strip(),
+           frame.locator(TIME_HOUR_SELECT).first.input_value(),
+           frame.locator(TIME_MINUTE_SELECT).first.input_value())
+    if got != (want_date, dt.strftime("%H"), dt.strftime("%M")):
+        raise Failed(f"예약 시각이 반영되지 않았다: 기대 {want_date} "
+                     f"{dt:%H:%M} · 실제 {got[0]} {got[1]}:{got[2]}")
+    log(f"  예약 발행: {dt:%Y-%m-%d(%a) %H:%M}  ← 발행 버튼은 사람이 누른다")
+
+
+def fill_publish_panel(frame, page, tags, category=None, publish_at=None):
+    """발행 설정 패널을 열고 카테고리·예약시각·태그를 넣는다.
+
+    **발행 버튼은 누르지 않는다.**
 
     패널을 여는 버튼(publish_btn)과 진짜 발행 버튼(confirm_btn)이 둘 다 '발행'
     이라고 쓰여 있다. 텍스트로 찾으면 발행이 눌린다 — 반드시 클래스로 가른다.
     """
-    if not tags:
+    if not (tags or category or publish_at):
         return
     opener = frame.locator(PUBLISH_PANEL_BUTTON).first
     if opener.count() == 0 or not opener.is_visible():
@@ -615,6 +731,11 @@ def fill_tags(frame, page, tags):
     opener.click()
     page.wait_for_timeout(1800)
 
+    set_category(frame, page, category)
+    set_schedule(frame, page, publish_at)
+
+    if not tags:
+        return
     box = frame.locator(TAG_INPUT).first
     if box.count() == 0 or not box.is_visible():
         raise Failed("태그 입력칸을 못 찾았다")
@@ -686,7 +807,8 @@ def load_photos(post_dir):
 
 # --- 본체 --------------------------------------------------------------------
 
-def fill_post(page, post, post_dir, align=ALIGN_DEFAULT, tags=True):
+def fill_post(page, post, post_dir, align=ALIGN_DEFAULT, tags=True,
+              no_spacing=False):
     frame = page.frame(name=FRAME_NAME)
     if frame is None:
         raise Failed(
@@ -712,7 +834,8 @@ def fill_post(page, post, post_dir, align=ALIGN_DEFAULT, tags=True):
     for i, b in enumerate(blocks, 1):
         head = f"  [{i}/{len(blocks)}]"
         if b["type"] == "html":
-            lines = html_to_paragraphs(b["content"])
+            lines = (html_to_paragraphs(b["content"]) if no_spacing
+                     else html_to_paragraphs_spaced(b["content"]))
             log(f"{head} 문단 {len(lines)}개")
             insert_paragraphs(frame, page, lines)
             # 원문 <a> 는 평문으로 둔다 — 의도된 동작이다(docstring '링크' 참조).
@@ -756,9 +879,11 @@ def fill_post(page, post, post_dir, align=ALIGN_DEFAULT, tags=True):
         # CC BY / BY-SA 는 저작자 표시가 의무다. 사진을 실제로 넣었을 때만 붙인다.
         insert_credits(frame, page, credit_lines(used))
     verify_whole(frame, post, photos, used)
-    # 태그는 맨 마지막에. 발행 설정 패널이 열리면 본문을 가려서 대조를 못 한다.
-    if tags:
-        fill_tags(frame, page, post.get("tags") or [])
+    # 발행 설정은 맨 마지막에. 패널이 열리면 본문을 가려서 대조를 못 한다.
+    # --no-tags 여도 카테고리·예약시각은 넣는다 (그건 태그와 별개 설정이다).
+    fill_publish_panel(frame, page, (post.get("tags") or []) if tags else [],
+                       category=post.get("category"),
+                       publish_at=post.get("publish_at"))
     return photos, used
 
 
@@ -846,6 +971,8 @@ def main(argv=None):
                     help="사진을 자동으로 받지 않는다 (photos.json 이 있어도)")
     ap.add_argument("--no-tags", action="store_true",
                     help="태그를 넣지 않는다 (발행 설정 패널을 열지 않음)")
+    ap.add_argument("--no-spacing", action="store_true",
+                    help="가독성용 빈 줄을 넣지 않는다 (2026-09-08 이전 동작)")
     ap.add_argument("--fresh", action="store_true",
                     help="채우기 전에 글쓰기 화면을 다시 열어 빈 글로 만든다 "
                          "(쓰던 내용은 버려진다)")
@@ -911,7 +1038,8 @@ def main(argv=None):
 
         try:
             photos, used = fill_post(page, post, post_dir, args.align,
-                                     tags=not args.no_tags)
+                                     tags=not args.no_tags,
+                                     no_spacing=args.no_spacing)
         except Failed as e:
             print(f"\n중단: {e}", file=sys.stderr)
             return 1
