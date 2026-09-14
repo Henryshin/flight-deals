@@ -50,6 +50,8 @@ AIRLINES = [
     "에미레이트", "카타르항공", "에티하드", "터키항공", "루프트한자",
     "에어프랑스", "KLM", "핀에어", "영국항공", "폴란드항공", "유나이티드항공",
     "델타항공", "아메리칸항공", "에어캐나다", "하와이안항공",
+    # 2026-09-14 호치민 화면 확인. 영문 표기 그대로 나온다.
+    "Sun PhuQuoc Airways",
 ]
 AIRLINE_CANON = {
     # 구글은 "스쿳항공"으로 쓰지만 블로그 표기는 "스쿠트항공"으로 통일한다.
@@ -196,20 +198,25 @@ def parse_itinerary(li_text: str):
 def same_itinerary_stats(itineraries):
     """같은 일정(한 번의 검색 결과) 안의 **직항** 항공권 통계. 브라우저 없이 테스트 가능한 순수 함수.
 
-    할인율 정의 (사용자 확정 2026-09-13):
-        같은 출발·귀국일의 직항끼리만 비교해서, 이 항공권 가격을
-        **나머지 직항 항공권들의 중앙값**과 비교한다. 경유편은 넣지 않는다.
+    할인율 정의 (사용자 확정 2026-09-14, 9/13 중앙값 정의를 대체):
+        같은 출발·귀국일의 직항끼리만 비교해서, 최저가를 **2위 항공권** 가격과 비교한다.
+        2위는 **최저가와 다른 항공사 중 가장 싼 직항**이다. 같은 항공사의 다른 시간대 편은
+        보통 같은 운임이라(2026-09-14 호치민: 비엣젯 10:50·21:15 둘 다 350,257원) 그대로
+        2위로 치면 0%가 된다. 중앙값 대비는 "숫자가 너무 커 보인다"고 사용자가 반려했다.
+        항공사명을 못 읽은 행은 다른 항공사로 친다 — 빼면 2위가 비싸져 할인율이 부풀려진다.
+        최저가 자체의 항공사를 모르면 2위를 정할 수 없어 None.
 
     크롤러는 원래 경유수별 최저가 1건만 남기고 나머지를 버렸다. 그러면 이 비교를
-    나중에 할 방법이 없어서, 버리기 전에 중앙값만 요약해 둔다.
+    나중에 할 방법이 없어서, 버리기 전에 요약해 둔다.
 
-    반환: {"nonstop_n": 직항 항공권 수, "nonstop_others_median": 최저가를 뺀 나머지 중앙값 or None}
+    반환: {"nonstop_n": 직항 항공권 수, "nonstop_others_median": 최저가를 뺀 나머지 중앙값 or None
+           (옛 정의, 참고용으로만 유지), "runnerup_price": 2위 가격 or None, "runnerup_airline": 2위 항공사 or ""}
     같은 편이 li 두 개로 잡혀서(바깥 li 와 안쪽 li) 중복을 뺀다. 키에서 도착시각은 뺀다 —
     안쪽 li 쪽은 도착시각이 출발시각으로 잘못 읽혀(2026-09-13 다낭 실측: 11편이 22편으로 셈)
     같은 편이 다른 편처럼 보인다. (항공사, 출발시각, 가격)으로 묶는다.
     """
     seen = set()
-    prices = []
+    rows = []
     for it in itineraries or []:
         if it.get("stops") != 0:
             continue
@@ -217,14 +224,22 @@ def same_itinerary_stats(itineraries):
         if key in seen:
             continue
         seen.add(key)
-        prices.append(it["price"])
-    prices.sort()
+        rows.append((it["price"], it.get("airline") or ""))
+    rows.sort(key=lambda r: r[0])
+    prices = [p for p, _ in rows]
     others = prices[1:]
     med = None
     if others:
         mid = len(others) // 2
         med = others[mid] if len(others) % 2 else round((others[mid - 1] + others[mid]) / 2)
-    return {"nonstop_n": len(prices), "nonstop_others_median": med}
+    ru_price, ru_airline = None, ""
+    if rows and rows[0][1]:
+        for p, a in rows[1:]:
+            if a != rows[0][1]:
+                ru_price, ru_airline = p, a
+                break
+    return {"nonstop_n": len(prices), "nonstop_others_median": med,
+            "runnerup_price": ru_price, "runnerup_airline": ru_airline}
 
 
 def classify_no_results(page_url: str, body_text: str, li_count: int, saw_price: bool):

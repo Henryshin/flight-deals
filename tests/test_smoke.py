@@ -334,7 +334,7 @@ def test_destmeta_covers_all_destinations():
 
 
 def test_same_itinerary_stats_nonstop_only_excludes_cheapest():
-    """할인율 = 같은 일정 나머지 직항 중앙값 대비 (사용자 정의 2026-09-13). 경유편은 빠진다."""
+    """할인율 = 같은 일정 2위(다른 항공사 최저 직항) 대비 (사용자 정의 2026-09-14). 경유편은 빠진다."""
     from collector.google_flights_crawler import same_itinerary_stats
     its = [
         {"price": 474200, "stops": 0, "airline": "에어서울", "dep_time": "20:55", "arr_time": "23:40"},
@@ -344,23 +344,49 @@ def test_same_itinerary_stats_nonstop_only_excludes_cheapest():
         {"price": 672100, "stops": 0, "airline": "제주항공", "dep_time": "09:10", "arr_time": "12:10"},
         {"price": 551400, "stops": 1, "airline": "필리핀항공", "dep_time": "20:30", "arr_time": "13:10+1"},
     ]
-    assert same_itinerary_stats(its) == {"nonstop_n": 4, "nonstop_others_median": 577200}
-    assert same_itinerary_stats([its[0]]) == {"nonstop_n": 1, "nonstop_others_median": None}
+    assert same_itinerary_stats(its) == {"nonstop_n": 4, "nonstop_others_median": 577200,
+                                         "runnerup_price": 557600, "runnerup_airline": "진에어"}
+    assert same_itinerary_stats([its[0]]) == {"nonstop_n": 1, "nonstop_others_median": None,
+                                              "runnerup_price": None, "runnerup_airline": ""}
 
 
-def test_same_itin_fields_needs_two_others_and_nonstop():
+def test_runnerup_skips_same_airline_and_keeps_unknown():
+    """2위는 최저가와 **다른 항공사** 중 최저. 같은 항공사 다른 시간대(동일 운임)는 건너뛴다.
+
+    2026-09-14 호치민 실측: 비엣젯 10:50·21:15 둘 다 350,257원 → 그대로 2위로 치면 0%.
+    이름을 못 읽은 항공사는 다른 항공사로 친다(빼면 2위가 비싸져 할인율이 부풀려진다).
+    """
+    from collector.google_flights_crawler import same_itinerary_stats
+    its = [
+        {"price": 350257, "stops": 0, "airline": "비엣젯", "dep_time": "10:50"},
+        {"price": 350257, "stops": 0, "airline": "비엣젯", "dep_time": "21:15"},
+        {"price": 447200, "stops": 0, "airline": "에어프레미아", "dep_time": "19:20"},
+        {"price": 583800, "stops": 0, "airline": "베트남항공", "dep_time": "10:35"},
+    ]
+    st = same_itinerary_stats(its)
+    assert (st["runnerup_price"], st["runnerup_airline"]) == (447200, "에어프레미아")
+    unknown = its[:2] + [{"price": 400000, "stops": 0, "airline": "", "dep_time": "00:10"}] + its[2:]
+    assert same_itinerary_stats(unknown)["runnerup_price"] == 400000
+    # 최저가 항공사를 모르면 2위를 정할 수 없다
+    anon = [{"price": 300000, "stops": 0, "airline": "", "dep_time": "01:00"}] + its
+    assert same_itinerary_stats(anon)["runnerup_price"] is None
+
+
+def test_same_itin_fields_uses_runnerup_and_nonstop():
     from scripts.build_dashboard_data import same_itin_fields
-    ok = same_itin_fields({"price": "474200", "stops": "0", "nonstop_n": "4", "nonstop_others_median": "577200"})
-    assert ok["same_itin_deal_pct"] == 17.8
-    assert same_itin_fields({"price": "474200", "stops": "0", "nonstop_n": "2",
-                             "nonstop_others_median": "557600"})["same_itin_deal_pct"] is None
-    assert same_itin_fields({"price": "474200", "stops": "0"})["same_itin_deal_pct"] is None
-    assert same_itin_fields({"price": "551400", "stops": "1", "nonstop_n": "4",
-                             "nonstop_others_median": "577200"})["same_itin_deal_pct"] is None
+    ok = same_itin_fields({"price": "350257", "stops": "0", "nonstop_n": "11",
+                           "runnerup_price": "447200", "runnerup_airline": "에어프레미아"})
+    assert ok["same_itin_deal_pct"] == 21.7 and ok["runnerup_airline"] == "에어프레미아"
+    old = same_itin_fields({"price": "474200", "stops": "0", "nonstop_n": "4", "nonstop_others_median": "577200"})
+    assert old["same_itin_deal_pct"] is None           # 9/14 이전 수집분: 중앙값으로 대신 채우지 않는다
+    none = same_itin_fields({"price": "474200", "stops": "0"})
+    assert none["same_itin_deal_pct"] is None
+    via = same_itin_fields({"price": "551400", "stops": "1", "runnerup_price": "577200"})
+    assert via["same_itin_deal_pct"] is None           # 경유 행은 대상 아님
 
 
 def test_migrate_12col_prices_to_new_header():
-    """운영 prices.csv 는 12열이다. 18열 헤더로 옮길 때 기존 행이 빈 칸으로 채워져야 한다."""
+    """옛 12열 prices.csv 를 20열 헤더로 옮길 때 기존 행이 빈 칸으로 채워져야 한다."""
     import csv, tempfile
     import scripts.collect as C
     old_header = C.NEW_HEADER[:12]
@@ -377,8 +403,30 @@ def test_migrate_12col_prices_to_new_header():
         finally:
             C.PRICES_FILE = saved
         rows = list(csv.reader(open(f, encoding="utf-8")))
-    assert rows[0] == C.NEW_HEADER and len(rows[0]) == 18
-    assert len(rows[1]) == 18 and rows[1][11] == "에어서울" and rows[1][16:] == ["", ""]
+    assert rows[0] == C.NEW_HEADER and len(rows[0]) == 20
+    assert len(rows[1]) == 20 and rows[1][11] == "에어서울" and rows[1][16:] == ["", "", "", ""]
+
+
+def test_migrate_18col_prices_to_runnerup_header():
+    """9/14 운영 prices.csv 는 18열이다. 2위 2열이 붙어도 기존 통계 값은 그대로여야 한다."""
+    import csv, tempfile
+    import scripts.collect as C
+    with tempfile.TemporaryDirectory() as d:
+        f = Path(d) / "prices.csv"
+        with open(f, "w", newline="", encoding="utf-8") as fh:
+            w = csv.writer(fh); w.writerow(C.NEW_HEADER[:18])
+            w.writerow(["ICN", "DAD", "2026-10-03", "2026-10-11", "474200", "1",
+                        "2026-09-13T00:00:00+00:00", "20:55", "23:40", "0", "2026-10-05", "에어서울",
+                        "", "", "", "0", "11", "781010"])
+        saved = C.PRICES_FILE
+        C.PRICES_FILE = f
+        try:
+            C.migrate_prices_file()
+        finally:
+            C.PRICES_FILE = saved
+        rows = list(csv.reader(open(f, encoding="utf-8")))
+    assert rows[0] == C.NEW_HEADER
+    assert rows[1][16:] == ["11", "781010", "", ""]
 
 
 def main():
