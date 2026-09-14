@@ -600,6 +600,7 @@ def test_blog_render_parses_draft():
         "| 항공사 | 가격 |\n|---|---|\n| **에어서울** | 277,300원 |\n\n"
         "---\n\n"
         "[[CARD:price]]\n\n"
+        "===\n\n"
         "[[PHOTO: 리츠린 공원]]\n"
     )
     meta, body = R.parse_front_matter(draft)
@@ -610,7 +611,8 @@ def test_blog_render_parses_draft():
     blocks = R.parse_body(body)
     kinds = [b["type"] for b in blocks]
     # 표는 이미지 카드, '---' 는 구분선 (2026-09-14: 붙여넣기로는 표가 평문이 된다)
-    assert kinds == ["html", "card", "divider", "card", "photo"], kinds
+    assert kinds == ["html", "card", "divider", "card", "divider", "photo"], kinds
+    assert blocks[2]["style"] == "default" and blocks[4]["style"] == "line1"
     h = blocks[0]["content"]
     assert "<p>첫 줄이에요.<br>둘째 줄이에요.</p>" in h
     assert "<h3>소제목</h3>" in h
@@ -623,7 +625,7 @@ def test_blog_render_parses_draft():
     assert blocks[1]["rows"] == [["항공사", "가격"], ["에어서울", "277,300원"]]   # 구분행·볼드 제거
     assert "277,300원" in R.blocks_to_text(blocks)   # 금액 검증에 표 숫자가 들어간다
     assert blocks[3]["card"] == "price"
-    assert blocks[4]["hint"] == "리츠린 공원"
+    assert blocks[5]["hint"] == "리츠린 공원"
 
 
 def test_blog_render_uses_allowed_tags_only():

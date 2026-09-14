@@ -21,7 +21,8 @@ draft.md 문법 (일부러 작게 유지)
     | a | b |                  -> table
     [[CARD:price]]             -> 자동 생성 가격 카드 PNG
     [[PHOTO: 아오시마 해안]]    -> 사용자가 직접 넣을 사진 자리
-    ---                        -> 구분선 (SmartEditor 구분선 컴포넌트)
+    ---                        -> 구분선 1 (기본)
+    ===                        -> 구분선 2 (큰 섹션 앞)
     표는 이미지 카드(table1, table2…)로 바뀐다 — 붙여넣기로는 평문이 되기 때문
 
 빈 줄이 문단 구분, 문단 안의 줄바꿈은 <br> 로 살린다 (예시 포스팅이 2~3줄씩
@@ -111,9 +112,10 @@ def parse_body(body):
             continue
 
         # 구분선. SmartEditor 의 구분선 컴포넌트로 들어간다 (사용자 지정 2026-09-14).
-        if line == "---":
+        # '---' = 구분선 1(default), '===' = 구분선 2(line1, 큰 섹션 앞 — 여행 파트·입국 정보).
+        if line in ("---", "==="):
             _flush(buf, blocks)
-            blocks.append({"type": "divider"})
+            blocks.append({"type": "divider", "style": "default" if line == "---" else "line1"})
             i += 1
             continue
 
@@ -175,7 +177,7 @@ def parse_body(body):
         para = []
         while i < n and lines[i].strip():
             cur = lines[i].strip()
-            if (cur.startswith(("## ", "- ", "> ", "|")) or cur == "---"
+            if (cur.startswith(("## ", "- ", "> ", "|")) or cur in ("---", "===")
                     or CARD_RE.match(cur) or PHOTO_RE.match(cur)):
                 break
             para.append(_inline(cur))

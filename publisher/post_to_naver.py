@@ -433,35 +433,33 @@ def upload_image(frame, page, path):
 
 HR_COMPONENT = ".se-component.se-horizontalLine"
 HR_OPTION_BUTTON = "button.se-document-toolbar-select-option-button[data-name='horizontal-line']"
-HR_MAIN_BUTTON = "button.se-document-toolbar-icon-select-button[data-name='horizontal-line']"
 
 
-def insert_divider(frame, page):
-    """구분선(기본 모양) 한 줄. 사용자가 손으로 넣던 것과 같은 se-l-default 를 고른다.
+def insert_divider(frame, page, style="default"):
+    """구분선 한 줄. style 은 툴바 옵션의 data-value — default(구분선 1) · line1(구분선 2) …
 
-    툴바 본 버튼은 '마지막으로 고른 모양'을 넣으므로, 옵션 목록을 열어 default 를 누른다.
-    옵션을 못 찾으면 본 버튼으로 넣는다. 넣은 뒤 컴포넌트 수로 확인한다.
+    사용자가 호치민 글에 손으로 넣은 모양이 기준이다 (2026-09-14): 대부분 구분선 1,
+    여행 파트·입국 정보 앞은 구분선 2. 툴바 본 버튼은 '마지막으로 고른 모양'을 넣으므로
+    반드시 옵션 목록(se-toolbar-option-insert-horizontal-line-{style}-button)을 열어 고른다.
+    넣은 뒤 새 컴포넌트의 se-l-{style} 클래스까지 확인한다.
     """
     wait_upload_progress_gone(frame, page)
     caret_to_end(frame, page)
     before = frame.locator(HR_COMPONENT).count()
-    done = False
     try:
         frame.click(HR_OPTION_BUTTON, timeout=5000)
         page.wait_for_timeout(400)
-        opt = frame.locator("button[data-name='horizontal-line'][data-value='default']")
-        if opt.count():
-            opt.first.click(timeout=5000)
-            done = True
-        else:
-            page.keyboard.press("Escape")
-    except Exception:
-        pass
-    if not done:
-        frame.click(HR_MAIN_BUTTON, timeout=10000)
+        frame.click(f"button.se-toolbar-option-insert-horizontal-line-{style}-button", timeout=5000)
+    except Exception as e:
+        raise Failed(f"구분선({style}) 옵션을 누르지 못했다: "
+                     + str(e).strip().splitlines()[0] + describe_popup(frame))
     for _ in range(20):
         if frame.locator(HR_COMPONENT).count() > before:
             page.wait_for_timeout(300)
+            last = frame.locator(HR_COMPONENT).nth(before)
+            cls = last.get_attribute("class") or ""
+            if f"se-l-{style}" not in cls:
+                raise Failed(f"구분선 모양이 {style} 가 아니다: {cls}")
             return
         page.wait_for_timeout(250)
     raise Failed("구분선이 들어가지 않았다." + describe_popup(frame))
@@ -905,8 +903,9 @@ def fill_post(page, post, post_dir, align=ALIGN_DEFAULT, tags=True,
             # 업로드 후 에디터가 포커스를 옮기므로 여기서만 커서를 되돌린다
             caret_to_end(frame, page)
         elif b["type"] == "divider":
-            log(f"{head} 구분선")
-            insert_divider(frame, page)
+            style = b.get("style") or "default"
+            log(f"{head} 구분선 ({style})")
+            insert_divider(frame, page, style)
             caret_to_end(frame, page)
         elif b["type"] == "photo":
             f = photos.get(b["hint"])
