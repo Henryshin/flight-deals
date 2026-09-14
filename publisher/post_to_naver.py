@@ -390,7 +390,24 @@ def set_title(frame, page, title):
     log(f"  제목 확인됨: {got[:40]}")
 
 
+def wait_upload_progress_gone(frame, page, timeout_ms=90000):
+    """'업로드 준비 중입니다' 진행 팝업(se-popup-progress)이 사라질 때까지 기다린다.
+
+    이미지 컴포넌트는 업로드가 끝나기 전에 먼저 생긴다. 컴포넌트 수만 보고 다음 사진
+    버튼을 누르면 진행 팝업에 막혀 멈춘다 (2026-09-14 호치민: 1MB 사진 직후 3번째 사진).
+    """
+    waited = 0
+    while waited < timeout_ms:
+        pop = visible_popup(frame)
+        if not pop or pop.get("name") != "se-popup-progress":
+            return
+        page.wait_for_timeout(500)
+        waited += 500
+    raise Failed("업로드 진행 팝업이 사라지지 않았다." + describe_popup(frame))
+
+
 def upload_image(frame, page, path):
+    wait_upload_progress_gone(frame, page)
     caret_to_end(frame, page)
     pop = describe_popup(frame)
     if pop:
@@ -408,6 +425,7 @@ def upload_image(frame, page, path):
     for _ in range(60):
         if frame.locator(IMAGE_COMPONENT).count() > before:
             page.wait_for_timeout(600)
+            wait_upload_progress_gone(frame, page)
             return
         page.wait_for_timeout(500)
     raise Failed(f"이미지 업로드가 끝나지 않았다: {path}")

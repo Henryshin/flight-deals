@@ -55,6 +55,7 @@ body{{background:#fff;font-family:{FONT_STACK};-webkit-font-smoothing:antialiase
 .hero{{font-size:60px;font-weight:700;line-height:1.05;margin-top:20px;
   letter-spacing:-.02em}}
 .hero small{{font-size:26px;font-weight:600;margin-left:4px}}
+.hero .bag{{font-size:20px;font-weight:600;margin-left:12px;color:{TEXT_MUTED}}}
 .badge{{display:inline-block;margin-top:14px;padding:7px 14px;border-radius:999px;
   font-size:16px;font-weight:600;background:#eaf6ea;color:{STATUS_GOOD}}}
 .badge.up{{background:#fbeaea;color:{STATUS_BAD}}}
@@ -130,13 +131,17 @@ def price_card_html(mat):
     # 나머지 직항 중앙값 대비(9/13)는 숫자가 너무 커 보인다고 반려됐다.
     ru = best.get("runnerup_price")
     ru_airline = (best.get("runnerup_airline") or "").strip()
+    # 수하물 조건이 다른 운임끼리 비교할 때 가격·할인율 옆에 붙이는 고지 (머리말 baggage_note).
+    # 2026-09-14 호치민: 비엣젯 위탁 유료 vs 2위 에어프레미아 위탁 포함 — 숫자만 두면 오해한다.
+    bag = (best.get("baggage_note") or "").strip()
     badge = ""
     if ru and hero_price and str(best.get("stops")) == "0":
         deal = (ru - hero_price) / ru * 100.0
         if deal >= 0.5:
             who = f"{ru_airline} " if ru_airline else ""
             badge = (f"<div class='badge'>▼ 같은 날짜 직항 2위 {who}"
-                     f"{D.krw(ru)}보다 {deal:.0f}% 낮아요</div>")
+                     f"{D.krw(ru)}보다 {deal:.1f}% 낮아요"
+                     f"{f' ({_e(bag)})' if bag else ''}</div>")
 
     stops = "직항" if str(best.get("stops")) == "0" else "경유"
     nights = best.get("nights")
@@ -180,13 +185,16 @@ def price_card_html(mat):
                             _dt.date.fromisoformat(best["return_date"]))
     except (KeyError, TypeError, ValueError):
         pass
-    head = f"{_e(mat['flag'])} {_e(w['label'])} {_e(w['start'])}~{_e(w['end'])}"
+    # 연휴 기간(w start~end)이 아니라 **실제 일정**을 적는다. 연휴 밖에서 출발하는 일정이면
+    # 두 날짜가 달라 독자가 헷갈린다 (2026-09-14 호치민: 연휴 12/24~28 · 일정 12/19~27).
+    head = f"{_e(mat['flag'])} {_e(w['label'])} {_e(best['depart_date'])}~{_e(best['return_date'])}"
     if trip:
         head += f" · {trip} · {stops}"
     return _page(
         f"<div class='eyebrow'>{head}</div>"
         f"<div class='route'>{_e(mat['label'])}</div>"
-        f"<div class='hero'>{D.krw(hero_price)[:-1]}<small>원</small></div>"
+        f"<div class='hero'>{D.krw(hero_price)[:-1]}<small>원</small>"
+        f"{f'<span class=bag>{_e(bag)}</span>' if bag else ''}</div>"
         f"{badge}{strip}"
         f"<div class='rule'></div><div class='grid'>{grid}</div>"
         f"<div class='foot'>왕복 최저가 · {_e(checked or asof)} 기준 · "

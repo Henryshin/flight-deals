@@ -172,6 +172,10 @@ def build_post(draft_path, today=None, with_images=True):
     ra = str(meta.get("runnerup_airline") or "").strip().strip("\"'")
     if ra:
         mat["best"]["runnerup_airline"] = ra
+    # baggage_note: 가격 카드의 가격·할인율 옆 고지 (예: 위탁수하물 별도). 확인한 조건만 적는다.
+    bn = str(meta.get("baggage_note") or "").strip().strip("\"'")
+    if bn:
+        mat["best"]["baggage_note"] = bn
 
     blocks = R.parse_body(body)
     plain = R.blocks_to_text(blocks)
