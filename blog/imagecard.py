@@ -100,6 +100,26 @@ def _e(x):
     return html.escape(str(x))
 
 
+# 연휴 고정 표기 — 제목·태그·카드 머리를 네이버 자동완성에 뜨는 표기 하나로 맞춘다
+# (사용자 승인 2026-09-14, 근거: 항공권특가뉴스형_피드백.md 3장 P0). 공휴일 이름 → 표기.
+# 삼일절·현충일은 미정이라 원래 이름 그대로 둔다. 자동완성은 바뀌므로 연휴 D-120 무렵 재조회.
+HOLIDAY_DISPLAY = {
+    "설날": "설연휴", "추석": "추석연휴", "개천절": "개천절 연휴", "한글날": "10월 연휴",
+    "성탄절": "크리스마스", "신정": "연말연시", "어린이날": "5월", "부처님오신날": "5월",
+    "광복절": "8월 연휴",
+}
+
+
+def holiday_display(label):
+    """'개천절·한글날' 같은 윈도 라벨을 고정 표기로. 같은 표기는 한 번만."""
+    out = []
+    for name in str(label or "").split("·"):
+        v = HOLIDAY_DISPLAY.get(name.strip(), name.strip())
+        if v and v not in out:
+            out.append(v)
+    return "·".join(out)
+
+
 def _page(inner):
     return (f"<!doctype html><meta charset='utf-8'><style>{_BASE_CSS}</style>"
             f"<div id='card'>{inner}</div>")
@@ -188,7 +208,8 @@ def price_card_html(mat):
         pass
     # 연휴 기간(w start~end)이 아니라 **실제 일정**을 적는다. 연휴 밖에서 출발하는 일정이면
     # 두 날짜가 달라 독자가 헷갈린다 (2026-09-14 호치민: 연휴 12/24~28 · 일정 12/19~27).
-    head = f"{_e(mat['flag'])} {_e(w['label'])} {_e(best['depart_date'])}~{_e(best['return_date'])}"
+    head = (f"{_e(mat['flag'])} {_e(holiday_display(w['label']))} "
+            f"{_e(best['depart_date'])}~{_e(best['return_date'])}")
     if trip:
         head += f" · {trip} · {stops}"
     return _page(
@@ -440,7 +461,7 @@ def schedule_card_html(mat):
     nights = best.get("nights")
     trip = f"{nights}박 {nights + 1}일" if isinstance(nights, int) else f"{n}일"
     return _page(
-        f"<div class='eyebrow'>{_e(mat['flag'])} {_e(w['label'])} · {_e(trip)}</div>"
+        f"<div class='eyebrow'>{_e(mat['flag'])} {_e(holiday_display(w['label']))} · {_e(trip)}</div>"
         f"<div class='route'>{dep.month}월 {dep.day}일({_DOW[dep.weekday()]})"
         f" → {ret.month}월 {ret.day}일({_DOW[ret.weekday()]})</div>"
         f"<div class='xl'>"
