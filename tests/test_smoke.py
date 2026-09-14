@@ -781,8 +781,7 @@ def test_same_itinerary_stats_nonstop_only_excludes_cheapest():
         {"price": 672100, "stops": 0, "airline": "제주항공", "dep_time": "09:10", "arr_time": "12:10"},
         {"price": 551400, "stops": 1, "airline": "필리핀항공", "dep_time": "20:30", "arr_time": "13:10+1"},
     ]
-    st = same_itinerary_stats(its)
-    assert st == {"nonstop_n": 4, "nonstop_others_median": 577200}
+    assert same_itinerary_stats(its) == {"nonstop_n": 4, "nonstop_others_median": 577200}
     assert same_itinerary_stats([its[0]]) == {"nonstop_n": 1, "nonstop_others_median": None}
 
 
@@ -796,6 +795,28 @@ def test_same_itin_fields_needs_two_others_and_nonstop():
     assert old["same_itin_deal_pct"] is None           # 9/13 이전 수집분
     via = same_itin_fields({"price": "551400", "stops": "1", "nonstop_n": "4", "nonstop_others_median": "577200"})
     assert via["same_itin_deal_pct"] is None           # 경유 행은 대상 아님
+
+
+def test_migrate_12col_prices_to_new_header():
+    """운영 prices.csv 는 12열이다. 18열 헤더로 옮길 때 기존 행이 빈 칸으로 채워져야 한다."""
+    import csv, tempfile
+    import scripts.collect as C
+    old_header = C.NEW_HEADER[:12]
+    with tempfile.TemporaryDirectory() as d:
+        f = Path(d) / "prices.csv"
+        with open(f, "w", newline="", encoding="utf-8") as fh:
+            w = csv.writer(fh); w.writerow(old_header)
+            w.writerow(["ICN", "DAD", "2026-10-03", "2026-10-11", "474200", "1",
+                        "2026-09-13T00:00:00+00:00", "20:55", "23:40", "0", "2026-10-05", "에어서울"])
+        saved = C.PRICES_FILE
+        C.PRICES_FILE = f
+        try:
+            C.migrate_prices_file()
+        finally:
+            C.PRICES_FILE = saved
+        rows = list(csv.reader(open(f, encoding="utf-8")))
+    assert rows[0] == C.NEW_HEADER and len(rows[0]) == 18
+    assert len(rows[1]) == 18 and rows[1][11] == "에어서울" and rows[1][16:] == ["", ""]
 
 
 def main():
