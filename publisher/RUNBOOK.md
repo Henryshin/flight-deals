@@ -1,4 +1,4 @@
-# 네이버 블로그 발행 런북 `v1.5`
+# 네이버 블로그 발행 런북 `v1.6`
 
 > flight-deals 글 하나를 네이버 블로그에 올리기까지. **실물 SmartEditor 로 검증한 내용만** 적었다.
 > 2026-09-08 첫 실물 발행(개천절 코타키나발루)에서 확인했다.
@@ -17,6 +17,14 @@ python publisher\post_to_naver.py posts\<슬러그> --fresh --blog-id iamyuhyun
 ```
 
 2번이 끝나면 **예약 시각을 잡고 발행 버튼을 누르는 것만** 남는다. 그건 사람이 한다.
+
+**2번을 돌리기 전에 로그인 여부를 먼저 본다.** 크롬이 떠 있어도 네이버 세션이 없으면
+글쓰기 주소가 `nid.naver.com/nidlogin.login` 으로 튕기고, 발행기는 `iframe 'mainFrame' 을
+못 찾았다` 로 멈춘다 (2026-09-16). 한 줄이면 확인된다 — 결과에 `nidlogin` 이 보이면 로그인부터.
+
+```bash
+curl -s http://127.0.0.1:9222/json/list | grep -o '"url": "[^"]*naver[^"]*"'
+```
 
 `photos.json` 은 있는데 사진을 아직 안 받았으면 **2번이 알아서 받는다.** `fetch_photos.py` 를
 따로 돌릴 필요가 없다(받는 것은 에디터를 건드리기 전에 끝낸다). 따로 돌리고 싶으면
@@ -161,6 +169,34 @@ Array.from(document.querySelectorAll('span.se-link'))
 한 번 `.se-popup-alert` 가 사진 버튼 클릭을 30초 재시도하다 죽였다. **재현되지 않았고 원인 미상.**
 지금은 팝업 문구를 에러에 실어 주므로, 또 나면 그 로그를 보고 판단한다.
 
+### 2-15. 예약 날짜 칸은 `readonly` 다 — 타이핑이 조용히 무시된다 ★
+
+`input[class*='input_date']` 에 **`readonly` 속성이 걸려 있다.** `keyboard.type("2026. 09. 17")`
+을 쳐도 예외 없이 값이 **오늘 날짜 그대로** 남는다. 2026-09-16 괌 글에서 9/17 예약이
+9/16 로 잡힐 뻔했고, 검증(`got != want`)이 잡아내서 멈췄다.
+
+시(hour)·분(minute)은 `<select>` 라 `select_option` 이 먹는다. **날짜만 다르다.**
+
+날짜 칸을 클릭하면 **jQuery UI 달력**이 뜬다.
+
+```html
+<div class="ui-datepicker ...">
+  <button class="ui-datepicker-prev ... ui-state-disabled" style="pointer-events:none">
+  <button class="ui-datepicker-next ...">
+  <div class="ui-datepicker-title">
+    <span class="ui-datepicker-year">2026</span>년 <span class="ui-datepicker-month">9월</span>
+  <td class="ui-state-disabled"><button class="ui-state-default" ...>1</button></td>   ← 지난 날짜
+  <td><button class="ui-state-default">17</button></td>                                ← 고를 수 있는 날짜
+```
+
+- **과거로는 못 간다.** `ui-datepicker-prev` 는 `ui-state-disabled` + `pointer-events:none` 이다.
+- 지난 날짜 `td` 에도 같은 것이 걸린다 → `td:not(.ui-state-disabled)` 로 스코프한다.
+- 날짜 버튼 텍스트는 `:text-is('17')` 로 **완전일치**로 잡는다. 부분일치면 `1`·`7` 에도 걸린다.
+- 다른 달이면 `ui-datepicker-next` 를 눌러 옮긴다. 제목의 연·월을 읽어 비교한다
+  (`ui-datepicker-month` 는 `9월` 처럼 '월' 이 붙어 있다).
+
+`_pick_date()` 가 이 일을 한다.
+
 ---
 
 ## 3. 셀렉터
@@ -180,6 +216,11 @@ Array.from(document.querySelectorAll('span.se-link'))
 | 발행 **패널 열기** | `button[class*='publish_btn']` |
 | 발행 **진짜 실행** | `button[class*='confirm_btn']` ← **누르지 말 것** |
 | 태그 입력 | `input[placeholder*="태그"]` |
+| 예약 라디오 | `input[name='radio_time'][value='pre']` |
+| 예약 날짜 | `input[class*='input_date']` ← **readonly**. 클릭해서 달력으로 고른다 (§2-15) |
+| 예약 달력 | `.ui-datepicker` · 연 `.ui-datepicker-year` · 월 `.ui-datepicker-month` · 다음달 `.ui-datepicker-next` |
+| 예약 날짜 셀 | `.ui-datepicker td:not(.ui-state-disabled) button:text-is('<일>')` |
+| 예약 시·분 | `select[class*='hour_option']` · `select[class*='minute_option']` (10분 단위) |
 | 링크(글자에 걸기) | `.se-link-toolbar-button` → `input.se-custom-layer-link-input` → `.se-custom-layer-link-apply-button` |
 | 링크(카드 삽입) | `.se-oglink-toolbar-button` ← 용도가 다름 |
 | 걸린 링크 확인 | `span.se-link` 의 `data-href` (`<a>` 아님) |
@@ -318,6 +359,7 @@ Array.from(document.querySelectorAll('.se-component')).map(...)   # 텍스트·�
 
 | 버전 | 날짜 | 변경 내용 |
 |---|---|---|
+| v1.6 | 2026-09-16 | 예약 **날짜** 칸이 `readonly` 라 타이핑이 무시되는 것을 발견(§2-15). `_pick_date()` 신설 — jQuery UI 달력을 열어 '다음 달'로 옮기고 날짜 버튼을 클릭한다. 괌 글에서 9/17 예약이 9/16 으로 잡힐 뻔했고 기존 검증이 잡아 멈췄다 |
 | v1.0 | 2026-09-08 | 최초 작성. 첫 실물 발행(개천절 코타키나발루)에서 확인한 함정 11가지, 셀렉터 표, 서식·사진·태그 규칙, 남은 수동 작업 정리 |
 | v1.1 | 2026-09-08 | 링크 관련 함정 3가지 추가(에디터 안 링크는 `span.se-link[data-href]`, 글감 패널이 클릭 가로챔, `html_to_paragraphs` 가 `<a>` 를 지움). 예약 링크(`booking_url`) 자동 삽입 절 신설, 셀렉터 표에 링크·글감 항목 추가 |
 | v1.3 | 2026-09-08 | `post_to_naver.py` 가 사진을 알아서 받도록(`ensure_photos`). 사용자가 치는 명령이 3개에서 2개로 줄었다. `--no-fetch` 추가 |
@@ -325,4 +367,4 @@ Array.from(document.querySelectorAll('.se-component')).map(...)   # 텍스트·�
 | v1.4 | 2026-09-08 | §7 재작성 — 하노이 발행본 실측으로 빈 줄 규칙을 표로 확정(이미지 뒤 5/5·이미지 앞 0/5·소제목 뒤 0/5), "사진 앞뒤에 항상"이 틀렸음을 정정. 문단 리듬(2~4줄) 기준과 자동화 경로 명시. 발행 때 지워지는 내용 목록에 `다른 일정 후보` 표 추가 |
 | v1.2 | 2026-09-08 | 링크 정책 확정 — 본문에 거는 링크는 `booking_url` 하나뿐이고 원문 `<a>`(자체 사이트)는 평문으로 두는 것이 **의도된 동작**임을 명시. 로그 문구를 결함처럼 읽히지 않게 수정 |
 
-<sub>네이버 블로그 발행 런북 v1.5 · 2026-09-08 · flight-deals `publisher/`</sub>
+<sub>네이버 블로그 발행 런북 v1.6 · 2026-09-16 · flight-deals `publisher/`</sub>

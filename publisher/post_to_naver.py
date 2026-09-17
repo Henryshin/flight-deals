@@ -164,6 +164,13 @@ CATEGORY_OPTION = "label[class*='radio_label']"
 # 예약 발행. 분은 **10분 단위**만 고를 수 있다 (00·10·20·30·40·50).
 TIME_RESERVE_RADIO = "input[name='radio_time'][value='pre']"
 TIME_DATE_INPUT = "input[class*='input_date']"
+# 날짜 칸은 **readonly** 다 (2026-09-16 실측). keyboard.type 이 조용히 무시되고
+# 값이 오늘로 남는다 — 달력(jQuery UI)을 열어 날짜 버튼을 눌러야 한다.
+# 지난 날짜와 넘길 수 없는 달은 td/버튼에 ui-state-disabled + pointer-events:none 이 걸린다.
+CAL_ROOT = ".ui-datepicker"
+CAL_YEAR = ".ui-datepicker-year"
+CAL_MONTH = ".ui-datepicker-month"
+CAL_NEXT = ".ui-datepicker-next"
 TIME_HOUR_SELECT = "select[class*='hour_option']"
 TIME_MINUTE_SELECT = "select[class*='minute_option']"
 TAG_ITEMS = "[class*='tag_textarea'] [class*='tag__']"
@@ -727,6 +734,41 @@ def set_category(frame, page, name):
     log(f"  카테고리: {got}")
 
 
+def _pick_date(frame, page, dt):
+    """예약 날짜 달력에서 dt 날짜를 클릭한다.
+
+    날짜 입력칸이 readonly 라 타이핑으로는 안 바뀐다 (2026-09-16: 9/17 을 쳤는데
+    9/16 그대로 남아 예약이 당일로 잡힐 뻔했다). 달력을 열고 '다음 달' 로 옮긴 뒤
+    날짜 버튼을 누른다. 과거로는 못 간다 — '이전 달' 은 비활성이다.
+    """
+    frame.locator(TIME_DATE_INPUT).first.click()
+    page.wait_for_timeout(600)
+    if frame.locator(CAL_ROOT).count() == 0:
+        raise Failed("예약 날짜 달력이 열리지 않았다")
+
+    for _ in range(13):
+        y = int(frame.locator(CAL_YEAR).first.inner_text().strip())
+        m = int(frame.locator(CAL_MONTH).first.inner_text().strip().rstrip("월"))
+        if (y, m) == (dt.year, dt.month):
+            break
+        if (y, m) > (dt.year, dt.month):
+            raise Failed(f"달력이 {y}년 {m}월 이라 {dt:%Y-%m} 으로 되돌릴 수 없다")
+        nxt = frame.locator(CAL_NEXT).first
+        if "ui-state-disabled" in (nxt.get_attribute("class") or ""):
+            raise Failed(f"달력을 {dt:%Y-%m} 까지 넘길 수 없다 (현재 {y}년 {m}월)")
+        nxt.click()
+        page.wait_for_timeout(400)
+    else:
+        raise Failed(f"달력을 {dt:%Y-%m} 으로 옮기지 못했다")
+
+    day = frame.locator(
+        f"{CAL_ROOT} td:not(.ui-state-disabled) button:text-is('{dt.day}')").first
+    if day.count() == 0:
+        raise Failed(f"달력에서 {dt:%Y-%m-%d} 을 고를 수 없다 (지난 날짜이거나 비활성)")
+    day.click()
+    page.wait_for_timeout(700)
+
+
 def set_schedule(frame, page, when):
     """예약 발행 시각을 지정한다. **발행 버튼은 여전히 누르지 않는다.**
 
@@ -749,11 +791,7 @@ def set_schedule(frame, page, when):
         raise Failed("예약 날짜 입력칸을 못 찾았다 ('예약'이 안 켜졌을 수 있다)")
     want_date = dt.strftime("%Y. %m. %d")
     if box.input_value().strip() != want_date:
-        box.click()
-        page.keyboard.press("Control+a")
-        page.keyboard.type(want_date, delay=20)
-        page.keyboard.press("Escape")     # 달력 팝업을 닫는다
-        page.wait_for_timeout(600)
+        _pick_date(frame, page, dt)
     frame.locator(TIME_HOUR_SELECT).first.select_option(dt.strftime("%H"))
     frame.locator(TIME_MINUTE_SELECT).first.select_option(dt.strftime("%M"))
     page.wait_for_timeout(500)

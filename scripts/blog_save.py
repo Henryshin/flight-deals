@@ -50,6 +50,10 @@ def known_prices(mat):
     for k in ("nonstop_others_median", "runnerup_price"):
         if mat["best"].get(k):
             vals.add(int(mat["best"][k]))
+    # 머리말 checked_prices: 구글 항공권 화면에서 직접 확인한 다른 금액들.
+    # price / runnerup_price 와 같은 규칙 — 화면을 보고 적은 값만 넣는다.
+    for v in mat.get("checked_prices") or []:
+        vals.add(int(v))
     if h.get("wow"):
         vals.update({int(h["wow"]["now"]), int(h["wow"]["prev"])})
     # 두 값의 차이도 글에 자주 쓴다 ("21만원 더 싸다")
@@ -172,6 +176,21 @@ def build_post(draft_path, today=None, with_images=True):
     ra = str(meta.get("runnerup_airline") or "").strip().strip("\"'")
     if ra:
         mat["best"]["runnerup_airline"] = ra
+    # checked_prices: 자료에는 없지만 **구글 항공권 화면에서 직접 확인한** 금액들.
+    # 최저가가 다구간(항공권 2장)일 때 "단일 항공사 왕복은 얼마인가" 처럼, 비교 대상이
+    # 수집 데이터 밖에 있는 경우가 있다 (2026-09-16 괌: 단일 진에어 왕복 503,200원).
+    # 여기 적은 값만 본문 금액 검증을 통과한다. price 와 같이 조회 화면을 보고 적는다.
+    cp = meta.get("checked_prices") or []
+    if isinstance(cp, str):
+        cp = [x for x in cp.split(",") if x.strip()]
+    checked = []
+    for v in cp:
+        v = str(v).strip().strip("\"'").replace(",", "")
+        if not v.isdigit():
+            raise DraftInvalid(f"  - 머리말 checked_prices 는 숫자 목록이어야 한다: {v}")
+        checked.append(int(v))
+    if checked:
+        mat["checked_prices"] = checked
     # baggage_note: 가격 카드의 가격·할인율 옆 고지 (예: 위탁수하물 별도). 확인한 조건만 적는다.
     bn = str(meta.get("baggage_note") or "").strip().strip("\"'")
     if bn:
