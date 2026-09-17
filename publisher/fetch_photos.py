@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""result/<슬러그>/photos.json 에 적힌 위키미디어 커먼즈 사진을 내려받는다.
+"""machine/<슬러그>/photos.json 에 적힌 위키미디어 커먼즈 사진을 내려받는다.
 
-    python publisher/fetch_photos.py result/2026-09-08-icn-bki-2026-10-05
+    python publisher/fetch_photos.py machine/2026-09-08-icn-bki-2026-10-05
 
 여행 사진은 **커먼즈에서 라이선스를 확인한 것만** 쓴다. 아무 데서나 가져오면
 저작권 문제가 생기고, 네이버는 출처 없는 사진을 저품질 신호로도 본다.
@@ -121,7 +121,7 @@ def credit_lines(manifest):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="커먼즈 사진을 내려받는다")
-    ap.add_argument("post_dir", help="result/<슬러그> 경로")
+    ap.add_argument("post_dir", help="machine/<슬러그> 경로")
     args = ap.parse_args(argv)
     post_dir = Path(args.post_dir).resolve()
     if not (post_dir / "photos.json").exists():

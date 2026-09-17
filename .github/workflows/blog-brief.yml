@@ -1,10 +1,10 @@
 name: Blog brief
 
-# 매일 아침 '오늘 쓸 만한 글감' 후보를 골라 result/_brief/ 에 커밋한다.
+# 매일 아침 '오늘 쓸 만한 글감' 후보를 골라 machine/_brief/ 에 커밋한다.
 # 글 자체는 쓰지 않는다 — 글은 Claude Code 세션에서 사람이 명령할 때 쓴다
 # (.claude/skills/blog-post/SKILL.md).
 #
-# 이 잡의 커밋은 result/** 만 건드린다. build.yml 의 push 트리거는 data/** 만
+# 이 잡의 커밋은 machine/** 만 건드린다. build.yml 의 push 트리거는 data/** 만
 # 보므로 대시보드 재빌드를 유발하지 않는다 (워크플로별 커밋 경로 분리 관례).
 
 on:
@@ -44,11 +44,11 @@ jobs:
             python scripts/blog_brief.py
           fi
 
-      - name: Commit and push result
+      - name: Commit and push machine
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add result
+          git add machine
           git diff --cached --quiet || git commit -m "chore: 오늘의 블로그 소재 브리핑"
           for i in 1 2 3; do
             if git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push; then

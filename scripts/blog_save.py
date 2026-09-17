@@ -1,4 +1,4 @@
-"""세션에서 쓴 초안(draft.md)을 result/ 에 저장하고 가격 카드를 렌더한다.
+"""세션에서 쓴 초안(draft.md)을 machine/ 에 저장하고 가격 카드를 렌더한다.
 
     python scripts/blog_save.py draft.md
     python scripts/blog_save.py draft.md --dry-run      # 쓰지 않고 검사만
@@ -291,7 +291,7 @@ def write_post(post, png, posts_dir=None):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="초안을 result/ 에 저장")
+    ap = argparse.ArgumentParser(description="초안을 machine/ 에 저장")
     ap.add_argument("draft", help="초안 마크다운 경로")
     ap.add_argument("--date", help="발행 기준일 YYYY-MM-DD")
     ap.add_argument("--dry-run", action="store_true", help="쓰지 않고 검사만")

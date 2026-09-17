@@ -25,7 +25,7 @@ C:\Users\klplm\Desktop\유현\01.개인\0.사다리 올라가기\01.주식리서
 `scripts/blog_save.py` 가 글 하나를 이렇게 남깁니다.
 
 ```
-result/<날짜>-<노선>-<연휴>/
+machine/<날짜>-<노선>-<연휴>/
   post.json      제목 · 태그 · 블록 배열 (정본)
   body.html      미리보기 / 수동 복붙용
   body.txt       평문
@@ -44,7 +44,7 @@ result/<날짜>-<노선>-<연휴>/
   (`p br h3 strong em ul ol li table thead tbody tr th td a blockquote`)
 - `card` — 자동 생성된 가격 카드 PNG. 절대경로로 업로드하면 됩니다
 - `photo` — 여행 사진 자리. 두 가지로 채웁니다.
-  - `result/<슬러그>/photos.json` 에 커먼즈 파일을 적고 `fetch_photos.py` 를 돌리면
+  - `machine/<슬러그>/photos.json` 에 커먼즈 파일을 적고 `fetch_photos.py` 를 돌리면
     라이선스를 확인해 받아 두고, `post_to_naver.py` 가 자리마다 넣습니다
   - 그 파일이 없으면 예전처럼 `[여기에 사진: ...]` 자리 표시만 넣고, 사람이 채웁니다
 
@@ -60,13 +60,13 @@ cd "...\98.네이버블로그자동화_v1.0"; python login.py
 
 :: 2. 네이버 블로그 글쓰기 화면을 연 상태에서
 cd C:\side_PJT\Blog_flight\flight-deals
-python publisher\post_to_naver.py result\2026-09-08-icn-bki-2026-10-05
+python publisher\post_to_naver.py machine\2026-09-08-icn-bki-2026-10-05
 
 :: (보통은 필요 없다) post_to_naver.py 가 알아서 받는다. 따로 받고 싶을 때만
-python publisher\fetch_photos.py result\2026-09-08-icn-bki-2026-10-05
+python publisher\fetch_photos.py machine\2026-09-08-icn-bki-2026-10-05
 
 :: 이미 뭔가 써 있는 화면에서 다시 돌릴 때
-python publisher\post_to_naver.py result\2026-09-08-icn-bki-2026-10-05 --fresh
+python publisher\post_to_naver.py machine\2026-09-08-icn-bki-2026-10-05 --fresh
 ```
 
 > ✅ **2026-09-08, 실물 SmartEditor 에서 통과했습니다.** 제목 · 문단 78개 ·

@@ -1,8 +1,8 @@
 """포스트 저장소와 원장(ledger).
 
-result/ 아래에 글 한 편이 디렉터리 하나로 들어간다. 워크플로 커밋 경로를 서로
-겹치지 않게 유지하는 저장소 관례에 따라, 블로그 관련 산출물은 전부 result/ 안에
-둔다 (collect.yml -> data/, build.yml -> docs/data/, blog -> result/).
+machine/ 아래에 글 한 편이 디렉터리 하나로 들어간다. 워크플로 커밋 경로를 서로
+겹치지 않게 유지하는 저장소 관례에 따라, 블로그 관련 산출물은 전부 machine/ 안에
+둔다 (collect.yml -> data/, build.yml -> docs/data/, blog -> machine/).
 """
 import json
 import re
@@ -12,7 +12,7 @@ from pathlib import Path
 
 from blog.data import KST, ROOT
 
-POSTS_DIR = ROOT / "result"
+POSTS_DIR = ROOT / "machine"
 LEDGER_FILE = POSTS_DIR / "_ledger.json"
 BRIEF_DIR = POSTS_DIR / "_brief"
 
