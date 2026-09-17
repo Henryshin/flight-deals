@@ -264,7 +264,9 @@ def build_post(draft_path, today=None, with_images=True):
         "category": meta.get("category", ""),
         # 예약 발행 시각 'YYYY-MM-DD HH:MM' (KST, 분은 10분 단위).
         # 발행기가 패널에 넣어 주고, 발행 버튼은 여전히 사람이 누른다.
-        "publish_at": meta.get("publish_at", ""),
+        # 머리말 파서는 따옴표를 안 벗긴다. '2026-09-18 07:30' 으로 적으면 따옴표째 넘어가
+        # 발행기가 형식 오류로 멈췄다 (2026-09-17 마카오).
+        "publish_at": str(meta.get("publish_at") or "").strip().strip("\"'"),
         # 오는 편 (기록용). 카드는 이 값을 그려 넣는다.
         "return_flight": {k: mat["best"].get(k, "")
                           for k in ("ret_dep_time", "ret_arr_time", "ret_airline")},

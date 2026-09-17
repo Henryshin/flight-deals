@@ -777,7 +777,7 @@ def set_schedule(frame, page, when):
     if not when:
         return
     try:
-        dt = datetime.strptime(when.strip(), "%Y-%m-%d %H:%M")
+        dt = datetime.strptime(when.strip().strip("\"'"), "%Y-%m-%d %H:%M")
     except ValueError as e:
         raise Failed(f"publish_at 형식이 'YYYY-MM-DD HH:MM' 이 아니다: {when!r}") from e
     if dt.minute % 10:
