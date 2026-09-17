@@ -1,9 +1,9 @@
-"""posts/<슬러그>/post.json 을 네이버 블로그 에디터에 채운다 (CDP 연결).
+"""result/<슬러그>/post.json 을 네이버 블로그 에디터에 채운다 (CDP 연결).
 
     # 1. 사용자 터미널에서 크롬을 원격 디버깅 포트로 띄우고 직접 로그인
     #    (98.네이버블로그자동화_v1.0/login.py 가 하는 일)
     # 2. 그 다음
-    python publisher/post_to_naver.py posts/2026-09-08-icn-bki-2026-10-05
+    python publisher/post_to_naver.py result/2026-09-08-icn-bki-2026-10-05
 
 제목·본문·이미지까지만 채우고 **멈춘다.** 저장도 발행도 하지 않는다.
 검토·태그·발행은 사람 몫이다.
@@ -1059,7 +1059,7 @@ def find_editor_page(ctx, match):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="post.json 을 네이버 에디터에 채운다")
-    ap.add_argument("post_dir", help="posts/<슬러그> 경로")
+    ap.add_argument("post_dir", help="result/<슬러그> 경로")
     ap.add_argument("--cdp", default=CDP_URL, help=f"CDP 엔드포인트 (기본 {CDP_URL})")
     ap.add_argument("--blog-id", help="글쓰기 페이지가 안 열려 있을 때 직접 연다")
     ap.add_argument("--match", default="blog.naver.com",

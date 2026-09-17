@@ -757,7 +757,7 @@ def test_blog_airline_compare_uses_one_snapshot():
 
 
 def test_blog_posts_match_ledger():
-    """posts/ 의 글과 원장이 어긋나지 않아야 한다 (실제 파일 정합성)."""
+    """result/ 의 글과 원장이 어긋나지 않아야 한다 (실제 파일 정합성)."""
     import json
     from blog import store as S
 
