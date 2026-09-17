@@ -22,6 +22,7 @@ from blog import data as D
 from blog import imagecard as IC
 from blog import render as R
 from blog import store as S
+import holidays as HD
 
 REQUIRED = ("title", "monitor_id", "window_id")
 PRICE_RE = re.compile(r"([0-9]{1,3}(?:,[0-9]{3})+)\s*원")
@@ -145,6 +146,21 @@ def build_post(draft_path, today=None, with_images=True):
             v = v[1:-1].strip()
         if v:
             mat["best"][k] = v
+
+    # 연차는 오는 편 시각까지 보고 다시 센다. 자료의 leave_days 는 수집값 기준이라
+    # 오는 편 시각이 비어 있으면 여행 기간 평일만 센 값이다. 한국 도착이 밤 10시를
+    # 넘으면 다음 평일도 연차로 친다 (사용자 지정 2026-09-17, holidays.late_return_leave_day).
+    b = mat["best"]
+    try:
+        d1 = date.fromisoformat(b["depart_date"])
+        d2 = date.fromisoformat(b["return_date"])
+    except (KeyError, TypeError, ValueError):
+        pass
+    else:
+        b["leave_days"] = HD.count_leave_days(d1, d2, b.get("ret_dep_time", ""),
+                                              b.get("ret_arr_time", ""))
+        late = HD.late_return_leave_day(d2, b.get("ret_dep_time", ""), b.get("ret_arr_time", ""))
+        b["late_return_leave_date"] = late.isoformat() if late else ""
 
     # price: **구글 항공권에서 직접 확인한 왕복가**. 수집값이 묵어 실제와 벌어졌을 때만 쓴다.
     # 수집기는 4시간마다 돌지만 노선·일정 조합을 매번 다 훑지는 못해서, 인기 구간은

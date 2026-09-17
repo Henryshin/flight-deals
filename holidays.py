@@ -71,14 +71,63 @@ def is_day_off(d: date) -> bool:
     return d.weekday() >= 5 or d in _HOLIDAY_SET
 
 
-def count_leave_days(depart: date, return_: date) -> int:
-    """여행 기간 중 평일이면서 공휴일이 아닌 날 수 (= 연차를 써야 하는 날 수)."""
+def _count_weekday_leave(depart: date, return_: date) -> int:
     n = 0
     d = depart
     while d <= return_:
         if not is_day_off(d):
             n += 1
         d += timedelta(days=1)
+    return n
+
+
+# 귀국 비행기가 한국에 이 시각보다 늦게 떨어지면 그다음 날도 연차로 친다.
+# 사용자 지정 (2026-09-17): 푸꾸옥 12/28 18:05 출발 → 12/29(화) 01:20 도착인데
+# 12/24~12/28 평일만 세서 "연차 2일"이 나왔다. 새벽에 도착해 출근하라는 계산이다.
+LATE_RETURN_MINUTES = 22 * 60
+
+
+def _hhmm(s):
+    """'01:20' / '07:05+1' -> (분, +일수). 못 읽으면 None."""
+    import re
+    m = re.match(r"\s*(\d{1,2}):(\d{2})\s*(?:\+(\d))?", str(s or ""))
+    if not m:
+        return None
+    return int(m.group(1)) * 60 + int(m.group(2)), int(m.group(3) or 0)
+
+
+def late_return_leave_day(return_: date, ret_dep_time="", ret_arr_time=""):
+    """귀국 다음 날을 연차로 쳐야 하면 그 날짜, 아니면 None.
+
+    return_ 는 **현지 출발일**이다 (수집 데이터의 return_date). 한국 도착 시각이
+    그날 22:00 를 넘으면(다음 날 새벽 도착 포함) 다음 날도 쉬어야 한다고 본다.
+    도착 날짜는 `+1` 표기가 있으면 그걸 따르고, 없으면 도착 시각이 출발 시각보다
+    이르면 자정을 넘긴 것으로 본다 (단거리 노선이라 24시간 넘는 비행은 없다).
+    다음 날이 주말·공휴일이면 연차가 들지 않으므로 None.
+    """
+    arr = _hhmm(ret_arr_time)
+    if arr is None:
+        return None
+    arr_min, plus = arr
+    dep = _hhmm(ret_dep_time)
+    if not plus and dep is not None and arr_min < dep[0]:
+        plus = 1
+    if not plus and arr_min <= LATE_RETURN_MINUTES:
+        return None
+    nxt = return_ + timedelta(days=1)
+    return None if is_day_off(nxt) else nxt
+
+
+def count_leave_days(depart: date, return_: date,
+                     ret_dep_time="", ret_arr_time="") -> int:
+    """연차를 써야 하는 날 수.
+
+    여행 기간 중 평일이면서 공휴일이 아닌 날 + 귀국 도착이 밤 10시를 넘으면 그다음
+    평일 하루 (late_return_leave_day). 오는 편 시각을 모르면 앞의 것만 센다.
+    """
+    n = _count_weekday_leave(depart, return_)
+    if late_return_leave_day(return_, ret_dep_time, ret_arr_time):
+        n += 1
     return n
 
 
@@ -91,7 +140,7 @@ def count_free_days(depart: date, return_: date) -> int:
     같은 연차 소모로 이 값이 클수록(=여행일 중 연차 아닌 날이 많을수록) 경제적인
     일정이다 (대시보드 비용-편익 계산의 편익 축).
     """
-    return (return_ - depart).days + 1 - count_leave_days(depart, return_)
+    return (return_ - depart).days + 1 - _count_weekday_leave(depart, return_)
 
 
 def holiday_name(d: date) -> str:

@@ -220,7 +220,9 @@ def _pair_entry(row, route, prev_price=None):
     d1 = date.fromisoformat(row["depart_date"])
     d2 = date.fromisoformat(row["return_date"])
     nights = (d2 - d1).days
-    leave = count_leave_days(d1, d2)
+    # 귀국 도착이 밤 10시를 넘으면 다음 평일도 연차로 친다 (holidays.late_return_leave_day).
+    # 오는 편 수집이 꺼진 동안은 시각이 비어 있어 여행 기간 평일만 센다.
+    leave = count_leave_days(d1, d2, row.get("ret_dep_time", ""), row.get("ret_arr_time", ""))
     return {
         "price": row["price"],
         "prev_price": prev_price,

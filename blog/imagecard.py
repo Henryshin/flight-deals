@@ -203,7 +203,8 @@ def price_card_html(mat):
     strip = ""
     try:
         strip = _strip_html(_dt.date.fromisoformat(best["depart_date"]),
-                            _dt.date.fromisoformat(best["return_date"]))
+                            _dt.date.fromisoformat(best["return_date"]),
+                            _late_day(best))
     except (KeyError, TypeError, ValueError):
         pass
     # 연휴 기간(w start~end)이 아니라 **실제 일정**을 적는다. 연휴 밖에서 출발하는 일정이면
@@ -373,13 +374,22 @@ DAY_KINDS = {
 _DOW = ["월", "화", "수", "목", "금", "토", "일"]
 
 
-def _strip_html(dep, ret):
+def _late_day(best):
+    """귀국 도착이 밤 10시를 넘어 연차로 치는 다음 날 (blog_save 가 채운다). 없으면 None."""
+    try:
+        v = best.get("late_return_leave_date")
+        return _dt.date.fromisoformat(v) if v else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _strip_html(dep, ret, late=None):
     """일정 스트립 **한 행**. 칸마다 날짜+요일이 들어가고 색이 종류를 말한다.
 
     예전에는 '날짜'와 '구분' 두 행이었는데 표가 무겁다는 지적을 받아 한 행으로 합쳤다
     (2026-09-09). 종류는 색으로만 구분하고 아래 범례가 뜻을 설명한다.
     """
-    days = _trip_days(dep, ret)
+    days = _trip_days(dep, ret, late)
     count = {k: sum(1 for _, kk in days if kk == k) for k in DAY_KINDS}
     cells = []
     for d, kind in days:
@@ -400,8 +410,12 @@ def _strip_html(dep, ret):
             f"<div class='xl-legend'>{legend}</div>")
 
 
-def _trip_days(depart, ret):
-    """[(date, kind)] — 공휴일이 주말보다 우선한다 (개천절이 토요일인 해가 있다)."""
+def _trip_days(depart, ret, late=None):
+    """[(date, kind)] — 공휴일이 주말보다 우선한다 (개천절이 토요일인 해가 있다).
+
+    late: 귀국 도착이 밤 10시를 넘어 연차로 치는 다음 날. 맨 뒤에 연차 칸으로 붙인다
+    (사용자 지정 2026-09-17).
+    """
     import holidays as HD
     hol = HD._all_holidays()
     out, d = [], depart
@@ -414,6 +428,8 @@ def _trip_days(depart, ret):
             kind = "leave"
         out.append((d, kind))
         d += _dt.timedelta(days=1)
+    if late and late > ret:
+        out.append((late, "leave"))
     return out
 
 
@@ -433,7 +449,8 @@ def schedule_card_html(mat):
     if ret < dep:
         return None
 
-    days = _trip_days(dep, ret)
+    late = _late_day(best)
+    days = _trip_days(dep, ret, late)
     n = len(days)
     count = {k: sum(1 for _, kk in days if kk == k) for k in DAY_KINDS}
 
@@ -471,7 +488,9 @@ def schedule_card_html(mat):
         f"</tbody></table></div>"
         f"<div class='xl-legend'>{legend}</div>"
         f"<div class='foot'>회색 칸만 연차를 쓰면 돼요. "
-        f"빨강은 공휴일, 파랑은 주말이라 원래 쉬는 날이에요</div>"
+        f"빨강은 공휴일, 파랑은 주말이라 원래 쉬는 날이에요"
+        + (f"<br>마지막 회색 칸({late.month}/{late.day})은 밤늦게 귀국한 다음 날이라 연차로 쳤어요" if late else "")
+        + "</div>"
     )
 
 
