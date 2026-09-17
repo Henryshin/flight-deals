@@ -1,9 +1,9 @@
-"""machine/<슬러그>/post.json 을 네이버 블로그 에디터에 채운다 (CDP 연결).
+"""result/<날짜>_<도시>/post.json 을 네이버 블로그 에디터에 채운다 (CDP 연결).
 
     # 1. 사용자 터미널에서 크롬을 원격 디버깅 포트로 띄우고 직접 로그인
     #    (98.네이버블로그자동화_v1.0/login.py 가 하는 일)
     # 2. 그 다음
-    python publisher/post_to_naver.py machine/2026-09-08-icn-bki-2026-10-05
+    python publisher/post_to_naver.py ../result/2026-09-08_코타키나발루
 
 제목·본문·이미지까지만 채우고 **멈춘다.** 저장도 발행도 하지 않는다.
 검토·태그·발행은 사람 몫이다.
@@ -865,7 +865,11 @@ def ensure_photos(post_dir, allow_fetch=True):
     if credits.exists():
         try:
             manifest = json.loads(credits.read_text(encoding="utf-8"))
-            need = any(not (post_dir / m["file"]).exists() for m in manifest)
+            spec = json.loads((post_dir / "photos.json").read_text(encoding="utf-8"))
+            have = {m["hint"] for m in manifest}
+            # photos.json 에 사진을 더 적었으면(원고에 사진 자리를 추가한 경우) 다시 받는다
+            need = (any(not (post_dir / m["file"]).exists() for m in manifest)
+                    or any(s["hint"] not in have for s in spec))
         except Exception:
             need = True
     if not need:
@@ -1059,7 +1063,7 @@ def find_editor_page(ctx, match):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="post.json 을 네이버 에디터에 채운다")
-    ap.add_argument("post_dir", help="machine/<슬러그> 경로")
+    ap.add_argument("post_dir", help="result/<날짜>_<도시> 폴더 경로")
     ap.add_argument("--cdp", default=CDP_URL, help=f"CDP 엔드포인트 (기본 {CDP_URL})")
     ap.add_argument("--blog-id", help="글쓰기 페이지가 안 열려 있을 때 직접 연다")
     ap.add_argument("--match", default="blog.naver.com",
@@ -1087,6 +1091,24 @@ def main(argv=None):
         print(f"post.json 이 없다: {pj}", file=sys.stderr)
         return 1
     post = json.loads(pj.read_text(encoding="utf-8"))
+
+    # 원고(<폴더>.md)가 post.json 을 만든 뒤에 바뀌었으면 먼저 다시 저장한다.
+    # 사람이 고치는 파일은 원고 하나뿐이고, 발행은 항상 그 최신본으로 한다
+    # (사용자 지정 2026-09-17 — 고친 원고가 반영되지 않은 채 채워질 뻔했다).
+    src = post_dir / (post.get("source_md") or f"{post_dir.name}.md")
+    if src.exists():
+        import hashlib
+        import subprocess
+        sha = hashlib.sha256(src.read_bytes()).hexdigest()
+        if sha != post.get("source_sha256"):
+            log(f"원고가 바뀌었다 -> blog_save 로 다시 만든다: {src.name}")
+            save = Path(__file__).resolve().parent.parent / "scripts" / "blog_save.py"
+            rc = subprocess.run([sys.executable, str(save), str(src)]).returncode
+            if rc != 0:
+                print("원고 재저장이 실패했다 — 에디터를 건드리지 않는다. 위 오류를 고친 뒤 다시 실행",
+                      file=sys.stderr)
+                return 1
+            post = json.loads(pj.read_text(encoding="utf-8"))
 
     # 브라우저를 건드리기 전에 사진부터 확보한다.
     ensure_photos(post_dir, allow_fetch=not args.no_fetch)

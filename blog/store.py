@@ -1,10 +1,14 @@
 """포스트 저장소와 원장(ledger).
 
-machine/ 아래에 글 한 편이 디렉터리 하나로 들어간다. 워크플로 커밋 경로를 서로
-겹치지 않게 유지하는 저장소 관례에 따라, 블로그 관련 산출물은 전부 machine/ 안에
-둔다 (collect.yml -> data/, build.yml -> docs/data/, blog -> machine/).
+글 한 편 = 저장소 **밖** `Blog_flight/result/<날짜>_<도시>/` 디렉터리 하나.
+원고(`<날짜>_<도시>.md`)와 발행용 파일(post.json·body·카드·사진)이 같은 폴더에 있고,
+사람이 고치는 파일은 원고 하나뿐이다 (사용자 지정 2026-09-17 — 저장소 안 사본과
+result 사본이 따로 있어 고친 원고가 발행에 반영되지 않을 뻔했다).
+BLOG_RESULT_DIR 환경변수로 위치를 바꿀 수 있다 (CI 등).
 """
+import hashlib
 import json
+import os
 import re
 import unicodedata
 from datetime import datetime
@@ -12,7 +16,7 @@ from pathlib import Path
 
 from blog.data import KST, ROOT
 
-POSTS_DIR = ROOT / "machine"
+POSTS_DIR = Path(os.environ.get("BLOG_RESULT_DIR") or ROOT.parent / "result")
 LEDGER_FILE = POSTS_DIR / "_ledger.json"
 BRIEF_DIR = POSTS_DIR / "_brief"
 
@@ -47,6 +51,30 @@ def post_slug(day, monitor_id, window_id=None):
     if window_id:
         parts.append(slugify(window_id, "window"))
     return "-".join(parts)
+
+
+_BAD_PATH_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
+
+
+def city_name(dest_ko):
+    """'타이페이(타오위안)' -> '타이페이'. 폴더 이름에 못 쓰는 글자와 공백을 뺀다."""
+    s = re.sub(r"\(.*?\)", "", str(dest_ko or ""))
+    s = _BAD_PATH_CHARS.sub("", s).replace(" ", "").strip(".")
+    return s or "post"
+
+
+def post_folder(day, dest_ko):
+    """'2026-09-17_마카오' 형태의 디렉터리 이름. 원고 파일 이름도 이것 + '.md'."""
+    return f"{day.isoformat()}_{city_name(dest_ko)}"
+
+
+def source_sha256(path):
+    """원고 파일 해시. post.json 에 남겨 두고 발행기가 원고 변경을 알아챈다."""
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def is_post_dir(d):
+    return Path(d).is_dir() and (Path(d) / "post.json").exists()
 
 
 def post_dir(slug, posts_dir=None):

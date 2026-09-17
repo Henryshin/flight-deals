@@ -8,7 +8,7 @@
     python scripts/blog_brief.py --material ICN-KMI --window 2026-09-24
     python scripts/blog_brief.py --date 2026-09-07 --stdout
 
-기본 실행은 machine/_brief/YYYY-MM-DD.md 에 브리핑을 쓴다 (GitHub Actions 용).
+기본 실행은 result/_brief/YYYY-MM-DD.md (저장소 밖 Blog_flight/result) 에 브리핑을 쓴다 (GitHub Actions 용).
 """
 import argparse
 import json
@@ -310,7 +310,7 @@ def main(argv=None):
         out = S.BRIEF_DIR / f"{today.isoformat()}.md"
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(md, encoding="utf-8")
-        print(f"\n-> {out.relative_to(D.ROOT)}", file=sys.stderr)
+        print(f"\n-> {out}", file=sys.stderr)
         summary = os.environ.get("GITHUB_STEP_SUMMARY")
         if summary:
             Path(summary).write_text(md, encoding="utf-8")

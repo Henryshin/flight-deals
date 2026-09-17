@@ -757,14 +757,14 @@ def test_blog_airline_compare_uses_one_snapshot():
 
 
 def test_blog_posts_match_ledger():
-    """machine/ 의 글과 원장이 어긋나지 않아야 한다 (실제 파일 정합성)."""
+    """result/ 의 글과 원장이 어긋나지 않아야 한다 (실제 파일 정합성)."""
     import json
     from blog import store as S
 
     if not S.POSTS_DIR.exists():
         return
-    dirs = {d.name for d in S.POSTS_DIR.iterdir()
-            if d.is_dir() and not d.name.startswith("_")}
+    # result/ 에는 글 말고도 조사 문서·이미지 폴더가 같이 있다 — post.json 있는 폴더만 글이다
+    dirs = {d.name for d in S.POSTS_DIR.iterdir() if S.is_post_dir(d)}
     led = {p["slug"] for p in S.load_ledger().get("posts", [])}
     assert dirs <= led, f"원장에 없는 글: {sorted(dirs - led)}"
     for d in dirs:

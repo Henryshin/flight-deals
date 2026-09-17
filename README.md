@@ -18,11 +18,11 @@ tests/test_smoke.py    # 브라우저 없이 도는 스모크 테스트 (python 
 
 blog/                  # 블로그 글감 추출·검증·카드 렌더 (표준 라이브러리 + playwright)
 scripts/blog_brief.py  # 오늘 쓸 만한 소재 브리핑 / 소재별 상세 자료
-scripts/blog_save.py   # 세션에서 쓴 초안 → machine/ 저장 + 가격 카드 PNG
-machine/                 # 생성된 글과 브리핑 (blog-brief.yml 이 커밋하는 유일한 경로)
+scripts/blog_save.py   # result/<날짜>_<도시>/<날짜>_<도시>.md 원고 → 같은 폴더에 post.json·카드 PNG
+../result/              # 저장소 밖. 글 폴더(원고+발행용 파일)·브리핑·원장 (BLOG_RESULT_DIR 로 변경 가능)
 publisher/README.md    # 발행은 별도 검증 도구가 담당 — 여기 자동화 코드 없음
 .claude/skills/blog-post/  # 글을 쓸 때 따르는 문체·구조 규칙
-.github/workflows/blog-brief.yml  # 매일 07:00 KST 소재 브리핑 (machine/ 만 커밋)
+.github/workflows/blog-brief.yml  # 매일 07:00 KST 소재 브리핑 (CI 에서는 brief/ 만 커밋)
 ```
 
 수집과 빌드가 분리되어 있어서:
@@ -118,10 +118,10 @@ publisher/README.md    # 발행은 별도 검증 도구가 담당 — 여기 자
 
 blog-brief.yml (매일 07:00 KST)
   └ scripts/blog_brief.py
-      └ machine/_brief/YYYY-MM-DD.md ──▶ "오늘 이거 써줘"
+      └ result/_brief/YYYY-MM-DD.md ──▶ "오늘 이거 써줘"
          (오늘 쓸 만한 소재 8건)         └ 데이터 읽고 글 작성
                                          └ scripts/blog_save.py
-                                             └ machine/<날짜>-<노선>-<연휴>/
+                                             └ result/<날짜>_<도시>/
                                                                  │
                                                                  ▼
                                                     98.네이버블로그자동화_v1.0
@@ -141,7 +141,7 @@ blog-brief.yml (매일 07:00 KST)
 (`98.네이버블로그자동화_v1.0/`)가 담당합니다. 여기서 다시 만들지 마세요 —
 `publisher/README.md` 에 이유와 연결 방법이 있습니다.
 
-이 저장소는 `machine/<슬러그>/post.json` 까지만 책임집니다.
+이 저장소는 `result/<날짜>_<도시>/post.json` 까지만 책임집니다.
 
 계정 정보는 저장소·GitHub Secrets 어디에도 두지 않습니다.
 
@@ -187,7 +187,7 @@ python scripts/blog_save.py draft.md                         # 저장 + 카드 �
 사진을 채우는 방법은 두 가지입니다.
 
 1. **사용자가 직접** 임시저장된 글에 본인 사진을 얹습니다.
-2. **위키미디어 커먼즈에서 받아 넣습니다.** `machine/<슬러그>/photos.json` 에 고른
+2. **위키미디어 커먼즈에서 받아 넣습니다.** `result/<날짜>_<도시>/photos.json` 에 고른
    파일을 적고 `publisher/fetch_photos.py` 를 돌리면, 라이선스가 허용 목록
    (CC BY / CC BY-SA / CC0 / PD)에 있는지 확인한 뒤 받아서 `photo-credits.json` 을
    남깁니다. 목록에 없는 라이선스면 받지 않고 죽습니다. `post_to_naver.py` 가 그

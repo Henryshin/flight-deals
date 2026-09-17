@@ -13,7 +13,7 @@ cd "C:\Users\klplm\Desktop\유현\01.개인\0.사다리 올라가기\01.주식�
 
 :: 2. 에디터에 채운다 (사진 내려받기 · 제목 · 본문 · 정렬 · 출처 · 링크 · 태그까지)
 cd C:\side_PJT\Blog_flight\flight-deals
-python publisher\post_to_naver.py machine\<슬러그> --fresh --blog-id iamyuhyun
+python publisher\post_to_naver.py ..\result\<날짜>_<도시> --fresh --blog-id iamyuhyun
 ```
 
 2번이 끝나면 **예약 시각을 잡고 발행 버튼을 누르는 것만** 남는다. 그건 사람이 한다.
@@ -28,7 +28,7 @@ curl -s http://127.0.0.1:9222/json/list | grep -o '"url": "[^"]*naver[^"]*"'
 
 `photos.json` 은 있는데 사진을 아직 안 받았으면 **2번이 알아서 받는다.** `fetch_photos.py` 를
 따로 돌릴 필요가 없다(받는 것은 에디터를 건드리기 전에 끝낸다). 따로 돌리고 싶으면
-`python publisher\fetch_photos.py machine\<슬러그>`, 안 받게 하려면 `--no-fetch`.
+`python publisher\fetch_photos.py ..\result\<날짜>_<도시>`, 안 받게 하려면 `--no-fetch`.
 
 **`photos.json` 을 만드는 것은 자동화 대상이 아니다** — 커먼즈에서 후보를 검색하고 썸네일을
 눈으로 보고 고르는 일이다. 그건 Claude 가 한다. 사용자 손이 가는 명령은 1번과 2번 둘뿐이다.
@@ -257,7 +257,7 @@ Array.from(document.querySelectorAll('span.se-link'))
 여행 사진은 **위키미디어 커먼즈에서 라이선스를 확인한 것만** 쓴다.
 
 1. 후보를 커먼즈 API 로 검색하고 **썸네일을 실제로 눈으로 보고** 고른다
-2. 고른 결과를 `machine/<슬러그>/photos.json` 에 적는다
+2. 고른 결과를 `result/<날짜>_<도시>/photos.json` 에 적는다
    ```json
    [{"hint": "post.json 의 photo 자리 설명 그대로",
      "commons": "File:....jpg",

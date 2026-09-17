@@ -1,4 +1,4 @@
-"""세션에서 쓴 초안(draft.md)을 machine/ 에 저장하고 가격 카드를 렌더한다.
+"""세션에서 쓴 원고(result/<날짜>_<도시>/<날짜>_<도시>.md)로 발행용 파일을 만들고 가격 카드를 렌더한다.
 
     python scripts/blog_save.py draft.md
     python scripts/blog_save.py draft.md --dry-run      # 쓰지 않고 검사만
@@ -235,11 +235,30 @@ def build_post(draft_path, today=None, with_images=True):
         for (n, _), blob in zip(specs, IC.render_html_to_png([h for _, h in specs])):
             png[n] = blob
 
-    slug = S.post_slug(today, meta["monitor_id"], meta["window_id"])
+    # 폴더 = result/<날짜>_<도시>. 원고가 이미 그 폴더 안(<폴더>.md)에 있으면 그 폴더에
+    # 다시 만든다 — 다음 날 고쳐 저장해도 날짜가 바뀐 새 폴더가 생기지 않는다.
+    src = Path(draft_path).resolve()
+    if (src.parent.parent == S.POSTS_DIR.resolve() and src.stem == src.parent.name
+            and re.match(r"^\d{4}-\d{2}-\d{2}_", src.stem)):
+        slug = src.stem
+        post_date = slug[:10]
+    else:
+        slug = S.post_folder(today, mat["dest_ko"])
+        post_date = today.isoformat()
+    existing = S.post_dir(slug) / "post.json"
+    if existing.exists():
+        old = json.loads(existing.read_text(encoding="utf-8"))
+        if (old.get("monitor_id"), old.get("window_id")) != (meta["monitor_id"], meta["window_id"]):
+            raise DraftInvalid(
+                f"  - {slug} 폴더에 다른 글({old.get('monitor_id')} {old.get('window_id')})이 이미 있다"
+            )
     post = {
         "version": 1,
         "slug": slug,
-        "date": today.isoformat(),
+        "date": post_date,
+        # 원고는 폴더 안 <slug>.md 하나다. 해시로 발행기가 원고 변경을 알아챈다.
+        "source_md": f"{slug}.md",
+        "source_sha256": S.source_sha256(src),
         "title": meta["title"],
         # 네이버 게시글 카테고리 이름 그대로. 안 넣으면 '공지사항' 으로 나간다.
         "category": meta.get("category", ""),
@@ -263,9 +282,14 @@ def build_post(draft_path, today=None, with_images=True):
     return post, png, mat
 
 
-def write_post(post, png, posts_dir=None):
+def write_post(post, png, posts_dir=None, source=None):
     d = S.post_dir(post["slug"], posts_dir)
     (d / "images").mkdir(parents=True, exist_ok=True)
+    # 원고를 폴더 안 <slug>.md 로 둔다. 이미 그 파일에서 저장한 거면 건드리지 않는다.
+    if source is not None:
+        target = d / post["source_md"]
+        if Path(source).resolve() != target.resolve():
+            target.write_bytes(Path(source).read_bytes())
     files = {}
     for name, blob in png.items():
         rel = f"images/card-{name}.png"
@@ -291,7 +315,7 @@ def write_post(post, png, posts_dir=None):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="초안을 machine/ 에 저장")
+    ap = argparse.ArgumentParser(description="원고로 result/<날짜>_<도시>/ 에 발행용 파일을 만든다")
     ap.add_argument("draft", help="초안 마크다운 경로")
     ap.add_argument("--date", help="발행 기준일 YYYY-MM-DD")
     ap.add_argument("--dry-run", action="store_true", help="쓰지 않고 검사만")
@@ -325,7 +349,7 @@ def main(argv=None):
         print(R.blocks_to_text(post["blocks"])[:1200])
         return 0
 
-    d = write_post(post, png)
+    d = write_post(post, png, source=args.draft)
     ledger = S.load_ledger()
     S.append_entry(ledger, {
         "date": post["date"], "slug": post["slug"], "title": post["title"],
@@ -333,7 +357,7 @@ def main(argv=None):
         "dest": post["dest"], "generated_at": post["generated_at"],
     })
     S.save_ledger(ledger)
-    print(f"저장: {d.relative_to(D.ROOT)}  (이미지 {len(png)}장)")
+    print(f"저장: {d}  (이미지 {len(png)}장)")
     return 0
 
 
