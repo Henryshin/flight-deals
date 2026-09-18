@@ -343,6 +343,10 @@ class PriceCrawlerSession:
             self._browser_context = self._browser.new_context(
                 locale="ko-KR",
                 user_agent=USER_AGENT,
+                # 기본 뷰포트(800x600)에서는 결과 목록이 접히고 구글 상단바가 화면을
+                # 크게 덮어, 가는 편을 누를 때 클릭이 상단바에 가로채인다
+                # (2026-09-18: "subtree intercepts pointer events" 로 오는 편 수집 0건).
+                viewport={"width": 1600, "height": 2400},
             )
         except Exception:
             self._close()
@@ -439,9 +443,18 @@ class PriceCrawlerSession:
         try:
             # li 자체는 클릭 대상이 아닐 수 있다. 안쪽 링크/버튼을 먼저 찾는다.
             clickable = target.query_selector("a, [role='link'], button") or target
-            clickable.click(timeout=timeout_ms)
+            # 일반 click() 은 Playwright 가 hit-test 를 하므로, 구글 상단바나 li 안쪽
+            # 오버레이가 좌표를 덮고 있으면 재시도만 하다 타임아웃난다 (2026-09-18 실측).
+            # dispatch_event 는 좌표를 거치지 않고 대상에 바로 이벤트를 보낸다.
+            clickable.scroll_into_view_if_needed(timeout=timeout_ms)
+            clickable.dispatch_event("click")
             page.wait_for_selector(RESULTS_SELECTOR, timeout=timeout_ms)
             page.wait_for_timeout(SETTLE_MS)
+            if not self._on_return_screen(page):
+                # dispatch 가 막힌 드문 경우를 위한 보조 경로.
+                clickable.click(timeout=timeout_ms, force=True)
+                page.wait_for_selector(RESULTS_SELECTOR, timeout=timeout_ms)
+                page.wait_for_timeout(SETTLE_MS)
         except Exception:
             return None
         if not self._on_return_screen(page):
