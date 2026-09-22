@@ -46,6 +46,12 @@ MAX_PAIRS_PER_ROUTE = int(os.environ.get("MAX_PAIRS_PER_ROUTE", "18"))
 PRIORITY_BOOST = float(os.environ.get("PRIORITY_BOOST", "2"))
 # 이 시간(분)을 넘기면 새 쿼리를 시작하지 않음. 4시간 크론에 맞춘 기본값.
 TIME_BUDGET_MIN = float(os.environ.get("TIME_BUDGET_MIN", "170"))
+# 직항 클래스를 'Nonstop' 검색에서 받는다 (1=켬). 필터 없는 검색의 "직항"은 가는 편 기준이라
+# 오는 편 경유 조합이 직항 최저가로 잡혔다 (2026-09-22 세부). 경유 허용 노선은 연휴 일정마다
+# 쿼리가 하나 늘어난다 — 수집량이 부족하면 0 으로 끌 수 있다.
+NONSTOP_QUERY = os.environ.get("NONSTOP_QUERY", "1") == "1"
+# 연휴 일정의 직항 최저가 행에 오는 편(시각·공항·다구간 여부)을 붙인다 (1=켬). 평시 기준가는 안 붙인다.
+RETURN_SCAN = os.environ.get("RETURN_SCAN", "1") == "1"
 # 평시(비연휴) 기준가 후보는 하루 1회만 수집 (연휴 가성비 지표의 분모).
 BASELINE_REFRESH_HOURS = 20
 # 연속 이 횟수만큼 차단/동의 페이지가 나오면 런을 조기 중단 (예산 낭비 방지).
@@ -70,12 +76,19 @@ NEW_HEADER = [
     "nonstop_n", "nonstop_others_median",
     # 2위 = 최저가와 다른 항공사 중 가장 싼 직항. 할인율의 기준 (사용자 정의 2026-09-14).
     "runnerup_price", "runnerup_airline",
+    # 구간별 실제 공항 ("GMP-KHH"). "서울" 검색이라 김포가 섞인다 — 허용하되 글에 밝힌다.
+    "airports", "ret_airports",
+    # 오는 편 경유수 (빈 값 = 확인 안 함). 1 이상이면 '직항 왕복'이 아니다.
+    "ret_stops",
+    # 1 = 'Nonstop' 검색에서 받은 행 = 가는 편·오는 편 모두 직항이 보장된다 (2026-09-22).
+    #     0 인 옛 직항 행은 오는 편이 경유일 수 있다 (세부 440,000원 사례).
+    "nonstop_query",
 ]
 # 과거 스키마들: 7열(초기) -> 10열(dep/arr/stops) -> 11열(window_id) -> 12열(airline)
 #              -> 16열(오는 편 3열 + multi_carrier) -> 18열(같은 일정 직항 통계)
-#              -> 20열(2위 가격·항공사)
+#              -> 20열(2위 가격·항공사) -> 24열(공항·오는 편 경유수·Nonstop 검색 여부)
 LEGACY_HEADERS = [NEW_HEADER[:7], NEW_HEADER[:10], NEW_HEADER[:11],
-                  NEW_HEADER[:12], NEW_HEADER[:16], NEW_HEADER[:18]]
+                  NEW_HEADER[:12], NEW_HEADER[:16], NEW_HEADER[:18], NEW_HEADER[:20]]
 
 
 def _base_window_pairs(window, min_nights, today):
@@ -578,10 +591,11 @@ def main():
                         origin, destination, depart, return_,
                         origin_city=origin_city, dest_city=dest_city,
                         max_stops=max_stops,
-                        # 오는 편 수집은 끈다. 2026-09-14 실수집 검증에서 3개 노선 전부
-                        # 오는 편을 못 받았고(빈 값), 쿼리당 3~8초 -> 18~44초로 느려져
-                        # 시간 예산 안에 도는 노선 수가 크게 줄어든다. 고칠 때까지 비활성.
-                        with_return=False,
+                        # 오는 편은 연휴 일정의 직항 행에만 붙인다 (평시 기준가는 가격만 필요).
+                        # 2026-09-14 에는 클릭이 가로채여 0건이라 꺼 두었고, 2026-09-18 클릭을
+                        # 고친 뒤에도 켜지 않아 오는 편 경유·다구간이 걸러지지 않았다 (9/22).
+                        with_return=RETURN_SCAN and bool(is_holiday),
+                        nonstop_query=NONSTOP_QUERY,
                     )
                     st = result["status"]
                     statuses[st] += 1
@@ -620,6 +634,9 @@ def main():
                             it.get("nonstop_others_median") or "",
                             it.get("runnerup_price") or "",
                             it.get("runnerup_airline", ""),
+                            it.get("airports", ""), it.get("ret_airports", ""),
+                            "" if it.get("ret_stops") is None else it["ret_stops"],
+                            int(it.get("query") == "nonstop"),
                         ])
             except Exception as e:  # noqa: BLE001 - 한 노선의 예기치 못한 크래시(세션 재기동
                 # 실패 등)가 남은 노선 수집과 상태 기록 전체를 유실시키지 않도록 격리.

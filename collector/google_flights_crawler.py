@@ -27,6 +27,8 @@ PRICE_PATTERN = re.compile(r"₩([0-9][0-9,]{2,})")
 TIME_PATTERN = re.compile(r"(오전|오후)\s*([0-9]{1,2}):([0-9]{2})(\+1)?")
 STOPS_NONSTOP = "직항"
 STOPS_PATTERN = re.compile(r"경유\s*([0-9]+)\s*회")
+# li 안의 "ICN–KHH" (en dash). 경유편도 출발–도착 공항만 이렇게 적힌다.
+AIRPORT_PAIR_PATTERN = re.compile(r"\b([A-Z]{3})\s*[–-]\s*([A-Z]{3})\b")
 
 # 결과 li 텍스트에서 항공사명을 뽑기 위한 사전. 등록 노선(한국 출발) 기준 주요 항공사.
 # 검색은 '텍스트에 이 이름이 있으면 매칭'이라 레이아웃 변경에 강하다.
@@ -52,6 +54,9 @@ AIRLINES = [
     "델타항공", "아메리칸항공", "에어캐나다", "하와이안항공",
     # 2026-09-14 호치민 화면 확인. 영문 표기 그대로 나온다.
     "Sun PhuQuoc Airways",
+    # 2026-09-22 가오슝·쿠알라룸푸르·방콕·싱가포르 화면 확인.
+    "타이거항공 타이완", "Trinity Airways", "Batik Air", "에어아시아 X",
+    "비엣젯에어 타이", "비엣젯항공", "말레이항공",
 ]
 AIRLINE_CANON = {
     # 구글은 "스쿳항공"으로 쓰지만 블로그 표기는 "스쿠트항공"으로 통일한다.
@@ -185,8 +190,14 @@ def parse_itinerary(li_text: str):
         # 파싱 못한 항목이 nonstop 클래스로 오염되므로 '알 수 없음'으로 남긴다.
         stops = int(m.group(1)) if m else None
 
+    # "GMP–KHH" 처럼 이 구간의 실제 공항. "서울" 검색이라 김포 출발편이 섞인다
+    # (2026-09-22 가오슝: 최저가가 제주항공 GMP–KHH). 김포 출발은 허용하되 글에 밝혀야 한다.
+    ap = AIRPORT_PAIR_PATTERN.search(li_text)
+    airports = f"{ap.group(1)}-{ap.group(2)}" if ap else ""
+
     return {
         "price": price, "stops": stops, "dep_time": dep_time, "arr_time": arr_time,
+        "airports": airports,
         "airline": extract_airline(li_text),
         # '다구간 항공권' = 가는 편과 오는 편의 항공사가 다른 조합권. 최저가가 이런
         # 경우가 흔한데(2026-09-08 실측: 하노이·나트랑 최저가 둘 다), 가는 편
@@ -278,10 +289,17 @@ def build_booking_url(
     return_: date,
     origin_city: str | None = None,
     dest_city: str | None = None,
+    nonstop: bool = False,
 ) -> str:
     """해당 노선/날짜로 사용자가 직접 예약을 확인할 수 있는 구글 플라이트 링크.
 
     도시명 결정 순서: 명시적 인자 -> AIRPORT_CITY 표 -> 공항 코드 그대로.
+
+    nonstop=True 면 검색어 앞에 "Nonstop" 을 붙인다. 구글이 이걸 '직항' 필터로 읽어
+    **가는 편·오는 편 모두 직항인 조합**만 총액을 매긴다 (2026-09-22 실측). 필터 없이
+    검색하면 첫 화면의 "직항" 표시는 가는 편 기준이라, 오는 편이 경유인 조합이 직항
+    최저가로 잡힌다 — 세부 10/5~10/12 세부퍼시픽 440,000원이 실제로는 오는 편 마닐라
+    경유였고, 양방향 직항 최저가는 제주항공 677,700원이었다.
     """
     origin_city = origin_city or AIRPORT_CITY.get(origin, origin)
     dest_city = dest_city or AIRPORT_CITY.get(destination, destination)
@@ -291,7 +309,7 @@ def build_booking_url(
     # hl=ko&curr=KRW가 없으면 러너 IP 지역에 따라 가격이 USD로 표시되어
     # PRICE_PATTERN(₩)이 아무것도 매칭하지 못하므로 반드시 붙인다.
     query = (
-        f"Flights from {origin_city} to {dest_city} "
+        f"{'Nonstop flights' if nonstop else 'Flights'} from {origin_city} to {dest_city} "
         f"on {depart.isoformat()} through {return_.isoformat()}"
     )
     return (
@@ -343,6 +361,10 @@ class PriceCrawlerSession:
             self._browser_context = self._browser.new_context(
                 locale="ko-KR",
                 user_agent=USER_AGENT,
+                # 기본 뷰포트(800x600)에서는 결과 목록이 접히고 구글 상단바가 화면을
+                # 크게 덮어, 가는 편을 누를 때 클릭이 상단바에 가로채인다
+                # (2026-09-18: "subtree intercepts pointer events" 로 오는 편 수집 0건).
+                viewport={"width": 1600, "height": 2400},
             )
         except Exception:
             self._close()
@@ -439,9 +461,23 @@ class PriceCrawlerSession:
         try:
             # li 자체는 클릭 대상이 아닐 수 있다. 안쪽 링크/버튼을 먼저 찾는다.
             clickable = target.query_selector("a, [role='link'], button") or target
-            clickable.click(timeout=timeout_ms)
+            # 일반 click() 은 Playwright 가 hit-test 를 하므로, 구글 상단바나 li 안쪽
+            # 오버레이가 좌표를 덮고 있으면 재시도만 하다 타임아웃난다 (2026-09-18 실측).
+            # dispatch_event 는 좌표를 거치지 않고 대상에 바로 이벤트를 보낸다.
+            clickable.scroll_into_view_if_needed(timeout=timeout_ms)
+            clickable.dispatch_event("click")
             page.wait_for_selector(RESULTS_SELECTOR, timeout=timeout_ms)
             page.wait_for_timeout(SETTLE_MS)
+            if not self._on_return_screen(page):
+                # dispatch 가 막힌 드문 경우를 위한 보조 경로.
+                clickable.click(timeout=timeout_ms, force=True)
+                page.wait_for_selector(RESULTS_SELECTOR, timeout=timeout_ms)
+                page.wait_for_timeout(SETTLE_MS)
+            if not self._on_return_screen(page):
+                # li 자체의 윗부분을 누르는 경로 (2026-09-16 괌·2026-09-22 8개 노선 실측에서 동작).
+                target.click(position={"x": 200, "y": 30}, timeout=timeout_ms, force=True)
+                page.wait_for_selector(RESULTS_SELECTOR, timeout=timeout_ms)
+                page.wait_for_timeout(SETTLE_MS)
         except Exception:
             return None
         if not self._on_return_screen(page):
@@ -459,21 +495,27 @@ class PriceCrawlerSession:
             "ret_dep_time": best.get("dep_time", ""),
             "ret_arr_time": best.get("arr_time", ""),
             "ret_airline": best.get("airline", ""),
+            "ret_airports": best.get("airports", ""),
+            # 오는 편 경유수. None = 못 읽음. 필터 없이 검색한 직항 행은 여기가 1 일 수 있다.
+            "ret_stops": best.get("stops"),
             "ret_price": best.get("price"),
+            # '다구간 항공권' 표시는 오는 편 화면에만 붙는다 = 항공권 2장을 따로 사야 한다
+            # (2026-09-22 가오슝 제주항공+타이거항공). 첫 화면만 보면 알 수 없다.
             "multi_carrier": bool(best.get("multi_carrier")),
         }
 
-    def _attach_returns(self, page, best, timeout_ms):
+    def _attach_returns(self, page, best, timeout_ms, classes=None):
         """by_stops 에 남은 항목마다 오는 편을 붙인다. 실패는 조용히 건너뛴다.
 
         가는 편을 누르면 화면이 오는 편 목록으로 넘어가므로, 두 번째 항목부터는
-        뒤로 가서 목록을 복구한 뒤 누른다.
+        뒤로 가서 목록을 복구한 뒤 누른다. classes 를 주면 그 경유수 클래스만 붙인다.
 
         **검증**: 첫 화면의 가는 편 행에 붙은 총액은 '그 가는 편으로 낼 수 있는 최저
         총액'이라, 오는 편 목록의 최저가와 같아야 한다. 다르면 엉뚱한 행을 눌렀다는
         뜻이므로 그 오는 편은 버린다 (틀린 시각을 쓰느니 없는 게 낫다).
         """
-        for i, s in enumerate(sorted(best)):
+        keys = [s for s in sorted(best) if classes is None or s in classes]
+        for i, s in enumerate(keys):
             it = best[s]
             if i:
                 try:
@@ -500,6 +542,7 @@ class PriceCrawlerSession:
         dest_city: str | None = None,
         max_stops=None,
         with_return=True,
+        nonstop_query=False,
     ):
         """typed 수집 결과 반환:
         {"status": str, "by_stops": {stops: itinerary_dict}, "detail": str}
@@ -508,46 +551,79 @@ class PriceCrawlerSession:
         같은 (o,d,날짜)라도 직항 모니터는 stops=0 최저가를, 경유 모니터는 stops<=1
         최저가를 각각 필요로 하므로, 총액 최저가 1건이 아니라 클래스별 최저가를 모두 담는다.
 
+        nonstop_query=True 면 **직항(stops=0) 클래스를 'Nonstop' 검색에서 받는다.**
+        필터 없는 검색의 "직항"은 가는 편 기준이라 오는 편이 경유인 조합이 섞이기 때문이다
+        (build_booking_url 설명 참고). max_stops 가 0 이면 Nonstop 검색 한 번으로 끝나고,
+        1 이상이면 필터 없는 검색에서 경유 클래스만, Nonstop 검색에서 직항 클래스를 받는다
+        (쿼리 2회). 같은 일정 2위 통계도 Nonstop 검색 결과로 계산한다.
+        with_return 은 이때 직항 클래스에만 오는 편을 붙인다 (시각·공항·다구간 여부).
+
         브라우저가 죽어 새 페이지조차 못 여는 경우엔 CrawlerSessionError 를 던져
         호출 측이 세션을 재시작할 수 있게 함. 그 외 실패는 status/detail 로 반환.
         """
-        url = build_booking_url(origin, destination, depart, return_, origin_city=origin_city, dest_city=dest_city)
+        def url_for(nonstop):
+            return build_booking_url(origin, destination, depart, return_,
+                                     origin_city=origin_city, dest_city=dest_city, nonstop=nonstop)
 
-        try:
-            page = self._browser_context.new_page()
-        except Exception as e:
-            raise CrawlerSessionError(f"cannot open new page (browser dead?): {e}") from e
+        # (검색어가 Nonstop 인가, 이 검색에서 받을 경유수 클래스 판정)
+        if not nonstop_query:
+            passes = [(False, lambda s: True)]
+        elif max_stops == 0:
+            passes = [(True, lambda s: s == 0)]
+        else:
+            passes = [(False, lambda s: s >= 1), (True, lambda s: s == 0)]
 
         best = {}
-        try:
-            status, itineraries, detail = self._scan_page(page, url, timeout_ms)
-            for parsed in itineraries:
-                s = parsed["stops"]
-                if s is None:
-                    continue  # 경유수 미상 항목은 클래스 오염 방지를 위해 제외
-                if max_stops is not None and s > max_stops:
-                    continue
-                if s not in best or parsed["price"] < best[s]["price"]:
-                    best[s] = parsed
-            # 같은 일정 직항 비교용 통계는 직항 최저가 행에 붙인다 (할인율 정의 2026-09-13).
-            if 0 in best:
-                best[0].update(same_itinerary_stats(itineraries))
-            # 오는 편은 **기록에 남을 항목에 대해서만** 받는다 (보통 1~2건).
-            # 후보 전부에 대해 받으면 쿼리 비용이 몇 배가 된다.
-            if with_return and status == STATUS_OK and best:
-                self._attach_returns(page, best, timeout_ms)
-        except Exception as e:
-            kind = STATUS_TIMEOUT if "Timeout" in type(e).__name__ else STATUS_ERROR
-            detail = f"{type(e).__name__}: {e}"
-            print(f"[google_flights_crawler] {kind} for {origin}->{destination} {depart}~{return_}: {detail}")
-            return {"status": kind, "by_stops": {}, "detail": detail[:300]}
-        finally:
+        status, detail, any_items = STATUS_OK, "", False
+        for nonstop, keep in passes:
             try:
-                page.close()
-            except Exception:
-                pass
+                page = self._browser_context.new_page()
+            except Exception as e:
+                raise CrawlerSessionError(f"cannot open new page (browser dead?): {e}") from e
+            try:
+                st, itineraries, det = self._scan_page(page, url_for(nonstop), timeout_ms)
+                any_items = any_items or bool(itineraries)
+                part = {}
+                for parsed in itineraries:
+                    s = parsed["stops"]
+                    if s is None:
+                        continue  # 경유수 미상 항목은 클래스 오염 방지를 위해 제외
+                    if max_stops is not None and s > max_stops:
+                        continue
+                    if not keep(s):
+                        continue
+                    if s not in part or parsed["price"] < part[s]["price"]:
+                        part[s] = parsed
+                # 같은 일정 직항 비교용 통계는 직항 최저가 행에 붙인다 (할인율 정의 2026-09-13).
+                if 0 in part:
+                    part[0].update(same_itinerary_stats(itineraries))
+                # 오는 편은 **기록에 남을 항목에 대해서만** 받는다 (보통 1~2건).
+                # 후보 전부에 대해 받으면 쿼리 비용이 몇 배가 된다.
+                if with_return and st == STATUS_OK and part:
+                    self._attach_returns(page, part, timeout_ms,
+                                         classes=(0,) if nonstop_query else None)
+                if nonstop:
+                    for it in part.values():
+                        it["query"] = "nonstop"
+                best.update(part)
+                # 한 검색이라도 실패하면 그 사유를 남긴다 (나머지 클래스는 살린다).
+                if st != STATUS_OK:
+                    status, detail = st, det
+            except Exception as e:
+                kind = STATUS_TIMEOUT if "Timeout" in type(e).__name__ else STATUS_ERROR
+                det = f"{type(e).__name__}: {e}"
+                print(f"[google_flights_crawler] {kind} for {origin}->{destination} {depart}~{return_}: {det}")
+                status, detail = kind, det[:300]
+            finally:
+                try:
+                    page.close()
+                except Exception:
+                    pass
 
-        if status == STATUS_OK and not best and itineraries:
+        if best and status != STATUS_OK:
+            # 한쪽 검색만 실패했으면 받은 클래스는 기록한다.
+            status = STATUS_OK
+        if status == STATUS_OK and not best and any_items:
             detail = "왕복 항목은 있으나 조건(경유수) 내 항목 없음"
         return {"status": status, "by_stops": best, "detail": detail}
 

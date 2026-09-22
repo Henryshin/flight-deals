@@ -403,8 +403,8 @@ def test_migrate_12col_prices_to_new_header():
         finally:
             C.PRICES_FILE = saved
         rows = list(csv.reader(open(f, encoding="utf-8")))
-    assert rows[0] == C.NEW_HEADER and len(rows[0]) == 20
-    assert len(rows[1]) == 20 and rows[1][11] == "에어서울" and rows[1][16:] == ["", "", "", ""]
+    assert rows[0] == C.NEW_HEADER and len(rows[0]) == 24
+    assert len(rows[1]) == 24 and rows[1][11] == "에어서울" and rows[1][16:] == [""] * 8
 
 
 def test_migrate_18col_prices_to_runnerup_header():
@@ -426,7 +426,61 @@ def test_migrate_18col_prices_to_runnerup_header():
             C.PRICES_FILE = saved
         rows = list(csv.reader(open(f, encoding="utf-8")))
     assert rows[0] == C.NEW_HEADER
-    assert rows[1][16:] == ["11", "781010", "", ""]
+    assert rows[1][16:] == ["11", "781010"] + [""] * 6
+
+
+def test_parse_itinerary_reads_airports():
+    """구간 공항을 읽어야 김포 출발편을 가려 적을 수 있다 (2026-09-22 가오슝)."""
+    from collector.google_flights_crawler import parse_itinerary
+    t = ("오전 9:45 – 오후 12:00 제주항공 3시간 15분 GMP–KHH 직항 ₩390,006 왕복")
+    assert parse_itinerary(t)["airports"] == "GMP-KHH"
+    t2 = ("오후 4:00 – 오후 7:45 다구간 항공권 타이거항공 타이완 2시간 45분 KHH–GMP 직항 ₩390,006 왕복")
+    p2 = parse_itinerary(t2)
+    assert p2["airports"] == "KHH-GMP" and p2["multi_carrier"] and p2["airline"] == "타이거항공 타이완"
+
+
+def test_booking_url_nonstop_prefix():
+    """'Nonstop' 검색어가 양방향 직항 필터로 읽힌다 (2026-09-22 세부 실측)."""
+    from collector.google_flights_crawler import build_booking_url
+    u = build_booking_url("ICN", "CEB", date(2026, 10, 5), date(2026, 10, 12), dest_city="Cebu", nonstop=True)
+    assert "q=Nonstop%20flights%20from%20Seoul%20to%20Cebu" in u and u.endswith("&hl=ko&curr=KRW")
+    assert "q=Flights%20from" in build_booking_url("ICN", "CEB", date(2026, 10, 5), date(2026, 10, 12))
+
+
+def test_fetch_result_takes_nonstop_class_from_nonstop_query():
+    """경유 허용 노선은 경유 클래스를 필터 없는 검색에서, 직항 클래스를 Nonstop 검색에서 받는다."""
+    from collector.google_flights_crawler import PriceCrawlerSession, STATUS_OK
+
+    class Page:
+        def close(self): pass
+
+    class Ctx:
+        def new_page(self): return Page()
+
+    s = PriceCrawlerSession.__new__(PriceCrawlerSession)
+    s._browser_context = Ctx()
+    seen = []
+
+    def fake_scan(page, url, timeout_ms):
+        nonstop = "Nonstop" in url
+        seen.append(nonstop)
+        if nonstop:   # 양방향 직항만 — 제주항공 677,700
+            return STATUS_OK, [{"price": 677700, "stops": 0, "airline": "제주항공", "dep_time": "20:55"},
+                               {"price": 1001800, "stops": 0, "airline": "대한항공", "dep_time": "20:05"}], ""
+        # 필터 없는 검색: 세부퍼시픽 '직항' 440,000 은 오는 편이 경유라 버려야 한다
+        return STATUS_OK, [{"price": 440000, "stops": 0, "airline": "세부퍼시픽", "dep_time": "21:35"},
+                           {"price": 473100, "stops": 1, "airline": "세부퍼시픽", "dep_time": "06:35"}], ""
+    s._scan_page = fake_scan
+    r = s.fetch_result("ICN", "CEB", date(2026, 10, 5), date(2026, 10, 12),
+                       max_stops=1, with_return=False, nonstop_query=True)
+    assert seen == [False, True]
+    assert r["by_stops"][0]["price"] == 677700 and r["by_stops"][0]["query"] == "nonstop"
+    assert r["by_stops"][0]["runnerup_price"] == 1001800
+    assert r["by_stops"][1]["price"] == 473100
+    seen.clear()
+    r0 = s.fetch_result("ICN", "CEB", date(2026, 10, 5), date(2026, 10, 12),
+                        max_stops=0, with_return=False, nonstop_query=True)
+    assert seen == [True] and set(r0["by_stops"]) == {0}
 
 
 def main():

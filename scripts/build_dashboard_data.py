@@ -242,6 +242,13 @@ def _pair_entry(row, route, prev_price=None):
         "ret_arr_time": row.get("ret_arr_time", ""),
         "ret_airline": row.get("ret_airline", ""),
         "multi_carrier": bool(int(row.get("multi_carrier") or 0)),
+        # 구간별 실제 공항 ("GMP-KHH"). 김포 출발은 허용하되 글에 밝힌다 (2026-09-22).
+        "airports": row.get("airports", ""),
+        "ret_airports": row.get("ret_airports", ""),
+        # 오는 편 경유수. None = 확인 안 함 (옛 수집분·평시 기준가).
+        "ret_stops": int(row["ret_stops"]) if str(row.get("ret_stops", "")).isdigit() else None,
+        # True = 'Nonstop' 검색 행 = 양방향 직항 보장. False 인 옛 직항 행은 오는 편이 경유일 수 있다.
+        "nonstop_query": bool(int(row.get("nonstop_query") or 0)),
         # 같은 일정 직항 비교 (할인율 정의, 사용자 확정 2026-09-13).
         **same_itin_fields(row),
         "booking_url": build_booking_url(
@@ -389,7 +396,8 @@ def main():
         row["is_holiday_window"] = bool(int(row["is_holiday_window"]))
         # 구 스키마 행은 이 키들이 없을 수 있음 -> 빈 문자열로 정규화.
         for k in ("dep_time", "arr_time", "stops", "window_id", "airline",
-                  "ret_dep_time", "ret_arr_time", "ret_airline", "multi_carrier"):
+                  "ret_dep_time", "ret_arr_time", "ret_airline", "multi_carrier",
+                  "airports", "ret_airports", "ret_stops", "nonstop_query"):
             row.setdefault(k, "")
             if row.get(k) is None:
                 row[k] = ""
