@@ -52,20 +52,21 @@ def _rows(cands, start_no=1):
 
         # 점수는 **순서만** 매긴다. 어느 일정으로 쓸지는 사람이 고른다
         # (사용자 지정 2026-09-08). 그래서 추천안과 최저가안을 나란히 보여준다.
-        def _opt(price, nights, leave, stops):
+        def _opt(price, nights, leave, stops, check=None):
             sched = f"{nights}박 {nights + 1}일" if isinstance(nights, int) else "-"
             lv = f"연차 {leave}일" if isinstance(leave, int) else "연차 -"
             # 직항/경유를 안 적으면 '더 싸고 더 짧은데 왜 추천이 아니지'로 읽힌다.
-            way = "직항" if str(stops) == "0" else "경유"
+            # 직항이면 오는 편까지 확인됐는지도 적는다 (D.nonstop_check, 2026-09-22).
+            way = check or ("직항" if str(stops) == "0" else "경유")
             return f"{D.krw(price)} · {sched} · **{lv}** · {way}"
 
         rec = _opt(c.get("price") or c["min_price"], c.get("nights"),
-                   c.get("leave_days"), c.get("stops"))
+                   c.get("leave_days"), c.get("stops"), c.get("check"))
         alt = c.get("cheapest")
         alt_txt = "―"
         if alt and alt.get("price") != c.get("price"):
             alt_txt = _opt(alt.get("price"), alt.get("nights"),
-                           alt.get("leave_days"), alt.get("stops"))
+                           alt.get("leave_days"), alt.get("stops"), alt.get("check"))
         L.append(
             f"| {i} | {c['flag']} {c['dest_ko']} (`{c['monitor_id']}`) "
             f"| {c['window_label']}<br><sub>D-{c['lead_days']}</sub> | {rec}<br>"
@@ -162,9 +163,12 @@ def render_material(mat):
         "",
         f"- 가는 편: {best['depart_date']}({best.get('depart_weekday','')}) "
         f"{best.get('dep_time','')} 출발 → {best.get('arr_time','')} 도착",
-        f"- 오는 편: {best['return_date']}({best.get('return_weekday','')})",
+        f"- 오는 편: {best['return_date']}({best.get('return_weekday','')})"
+        + (f" {best.get('ret_dep_time')} 출발 → {best.get('ret_arr_time')} 도착"
+           f" · {best.get('ret_airline') or '항공사 미상'}" if best.get("ret_dep_time") else " — 시각 미수집"),
+        f"- 공항: 가는 편 {best.get('airports') or '미수집'} · 오는 편 {best.get('ret_airports') or '미수집'}",
         f"- 일정: {best.get('nights')}박 {best.get('days')}일 · "
-        f"{'직항' if str(best.get('stops')) == '0' else '경유 ' + str(best.get('stops')) + '회'}",
+        f"{D.nonstop_check(best) if str(best.get('stops')) == '0' else '경유 ' + str(best.get('stops')) + '회'}",
         f"- 항공사: {best.get('airline') or '미상'}",
         f"- 휴가 {best.get('leave_days')}일 사용 · 여행 중 쉬는 날 "
         f"{best.get('bonus_days')}일",

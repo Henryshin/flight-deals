@@ -189,6 +189,30 @@ def usable_pairs(cell, today=None, min_lead_days=MIN_LEAD_DAYS):
     return out
 
 
+def nonstop_check(pair):
+    """이 일정의 '직항 왕복'이 어디까지 확인됐는지 한 줄로.
+
+    수집값의 stops 는 **가는 편 기준**이다 (2026-09-22 까지의 수집분). 오는 편이 경유이거나
+    (세부 440,000원 → 오는 편 마닐라 경유) 편도 2장 조합(가오슝 제주항공+타이거항공)이어도
+    "직항"으로 잡혔다. 2026-09-22 부터는 'Nonstop' 검색(nonstop_query)과 오는 편 화면
+    (ret_stops · multi_carrier)으로 가려낸다. 반환값 앞머리:
+      "양방향 직항" / "편도 2장" / "오는 편 경유" / "오는 편 미확인" / "경유"
+    김포 출발·도착이면 뒤에 붙인다 (허용하되 글에 밝힌다).
+    """
+    if str(pair.get("stops")) != "0":
+        return "경유"
+    if pair.get("multi_carrier"):
+        label = "편도 2장"
+    elif isinstance(pair.get("ret_stops"), int) and pair["ret_stops"] > 0:
+        label = "오는 편 경유"
+    elif pair.get("nonstop_query") or pair.get("ret_stops") == 0:
+        label = "양방향 직항"
+    else:
+        label = "오는 편 미확인"
+    gimpo = "GMP" in (pair.get("airports") or "") or "GMP" in (pair.get("ret_airports") or "")
+    return label + (" · 김포" if gimpo else "")
+
+
 def usable_cells(matrix, window_id, today=None):
     """한 연휴 윈도우에서 쓸 만한 (monitor_id, cell) 목록을 싼 순으로."""
     cells = (matrix.get("cells") or {}).get(window_id) or {}

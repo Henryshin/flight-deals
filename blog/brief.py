@@ -153,12 +153,15 @@ def candidates(inputs, today=None, exclude_dests=(), limit=8,
                 "nights": best.get("nights"),
                 # 최종 선택은 사람이 하므로 비교할 다른 안도 같이 넘긴다.
                 "stops": best.get("stops"),
+                # 양방향 직항·편도 2장·김포 여부 (D.nonstop_check). 가는 편만 본 수집분이면 '미확인'.
+                "check": D.nonstop_check(best),
                 # 할인율은 **실을 일정 기준**이다. 셀 deal_pct 는 최저가 기준이라
                 # 주인공이 최저가가 아닐 때 어긋난다.
                 "deal_pct_pair": _pair_deal_pct(best, cell),
-                "cheapest": {k: pairs[0].get(k)
-                             for k in ("price", "nights", "leave_days", "stops",
-                                       "depart_date", "return_date")},
+                "cheapest": {**{k: pairs[0].get(k)
+                                for k in ("price", "nights", "leave_days", "stops",
+                                          "depart_date", "return_date")},
+                             "check": D.nonstop_check(pairs[0])},
                 "min_leave": {k: min(pairs, key=lambda p: (p.get("leave_days", 99),
                                                            p["price"])).get(k)
                               for k in ("price", "nights", "leave_days", "stops",
