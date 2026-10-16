@@ -89,7 +89,7 @@ python scripts/blog_brief.py --material ICN-KMI --window 2026-09-24
 
 ### 3. 초안 쓰기
 
-**`C:\side_PJT\Blog_flight\result\<날짜>_<도시>\<날짜>_<도시>.md` 에 바로 쓴다.** 이 파일이 원본이고,
+**`C:\side_PJT\excel-flights\result\<날짜>_<도시>\<날짜>_<도시>.md` 에 바로 쓴다.** 이 파일이 원본이고,
 사람이 고치는 파일도 이것 하나뿐이다 (사용자 지정 2026-09-17 — 저장소 안 사본과 result 사본이
 따로 있어 사용자가 고친 원고가 발행에 반영되지 않을 뻔했다). 스크래치패드·저장소에 사본을 두지 않는다.
 

@@ -8,7 +8,7 @@
     python scripts/blog_brief.py --material ICN-KMI --window 2026-09-24
     python scripts/blog_brief.py --date 2026-09-07 --stdout
 
-기본 실행은 result/_brief/YYYY-MM-DD.md (저장소 밖 Blog_flight/result) 에 브리핑을 쓴다 (GitHub Actions 용).
+기본 실행은 result/_brief/YYYY-MM-DD.md (저장소 밖 excel-flights/result) 에 브리핑을 쓴다 (GitHub Actions 용).
 """
 import argparse
 import json

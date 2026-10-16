@@ -25,7 +25,7 @@ C:\Users\klplm\Desktop\유현\01.개인\0.사다리 올라가기\01.주식리서
 `scripts/blog_save.py` 가 글 하나를 이렇게 남깁니다.
 
 ```
-result/<날짜>_<도시>/   (저장소 밖 Blog_flight/result)
+result/<날짜>_<도시>/   (저장소 밖 excel-flights/result)
   post.json      제목 · 태그 · 블록 배열 (정본)
   body.html      미리보기 / 수동 복붙용
   body.txt       평문
@@ -59,7 +59,7 @@ result/<날짜>_<도시>/   (저장소 밖 Blog_flight/result)
 cd "...\98.네이버블로그자동화_v1.0"; python login.py
 
 :: 2. 네이버 블로그 글쓰기 화면을 연 상태에서
-cd C:\side_PJT\Blog_flight\flight-deals
+cd C:\side_PJT\excel-flights\flight-deals
 python publisher\post_to_naver.py ..\result\2026-09-08_코타키나발루
 
 :: (보통은 필요 없다) post_to_naver.py 가 알아서 받는다. 따로 받고 싶을 때만

@@ -12,14 +12,14 @@
 cd "C:\Users\klplm\Desktop\유현\01.개인\0.사다리 올라가기\01.주식리서치 보고서\98.네이버블로그자동화_v1.0"; python login.py
 
 :: 2. 에디터에 채운다 (사진 내려받기 · 제목 · 본문 · 정렬 · 출처 · 링크 · 태그까지)
-cd C:\side_PJT\Blog_flight\flight-deals
+cd C:\side_PJT\excel-flights\flight-deals
 python publisher\post_to_naver.py ..\result\<날짜>_<도시> --fresh --blog-id iamyuhyun
 ```
 
 2번이 끝나면 **발행 설정 패널의 마지막 발행 버튼을 누르는 것만** 남는다. 그건 사람이 한다.
 (카테고리·예약 시각·태그는 `post.json` 값으로 2번이 넣는다.)
 
-**글 폴더는 저장소 밖 `C:\side_PJT\Blog_flight\result\<날짜>_<도시>\` 다** (2026-09-17 변경).
+**글 폴더는 저장소 밖 `C:\side_PJT\excel-flights\result\<날짜>_<도시>\` 다** (2026-09-17 변경).
 원고 `<날짜>_<도시>.md` 가 원본이고 사람이 고치는 파일은 이것 하나다. 원고를 고친 뒤 그냥 2번을 돌리면 된다 —
 발행기가 `post.json` 의 `source_sha256` 과 원고 해시를 비교해 **다르면 `blog_save.py` 로 먼저 다시 저장하고** 채운다.
 재저장이 검증에서 실패하면 에디터를 건드리지 않고 멈춘다. 저장소 안에는 글 사본이 없다(옛 `posts/`·`machine/` 은 없어졌다).
