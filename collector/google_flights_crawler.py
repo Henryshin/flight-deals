@@ -112,6 +112,28 @@ STATUS_BLOCKED = "blocked"       # 비정상 트래픽/캡차 감지
 STATUS_CONSENT = "consent"       # 동의(consent) 페이지에서 벗어나지 못함
 STATUS_TIMEOUT = "timeout"       # 페이지 로드 타임아웃
 STATUS_ERROR = "error"           # 그 외 예외
+# 파싱은 됐지만 금액이 노선 하한 아래라 **그 페이지 결과를 통째로 버림** (아래 가격 타당성 참고)
+STATUS_PRICE_IMPLAUSIBLE = "price_implausible"
+
+# ---- 가격 타당성 (2026-10-16) ----
+# 2026-08-03~10-11 사이 prices.csv 에 507·874·1,340 같은 값 54행이 들어왔다 (ICN-ULN 2027-02-05
+# 출발 507 등). 같은 쿼리의 정상 행 ÷ 노이즈 값은 54건 모두 950~1,870, 중앙값 1,345 로
+# USD/KRW 환율에 붙어 있고, 정상값의 뒷자리와 일치한 경우는 0건이다. 같은 페이지의
+# runnerup_price·nonstop_others_median 도 같은 단위(507/533/550)였고, Nonstop 검색과 필터 없는
+# 검색이 같은 collected_at 을 공유하는 쿼리에서 한쪽만 USD 인 경우가 14건 있었다.
+# => 구글이 curr=KRW 를 무시하고 **페이지 단위로** USD 금액을 ₩ 기호에 실어 보낸 것이다
+#    (가설 a). 뒷 토막 매칭(c)이나 부가 금액 매칭(b)이면 비율이 환율에 모일 수 없다.
+# 따라서 검사는 항목이 아니라 **페이지 단위**로 한다: 한 항목이라도 하한 아래면 그 페이지의
+# 모든 금액이 같은 단위이므로 전부 버린다.
+#
+# 하한은 두 기준 중 **더 높은 쪽**(보수적으로 버리는 쪽):
+# - 절대 하한 30,000원: 한국 출발 국제선 왕복에 유류할증료·공항세만 더해도 이 아래로는
+#   내려오지 못한다. 관측된 정상 최저가는 159,200원(ICN-FUK)이다. 노선 이력이 없는
+#   신규 노선에서도 USD 금액(수백~수천)은 이 선에서 걸린다.
+# - 노선 중앙값의 10%: 정상 행의 노선별 min/median 최저치가 0.27(KIX·FUK), 노이즈의
+#   최대치가 0.0014 라 10% 는 양쪽 모두에서 수십 배 여유가 있다.
+PRICE_ABS_FLOOR_KRW = 30_000
+PRICE_MEDIAN_FLOOR_RATIO = 0.10
 
 CONSENT_BUTTON_SELECTORS = (
     'button:has-text("모두 동의")',
@@ -273,6 +295,66 @@ def classify_no_results(page_url: str, body_text: str, li_count: int, saw_price:
     if not saw_price:
         return STATUS_PARSE_ZERO, f"li {li_count}개 중 ₩ 가격 없음 (통화/로케일 또는 파서 확인)"
     return STATUS_PARSE_ZERO, f"li {li_count}개, 왕복 항목 파싱 0건 (사이트 구조 변경?)"
+
+
+def price_floor(route_median=None):
+    """노선의 과거 중앙값을 받아 '이 아래면 가격 단위가 틀렸다'고 볼 하한(원)을 돌려준다.
+
+    중앙값이 없으면(신규 노선) 절대 하한만 쓴다. 근거는 PRICE_ABS_FLOOR_KRW 주석 참고.
+    """
+    floor = PRICE_ABS_FLOOR_KRW
+    if route_median and route_median > 0:
+        floor = max(floor, int(route_median * PRICE_MEDIAN_FLOOR_RATIO))
+    return floor
+
+
+def is_price_implausible(price, floor=PRICE_ABS_FLOOR_KRW):
+    """price 가 하한 아래(또는 숫자가 아님)면 True."""
+    try:
+        return int(price) < floor
+    except (TypeError, ValueError):
+        return True
+
+
+def check_page_prices(itineraries, floor):
+    """한 페이지에서 파싱한 항목들의 가격 단위 검사. (kept, rejected_detail) 반환.
+
+    단위 오류는 페이지 전체에 걸리므로, 하나라도 하한 아래면 **전부** 버리고 사유를 돌려준다.
+    문제가 없으면 (itineraries, "") 그대로.
+    """
+    bad = [it for it in itineraries if is_price_implausible(it.get("price"), floor)]
+    if not bad:
+        return itineraries, ""
+    prices = sorted(int(it["price"]) for it in itineraries if it.get("price") is not None)
+    detail = (f"가격 단위 의심: 하한 {floor:,}원 아래 {len(bad)}/{len(itineraries)}건 "
+              f"(최저 {prices[0]:,}, 최고 {prices[-1]:,}) -> 페이지 결과 폐기")
+    return [], detail
+
+
+def route_medians(rows):
+    """prices.csv 행들로 (origin, destination) -> 가격 중앙값. 절대 하한 아래 행은 중앙값에서 뺀다
+    (이미 들어온 노이즈가 중앙값을 끌어내리지 않도록)."""
+    import statistics
+    by = {}
+    for r in rows:
+        try:
+            p = int(r.get("price"))
+        except (TypeError, ValueError):
+            continue
+        if p < PRICE_ABS_FLOOR_KRW:
+            continue
+        by.setdefault((r.get("origin"), r.get("destination")), []).append(p)
+    return {k: statistics.median(v) for k, v in by.items()}
+
+
+def split_implausible_rows(rows):
+    """CSV 행 목록을 (정상 행, 노이즈 행) 으로 나눈다. 노이즈 판정은 price_floor(노선 중앙값)."""
+    meds = route_medians(rows)
+    kept, dropped = [], []
+    for r in rows:
+        floor = price_floor(meds.get((r.get("origin"), r.get("destination"))))
+        (dropped if is_price_implausible(r.get("price"), floor) else kept).append(r)
+    return kept, dropped
 
 
 class CrawlerSessionError(RuntimeError):
@@ -543,9 +625,15 @@ class PriceCrawlerSession:
         max_stops=None,
         with_return=True,
         nonstop_query=False,
+        min_plausible_price=None,
     ):
         """typed 수집 결과 반환:
-        {"status": str, "by_stops": {stops: itinerary_dict}, "detail": str}
+        {"status": str, "by_stops": {stops: itinerary_dict}, "detail": str, "rejected": [str, ...]}
+
+        min_plausible_price: 이 노선의 가격 하한(원). 호출 측이 price_floor(노선 중앙값)로 구해
+        넘긴다 (없으면 절대 하한). 파싱한 페이지에 하한 아래 금액이 하나라도 있으면 그 페이지는
+        통째로 버리고 rejected 에 사유를 남긴다 (2026-10-16 USD 단위 혼입 사고, 상단 주석).
+        모든 검색이 그렇게 버려지면 status 는 STATUS_PRICE_IMPLAUSIBLE.
 
         by_stops 는 경유수 클래스별 최저가 (경유수 미상 항목 제외, max_stops 이하만).
         같은 (o,d,날짜)라도 직항 모니터는 stops=0 최저가를, 경유 모니터는 stops<=1
@@ -573,7 +661,9 @@ class PriceCrawlerSession:
         else:
             passes = [(False, lambda s: s >= 1), (True, lambda s: s == 0)]
 
+        floor = min_plausible_price if min_plausible_price else PRICE_ABS_FLOOR_KRW
         best = {}
+        rejected = []
         status, detail, any_items = STATUS_OK, "", False
         for nonstop, keep in passes:
             try:
@@ -583,6 +673,14 @@ class PriceCrawlerSession:
             try:
                 st, itineraries, det = self._scan_page(page, url_for(nonstop), timeout_ms)
                 any_items = any_items or bool(itineraries)
+                itineraries, bad = check_page_prices(itineraries, floor)
+                if bad:
+                    label = "nonstop" if nonstop else "all"
+                    bad = f"[{label}] {bad}"
+                    print(f"[google_flights_crawler] {STATUS_PRICE_IMPLAUSIBLE} for "
+                          f"{origin}->{destination} {depart}~{return_}: {bad}")
+                    rejected.append(bad)
+                    st, det = STATUS_PRICE_IMPLAUSIBLE, bad
                 part = {}
                 for parsed in itineraries:
                     s = parsed["stops"]
@@ -625,7 +723,7 @@ class PriceCrawlerSession:
             status = STATUS_OK
         if status == STATUS_OK and not best and any_items:
             detail = "왕복 항목은 있으나 조건(경유수) 내 항목 없음"
-        return {"status": status, "by_stops": best, "detail": detail}
+        return {"status": status, "by_stops": best, "detail": detail, "rejected": rejected}
 
     def fetch_min_by_stops(self, *args, **kwargs):
         """(하위호환) 경유수별 최저가 dict 만 반환. 실패/결과 없음 시 {}."""
