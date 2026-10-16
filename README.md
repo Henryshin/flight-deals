@@ -15,6 +15,14 @@ docs/index.html        # GitHub Pages가 서빙하는 대시보드
 .github/workflows/collect.yml   # 4시간마다 자동 수집하는 cron (data/ 만 커밋)
 .github/workflows/build.yml     # data/** push 시 docs/data/*.json 재생성·커밋
 tests/test_smoke.py    # 브라우저 없이 도는 스모크 테스트 (python tests/test_smoke.py)
+
+blog/                  # 블로그 글감 추출·검증·카드 렌더 (표준 라이브러리 + playwright)
+scripts/blog_brief.py  # 오늘 쓸 만한 소재 브리핑 / 소재별 상세 자료
+scripts/blog_save.py   # result/<날짜>_<도시>/<날짜>_<도시>.md 원고 → 같은 폴더에 post.json·카드 PNG
+../result/              # 저장소 밖. 글 폴더(원고+발행용 파일)·브리핑·원장 (BLOG_RESULT_DIR 로 변경 가능)
+../publisher/          # 네이버·Threads 발행기 — 별도 private 저장소(Henryshin/flight-deals-publisher)를 형제 폴더에 클론
+.claude/skills/blog-post/  # 글을 쓸 때 따르는 문체·구조 규칙
+.github/workflows/blog-brief.yml  # 매일 07:00 KST 소재 브리핑 (CI 에서는 brief/ 만 커밋)
 ```
 
 수집과 빌드가 분리되어 있어서:
@@ -98,6 +106,97 @@ tests/test_smoke.py    # 브라우저 없이 도는 스모크 테스트 (python 
 - `origin`/`destination`은 IATA 공항 코드
 - 구글 플라이트 크롤러는 도시명을 인식하므로, 새 공항 코드를 쓰려면 `collector/google_flights_crawler.py`의 `AIRPORT_CITY` 표에도 추가해야 함
 
+## 네이버 블로그 자동 포스팅
+
+수집한 가격 데이터로 네이버 블로그 **글을 만드는 데까지**가 이 저장소의 범위입니다.
+네이버에 올리는 일은 검증된 별도 도구가 하고, 발행 버튼은 사람이 누릅니다.
+
+### 자동화되는 것 / 사람이 하는 것
+
+```
+[GitHub Actions]                    [Claude Code 세션]         [PC — 별도 검증된 도구]
+
+blog-brief.yml (매일 07:00 KST)
+  └ scripts/blog_brief.py
+      └ result/_brief/YYYY-MM-DD.md ──▶ "오늘 이거 써줘"
+         (오늘 쓸 만한 소재 8건)         └ 데이터 읽고 글 작성
+                                         └ scripts/blog_save.py
+                                             └ result/<날짜>_<도시>/
+                                                                 │
+                                                                 ▼
+                                                    98.네이버블로그자동화_v1.0
+                                                      login.py (사람이 로그인)
+                                                      post.py  (제목·본문·태그)
+                                                                 │
+                                             사람: 사진 넣고 · 읽어보고 · 발행
+```
+
+글은 매번 세션에서 새로 씁니다. 템플릿을 기계적으로 채우지 않습니다 —
+문체·구조 규칙은 `.claude/skills/blog-post/SKILL.md` 에 있습니다.
+
+### 발행 자동화는 이 저장소에 없습니다
+
+네이버 블로그 글쓰기 API 는 2020-05-06 종료됐고, 공식 자동 발행 경로가 없습니다.
+남은 방법은 SmartEditor 브라우저 자동화뿐인데, 그건 **이미 검증된 별도 도구**
+(`98.네이버블로그자동화_v1.0/`)가 담당합니다. 여기서 다시 만들지 마세요 —
+`../publisher/README.md` 에 이유와 연결 방법이 있습니다.
+
+이 저장소는 `result/<날짜>_<도시>/post.json` 까지만 책임집니다.
+
+계정 정보는 저장소·GitHub Secrets 어디에도 두지 않습니다.
+
+### 쓰는 법
+
+```bash
+python scripts/blog_brief.py --stdout                        # 오늘의 소재 후보
+python scripts/blog_brief.py --material ICN-TAK --window 2026-09-24   # 상세 자료
+python scripts/blog_save.py draft.md --dry-run               # 검증 + 미리보기
+python scripts/blog_save.py draft.md                         # 저장 + 카드 렌더
+```
+
+### 가격 신뢰성 가드레일
+
+`blog/data.py` 가 **글에 써도 되는 값만** 통과시킵니다. 이게 없으면 안 됩니다 —
+`data/prices.csv` 에는 크롤러의 `PRICE_PATTERN` 이 덜 렌더된 페이지에서 `₩333`
+같은 값을 잡아 넣은 행이 15개 있고, 그 결과 `docs/data/matrix.json` 에
+**"밀라노 왕복 755원 (tier A, 할증률 99.9%)"** 셀이 실제로 들어 있습니다.
+가드레일 없이 "최저가" 글을 쓰면 1위가 밀라노 755원이 됩니다.
+
+| 상수 | 값 | 뜻 |
+|---|---|---|
+| `PRICE_FLOOR_KRW` | 50,000 | ICN 출발 국제선 왕복 절대 하한 |
+| `MIN_PLAUSIBLE_RATIO` | 0.25 | `min_price / typical` 하한 (실제 최고 특가가 0.47) |
+| `MAX_PLAUSIBLE_DEAL_PCT` | 75 | 이보다 큰 할증률은 아티팩트 |
+| `MAX_DATA_AGE_HOURS` | 30 | 데이터가 오래되면 글을 쓰지 않는다 |
+| `MIN_CELL_OBS` / `MIN_CELL_PAIRS` | 6 / 2 | 관측이 얇은 셀은 제외 |
+| `MIN_LEAD_DAYS` | 7 | 출발이 코앞인 일정은 제외 |
+
+거기에 `scripts/blog_save.py` 가 **본문에 등장하는 금액을 자료와 대조**해서,
+근거 없는 숫자가 하나라도 있으면 저장을 거부합니다. 주간 관측이 부족한데
+"내렸다"고 쓰거나, 기후 자료가 없는데 날씨를 쓰는 것도 막습니다.
+
+> 이 가드레일은 블로그 파이프라인 안에서만 동작합니다. 대시보드(`docs/index.html`)
+> 에는 아직 하한선 검사가 없어서 755원 셀이 그대로 보입니다. 상류 수정은 별도 작업.
+
+### 사진
+
+초안은 `[[PHOTO: 설명]]` 자리만 잡습니다 — 글 쓰는 단계에서 사진을 임의로 끌어오지
+않습니다. 가격·추이·항공사 비교는 `blog/imagecard.py` 가 PNG 카드로 만들어 자동
+삽입합니다.
+
+사진을 채우는 방법은 두 가지입니다.
+
+1. **사용자가 직접** 임시저장된 글에 본인 사진을 얹습니다.
+2. **위키미디어 커먼즈에서 받아 넣습니다.** `result/<날짜>_<도시>/photos.json` 에 고른
+   파일을 적고 `../publisher/fetch_photos.py` 를 돌리면, 라이선스가 허용 목록
+   (CC BY / CC BY-SA / CC0 / PD)에 있는지 확인한 뒤 받아서 `photo-credits.json` 을
+   남깁니다. 목록에 없는 라이선스면 받지 않고 죽습니다. `post_to_naver.py` 가 그
+   파일을 보고 사진을 자리마다 넣고, **글 끝에 저작자·라이선스 출처 문단을
+   붙입니다** — CC BY / BY-SA 의 저작자 표시 의무입니다. 그 문단은 지우면 안 됩니다.
+
+아무 데서나 가져온 사진은 여전히 쓰지 않습니다. 출처와 라이선스를 확인할 수 없는
+사진은 이 경로로 들어오지 않습니다.
+
 ## 우선순위 노선 (수집 다양성 조정)
 
 `data/priority_routes.json`에 `["ICN-KHH", "ICN-HAN"]` 처럼 origin-destination 배열을 적어두면, 그 노선들은 연휴당 날짜쌍 후보 상한이 `PRIORITY_BOOST`(기본 2)배로 늘어나 같은 총 크롤 예산 안에서도 더 다양한 일정 후보(특히 덤휴일이 큰 앵커 후보)를 확보합니다. 하루짜리 연휴처럼 원래 후보가 1개뿐이던 노선도 이걸로 여러 개를 만들어, 휴일 가치/연차 상한 설정이 실제로 고를 게 생기게 됩니다.
@@ -133,6 +232,18 @@ python scripts/build_dashboard_data.py
 
 `docs/index.html`을 브라우저로 직접 열거나 `python -m http.server` 로 로컬 확인 가능.
 
+블로그 쪽:
+
+```bash
+python tests/test_smoke.py                    # 신규 블로그 테스트 포함 전체
+python scripts/blog_brief.py --stdout         # 소재 후보
+python -m blog.imagecard --selftest           # 한글 폰트 확인 (없으면 카드가 □)
+```
+
+카드 렌더에는 한글 폰트가 필요합니다. 러너/컨테이너에 없으면
+`apt-get install -y fonts-noto-cjk`. 크로미움이 이미 깔린 환경에서는
+`BLOG_CHROMIUM_PATH` 로 실행 파일을 직접 지정할 수 있습니다.
+
 ## GitHub Pages 설정
 
 저장소 Settings → Pages → Source를 `main` 브랜치의 `/docs` 폴더로 지정.
@@ -142,3 +253,5 @@ python scripts/build_dashboard_data.py
 - 구글 플라이트 화면 크롤링이므로 사이트 구조가 바뀌면 `collector/google_flights_crawler.py`의 파싱 로직을 갱신해야 함
 - GitHub Actions 무료 크레딧은 public 저장소 기준 무제한이지만, 실제 실행 간격은 GitHub의 스케줄 지연으로 정확히 4시간이 아닐 수 있음
 - 가격 이력은 `data/prices.csv`에 쌓이지만, 매 수집 직후 `scripts/prune_prices.py`가 계산에 안 쓰이는 90일 초과분(`PRUNE_RETENTION_DAYS`)을 자동으로 잘라내 무한정 커지지 않음
+- **가격 하한선 검사가 크롤러·빌더에는 아직 없음.** `PRICE_PATTERN`이 덜 렌더된 페이지에서 `₩333` 같은 값을 잡아 `prices.csv`에 들어온 행이 15개 있고, 그게 `matrix.json`·`routes_status.json`까지 흘러가 대시보드에 "밀라노 왕복 755원"으로 보임. 블로그 파이프라인은 자체 필터(`blog/data.py`)로 막지만, 상류 수정은 별도 작업 필요
+- 네이버 발행 자동화 코드를 이 저장소에 만들지 말 것. 실물 SmartEditor 로 검증된 도구가 이미 따로 있고, 비슷한 걸 하나 더 두면 둘 다 썩는다 (`../publisher/README.md`)
