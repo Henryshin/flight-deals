@@ -20,7 +20,7 @@ blog/                  # 블로그 글감 추출·검증·카드 렌더 (표준 
 scripts/blog_brief.py  # 오늘 쓸 만한 소재 브리핑 / 소재별 상세 자료
 scripts/blog_save.py   # result/<날짜>_<도시>/<날짜>_<도시>.md 원고 → 같은 폴더에 post.json·카드 PNG
 ../result/              # 저장소 밖. 글 폴더(원고+발행용 파일)·브리핑·원장 (BLOG_RESULT_DIR 로 변경 가능)
-publisher/README.md    # 발행은 별도 검증 도구가 담당 — 여기 자동화 코드 없음
+../publisher/          # 네이버·Threads 발행기 — 별도 private 저장소(Henryshin/flight-deals-publisher)를 형제 폴더에 클론
 .claude/skills/blog-post/  # 글을 쓸 때 따르는 문체·구조 규칙
 .github/workflows/blog-brief.yml  # 매일 07:00 KST 소재 브리핑 (CI 에서는 brief/ 만 커밋)
 ```
@@ -139,7 +139,7 @@ blog-brief.yml (매일 07:00 KST)
 네이버 블로그 글쓰기 API 는 2020-05-06 종료됐고, 공식 자동 발행 경로가 없습니다.
 남은 방법은 SmartEditor 브라우저 자동화뿐인데, 그건 **이미 검증된 별도 도구**
 (`98.네이버블로그자동화_v1.0/`)가 담당합니다. 여기서 다시 만들지 마세요 —
-`publisher/README.md` 에 이유와 연결 방법이 있습니다.
+`../publisher/README.md` 에 이유와 연결 방법이 있습니다.
 
 이 저장소는 `result/<날짜>_<도시>/post.json` 까지만 책임집니다.
 
@@ -188,7 +188,7 @@ python scripts/blog_save.py draft.md                         # 저장 + 카드 �
 
 1. **사용자가 직접** 임시저장된 글에 본인 사진을 얹습니다.
 2. **위키미디어 커먼즈에서 받아 넣습니다.** `result/<날짜>_<도시>/photos.json` 에 고른
-   파일을 적고 `publisher/fetch_photos.py` 를 돌리면, 라이선스가 허용 목록
+   파일을 적고 `../publisher/fetch_photos.py` 를 돌리면, 라이선스가 허용 목록
    (CC BY / CC BY-SA / CC0 / PD)에 있는지 확인한 뒤 받아서 `photo-credits.json` 을
    남깁니다. 목록에 없는 라이선스면 받지 않고 죽습니다. `post_to_naver.py` 가 그
    파일을 보고 사진을 자리마다 넣고, **글 끝에 저작자·라이선스 출처 문단을
@@ -254,4 +254,4 @@ python -m blog.imagecard --selftest           # 한글 폰트 확인 (없으면 
 - GitHub Actions 무료 크레딧은 public 저장소 기준 무제한이지만, 실제 실행 간격은 GitHub의 스케줄 지연으로 정확히 4시간이 아닐 수 있음
 - 가격 이력은 `data/prices.csv`에 쌓이지만, 매 수집 직후 `scripts/prune_prices.py`가 계산에 안 쓰이는 90일 초과분(`PRUNE_RETENTION_DAYS`)을 자동으로 잘라내 무한정 커지지 않음
 - **가격 하한선 검사가 크롤러·빌더에는 아직 없음.** `PRICE_PATTERN`이 덜 렌더된 페이지에서 `₩333` 같은 값을 잡아 `prices.csv`에 들어온 행이 15개 있고, 그게 `matrix.json`·`routes_status.json`까지 흘러가 대시보드에 "밀라노 왕복 755원"으로 보임. 블로그 파이프라인은 자체 필터(`blog/data.py`)로 막지만, 상류 수정은 별도 작업 필요
-- 네이버 발행 자동화 코드를 이 저장소에 만들지 말 것. 실물 SmartEditor 로 검증된 도구가 이미 따로 있고, 비슷한 걸 하나 더 두면 둘 다 썩는다 (`publisher/README.md`)
+- 네이버 발행 자동화 코드를 이 저장소에 만들지 말 것. 실물 SmartEditor 로 검증된 도구가 이미 따로 있고, 비슷한 걸 하나 더 두면 둘 다 썩는다 (`../publisher/README.md`)
