@@ -184,6 +184,12 @@ MATERIAL_PANEL = ".se-popup-unified-result-flayer--visible"
 MATERIAL_CLOSE = ".se-flayer-unified-result-close"
 # 예약 링크를 거는 문구. post.json 의 booking_url 로 연결한다.
 BOOKING_LINK_TEXT = "구글 항공권에서 이 조건 그대로 보기"
+# 원고 맨 끝 대시보드 두 줄 (사용자 지정 2026-09-21, SKILL.md '글의 구조' 10번).
+# 발행 글에서는 예약 링크 줄 **아래**로 옮긴다 (사용자 선택 2026-09-21).
+# 원고 순서대로 두면 예약 링크가 맨 URL 바로 뒤에 오는데, 에디터가 그 URL 을
+# 자동 링크로 바꾸면서 Enter 를 먹어 두 줄이 한 문단으로 붙었다 (미야자키 첫 실행).
+DASHBOARD_TAIL = ("이 모든걸 한번에 볼수 있는 사이트는 아래 링크에 있습니다!",
+                  "https://excel-flights.xyz/")
 # text=취소 는 화면에 안 보이는 스크린리더용 span 을 먼저 잡아 타임아웃된다.
 RECOVERY_CANCEL = ".se-popup-alert-confirm button:has-text('취소')"
 
@@ -377,6 +383,44 @@ def insert_paragraphs(frame, page, lines, verify=True):
             if norm(last_body_paragraph(frame)) != "":
                 page.keyboard.press("Enter")   # Enter 가 씹혔다
                 page.wait_for_timeout(ENTER_SETTLE_MS)
+
+
+def new_paragraph(frame, page):
+    """Enter 로 새 빈 문단을 연다. 씹혔으면 한 번 더 친다.
+
+    insert_paragraphs 의 줄 사이 Enter 와 같은 검사다. 블록 **사이**의 Enter 에도
+    필요하다 — 맨 URL 로 끝난 문단 뒤에서는 에디터가 첫 Enter 를 자동 링크 변환에
+    써 버려서, 다음 insert_text 가 URL 문단 끝에 이어 붙었다 (2026-09-21 실측:
+    'https://excel-flights.xyz/구글 항공권에서 이 조건 …').
+    """
+    page.keyboard.press("Enter")
+    page.wait_for_timeout(ENTER_SETTLE_MS)
+    if norm(last_body_paragraph(frame)) != "":
+        page.keyboard.press("Enter")
+        page.wait_for_timeout(ENTER_SETTLE_MS)
+    if norm(last_body_paragraph(frame)) != "":
+        raise Failed("Enter 를 두 번 쳤는데 새 문단이 생기지 않았다. 흐름이 예상과 다르므로 멈춘다.")
+
+
+def split_dashboard_tail(blocks):
+    """마지막 html 블록 끝의 대시보드 두 줄(DASHBOARD_TAIL)을 떼어 낸다.
+
+    돌려주는 것: (블록 목록, 떼어 낸 줄 목록). 해당 없으면 (blocks, []).
+    post["blocks"] 는 고치지 않고 새 목록을 만든다 — verify_whole 도 같은 함수로
+    기대 순서를 만들어야 해서 원본이 그대로 있어야 한다.
+    """
+    if not blocks or blocks[-1]["type"] != "html":
+        return blocks, []
+    b = blocks[-1]
+    tops = list(TOP_TAG.finditer(b["content"]))
+    if not tops or tuple(html_to_paragraphs(tops[-1].group(0))) != DASHBOARD_TAIL:
+        return blocks, []
+    last = tops[-1]
+    rest = (b["content"][:last.start()] + b["content"][last.end():]).strip()
+    head = list(blocks[:-1])
+    if rest:
+        head.append({**b, "content": rest})
+    return head, list(DASHBOARD_TAIL)
 
 
 def set_title(frame, page, title):
@@ -611,7 +655,10 @@ def insert_credits(frame, page, lines):
     """
     log(f"  사진 출처 {len(lines)}줄 ({CREDIT_ALIGN} · {CREDIT_PT}pt)")
     # 본문과 출처 사이 간격. 하노이 발행본 실측 8줄 (RUNBOOK §7).
-    for _ in range(CREDIT_GAP):
+    # 첫 Enter 는 new_paragraph 로 — 본문 끝이 맨 URL(대시보드 줄)이면 자동 링크
+    # 변환이 첫 Enter 를 먹는다 (2026-09-21).
+    new_paragraph(frame, page)
+    for _ in range(CREDIT_GAP - 1):
         page.keyboard.press("Enter")
         page.wait_for_timeout(ENTER_SETTLE_MS)
     frame.click(ALIGN_DROPDOWN)
@@ -924,7 +971,7 @@ def fill_post(page, post, post_dir, align=ALIGN_DEFAULT, tags=True,
     frame.locator(BODY_INNER).first.click()
     page.wait_for_timeout(FOCUS_SETTLE_MS)
 
-    blocks = post["blocks"]
+    blocks, tail = split_dashboard_tail(post["blocks"])
     for i, b in enumerate(blocks, 1):
         head = f"  [{i}/{len(blocks)}]"
         if b["type"] == "html":
@@ -964,10 +1011,17 @@ def fill_post(page, post, post_dir, align=ALIGN_DEFAULT, tags=True,
 
     booking = post.get("booking_url")
     if booking:
-        page.keyboard.press("Enter")
-        page.wait_for_timeout(ENTER_SETTLE_MS)
+        new_paragraph(frame, page)
         log("  예약 링크 한 줄")
         insert_paragraphs(frame, page, [BOOKING_LINK_TEXT])
+    if tail:
+        new_paragraph(frame, page)
+        log("  대시보드 두 줄 (예약 링크 아래)")
+        insert_paragraphs(frame, page, [""] + tail)
+    # 링크는 줄을 다 넣은 뒤에 건다. apply_link 는 문단을 트리플클릭으로 '선택'한 채
+    # 끝나므로, 그 뒤에 Enter 를 치면 예약 링크 줄이 통째로 지워질 수 있다.
+    # 문단을 글자로 찾기 때문에 위치가 맨 끝이 아니어도 걸린다.
+    if booking:
         apply_link(frame, page, BOOKING_LINK_TEXT, booking)
 
     used = [m for m in manifest if m["hint"] in photos]
@@ -996,13 +1050,15 @@ def verify_whole(frame, post, photos, used):
     """
     body = body_text(frame)
     want = []
-    for b in post["blocks"]:
+    blocks, tail = split_dashboard_tail(post["blocks"])   # fill_post 와 같은 순서
+    for b in blocks:
         if b["type"] == "html":
             want += html_to_paragraphs(b["content"])
         elif b["type"] == "photo" and b["hint"] not in photos:
             want.append(f"[여기에 사진: {b['hint']}]")
     if post.get("booking_url"):
         want.append(BOOKING_LINK_TEXT)
+    want += tail
     if used:
         want += credit_lines(used)
 

@@ -119,6 +119,16 @@ def validate(meta, blocks, text, mat):
     return errs
 
 
+def _booking_url(meta):
+    """머리말 booking_url (구글 항공권 검색 URL 만). 머리말 파서가 따옴표를 안 벗겨서 여기서 벗긴다."""
+    url = str(meta.get("booking_url") or "").strip().strip("\"'")
+    if not url:
+        return ""
+    if not url.startswith("https://www.google.com/travel/flights"):
+        raise DraftInvalid(f"  - booking_url 은 구글 항공권 URL 이어야 한다: {url}")
+    return url
+
+
 def build_post(draft_path, today=None, with_images=True):
     text = Path(draft_path).read_text(encoding="utf-8")
     meta, body = R.parse_front_matter(text)
@@ -277,7 +287,9 @@ def build_post(draft_path, today=None, with_images=True):
         "dest_ko": mat["dest_ko"],
         "data_generated_at": mat["data_generated_at"],
         "generated_at": datetime.now(D.KST).isoformat(timespec="seconds"),
-        "booking_url": mat["booking_url"],
+        # 머리말 booking_url 이 있으면 그걸 쓴다. 기본 URL 은 '서울→도시' 전체 검색이라 고른 항공편이
+        # 첫 화면에 안 보인다 (2026-09-23 도쿄: 에어프레미아편인데 ZIPAIR·제주항공이 먼저 떴다).
+        "booking_url": _booking_url(meta) or mat["booking_url"],
         "blocks": blocks,
         "photo_hints": [b["hint"] for b in blocks if b["type"] == "photo"],
     }
