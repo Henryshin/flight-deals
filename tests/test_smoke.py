@@ -936,6 +936,158 @@ def test_nonstop_check_labels():
                             "airports": "GMP-KHH"}) == "편도 2장 · 김포"
 
 
+# =============================================================================
+# 가격 단위 혼입 (2026-10-16): USD 금액이 ₩ 기호에 실려 507원 류가 54행 저장된 사고
+# =============================================================================
+
+# 2026-10-07T19:01:27Z 에 저장된 ICN-ULN 2027-02-05~09 직항 507원. 같은 쿼리의 정상 행은
+# 677,700원 (비율 1,336.7 = USD/KRW). 아래 li 텍스트는 2026-10-16 실측 화면 구조에 금액만 바꾼 것.
+_ULN_LI_USD = "오후 11:55\n – \n오전 2:40+1\nMIAT 몽골항공\n3시간 45분\nICN–UBN\n직항\nCO2e 213kg\n+20% 배출\n₩507\n왕복"
+_ULN_LI_KRW = "오후 11:55\n – \n오전 2:40+1\nMIAT 몽골항공\n3시간 45분\nICN–UBN\n직항\nCO2e 213kg\n+20% 배출\n₩677,600\n왕복"
+
+
+def test_price_floor_and_page_check():
+    from collector.google_flights_crawler import (
+        PRICE_ABS_FLOOR_KRW, check_page_prices, is_price_implausible, price_floor,
+    )
+    assert price_floor(None) == PRICE_ABS_FLOOR_KRW == 30_000
+    assert price_floor(677700) == 67770            # 중앙값의 10% 가 절대 하한보다 높으면 그쪽
+    assert price_floor(200_000) == PRICE_ABS_FLOOR_KRW  # 10% 가 절대 하한 아래면 절대 하한
+
+    floor = price_floor(677700)
+    assert is_price_implausible(507, floor)
+    assert is_price_implausible(1678, floor)       # ORD 2026-10-09 노이즈 (최대값)
+    assert not is_price_implausible(159200, floor) # 관측된 정상 최저가 (ICN-FUK)
+    assert not is_price_implausible(677700, floor)
+    assert is_price_implausible(None, floor) and is_price_implausible("", floor)
+
+    # 파서는 ₩507 을 그대로 507 로 읽는다 — 거부는 페이지 검사 몫이다
+    usd = parse_itinerary(_ULN_LI_USD)
+    krw = parse_itinerary(_ULN_LI_KRW)
+    assert usd["price"] == 507 and krw["price"] == 677600
+    kept, detail = check_page_prices([usd, {"price": 712900, "stops": 0}], floor)
+    assert kept == [] and "507" in detail            # 한 건이라도 하한 아래면 페이지 전체 폐기
+    kept, detail = check_page_prices([krw, {"price": 712900, "stops": 0}], floor)
+    assert len(kept) == 2 and detail == ""
+
+
+def test_fetch_result_discards_implausible_page():
+    """Nonstop 검색 페이지만 USD 로 왔을 때(2026-10-07 ULN 실제 패턴): 그 클래스는 버리고
+    필터 없는 검색의 경유 클래스만 남긴다. 둘 다 USD 면 status=price_implausible."""
+    from collector.google_flights_crawler import (
+        PriceCrawlerSession, STATUS_OK, STATUS_PRICE_IMPLAUSIBLE, price_floor,
+    )
+
+    class Page:
+        def close(self): pass
+
+    class Ctx:
+        def new_page(self): return Page()
+
+    s = PriceCrawlerSession.__new__(PriceCrawlerSession)
+    s._browser_context = Ctx()
+    usd_page = [parse_itinerary(_ULN_LI_USD), {"price": 533, "stops": 0, "airline": "대한항공", "dep_time": "07:45"}]
+    krw_page = [{"price": 1397200, "stops": 1, "airline": "대한항공", "dep_time": "07:55"},
+                {"price": 677700, "stops": 0, "airline": "몽골항공", "dep_time": "23:55"}]
+
+    def scan_mixed(page, url, timeout_ms):
+        return STATUS_OK, (usd_page if "Nonstop" in url else krw_page), ""
+    s._scan_page = scan_mixed
+    r = s.fetch_result("ICN", "ULN", date(2027, 2, 5), date(2027, 2, 9), max_stops=1,
+                       with_return=False, nonstop_query=True, min_plausible_price=price_floor(677700))
+    assert set(r["by_stops"]) == {1} and r["by_stops"][1]["price"] == 1397200
+    assert r["status"] == STATUS_OK            # 살아남은 클래스는 기록한다
+    assert len(r["rejected"]) == 1 and r["rejected"][0].startswith("[nonstop]")
+
+    s._scan_page = lambda page, url, timeout_ms: (STATUS_OK, list(usd_page), "")
+    r2 = s.fetch_result("ICN", "ULN", date(2027, 2, 5), date(2027, 2, 9), max_stops=1,
+                        with_return=False, nonstop_query=True, min_plausible_price=price_floor(677700))
+    assert r2["by_stops"] == {} and r2["status"] == STATUS_PRICE_IMPLAUSIBLE
+    assert len(r2["rejected"]) == 2
+
+    # 노선 이력이 없어도(하한 미지정) 절대 하한 30,000원이 USD 금액을 걸러야 한다
+    r3 = s.fetch_result("ICN", "ULN", date(2027, 2, 5), date(2027, 2, 9), max_stops=0,
+                        with_return=False, nonstop_query=True)
+    assert r3["status"] == STATUS_PRICE_IMPLAUSIBLE and r3["by_stops"] == {}
+
+    # 정상 페이지는 그대로 통과
+    s._scan_page = lambda page, url, timeout_ms: (STATUS_OK, list(krw_page), "")
+    r4 = s.fetch_result("ICN", "ULN", date(2027, 2, 5), date(2027, 2, 9), max_stops=1,
+                        with_return=False, nonstop_query=True, min_plausible_price=price_floor(677700))
+    assert r4["status"] == STATUS_OK and r4["rejected"] == []
+    assert r4["by_stops"][0]["price"] == 677700 and r4["by_stops"][1]["price"] == 1397200
+
+
+def test_summarize_group_surfaces_implausible_pages():
+    from collections import Counter
+    from scripts.collect import summarize_group
+    # 행이 저장됐어도 폐기 페이지 수가 detail 과 implausible 에 남아야 한다
+    e = summarize_group(Counter({"ok": 3}), 4, "", "2026-10-16T00:00:00+00:00", n_implausible=1)
+    assert e["status"] == "ok" and e["implausible"] == 1 and "1건" in e["detail"]
+    # 전부 폐기되면 상태 자체가 price_implausible
+    e2 = summarize_group(Counter({"price_implausible": 2}), 0, "[nonstop] 가격 단위 의심",
+                         "2026-10-16T00:00:00+00:00", n_implausible=2)
+    assert e2["status"] == "price_implausible" and e2["rows"] == 0
+
+
+def _price_row(price, collected_at, stops="0", dest="ULN", depart="2027-02-05", ret="2027-02-09"):
+    return {
+        "origin": "ICN", "destination": dest, "depart_date": depart, "return_date": ret,
+        "price": str(price), "is_holiday_window": "1", "collected_at": collected_at,
+        "dep_time": "", "arr_time": "", "stops": stops, "window_id": "2027-02-05", "airline": "몽골항공",
+    }
+
+
+def test_split_implausible_rows():
+    from collector.google_flights_crawler import split_implausible_rows
+    rows = [
+        _price_row(677700, "2026-10-07T08:58:00+00:00"),
+        _price_row(507, "2026-10-07T19:01:27+00:00"),            # 사용자가 지적한 행
+        _price_row(1397200, "2026-10-07T19:01:27+00:00", stops="1"),
+        _price_row(159200, "2026-10-07T01:00:00+00:00", dest="FUK"),  # 이력 없는 노선의 정상 최저가
+        _price_row(182, "2026-10-07T02:00:00+00:00", dest="FUK"),     # 2026-08-25 FUK 노이즈
+    ]
+    kept, dropped = split_implausible_rows(rows)
+    assert [r["price"] for r in dropped] == ["507", "182"]
+    assert len(kept) == 3
+    # 노이즈가 중앙값을 끌어내려 정상 행을 같이 지우는 일이 없어야 한다 (노이즈만 있는 노선)
+    kept2, dropped2 = split_implausible_rows([_price_row(507, "x"), _price_row(533, "y")])
+    assert kept2 == [] and len(dropped2) == 2
+
+
+def test_prune_prices_removes_implausible_rows():
+    import csv
+    import tempfile
+
+    from scripts import prune_prices
+
+    today = date(2026, 10, 16)
+    fieldnames = list(_price_row(1, "").keys())
+    rows = [
+        _price_row(677700, "2026-10-07T08:58:00+00:00"),
+        _price_row(507, "2026-10-07T19:01:27+00:00"),
+        _price_row(1397200, "2026-10-07T19:01:27+00:00", stops="1"),
+    ]
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False, newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=fieldnames)
+        w.writeheader()
+        w.writerows(rows)
+        tmp_path = Path(f.name)
+    orig = prune_prices.PRICES_FILE
+    prune_prices.PRICES_FILE = tmp_path
+    try:
+        prune_prices.prune(dry_run=True, today=today)
+        with open(tmp_path, encoding="utf-8", newline="") as f:
+            assert len(list(csv.DictReader(f))) == 3, "dry-run인데 파일이 바뀜"
+        prune_prices.prune(today=today)
+        with open(tmp_path, encoding="utf-8", newline="") as f:
+            kept = list(csv.DictReader(f))
+        assert sorted(r["price"] for r in kept) == ["1397200", "677700"], kept
+    finally:
+        prune_prices.PRICES_FILE = orig
+        tmp_path.unlink(missing_ok=True)
+
+
 def main():
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     failed = 0
