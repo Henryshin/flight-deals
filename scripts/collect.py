@@ -21,7 +21,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from collector.google_flights_crawler import CrawlerSessionError, PriceCrawlerSession
+from collector.google_flights_crawler import (
+    CrawlerSessionError, PriceCrawlerSession, STATUS_PRICE_IMPLAUSIBLE, price_floor, route_medians,
+)
 from holidays import (
     count_free_days, count_leave_days, date_range_candidates, get_holiday_windows,
 )
@@ -287,22 +289,25 @@ def append_rows(rows):
 
 
 def load_collection_meta():
-    """prices.csv 1회 스캔: (o,d)별 마지막 수집시각 / 마지막 평시(baseline) 수집시각.
+    """prices.csv 1회 스캔: (o,d)별 마지막 수집시각 / 마지막 평시(baseline) 수집시각 / 가격 중앙값.
 
-    stale-first 정렬과 '평시 기준가는 하루 1회만' 게이트에 쓴다.
+    stale-first 정렬과 '평시 기준가는 하루 1회만' 게이트, 그리고 가격 단위 검사의 노선 하한
+    (price_floor) 에 쓴다.
     """
-    last_any, last_baseline = {}, {}
+    last_any, last_baseline, medians = {}, {}, {}
     if not PRICES_FILE.exists():
-        return last_any, last_baseline
+        return last_any, last_baseline, medians
     with open(PRICES_FILE, newline="", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
-            key = (row.get("origin"), row.get("destination"))
-            ts = row.get("collected_at") or ""
-            if ts > last_any.get(key, ""):
-                last_any[key] = ts
-            if row.get("is_holiday_window") == "0" and ts > last_baseline.get(key, ""):
-                last_baseline[key] = ts
-    return last_any, last_baseline
+        rows = list(csv.DictReader(f))
+    for row in rows:
+        key = (row.get("origin"), row.get("destination"))
+        ts = row.get("collected_at") or ""
+        if ts > last_any.get(key, ""):
+            last_any[key] = ts
+        if row.get("is_holiday_window") == "0" and ts > last_baseline.get(key, ""):
+            last_baseline[key] = ts
+    medians = route_medians(rows)
+    return last_any, last_baseline, medians
 
 
 def load_status_attempts():
@@ -461,11 +466,18 @@ def write_collect_status(updates):
     STATUS_FILE.write_text(json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def summarize_group(statuses: Counter, n_rows: int, last_detail: str, now_iso: str):
-    """노선 그룹 하나의 쿼리 결과들을 상태 엔트리 하나로 요약."""
+def summarize_group(statuses: Counter, n_rows: int, last_detail: str, now_iso: str,
+                    n_implausible: int = 0):
+    """노선 그룹 하나의 쿼리 결과들을 상태 엔트리 하나로 요약.
+
+    n_implausible = 가격 단위 의심으로 버린 페이지 수. 다른 쿼리가 성공해 행이 저장됐어도
+    detail 에 남겨 collect_status.json / 스텝 요약에서 보이게 한다 (2026-10-16 USD 혼입 사고).
+    """
     attempts = sum(statuses.values())
     if n_rows > 0:
         status, detail = "ok", ""
+        if n_implausible:
+            detail = f"가격 단위 의심으로 버린 페이지 {n_implausible}건 (저장분은 정상)"
     elif attempts == 0:
         status, detail = "error", "시도된 쿼리 없음"
     elif statuses.get("ok"):
@@ -481,6 +493,7 @@ def summarize_group(statuses: Counter, n_rows: int, last_detail: str, now_iso: s
         "attempts": attempts,
         "ok": statuses.get("ok", 0),
         "rows": n_rows,
+        "implausible": n_implausible,
         "last_attempt_at": now_iso,
     }
 
@@ -490,9 +503,14 @@ def write_step_summary(status_updates, skipped):
     path = os.environ.get("GITHUB_STEP_SUMMARY")
     if not path:
         return
-    lines = ["## 수집 결과", "", "| 노선 | 상태 | 성공/시도 | 저장 행 |", "|---|---|---|---|"]
+    lines = ["## 수집 결과", "", "| 노선 | 상태 | 성공/시도 | 저장 행 | 단위 의심 폐기 |", "|---|---|---|---|---|"]
     for key, s in sorted(status_updates.items()):
-        lines.append(f"| {key} | {s['status']} | {s.get('ok', 0)}/{s.get('attempts', 0)} | {s.get('rows', 0)} |")
+        lines.append(f"| {key} | {s['status']} | {s.get('ok', 0)}/{s.get('attempts', 0)} "
+                     f"| {s.get('rows', 0)} | {s.get('implausible', 0)} |")
+    n_imp = sum(s.get("implausible", 0) for s in status_updates.values())
+    if n_imp:
+        lines += ["", f"가격 단위 의심({STATUS_PRICE_IMPLAUSIBLE})으로 폐기한 페이지: {n_imp}건 "
+                      "(구글이 curr=KRW 를 무시하고 USD 금액을 보낸 것으로 추정, 2026-10-16 분석)"]
     if skipped:
         lines += ["", f"예산/차단으로 건너뜀: {', '.join(sorted(skipped))}"]
     try:
@@ -512,7 +530,7 @@ def main():
     # stale-first: 한 번도 시도 안 된 노선 먼저, 그 다음 오래된 순.
     # (예산에 잘린 노선이 다음 런에서 자동으로 앞에 오는 로테이션 효과.
     #  '시도' 시각도 반영해 계속 실패하는 노선이 앞자리를 영구 점유하지 않게 한다.)
-    last_any, last_baseline = load_collection_meta()
+    last_any, last_baseline, route_median = load_collection_meta()
     attempts = load_status_attempts()
     specs.sort(key=lambda s: max(
         last_any.get((s[0], s[1]), ""),
@@ -581,6 +599,9 @@ def main():
             rows = []
             statuses = Counter()
             last_detail = ""
+            n_implausible = 0
+            # 이 노선의 가격 하한: 과거 중앙값의 10% 와 절대 하한 중 높은 쪽 (crawler 주석 참고).
+            min_plausible = price_floor(route_median.get((origin, destination)))
             try:
                 for depart, return_, is_holiday, window_id in candidates:
                     if time.monotonic() > deadline:
@@ -596,9 +617,11 @@ def main():
                         # 고친 뒤에도 켜지 않아 오는 편 경유·다구간이 걸러지지 않았다 (9/22).
                         with_return=RETURN_SCAN and bool(is_holiday),
                         nonstop_query=NONSTOP_QUERY,
+                        min_plausible_price=min_plausible,
                     )
                     st = result["status"]
                     statuses[st] += 1
+                    n_implausible += len(result.get("rejected") or [])
                     if st in ("blocked", "consent"):
                         blocked_streak += 1
                         if blocked_streak >= BLOCKED_ABORT_STREAK:
@@ -650,6 +673,7 @@ def main():
             status_updates[group_key] = summarize_group(
                 statuses, len(rows), last_detail,
                 datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                n_implausible=n_implausible,
             )
 
     write_collect_status(status_updates)

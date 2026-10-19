@@ -17,7 +17,7 @@ from statistics import median
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from collector.google_flights_crawler import build_booking_url
+from collector.google_flights_crawler import build_booking_url, split_implausible_rows
 from holidays import (
     KOREAN_HOLIDAYS, count_free_days, count_leave_days, get_holiday_windows,
 )
@@ -55,6 +55,12 @@ def load_prices():
         return []
     with open(PRICES_FILE, encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
+    # 가격 단위가 틀린 행(USD 금액이 ₩ 로 들어온 507원 류, 2026-10-16)은 계산에서 뺀다.
+    # 수집(크롤러)·정리(prune_prices) 단계에서도 막지만, 어느 쪽이 빠져도 matrix 에
+    # '왕복 755원 tier A' 같은 셀이 생기지 않도록 여기서 한 번 더 거른다.
+    rows, noise = split_implausible_rows(rows)
+    if noise:
+        print(f"[build] 가격 단위 의심 행 {len(noise)}건 제외")
     # 같은 날 여러 런이 재수집한 동일 (노선, 날짜쌍, stops) 관측은 마지막 것만 유지.
     # (하루 ~6회 크론이 같은 후보를 다시 긁으므로, dedup 없이는 표본수/평균이 부풀려짐)
     dedup = {}
