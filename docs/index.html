@@ -2069,13 +2069,19 @@
     // 최저가가 아닌 다른(더 비싼) 일정으로 바뀐 경우, 그 일정의 실제 가격을 넘겨서 배지가
     // '화면에 보이는 가격'과 같은 기준으로 계산되게 한다 (그렇지 않으면 배지만 원래
     // 최저가 기준이라 화면에 보이는 가격과 어긋난 특가율이 뜬다).
+    // 화면에 보이는 가격(price) 기준 통상 시세 대비 할인율(%, 0 미만은 0). 배지와
+    // 특가 보드의 '특가 아님' 제외 판단이 같은 숫자를 쓰도록 한 곳에서 계산한다.
+    function gvDealPct(cell, price) {
+      const p = price != null ? price : cell.min_price;
+      return cell.typical > 0 ? Math.max(0, Math.round((cell.typical - p) / cell.typical * 100)) : (cell.deal_pct || 0);
+    }
     function gvDealBadge(cell, price) {
       if (!cell) return '<span class="gv-badge gv-na">수집 대기</span>';
       if (cell.tier === 'C') {
         return `<span class="gv-badge gv-na" title="이 연휴의 통상 시세를 잡을 표본이 아직 부족합니다 (관측 ${cell.n_obs || 0}) — 왼쪽 최저가만 참고하세요">수집 중</span>`;
       }
       const p = price != null ? price : cell.min_price;
-      const d = cell.typical > 0 ? Math.max(0, Math.round((cell.typical - p) / cell.typical * 100)) : (cell.deal_pct || 0);
+      const d = gvDealPct(cell, p);
       const cls = d >= 12 ? 'gv-r0' : d >= 5 ? 'gv-r1' : 'gv-na';
       const txt = d >= 5 ? `−${d.toFixed(0)}%` : '수준';
       const dim = cell.tier === 'B' ? ' style="opacity:.65"' : '';
@@ -2218,10 +2224,14 @@
         // 직항/경유 칩이 걸려 있을 땐 조건에 맞는 일정이 없는 노선을 조용히 뺀다
         // (연차 상한만 걸린 경우는 기존처럼 사유 행으로 남겨 '왜 없는지' 보여준다).
         if (state.selStops.size && !pick.cell) continue;
+        // 통상 시세 대비 5% 미만(배지가 '수준'이던 칸)은 특가가 아니라 특가 보드에서 뺀다.
+        // pickBestCell 이 특가율 높은 칸을 먼저 고르므로, 여기서 빠지면 선택한 연휴 전부가 특가 아님.
+        // (표본 부족 tier C 는 판단 불가라 '수집 중'으로 남긴다.)
+        if (pick.cell && pick.cell.tier !== 'C' && gvDealPct(pick.cell, (displayPair(pick.cell) || {}).price) < 5) continue;
         rows.push({ route: g.route, monitors: g.monitors, cell: pick.cell, win: pick.win, capBlocked: pick.capBlocked });
       }
       if (!rows.length) {
-        tbody.innerHTML = emptyRow(6, '조건에 맞는 노선이 없습니다. 필터를 조정해 보세요.');
+        tbody.innerHTML = emptyRow(6, '조건에 맞는 특가 노선이 없습니다. 필터를 조정해 보세요.');
         return;
       }
 
