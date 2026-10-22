@@ -1,48 +1,50 @@
 {
-  "updated_at": "2026-10-22T08:15:00+00:00",
+  "updated_at": "2026-10-22T17:32:31+00:00",
   "routes": {
     "ICN-LHR": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 4,
-      "rows": 4,
+      "attempts": 18,
+      "ok": 15,
+      "rows": 15,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T07:15:12+00:00"
+      "last_attempt_at": "2026-10-22T16:16:37+00:00"
     },
     "ICN-FCO": {
       "status": "ok",
       "detail": "",
-      "attempts": 18,
-      "ok": 5,
-      "rows": 5,
+      "attempts": 20,
+      "ok": 13,
+      "rows": 13,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T07:19:31+00:00"
+      "last_attempt_at": "2026-10-22T16:20:00+00:00"
     },
     "ICN-BCN": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 16,
+      "attempts": 18,
+      "ok": 15,
+      "rows": 15,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T07:22:04+00:00"
+      "last_attempt_at": "2026-10-22T16:22:13+00:00"
     },
     "ICN-PRG": {
-      "status": "skipped_budget",
-      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 20,
+      "ok": 16,
+      "rows": 30,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T17:28:21+00:00"
     },
     "ICN-VIE": {
-      "status": "skipped_budget",
-      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 11,
+      "ok": 7,
+      "rows": 9,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-IST": {
       "status": "skipped_budget",
@@ -50,7 +52,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-FRA": {
       "status": "skipped_budget",
@@ -58,7 +60,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-ZRH": {
       "status": "skipped_budget",
@@ -66,106 +68,106 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-NRT": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 14,
-      "rows": 16,
+      "attempts": 18,
+      "ok": 15,
+      "rows": 18,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T07:29:24+00:00"
+      "last_attempt_at": "2026-10-22T16:26:41+00:00"
     },
     "ICN-KIX": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 10,
-      "rows": 17,
+      "attempts": 18,
+      "ok": 15,
+      "rows": 30,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T07:38:44+00:00"
+      "last_attempt_at": "2026-10-22T16:30:59+00:00"
     },
     "ICN-DAD": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 32,
+      "attempts": 18,
+      "ok": 15,
+      "rows": 30,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T07:43:36+00:00"
+      "last_attempt_at": "2026-10-22T16:35:00+00:00"
     },
     "ICN-DPS": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 32,
+      "attempts": 18,
+      "ok": 14,
+      "rows": 28,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T07:48:27+00:00"
+      "last_attempt_at": "2026-10-22T16:39:34+00:00"
     },
     "ICN-ULN": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 14,
-      "rows": 28,
+      "attempts": 18,
+      "ok": 12,
+      "rows": 24,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T07:54:21+00:00"
+      "last_attempt_at": "2026-10-22T16:45:12+00:00"
     },
     "ICN-PVG": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 29,
+      "attempts": 18,
+      "ok": 14,
+      "rows": 26,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T07:59:36+00:00"
+      "last_attempt_at": "2026-10-22T16:50:08+00:00"
     },
     "ICN-TPE": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 31,
+      "attempts": 18,
+      "ok": 15,
+      "rows": 30,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T08:04:50+00:00"
+      "last_attempt_at": "2026-10-22T16:54:09+00:00"
     },
     "ICN-KHH": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 31,
+      "attempts": 18,
+      "ok": 14,
+      "rows": 27,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T08:09:54+00:00"
+      "last_attempt_at": "2026-10-22T16:58:54+00:00"
     },
     "ICN-PQC": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 31,
+      "attempts": 18,
+      "ok": 15,
+      "rows": 29,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:03:07+00:00"
     },
     "ICN-GUM": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 16,
+      "attempts": 18,
+      "ok": 14,
+      "rows": 14,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T04:39:16+00:00"
+      "last_attempt_at": "2026-10-22T13:56:03+00:00"
     },
     "ICN-SHI": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 5,
-      "rows": 5,
+      "attempts": 18,
+      "ok": 3,
+      "rows": 3,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T04:36:42+00:00"
+      "last_attempt_at": "2026-10-22T13:53:27+00:00"
     },
     "ICN-KBV": {
       "status": "parse_zero",
@@ -174,219 +176,223 @@
       "ok": 0,
       "rows": 0,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T04:26:35+00:00"
+      "last_attempt_at": "2026-10-22T13:43:48+00:00"
     },
     "ICN-ATH": {
-      "status": "skipped_budget",
-      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
-    },
-    "ICN-CDG": {
-      "status": "skipped_budget",
-      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
-    },
-    "ICN-FUK": {
-      "status": "skipped_budget",
-      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
-    },
-    "ICN-CTS": {
-      "status": "skipped_budget",
-      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
-    },
-    "ICN-OKA": {
-      "status": "ok",
-      "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 31,
-      "implausible": 0,
-      "last_attempt_at": "2026-10-22T04:44:21+00:00"
-    },
-    "ICN-NGO": {
-      "status": "ok",
-      "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 24,
-      "implausible": 0,
-      "last_attempt_at": "2026-10-22T04:49:09+00:00"
-    },
-    "ICN-HKG": {
-      "status": "ok",
-      "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 32,
-      "implausible": 0,
-      "last_attempt_at": "2026-10-22T04:54:07+00:00"
-    },
-    "ICN-MFM": {
-      "status": "ok",
-      "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 32,
-      "implausible": 0,
-      "last_attempt_at": "2026-10-22T04:58:53+00:00"
-    },
-    "ICN-PEK": {
-      "status": "ok",
-      "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 20,
-      "implausible": 0,
-      "last_attempt_at": "2026-10-22T05:04:19+00:00"
-    },
-    "ICN-TAO": {
-      "status": "ok",
-      "detail": "",
-      "attempts": 20,
-      "ok": 14,
-      "rows": 26,
-      "implausible": 0,
-      "last_attempt_at": "2026-10-22T05:10:21+00:00"
-    },
-    "ICN-BKK": {
-      "status": "ok",
-      "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 30,
-      "implausible": 0,
-      "last_attempt_at": "2026-10-22T05:15:47+00:00"
-    },
-    "ICN-HKT": {
-      "status": "ok",
-      "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 32,
-      "implausible": 0,
-      "last_attempt_at": "2026-10-22T05:20:33+00:00"
-    },
-    "ICN-CNX": {
-      "status": "ok",
-      "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 24,
-      "implausible": 0,
-      "last_attempt_at": "2026-10-22T05:27:18+00:00"
-    },
-    "ICN-SGN": {
-      "status": "ok",
-      "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 32,
-      "implausible": 0,
-      "last_attempt_at": "2026-10-22T05:32:07+00:00"
-    },
-    "ICN-HAN": {
-      "status": "ok",
-      "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 31,
-      "implausible": 0,
-      "last_attempt_at": "2026-10-22T05:37:15+00:00"
-    },
-    "ICN-CXR": {
-      "status": "ok",
-      "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 29,
-      "implausible": 0,
-      "last_attempt_at": "2026-10-22T05:42:03+00:00"
-    },
-    "ICN-CEB": {
-      "status": "ok",
-      "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 32,
-      "implausible": 0,
-      "last_attempt_at": "2026-10-22T05:46:49+00:00"
-    },
-    "ICN-MNL": {
-      "status": "ok",
-      "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 30,
-      "implausible": 0,
-      "last_attempt_at": "2026-10-22T05:51:40+00:00"
-    },
-    "ICN-KUL": {
-      "status": "ok",
-      "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 32,
-      "implausible": 0,
-      "last_attempt_at": "2026-10-22T05:56:28+00:00"
-    },
-    "ICN-BKI": {
-      "status": "ok",
-      "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 32,
-      "implausible": 0,
-      "last_attempt_at": "2026-10-22T06:01:14+00:00"
-    },
-    "ICN-SIN": {
-      "status": "ok",
-      "detail": "",
-      "attempts": 20,
-      "ok": 16,
-      "rows": 16,
-      "implausible": 0,
-      "last_attempt_at": "2026-10-22T06:03:52+00:00"
-    },
-    "ICN-REP": {
       "status": "ok",
       "detail": "",
       "attempts": 20,
       "ok": 15,
       "rows": 15,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T06:13:02+00:00"
+      "last_attempt_at": "2026-10-22T17:11:56+00:00"
+    },
+    "ICN-CDG": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 20,
+      "ok": 17,
+      "rows": 17,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T17:14:11+00:00"
+    },
+    "ICN-FUK": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 20,
+      "ok": 17,
+      "rows": 33,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T17:18:26+00:00"
+    },
+    "ICN-CTS": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 20,
+      "ok": 17,
+      "rows": 33,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T17:22:53+00:00"
+    },
+    "ICN-OKA": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 14,
+      "rows": 27,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T14:00:53+00:00"
+    },
+    "ICN-NGO": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 12,
+      "rows": 20,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T14:06:00+00:00"
+    },
+    "ICN-HKG": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 15,
+      "rows": 30,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T14:10:06+00:00"
+    },
+    "ICN-MFM": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 15,
+      "rows": 27,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T14:14:57+00:00"
+    },
+    "ICN-PEK": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 15,
+      "rows": 19,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T14:19:42+00:00"
+    },
+    "ICN-TAO": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 14,
+      "rows": 24,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T14:24:53+00:00"
+    },
+    "ICN-BKK": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 14,
+      "rows": 28,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T14:29:26+00:00"
+    },
+    "ICN-HKT": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 14,
+      "rows": 28,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T14:33:54+00:00"
+    },
+    "ICN-CNX": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 14,
+      "rows": 21,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T14:40:20+00:00"
+    },
+    "ICN-SGN": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 14,
+      "rows": 28,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T14:44:52+00:00"
+    },
+    "ICN-HAN": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 15,
+      "rows": 27,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T14:49:09+00:00"
+    },
+    "ICN-CXR": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 14,
+      "rows": 25,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T14:53:40+00:00"
+    },
+    "ICN-CEB": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 14,
+      "rows": 28,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T14:58:09+00:00"
+    },
+    "ICN-MNL": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 14,
+      "rows": 28,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T15:02:41+00:00"
+    },
+    "ICN-KUL": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 14,
+      "rows": 28,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T15:07:13+00:00"
+    },
+    "ICN-BKI": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 14,
+      "rows": 28,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T15:11:45+00:00"
+    },
+    "ICN-SIN": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 14,
+      "rows": 14,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T15:14:14+00:00"
+    },
+    "ICN-REP": {
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 14,
+      "rows": 14,
+      "implausible": 0,
+      "last_attempt_at": "2026-10-22T15:22:33+00:00"
     },
     "ICN-SPN": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 5,
-      "rows": 5,
+      "attempts": 18,
+      "ok": 2,
+      "rows": 3,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T06:21:19+00:00"
+      "last_attempt_at": "2026-10-22T15:30:19+00:00"
     },
     "ICN-ALA": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 10,
-      "rows": 20,
+      "attempts": 18,
+      "ok": 8,
+      "rows": 16,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T06:29:30+00:00"
+      "last_attempt_at": "2026-10-22T15:38:16+00:00"
     },
     "ICN-LIS": {
       "status": "skipped_budget",
@@ -394,7 +400,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-LAX": {
       "status": "skipped_budget",
@@ -402,7 +408,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-JFK": {
       "status": "skipped_budget",
@@ -410,7 +416,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-SFO": {
       "status": "skipped_budget",
@@ -418,7 +424,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-SEA": {
       "status": "skipped_budget",
@@ -426,7 +432,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-HNL": {
       "status": "skipped_budget",
@@ -434,7 +440,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-YVR": {
       "status": "skipped_budget",
@@ -442,7 +448,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-SYD": {
       "status": "skipped_budget",
@@ -450,7 +456,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-IAO": {
       "status": "skipped_budget",
@@ -458,70 +464,70 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-BNE": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 11,
-      "rows": 11,
+      "attempts": 18,
+      "ok": 9,
+      "rows": 9,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T06:32:15+00:00"
+      "last_attempt_at": "2026-10-22T15:40:53+00:00"
     },
     "ICN-AKL": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 15,
-      "rows": 26,
+      "attempts": 18,
+      "ok": 13,
+      "rows": 22,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T06:37:32+00:00"
+      "last_attempt_at": "2026-10-22T15:45:55+00:00"
     },
     "ICN-YYZ": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 15,
-      "rows": 29,
+      "attempts": 18,
+      "ok": 13,
+      "rows": 26,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T06:43:11+00:00"
+      "last_attempt_at": "2026-10-22T15:51:11+00:00"
     },
     "ICN-ORD": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 14,
-      "rows": 28,
+      "attempts": 18,
+      "ok": 12,
+      "rows": 24,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T06:49:09+00:00"
+      "last_attempt_at": "2026-10-22T15:56:57+00:00"
     },
     "ICN-BUD": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 14,
-      "rows": 21,
+      "attempts": 18,
+      "ok": 12,
+      "rows": 19,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T06:55:16+00:00"
+      "last_attempt_at": "2026-10-22T16:02:33+00:00"
     },
     "ICN-AMS": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 14,
-      "rows": 24,
+      "attempts": 18,
+      "ok": 12,
+      "rows": 21,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T07:02:04+00:00"
+      "last_attempt_at": "2026-10-22T16:08:51+00:00"
     },
     "ICN-MAD": {
       "status": "ok",
       "detail": "",
-      "attempts": 20,
-      "ok": 11,
-      "rows": 15,
+      "attempts": 18,
+      "ok": 12,
+      "rows": 17,
       "implausible": 0,
-      "last_attempt_at": "2026-10-22T07:10:15+00:00"
+      "last_attempt_at": "2026-10-22T16:14:25+00:00"
     },
     "ICN-MXP": {
       "status": "skipped_budget",
@@ -529,7 +535,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-DYG": {
       "status": "skipped_budget",
@@ -537,7 +543,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-ISG": {
       "status": "skipped_budget",
@@ -545,7 +551,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-TAK": {
       "status": "skipped_budget",
@@ -553,7 +559,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-KMJ": {
       "status": "skipped_budget",
@@ -561,7 +567,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-UKB": {
       "status": "skipped_budget",
@@ -569,7 +575,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-TAG": {
       "status": "skipped_budget",
@@ -577,7 +583,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-KLO": {
       "status": "skipped_budget",
@@ -585,7 +591,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-LOP": {
       "status": "skipped_budget",
@@ -593,7 +599,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-LGK": {
       "status": "skipped_budget",
@@ -601,7 +607,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     },
     "ICN-KMI": {
       "status": "skipped_budget",
@@ -609,7 +615,7 @@
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-10-22T08:15:00+00:00"
+      "last_attempt_at": "2026-10-22T17:32:31+00:00"
     }
   }
 }
