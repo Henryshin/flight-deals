@@ -10,6 +10,23 @@
 
   gtag('config', 'G-1NSTL7K368');
 </script>
+<!-- 관리자 모드: ?admin 으로 켜고 ?admin=0 으로 끈다(index.html 과 같은 저장값 공유).
+     꺼져 있으면 이벤트 삭제 버튼과 그로 열리는 암호 입력을 숨긴다. -->
+<script>
+  (function(){
+    try {
+      var q = new URLSearchParams(location.search);
+      if (q.has('admin')) {
+        if (q.get('admin') === '0') localStorage.removeItem('fd_admin');
+        else localStorage.setItem('fd_admin', '1');
+      }
+      if (localStorage.getItem('fd_admin') === '1') document.documentElement.classList.add('admin');
+    } catch (e) {}
+  })();
+</script>
+<style>
+  html:not(.admin) [data-del-air] { display: none !important; }
+</style>
 <!-- Simple visit counter (abacus.jasoncameron.dev) -->
 <script>
   fetch('https://abacus.jasoncameron.dev/hit/excel-flights-xyz/site-visits')

@@ -12,6 +12,27 @@
 </script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- 관리자 모드: ?admin 으로 켜고 ?admin=0 으로 끈다(이 브라우저에만 저장).
+     꺼져 있으면 삭제(✕)·박수/경유 수정(✎) 버튼을 숨기고(설정 문구는 표시),
+     설정 창(공유 암호·토큰 입력)을 열지 않는다. ✎ 은 저장소 routes.json 을 바꿔 모두의 수집에 영향.
+     실제 권한은 Worker 공유 암호가 지키고, 이건 방문자 화면 정리용이다. -->
+<script>
+  (function(){
+    try {
+      var q = new URLSearchParams(location.search);
+      if (q.has('admin')) {
+        if (q.get('admin') === '0') localStorage.removeItem('fd_admin');
+        else localStorage.setItem('fd_admin', '1');
+      }
+      if (localStorage.getItem('fd_admin') === '1') document.documentElement.classList.add('admin');
+    } catch (e) {}
+  })();
+</script>
+<style>
+  html:not(.admin) .admin-only,
+  html:not(.admin) .x-btn[data-del] { display: none !important; }
+  html:not(.admin) .policy-edit { pointer-events: none; cursor: default; color: inherit; }
+</style>
 <title>프로젝트 스케줄 조정표_v4.33</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='2' fill='%23217346'/%3E%3Ctext x='8' y='12' font-size='10' font-weight='bold' text-anchor='middle' fill='white' font-family='Arial'%3EX%3C/text%3E%3C/svg%3E" />
 <style>
@@ -2436,7 +2457,7 @@
         // 추이(스파크라인)는 요약 행에서 뺐으므로(열 구성을 특가 보드와 맞추느라) 여기에 둔다.
         const spark = (state.history[key] || []).length
           ? ` <span class="head-spark" title="수집일별 최저가 추이">${sparklineSVG(state.history[key])}</span>` : '';
-        return `<div><button class="policy-edit" data-edit="${esc(key)}" title="박수/경유 수정">${esc(routePolicyLabel(m))} ✎</button>` +
+        return `<div><button class="policy-edit" data-edit="${esc(key)}" title="박수/경유 수정">${esc(routePolicyLabel(m))}<span class="admin-only"> ✎</span></button>` +
           ` · 표본 ${m.sample_count} · ${latest}${range30}${seen}${link}${spark}${manage}</div>`;
       }).join('');
 
@@ -2604,7 +2625,7 @@
         const nameCell = `<button class="dest-toggle" data-dest="${esc(gk)}" title="연휴별 시세 펼치기/접기">` +
           `<span class="dest-caret">${open ? '▼' : '▶'}</span> ${esc(label)}</button>` +
           `<span class="cell-sub" title="${esc(g.items.map(statusTitle).join(' / '))}">${sub}</span>` +
-          (solo ? `<button class="policy-edit" data-edit="${esc(rk(g.items[0]))}" title="박수/경유 수정">${esc(routePolicyLabel(g.items[0]))} ✎</button>` : '');
+          (solo ? `<button class="policy-edit" data-edit="${esc(rk(g.items[0]))}" title="박수/경유 수정">${esc(routePolicyLabel(g.items[0]))}<span class="admin-only"> ✎</span></button>` : '');
 
         const delCell = solo
           ? `<button class="x-btn" data-del="${esc(rk(g.items[0]))}" title="항목 삭제">✕</button>`
@@ -2901,6 +2922,11 @@
       document.getElementById('token-state').textContent = t ? '저장됨: ' + maskToken(t) : '미등록';
     }
     function openSettings(notice) {
+      // 공유 암호·토큰 입력은 관리자 전용 — 방문자에겐 입력 창 대신 안내만 띄운다.
+      if (!document.documentElement.classList.contains('admin')) {
+        toast('관리자만 변경할 수 있어요', 'err');
+        return;
+      }
       const proxy = usingProxy();
       document.getElementById('settings-title').textContent = proxy ? '공유 암호' : '연결 설정';
       document.getElementById('settings-help-token').hidden = proxy;
