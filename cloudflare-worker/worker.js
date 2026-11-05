@@ -658,7 +658,7 @@ async function handleThreadsRoute(request, env, url) {
 const REPLY_URL = "excel-flights.xyz/?utm_source=threads&utm_medium=reply";
 const DEFAULT_STYLE = {
   // 2026-11-05 첫 게시에서 사용자가 고친 것
-  drop_line_patterns: ["^(직항|경유)"],             // 직항/경유 줄 삭제
+  drop_line_patterns: ["^직항"],                     // 직항 줄 삭제 (경유는 남김 — 사용자 결정)
   replace: [["{hol}에 {city} 어때?", "{hol}에 {city} 어때??"]],
   image_mode: "card",                                // 엑셀 표지 빼고 해당 항공권 카드 1장만
   image_spoiler: true,                               // 이미지 스포일러
