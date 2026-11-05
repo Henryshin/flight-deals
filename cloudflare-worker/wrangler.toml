@@ -1,0 +1,9 @@
+name = "flight-register"
+main = "worker.js"
+compatibility_date = "2026-07-23"
+keep_vars = true
+workers_dev = true
+
+[[kv_namespaces]]
+binding = "COUNTER_KV"
+id = "1fd009410f4a4d4c897e626fbe130284"

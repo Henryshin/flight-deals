@@ -4,10 +4,11 @@
     python scripts/threads_brief.py --no-send       # 전송 없이 파일만
     python scripts/threads_brief.py --date 2026-11-05
 
-산출물: docs/threads/<날짜>/  (GitHub Pages 로 공개 → Threads API 가 이미지 URL 로 가져간다)
+산출물: docs/threads/<날짜>/  (GitHub Pages 로 공개 → Worker·homepc 에이전트가 URL 로 가져간다)
   cover.png, 1.png~3.png, candidates.json
-버튼 처리·Threads 게시는 cloudflare-worker/worker.js 의 /telegram 이 한다.
-여기서는 아무것도 게시하지 않는다.
+버튼 처리는 cloudflare-worker/worker.js 의 /telegram 이 하고, Threads 웹 임시저장은
+homepc 에서 도는 threads-agent/threads_web_agent.py 가 한다. 게시는 사용자가 앱에서 직접.
+사용자가 고쳐서 게시한 형식은 Worker 의 threads:style 에 쌓여 미리보기·임시저장에 반영된다.
 
 비밀값: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID (환경변수, 없으면 저장소 루트 .env)
 """
@@ -254,7 +255,8 @@ def send_telegram(doc, outdir, warn=None):
         }, {"photo": outdir / f"{i}.png"})
     tg("sendMessage", {
         "chat_id": chat,
-        "text": "링크 답글은 게시 직후 자동으로 달려요:\n" + doc["candidates"][0]["reply"],
+        "text": "여행지 → 문구 → 미리보기 → [📝 임시저장] 순서예요.\n"
+                "링크는 이어지는 글로 같이 임시저장돼요. 게시는 Threads 앱 임시저장본에서.",
         "reply_markup": kb([[{"text": "🙅 오늘은 패스", "callback_data": f"tp:{doc['date']}:pass"}]]),
         "disable_web_page_preview": "true",
     })

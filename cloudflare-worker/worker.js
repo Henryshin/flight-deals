@@ -607,17 +607,23 @@ async function dispatchCollect(env, only) {
 // ---------------------------------------------------------------------
 // 매일 07:30 KST GitHub Actions(threads-brief.yml)가 후보 3개를 docs/threads/<날짜>/ 에
 // 커밋하고 텔레그램으로 보낸다. 사용자가 버튼을 누르면 텔레그램이 여기 /telegram 으로
-// 알려 주고, 이 Worker 가 Threads 에 캐러셀(표지+해당 줄)을 올린 뒤 링크 답글을 단다.
+// 알려 준다: 여행지 → 문구 6개 → 미리보기 → [📝 임시저장].
+// 임시저장은 Threads API 에 없어서 homepc 의 웹 에이전트(threads-agent/)가 한다 (2026-11-05 결정).
+// 게시는 사용자가 앱에서 직접 하고, 고쳐서 올린 형식은 에이전트가 /threads/learn 으로 돌려준다.
+// (THREADS_MODE=api 로 두면 예전 API 직접 게시 경로를 쓴다 — 지금은 안 씀)
 //
-// 비밀값 (Settings > Variables and Secrets):
+// 비밀값 (wrangler secret put):
 //   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID  : 봇, 그리고 버튼을 누를 수 있는 유일한 사용자 ID
 //   TG_WEBHOOK_SECRET                    : setWebhook 의 secret_token 과 같은 값
-//   THREADS_USER_ID, THREADS_TOKEN       : Threads API (장기 토큰, 60일). 없으면 연습 모드
-//   THREADS_DRY_RUN = "1"                 : 있으면 실제로 올리지 않고 올라갈 내용만 텔레그램으로
+//   THREADS_AGENT_KEY                    : homepc 에이전트 인증 (threads-agent/.env 와 같은 값)
+//   THREADS_USER_ID, THREADS_TOKEN, THREADS_DRY_RUN : API 경로용 (지금은 안 씀)
 // KV(COUNTER_KV) 키:
-//   threads:day:<날짜>   그날 처리 결과 (중복 게시 방지)
-//   threads:recent       최근 게시 목록 [{date, dest, city, permalink}]
-//   threads:token        갱신된 Threads 토큰 {token, refreshed_at}
+//   threads:day:<날짜>   그날 처리 결과 (posted/posting 이면 중복 방지, drafted 는 다시 가능)
+//   threads:recent       최근 글 목록 [{date, dest, city, permalink}] — 후보 중복 제외용
+//   threads:job          에이전트에게 넘길 임시저장 작업 하나
+//   threads:agent_seen   에이전트 마지막 생존 신호 (10분 단위)
+//   threads:style        사용자가 고쳐 게시한 형식 (루프백)
+//   threads:token        갱신된 Threads 토큰 {token, refreshed_at} (API 경로용)
 // =====================================================================
 
 const SITE = "https://excel-flights.xyz";
@@ -638,7 +644,115 @@ async function handleThreadsRoute(request, env, url) {
       headers: { "Content-Type": "application/json; charset=utf-8" },
     });
   }
+  if (url.pathname === "/threads/job" || url.pathname === "/threads/job/done" ||
+      url.pathname === "/threads/learn") {
+    return handleAgentJob(request, env, url);
+  }
   return null;
+}
+
+// --- 게시 스타일 (루프백) -------------------------------------------------
+// 사용자가 임시저장본을 고쳐서 게시하면, homepc 에이전트가 게시된 글과 임시저장한 글을 비교해
+// /threads/learn 으로 고친 점을 보낸다 → 여기 threads:style 에 쌓여 다음 글부터 자동 반영.
+// 자리표시자: {city} {hol} {md}(가격 수집일, 예: 11월 5일) {url}
+const REPLY_URL = "excel-flights.xyz/?utm_source=threads&utm_medium=reply";
+const DEFAULT_STYLE = {
+  // 2026-11-05 첫 게시에서 사용자가 고친 것
+  drop_line_patterns: ["^(직항|경유)"],             // 직항/경유 줄 삭제
+  replace: [["{hol}에 {city} 어때?", "{hol}에 {city} 어때??"]],
+  image_mode: "card",                                // 엑셀 표지 빼고 해당 항공권 카드 1장만
+  image_spoiler: true,                               // 이미지 스포일러
+  reply_template: "{url}\n연휴 끼워서 연차 덜 쓰는 일정만 모아둔 엑셀이야\n가격은 {md} 기준이야",
+  reply_link_spoiler: true,                          // 링크 줄 스포일러
+};
+
+function kstMonthDay(iso) {
+  const d = new Date(Date.parse(iso || "") || Date.now());
+  const k = new Date(d.getTime() + 9 * 3600e3);
+  return `${k.getUTCMonth() + 1}월 ${k.getUTCDate()}일`;
+}
+
+function applyStyle(c, body, doc, style) {
+  const s = { ...DEFAULT_STYLE, ...(style || {}) };
+  const md = kstMonthDay(doc && doc.data_generated_at);
+  const fill = t => String(t).replaceAll("{city}", c.city).replaceAll("{hol}", c.holiday || "")
+    .replaceAll("{md}", md).replaceAll("{url}", REPLY_URL);
+  const drops = (s.drop_line_patterns || []).map(p => { try { return new RegExp(p); } catch { return null; } })
+    .filter(Boolean);
+  let text = body.split("\n").filter(l => !drops.some(r => r.test(l.trim()))).join("\n")
+    .replace(/\n{3,}/g, "\n\n").trim();
+  for (const [a, b] of s.replace || []) text = text.split(fill(a)).join(fill(b));
+  const images = s.image_mode === "card" && c.images.length > 1 ? c.images.slice(1) : c.images;
+  const reply = s.reply_template ? fill(s.reply_template) : c.reply;
+  return { text, reply, images, collected: md };
+}
+
+// --- homepc 웹 에이전트와 주고받기 -----------------------------------------
+// GET  /threads/job       (X-Agent-Key) 대기 중인 임시저장 작업 하나를 가져간다
+// POST /threads/job/done  (X-Agent-Key) {id, ok, error} 결과 → 텔레그램으로 알림
+// KV 쓰기 한도(무료 1,000회/일)를 아끼려고 생존 신호는 10분에 한 번만 기록한다.
+
+const JSONH = { "Content-Type": "application/json; charset=utf-8" };
+
+async function handleAgentJob(request, env, url) {
+  if (!env.THREADS_AGENT_KEY || request.headers.get("X-Agent-Key") !== env.THREADS_AGENT_KEY) {
+    return new Response("forbidden", { status: 403 });
+  }
+  const now = Date.now();
+  const seen = Number(await env.COUNTER_KV.get("threads:agent_seen")) || 0;
+  if (now - seen > 10 * 60e3) await env.COUNTER_KV.put("threads:agent_seen", String(now));
+
+  const job = await kvJson(env, "threads:job", null);
+  if (url.pathname === "/threads/job") {
+    // 가져간 뒤 15분 넘게 결과가 없으면 에이전트가 죽은 것 → 다시 내준다
+    const ready = job && (job.status === "queued" || (job.status === "taken" && now - job.taken_at > 15 * 60e3));
+    if (!ready) return new Response(JSON.stringify({ job: null }), { headers: JSONH });
+    job.status = "taken"; job.taken_at = now;
+    await env.COUNTER_KV.put("threads:job", JSON.stringify(job), { expirationTtl: 3 * 86400 });
+    return new Response(JSON.stringify({ job }), { headers: JSONH });
+  }
+
+  if (url.pathname === "/threads/learn") {
+    // {patch: {...style 일부}, report: "사람이 읽는 요약"} → 스타일에 합치고 텔레그램으로 알림
+    const body = await request.json().catch(() => ({}));
+    const cur = await kvJson(env, "threads:style", DEFAULT_STYLE);
+    const patch = body.patch || {};
+    const next = { ...cur };
+    for (const [k, v] of Object.entries(patch)) {
+      if (Array.isArray(v) && Array.isArray(cur[k])) {
+        const seenKeys = new Set(cur[k].map(x => JSON.stringify(x)));
+        next[k] = [...cur[k], ...v.filter(x => !seenKeys.has(JSON.stringify(x)))];
+      } else next[k] = v;
+    }
+    next.updated_at = new Date().toISOString();
+    await env.COUNTER_KV.put("threads:style", JSON.stringify(next));
+    if (body.report && env.TELEGRAM_CHAT_ID) {
+      await tgCall(env, "sendMessage", { chat_id: env.TELEGRAM_CHAT_ID, disable_web_page_preview: true,
+        text: `🔁 게시된 글에서 바꾼 점 — 다음 글부터 반영\n\n${body.report}`.slice(0, 4096) });
+    }
+    return new Response(JSON.stringify({ ok: true, style: next }), { headers: JSONH });
+  }
+  const res = await request.json().catch(() => ({}));
+  if (!job || res.id !== job.id) return new Response(JSON.stringify({ ok: false, why: "stale" }), { headers: JSONH });
+  job.status = res.ok ? "done" : "failed"; job.error = res.error || null;
+  await env.COUNTER_KV.put("threads:job", JSON.stringify(job), { expirationTtl: 3 * 86400 });
+  const reply = { chat_id: job.chat_id, reply_to_message_id: job.msg_id, disable_web_page_preview: true };
+  if (res.ok) {
+    await env.COUNTER_KV.put("threads:day:" + job.day, JSON.stringify({ status: "drafted", pick: job.pick }),
+      { expirationTtl: 30 * 86400 });
+    const recent = await kvJson(env, "threads:recent", []);
+    recent.push({ date: job.day, dest: job.dest, city: job.city, permalink: null });
+    await env.COUNTER_KV.put("threads:recent", JSON.stringify(recent.slice(-RECENT_KEEP)));
+    await tgCall(env, "sendMessage", { ...reply,
+      text: `📝 임시저장 완료 — ${job.city} · ${job.label}\n` +
+            `Threads 앱 → 글쓰기(+) → 오른쪽 위 임시저장본에서 열어 [게시]만 누르면 돼요.\n` +
+            `링크 글은 이어지는 글로 같이 들어가 있어요.\n\n게시 후 1시간 안에 달리는 댓글엔 답글!` });
+  } else {
+    await tgCall(env, "sendMessage", { ...reply,
+      text: `❌ 임시저장 실패: ${(res.error || "알 수 없음").slice(0, 500)}`,
+      reply_markup: { inline_keyboard: [[{ text: "🔁 다시 시도", callback_data: `tp:${job.day}:${job.pick}:${job.opt}:go` }]] } });
+  }
+  return new Response(JSON.stringify({ ok: true }), { headers: JSONH });
 }
 
 async function kvJson(env, key, dflt) {
@@ -671,13 +785,16 @@ async function handleTelegram(request, env) {
     await tgCall(env, "answerCallbackQuery", { callback_query_id: cq.id, text: "권한 없음" });
     return ok;
   }
-  // tp:<날짜>:pass | tp:<날짜>:<여행지 번호> (문구 6개 보여주기) | tp:<날짜>:<여행지>:<문구 번호> (게시)
-  const m = /^tp:(\d{4}-\d{2}-\d{2}):(\d|pass)(?::(\d))?$/.exec(cq.data || "");
+  // tp:<날짜>:pass                    오늘은 패스
+  // tp:<날짜>:<여행지>                문구 6개 보여주기
+  // tp:<날짜>:<여행지>:<문구>         미리보기 (이미지+본문+답글) + 게시/다른 문구/패스 버튼
+  // tp:<날짜>:<여행지>:<문구>:go      게시 — Threads API 에 임시저장이 없어서 텔레그램 미리보기가 그 역할
+  const m = /^tp:(\d{4}-\d{2}-\d{2}):(\d|pass)(?::(\d))?(?::(go))?$/.exec(cq.data || "");
   if (!m) {
     await tgCall(env, "answerCallbackQuery", { callback_query_id: cq.id, text: "모르는 버튼" });
     return ok;
   }
-  const [, day, pick, opt] = m;
+  const [, day, pick, opt, go] = m;
   const chat_id = cq.message.chat.id;
   const msgId = cq.message.message_id;
   const say = text => tgCall(env, "sendMessage", {
@@ -702,7 +819,9 @@ async function handleTelegram(request, env) {
     return ok;
   }
 
-  await tgCall(env, "answerCallbackQuery", { callback_query_id: cq.id, text: opt ? "올리는 중…" : "문구 불러오는 중…" });
+  await tgCall(env, "answerCallbackQuery", {
+    callback_query_id: cq.id, text: go ? "올리는 중…" : opt ? "미리보기 만드는 중…" : "문구 불러오는 중…",
+  });
   let doc;
   try {
     const r = await fetch(`${SITE}/threads/${day}/candidates.json?t=${Date.now()}`, { cf: { cacheTtl: 0 } });
@@ -724,14 +843,63 @@ async function handleTelegram(request, env) {
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
     await tgCall(env, "sendMessage", {
       chat_id, reply_to_message_id: msgId, disable_web_page_preview: true,
-      text: `✍️ ${c.city} — 문구를 골라 주세요. 누르면 바로 올라가요.\n\n${list}`.slice(0, 4096),
+      text: `✍️ ${c.city} — 문구를 골라 주세요. 누르면 미리보기가 나오고, 거기서 [게시]를 눌러야 올라가요.\n\n${list}`.slice(0, 4096),
       reply_markup: { inline_keyboard: rows },
     });
     return ok;
   }
   const chosen = texts[Number(opt) - 1];
   if (!chosen) { await say("❌ 그 번호의 문구가 없어요"); return ok; }
-  const text = chosen.text;
+  // 사용자가 실제 게시 때 고친 방식(threads:style, homepc 에이전트가 학습)을 입힌다
+  const style = await kvJson(env, "threads:style", DEFAULT_STYLE);
+  const styled = applyStyle(c, chosen.text, doc, style);
+  const text = styled.text;
+  c.reply = styled.reply;
+  c.images = styled.images;
+
+  if (!go) {
+    // 2단계: 실제로 올라갈 모습 그대로 보여주고 최종 확인을 받는다
+    if (c.images.length > 1) {
+      await tgCall(env, "sendMediaGroup", {
+        chat_id, reply_to_message_id: msgId,
+        media: c.images.map(u => ({ type: "photo", media: `${u}?v=${day}` })),
+      });
+    } else if (c.images.length === 1) {
+      await tgCall(env, "sendPhoto", { chat_id, reply_to_message_id: msgId, photo: `${c.images[0]}?v=${day}` });
+    }
+    const marks = [style.image_spoiler && "이미지 스포일러", style.reply_link_spoiler && "링크 줄 스포일러"]
+      .filter(Boolean).join(" · ");
+    await tgCall(env, "sendMessage", {
+      chat_id, disable_web_page_preview: true,
+      text: (`👀 미리보기 — ${c.city} · ${chosen.label}${marks ? `\n(${marks} 적용)` : ""}\n\n` +
+             `[본문]\n${text}\n\n[이어지는 글 (링크)]\n${c.reply}`).slice(0, 4096),
+      reply_markup: { inline_keyboard: [
+        [{ text: "📝 Threads 임시저장", callback_data: `tp:${day}:${pick}:${opt}:go` }],
+        [{ text: "↩️ 다른 문구", callback_data: `tp:${day}:${pick}` },
+         { text: "🙅 오늘은 패스", callback_data: `tp:${day}:pass` }],
+      ] },
+    });
+    return ok;
+  }
+
+  // 3단계: homepc 의 웹 에이전트(threads_web_agent.py)에게 넘긴다 — 웹에서 임시저장
+  if (env.THREADS_MODE !== "api") {
+    const seen = Number(await env.COUNTER_KV.get("threads:agent_seen")) || 0;
+    const job = {
+      id: `${day}-${pick}-${opt}-${Date.now()}`, day, pick, opt, city: c.city, dest: c.dest,
+      label: chosen.label, text, reply: c.reply, images: c.images,
+      price: c.price, holiday: c.holiday, collected: styled.collected,
+      image_spoiler: !!style.image_spoiler, reply_link_spoiler: !!style.reply_link_spoiler,
+      chat_id, msg_id: msgId, status: "queued", at: Date.now(),
+    };
+    await env.COUNTER_KV.put("threads:job", JSON.stringify(job), { expirationTtl: 3 * 86400 });
+    await tgCall(env, "editMessageReplyMarkup", { chat_id, message_id: msgId, reply_markup: { inline_keyboard: [] } });
+    const away = Date.now() - seen > 15 * 60e3;   // 에이전트는 10분마다 생존 신호를 남긴다
+    await say(away
+      ? `⏳ 임시저장 요청을 받아 뒀어요. 그런데 homepc 가 ${seen ? Math.round((Date.now() - seen) / 60e3) + "분째" : "아직"} 응답이 없어요 — PC 를 켜면 바로 처리해요.`
+      : "⏳ homepc 에서 임시저장하는 중… (1분 정도)");
+    return ok;
+  }
 
   const token = await currentThreadsToken(env);
   if (env.THREADS_DRY_RUN === "1" || !token || !env.THREADS_USER_ID) {

@@ -1,9 +1,10 @@
 name: Threads brief
 
 # 매일 07:30 KST: Threads 후보 3개를 골라 사이트를 캡처하고 텔레그램으로 보낸다.
-# 버튼을 누르면 Cloudflare Worker(/telegram)가 Threads 에 올린다 — 여기서는 게시하지 않는다.
+# 버튼을 누르면 Cloudflare Worker(/telegram)가 미리보기를 보여주고, [임시저장]을 누르면
+# homepc 의 threads-agent 가 Threads 웹에 임시저장한다 — 여기서는 게시하지 않는다.
 #
-# 이미지는 Threads API 가 URL 로 가져가야 해서 docs/threads/<날짜>/ 에 커밋하고,
+# 이미지는 Worker·에이전트가 URL 로 가져가야 해서 docs/threads/<날짜>/ 에 커밋하고,
 # GitHub Pages 에 뜬 걸 확인한 뒤에 텔레그램을 보낸다 (그래야 버튼을 바로 눌러도 된다).
 # 이 잡의 커밋은 docs/threads/** 만 건드린다 (build.yml 은 data/** 만 본다).
 
