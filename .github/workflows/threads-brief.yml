@@ -1,0 +1,84 @@
+name: Threads brief
+
+# 매일 07:30 KST: Threads 후보 3개를 골라 사이트를 캡처하고 텔레그램으로 보낸다.
+# 버튼을 누르면 Cloudflare Worker(/telegram)가 Threads 에 올린다 — 여기서는 게시하지 않는다.
+#
+# 이미지는 Threads API 가 URL 로 가져가야 해서 docs/threads/<날짜>/ 에 커밋하고,
+# GitHub Pages 에 뜬 걸 확인한 뒤에 텔레그램을 보낸다 (그래야 버튼을 바로 눌러도 된다).
+# 이 잡의 커밋은 docs/threads/** 만 건드린다 (build.yml 은 data/** 만 본다).
+
+on:
+  schedule:
+    - cron: "30 22 * * *"   # 22:30 UTC = 07:30 KST
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "기준 날짜(YYYY-MM-DD). 비우면 오늘(KST)."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: threads-brief
+  cancel-in-progress: false
+
+jobs:
+  brief:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      DATE_ARG: ${{ inputs.date && format('--date {0}', inputs.date) || '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # 한글·국기 이모지가 네모로 깨지지 않게 글꼴부터
+      - name: Install Playwright + fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk fonts-noto-color-emoji
+          pip install -q playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Pick + capture
+        run: python scripts/threads_brief.py --no-send $DATE_ARG
+
+      - name: Commit and push (30일 지난 폴더는 정리)
+        run: |
+          # 체크아웃한 파일은 mtime 이 전부 '지금'이라 폴더 이름(날짜)으로 비교한다
+          cutoff=$(date -u -d '30 days ago' +%F)
+          for d in docs/threads/*/; do
+            n=$(basename "$d")
+            if [[ "$n" < "$cutoff" ]]; then git rm -rq "$d"; fi
+          done
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/threads
+          git diff --cached --quiet || git commit -m "chore: 오늘의 Threads 후보"
+          for i in 1 2 3; do
+            if git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push; then
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            echo "push 경합 -> 재시도 ($i/3)"
+            sleep $((i * 3))
+          done
+          echo "::error::재시도 후에도 push 실패"
+          exit 1
+
+      - name: Wait for Pages + send to Telegram
+        run: python scripts/threads_brief.py --send-only $DATE_ARG
+
+      - name: Notify failure
+        if: failure()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=❌ Threads 후보 워크플로 실패: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" > /dev/null

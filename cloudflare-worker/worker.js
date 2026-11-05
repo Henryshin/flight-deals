@@ -31,6 +31,12 @@ const IATA = /^[A-Z]{3}$/;
 
 export default {
   async fetch(request, env) {
+    // Threads 자동 게시 (/telegram 웹훅, /threads/recent). 맨 아래 'Threads 자동 게시' 절 참고.
+    const url = new URL(request.url);
+    if (url.pathname !== "/" && env.COUNTER_KV) {
+      const res = await handleThreadsRoute(request, env, url);
+      if (res) return res;
+    }
     const cors = corsHeaders(request, env);
     if (request.method === "OPTIONS") return new Response(null, { headers: cors });
     if (request.method !== "POST") return json({ error: "POST only" }, 405, cors);
@@ -594,4 +600,248 @@ async function dispatchCollect(env, only) {
   });
   if (res.status !== 204) throw ghFail("수집 실행", res.status);
   return { ok: true };
+}
+
+// =====================================================================
+// Threads 자동 게시 (텔레그램 버튼 → Threads)
+// ---------------------------------------------------------------------
+// 매일 07:30 KST GitHub Actions(threads-brief.yml)가 후보 3개를 docs/threads/<날짜>/ 에
+// 커밋하고 텔레그램으로 보낸다. 사용자가 버튼을 누르면 텔레그램이 여기 /telegram 으로
+// 알려 주고, 이 Worker 가 Threads 에 캐러셀(표지+해당 줄)을 올린 뒤 링크 답글을 단다.
+//
+// 비밀값 (Settings > Variables and Secrets):
+//   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID  : 봇, 그리고 버튼을 누를 수 있는 유일한 사용자 ID
+//   TG_WEBHOOK_SECRET                    : setWebhook 의 secret_token 과 같은 값
+//   THREADS_USER_ID, THREADS_TOKEN       : Threads API (장기 토큰, 60일). 없으면 연습 모드
+//   THREADS_DRY_RUN = "1"                 : 있으면 실제로 올리지 않고 올라갈 내용만 텔레그램으로
+// KV(COUNTER_KV) 키:
+//   threads:day:<날짜>   그날 처리 결과 (중복 게시 방지)
+//   threads:recent       최근 게시 목록 [{date, dest, city, permalink}]
+//   threads:token        갱신된 Threads 토큰 {token, refreshed_at}
+// =====================================================================
+
+const SITE = "https://excel-flights.xyz";
+const TH = "https://graph.threads.net/v1.0";
+const RECENT_KEEP = 40;
+const RECENT_DAYS = 14;
+const TOKEN_REFRESH_DAYS = 7;
+
+async function handleThreadsRoute(request, env, url) {
+  if (url.pathname === "/telegram") return handleTelegram(request, env);
+  if (url.pathname === "/threads/recent") {
+    // 아침 후보 생성 스크립트가 매일 부른다 → 이 김에 토큰 갱신도 한다 (크론 불필요)
+    const note = await maybeRefreshThreadsToken(env).catch(e => "갱신 실패: " + e.message);
+    const recent = await kvJson(env, "threads:recent", []);
+    const since = Date.now() - RECENT_DAYS * 86400e3;
+    const dests = [...new Set(recent.filter(r => Date.parse(r.date) >= since).map(r => r.dest))];
+    return new Response(JSON.stringify({ dests, token_note: note || null }), {
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+    });
+  }
+  return null;
+}
+
+async function kvJson(env, key, dflt) {
+  const raw = await env.COUNTER_KV.get(key);
+  if (!raw) return dflt;
+  try { return JSON.parse(raw); } catch { return dflt; }
+}
+
+// --- 텔레그램 -----------------------------------------------------------
+
+async function tgCall(env, method, payload) {
+  const r = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/${method}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return r.json();
+}
+
+async function handleTelegram(request, env) {
+  if (!env.TG_WEBHOOK_SECRET ||
+      request.headers.get("X-Telegram-Bot-Api-Secret-Token") !== env.TG_WEBHOOK_SECRET) {
+    return new Response("forbidden", { status: 403 });
+  }
+  const upd = await request.json().catch(() => ({}));
+  const cq = upd.callback_query;
+  const ok = new Response("ok");
+  if (!cq) return ok;
+  if (String(cq.from && cq.from.id) !== String(env.TELEGRAM_CHAT_ID)) {
+    await tgCall(env, "answerCallbackQuery", { callback_query_id: cq.id, text: "권한 없음" });
+    return ok;
+  }
+  // tp:<날짜>:pass | tp:<날짜>:<여행지 번호> (문구 6개 보여주기) | tp:<날짜>:<여행지>:<문구 번호> (게시)
+  const m = /^tp:(\d{4}-\d{2}-\d{2}):(\d|pass)(?::(\d))?$/.exec(cq.data || "");
+  if (!m) {
+    await tgCall(env, "answerCallbackQuery", { callback_query_id: cq.id, text: "모르는 버튼" });
+    return ok;
+  }
+  const [, day, pick, opt] = m;
+  const chat_id = cq.message.chat.id;
+  const msgId = cq.message.message_id;
+  const say = text => tgCall(env, "sendMessage", {
+    chat_id, text, reply_to_message_id: msgId, disable_web_page_preview: true,
+  });
+
+  // 중복 방지: 이미 처리한 날이면 그 결과만 알려준다
+  const dayKey = "threads:day:" + day;
+  const done = await kvJson(env, dayKey, null);
+  // posting 이 10분 넘게 남아 있으면 중간에 죽은 것 → 다시 시도 허용
+  const stuck = done && done.status === "posting" && Date.now() - (done.at || 0) > 10 * 60e3;
+  if (done && !stuck && (done.status === "posted" || done.status === "posting")) {
+    await tgCall(env, "answerCallbackQuery", { callback_query_id: cq.id, text: "이미 처리됨" });
+    await say(done.status === "posted" ? `이미 게시됐어요: ${done.permalink || ""}` : "지금 올리는 중이에요");
+    return ok;
+  }
+
+  if (pick === "pass") {
+    await env.COUNTER_KV.put(dayKey, JSON.stringify({ status: "pass" }), { expirationTtl: 30 * 86400 });
+    await tgCall(env, "answerCallbackQuery", { callback_query_id: cq.id, text: "오늘은 패스" });
+    await say("👌 오늘은 안 올려요");
+    return ok;
+  }
+
+  await tgCall(env, "answerCallbackQuery", { callback_query_id: cq.id, text: opt ? "올리는 중…" : "문구 불러오는 중…" });
+  let doc;
+  try {
+    const r = await fetch(`${SITE}/threads/${day}/candidates.json?t=${Date.now()}`, { cf: { cacheTtl: 0 } });
+    if (!r.ok) throw new Error("후보 파일 HTTP " + r.status);
+    doc = await r.json();
+  } catch (e) {
+    await say("❌ 후보를 못 읽었어요: " + e.message);
+    return ok;
+  }
+  const c = (doc.candidates || [])[Number(pick) - 1];
+  if (!c) { await say("❌ 그 번호의 후보가 없어요"); return ok; }
+
+  const texts = c.texts || (c.text ? [{ label: "기본", text: c.text }] : []);
+  if (!opt) {
+    // 1단계: 여행지를 골랐다 → 문구 후보를 번호와 함께 보여주고 번호 버튼을 단다
+    const list = texts.map((t, i) => `【${i + 1}】 ${t.label}\n${t.text}`).join("\n\n━━━━━━━━\n\n");
+    const btns = texts.map((t, i) => ({ text: `${i + 1}. ${t.label}`, callback_data: `tp:${day}:${pick}:${i + 1}` }));
+    const rows = [];
+    for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
+    await tgCall(env, "sendMessage", {
+      chat_id, reply_to_message_id: msgId, disable_web_page_preview: true,
+      text: `✍️ ${c.city} — 문구를 골라 주세요. 누르면 바로 올라가요.\n\n${list}`.slice(0, 4096),
+      reply_markup: { inline_keyboard: rows },
+    });
+    return ok;
+  }
+  const chosen = texts[Number(opt) - 1];
+  if (!chosen) { await say("❌ 그 번호의 문구가 없어요"); return ok; }
+  const text = chosen.text;
+
+  const token = await currentThreadsToken(env);
+  if (env.THREADS_DRY_RUN === "1" || !token || !env.THREADS_USER_ID) {
+    await say(
+      `🧪 연습 모드 — 실제로는 안 올렸어요\n\n[본문 · ${chosen.label}]\n${text}\n\n[이미지]\n${c.images.join("\n")}\n\n[첫 답글]\n${c.reply}`,
+    );
+    return ok;
+  }
+
+  await env.COUNTER_KV.put(dayKey, JSON.stringify({ status: "posting", pick, at: Date.now() }), { expirationTtl: 30 * 86400 });
+  let post;
+  try {
+    post = await threadsPublishCarousel(env, token, c.images, text);
+  } catch (e) {
+    await env.COUNTER_KV.delete(dayKey);     // 실패하면 다시 누를 수 있게
+    await tgCall(env, "sendMessage", {
+      chat_id, reply_to_message_id: msgId,
+      text: "❌ Threads 게시 실패: " + e.message + "\n같은 버튼을 다시 누르면 재시도해요.",
+    });
+    return ok;
+  }
+
+  let replyNote = "";
+  try {
+    await threadsPublishText(env, token, c.reply, post.id);
+  } catch (e) {
+    replyNote = "\n⚠️ 링크 답글은 실패했어요 — 직접 달아 주세요:\n" + c.reply;
+  }
+
+  await env.COUNTER_KV.put(dayKey, JSON.stringify({ status: "posted", pick, permalink: post.permalink, id: post.id }),
+    { expirationTtl: 30 * 86400 });
+  const recent = await kvJson(env, "threads:recent", []);
+  recent.push({ date: day, dest: c.dest, city: c.city, permalink: post.permalink });
+  await env.COUNTER_KV.put("threads:recent", JSON.stringify(recent.slice(-RECENT_KEEP)));
+
+  await tgCall(env, "editMessageReplyMarkup", { chat_id, message_id: msgId, reply_markup: { inline_keyboard: [] } });
+  await say(`✅ 게시됨 ${c.city}\n${post.permalink || "(링크 조회 실패)"}${replyNote}\n\n1시간 안에 달리는 댓글엔 답글 달아주기!`);
+  return ok;
+}
+
+// --- Threads API ---------------------------------------------------------
+
+async function thPost(path, params) {
+  const r = await fetch(`${TH}/${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams(params).toString(),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || j.error) throw new Error((j.error && j.error.message) || ("HTTP " + r.status));
+  return j;
+}
+
+async function thGet(path, params) {
+  const r = await fetch(`${TH}/${path}?${new URLSearchParams(params)}`);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || j.error) throw new Error((j.error && j.error.message) || ("HTTP " + r.status));
+  return j;
+}
+
+async function waitFinished(id, token) {
+  for (let i = 0; i < 15; i++) {
+    const s = await thGet(id, { fields: "status,error_message", access_token: token });
+    if (s.status === "FINISHED") return;
+    if (s.status === "ERROR" || s.status === "EXPIRED") throw new Error("컨테이너 " + s.status + ": " + (s.error_message || ""));
+    await new Promise(r => setTimeout(r, 2000));
+  }
+  throw new Error("컨테이너 처리 시간 초과");
+}
+
+async function publish(env, token, creationId) {
+  await waitFinished(creationId, token);
+  const pub = await thPost(`${env.THREADS_USER_ID}/threads_publish`, { creation_id: creationId, access_token: token });
+  return pub.id;
+}
+
+async function threadsPublishCarousel(env, token, images, text) {
+  const uid = env.THREADS_USER_ID;
+  const children = [];
+  for (const image_url of images) {
+    const it = await thPost(`${uid}/threads`, { media_type: "IMAGE", image_url, is_carousel_item: "true", access_token: token });
+    children.push(it.id);
+  }
+  for (const id of children) await waitFinished(id, token);
+  const car = await thPost(`${uid}/threads`, { media_type: "CAROUSEL", children: children.join(","), text, access_token: token });
+  const id = await publish(env, token, car.id);
+  let permalink = "";
+  try { permalink = (await thGet(id, { fields: "permalink", access_token: token })).permalink || ""; } catch {}
+  return { id, permalink };
+}
+
+async function threadsPublishText(env, token, text, replyToId) {
+  const t = await thPost(`${env.THREADS_USER_ID}/threads`, { media_type: "TEXT", text, reply_to_id: replyToId, access_token: token });
+  return publish(env, token, t.id);
+}
+
+// 장기 토큰은 60일. 7일마다 갱신해서 KV 에 둔다 (환경변수 값은 최초 1회용).
+async function currentThreadsToken(env) {
+  const saved = await kvJson(env, "threads:token", null);
+  return (saved && saved.token) || env.THREADS_TOKEN || "";
+}
+
+async function maybeRefreshThreadsToken(env) {
+  const saved = await kvJson(env, "threads:token", null);
+  const token = (saved && saved.token) || env.THREADS_TOKEN;
+  if (!token) return "토큰 없음";
+  if (saved && Date.now() - saved.refreshed_at < TOKEN_REFRESH_DAYS * 86400e3) return "";
+  const r = await fetch(`https://graph.threads.net/refresh_access_token?grant_type=th_refresh_token&access_token=${encodeURIComponent(token)}`);
+  const j = await r.json();
+  if (!j.access_token) throw new Error((j.error && j.error.message) || "응답에 토큰 없음");
+  await env.COUNTER_KV.put("threads:token", JSON.stringify({ token: j.access_token, refreshed_at: Date.now(), expires_in: j.expires_in }));
+  return "갱신됨";
 }
