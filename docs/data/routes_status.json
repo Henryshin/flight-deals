@@ -22,9 +22,9 @@
     "prev_price": 303139,
     "min_price_30d": 219800,
     "avg_price_30d": 434847,
-    "collect_status": "ok",
-    "collect_status_detail": "",
-    "last_attempt_at": "2026-11-07T01:12:43+00:00"
+    "collect_status": "skipped_budget",
+    "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -49,9 +49,9 @@
     "prev_price": 356168,
     "min_price_30d": 290763,
     "avg_price_30d": 575533,
-    "collect_status": "ok",
-    "collect_status_detail": "",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "collect_status": "skipped_budget",
+    "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -78,7 +78,7 @@
     "avg_price_30d": 556611,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -90,9 +90,9 @@
     "destination_city": "Bali",
     "min_nights": 5,
     "max_stops": 1,
-    "sample_count": 2446,
+    "sample_count": 2454,
     "no_direct": false,
-    "last_collected_at": "2026-11-07T00:12:33+00:00",
+    "last_collected_at": "2026-11-07T08:36:26+00:00",
     "latest_price": 486337,
     "latest_depart_date": "2027-06-05",
     "latest_return_date": "2027-06-13",
@@ -102,10 +102,10 @@
     "airline": "비엣젯항공",
     "prev_price": 548590,
     "min_price_30d": 394490,
-    "avg_price_30d": 871661,
+    "avg_price_30d": 871990,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-07T00:12:33+00:00"
+    "last_attempt_at": "2026-11-07T08:37:08+00:00"
   },
   {
     "origin": "ICN",
@@ -118,9 +118,9 @@
     "min_nights": 5,
     "max_stops": 0,
     "id": "ICN-DPS-d",
-    "sample_count": 1224,
+    "sample_count": 1227,
     "no_direct": false,
-    "last_collected_at": "2026-11-07T00:12:33+00:00",
+    "last_collected_at": "2026-11-07T08:36:26+00:00",
     "latest_price": 798400,
     "latest_depart_date": "2027-02-25",
     "latest_return_date": "2027-03-03",
@@ -130,10 +130,10 @@
     "airline": "제주항공",
     "prev_price": 798400,
     "min_price_30d": 726800,
-    "avg_price_30d": 1075509,
+    "avg_price_30d": 1077150,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-07T00:12:33+00:00"
+    "last_attempt_at": "2026-11-07T08:37:08+00:00"
   },
   {
     "origin": "ICN",
@@ -160,7 +160,7 @@
     "avg_price_30d": 976082,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -187,7 +187,7 @@
     "avg_price_30d": 445967,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -214,7 +214,7 @@
     "avg_price_30d": 409954,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -241,7 +241,7 @@
     "avg_price_30d": 555001,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "id": "ICN-PQC",
@@ -269,7 +269,7 @@
     "avg_price_30d": 633057,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "id": "ICN-GUM",
@@ -282,9 +282,9 @@
     "flag": "🇬🇺",
     "origin_city": "Seoul",
     "destination_city": "Guam",
-    "sample_count": 1211,
+    "sample_count": 1214,
     "no_direct": false,
-    "last_collected_at": "2026-11-07T00:15:42+00:00",
+    "last_collected_at": "2026-11-07T08:39:41+00:00",
     "latest_price": 321749,
     "latest_depart_date": "2027-02-27",
     "latest_return_date": "2027-03-07",
@@ -294,10 +294,10 @@
     "airline": "에어서울",
     "prev_price": 266512,
     "min_price_30d": 241039,
-    "avg_price_30d": 731694,
+    "avg_price_30d": 733149,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-07T00:15:42+00:00"
+    "last_attempt_at": "2026-11-07T08:40:22+00:00"
   },
   {
     "id": "ICN-SHI",
@@ -310,9 +310,9 @@
     "flag": "🇯🇵",
     "origin_city": "Seoul",
     "destination_city": "Shimojishima",
-    "sample_count": 490,
+    "sample_count": 491,
     "no_direct": false,
-    "last_collected_at": "2026-11-07T00:24:42+00:00",
+    "last_collected_at": "2026-11-07T08:49:48+00:00",
     "latest_price": 735000,
     "latest_depart_date": "2026-12-25",
     "latest_return_date": "2027-01-02",
@@ -322,10 +322,10 @@
     "airline": "진에어",
     "prev_price": 710000,
     "min_price_30d": 510600,
-    "avg_price_30d": 810312,
+    "avg_price_30d": 811756,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-07T00:24:42+00:00"
+    "last_attempt_at": "2026-11-07T08:50:38+00:00"
   },
   {
     "id": "ICN-KBV",
@@ -353,7 +353,7 @@
     "avg_price_30d": null,
     "collect_status": "parse_zero",
     "collect_status_detail": "li 78개, 왕복 항목 파싱 0건 (사이트 구조 변경?)",
-    "last_attempt_at": "2026-11-06T21:27:51+00:00"
+    "last_attempt_at": "2026-11-07T05:44:56+00:00"
   },
   {
     "id": "ICN-ATH",
@@ -381,7 +381,7 @@
     "avg_price_30d": 1156855,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "id": "ICN-CDG",
@@ -409,7 +409,7 @@
     "avg_price_30d": 1607213,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -436,7 +436,7 @@
     "avg_price_30d": 586476,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -463,7 +463,7 @@
     "avg_price_30d": 745470,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -475,9 +475,9 @@
     "destination_city": "Okinawa",
     "min_nights": 4,
     "max_stops": 1,
-    "sample_count": 2184,
+    "sample_count": 2185,
     "no_direct": false,
-    "last_collected_at": "2026-11-07T00:28:57+00:00",
+    "last_collected_at": "2026-11-07T08:55:40+00:00",
     "latest_price": 514700,
     "latest_depart_date": "2027-06-03",
     "latest_return_date": "2027-06-08",
@@ -487,10 +487,10 @@
     "airline": "아시아나항공",
     "prev_price": 514700,
     "min_price_30d": 476489,
-    "avg_price_30d": 683831,
+    "avg_price_30d": 684033,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-07T00:28:57+00:00"
+    "last_attempt_at": "2026-11-07T08:55:40+00:00"
   },
   {
     "origin": "ICN",
@@ -517,7 +517,7 @@
     "avg_price_30d": 595312,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -544,7 +544,7 @@
     "avg_price_30d": 472940,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -571,7 +571,7 @@
     "avg_price_30d": 670497,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -598,7 +598,7 @@
     "avg_price_30d": 429471,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -625,7 +625,7 @@
     "avg_price_30d": 625180,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -652,7 +652,7 @@
     "avg_price_30d": 609415,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -679,7 +679,7 @@
     "avg_price_30d": 860809,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -706,7 +706,7 @@
     "avg_price_30d": 781950,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -733,7 +733,7 @@
     "avg_price_30d": 470752,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -760,7 +760,7 @@
     "avg_price_30d": 620121,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -787,7 +787,7 @@
     "avg_price_30d": 599602,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -814,7 +814,7 @@
     "avg_price_30d": 573698,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -841,7 +841,7 @@
     "avg_price_30d": 574803,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -868,7 +868,7 @@
     "avg_price_30d": 642886,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "origin": "ICN",
@@ -880,22 +880,22 @@
     "destination_city": "Kota Kinabalu",
     "min_nights": 5,
     "max_stops": 1,
-    "sample_count": 2148,
+    "sample_count": 2164,
     "no_direct": false,
-    "last_collected_at": "2026-11-06T21:33:21+00:00",
-    "latest_price": 402508,
+    "last_collected_at": "2026-11-07T05:52:45+00:00",
+    "latest_price": 402466,
     "latest_depart_date": "2026-12-23",
     "latest_return_date": "2026-12-29",
     "dep_time": "06:45",
     "arr_time": "00:35+1",
     "stops": "1",
     "airline": "홍콩 익스프레스항공",
-    "prev_price": 382263,
+    "prev_price": 402508,
     "min_price_30d": 338452,
-    "avg_price_30d": 644168,
+    "avg_price_30d": 643647,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-06T21:33:21+00:00"
+    "last_attempt_at": "2026-11-07T05:52:45+00:00"
   },
   {
     "origin": "ICN",
@@ -907,9 +907,9 @@
     "destination_city": "Singapore",
     "min_nights": 2,
     "max_stops": 0,
-    "sample_count": 1035,
+    "sample_count": 1048,
     "no_direct": false,
-    "last_collected_at": "2026-11-06T21:36:33+00:00",
+    "last_collected_at": "2026-11-07T05:55:29+00:00",
     "latest_price": 456979,
     "latest_depart_date": "2027-05-08",
     "latest_return_date": "2027-05-17",
@@ -917,12 +917,12 @@
     "arr_time": "20:40",
     "stops": "0",
     "airline": "스쿠트항공",
-    "prev_price": 457184,
+    "prev_price": 456979,
     "min_price_30d": 401440,
-    "avg_price_30d": 809484,
+    "avg_price_30d": 808839,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-06T21:36:33+00:00"
+    "last_attempt_at": "2026-11-07T05:55:29+00:00"
   },
   {
     "origin": "ICN",
@@ -934,22 +934,22 @@
     "destination_city": "Siem Reap",
     "min_nights": 4,
     "max_stops": 1,
-    "sample_count": 999,
+    "sample_count": 1010,
     "no_direct": false,
-    "last_collected_at": "2026-11-06T21:46:40+00:00",
+    "last_collected_at": "2026-11-07T06:03:21+00:00",
     "latest_price": 365694,
-    "latest_depart_date": "2027-05-09",
-    "latest_return_date": "2027-05-14",
+    "latest_depart_date": "2027-06-05",
+    "latest_return_date": "2027-06-13",
     "dep_time": "11:05",
     "arr_time": "18:05",
     "stops": "1",
     "airline": "비엣젯항공",
     "prev_price": 365694,
     "min_price_30d": 365694,
-    "avg_price_30d": 726446,
+    "avg_price_30d": 725629,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-06T21:46:40+00:00"
+    "last_attempt_at": "2026-11-07T06:03:45+00:00"
   },
   {
     "origin": "ICN",
@@ -961,22 +961,22 @@
     "destination_city": "Saipan",
     "min_nights": 4,
     "max_stops": 1,
-    "sample_count": 827,
+    "sample_count": 830,
     "no_direct": false,
-    "last_collected_at": "2026-11-06T21:56:02+00:00",
-    "latest_price": 662300,
-    "latest_depart_date": "2026-12-25",
-    "latest_return_date": "2027-01-04",
-    "dep_time": "22:15",
-    "arr_time": "03:40+1",
-    "stops": "0",
-    "airline": "제주항공",
-    "prev_price": 662100,
+    "last_collected_at": "2026-11-07T06:09:33+00:00",
+    "latest_price": 809216,
+    "latest_depart_date": "2027-02-27",
+    "latest_return_date": "2027-03-08",
+    "dep_time": "20:30",
+    "arr_time": "01:45",
+    "stops": "1",
+    "airline": "필리핀항공",
+    "prev_price": 662300,
     "min_price_30d": 632300,
-    "avg_price_30d": 1352932,
+    "avg_price_30d": 1355125,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-06T21:56:02+00:00"
+    "last_attempt_at": "2026-11-07T06:12:01+00:00"
   },
   {
     "origin": "ICN",
@@ -988,9 +988,9 @@
     "destination_city": "Almaty",
     "min_nights": 5,
     "max_stops": 1,
-    "sample_count": 2075,
+    "sample_count": 2098,
     "no_direct": false,
-    "last_collected_at": "2026-11-06T22:02:56+00:00",
+    "last_collected_at": "2026-11-07T06:18:51+00:00",
     "latest_price": 730462,
     "latest_depart_date": "2027-05-10",
     "latest_return_date": "2027-05-16",
@@ -998,12 +998,12 @@
     "arr_time": "12:50+1",
     "stops": "1",
     "airline": "비엣젯항공",
-    "prev_price": 813938,
+    "prev_price": 730462,
     "min_price_30d": 663544,
-    "avg_price_30d": 1005820,
+    "avg_price_30d": 1006000,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-06T22:02:56+00:00"
+    "last_attempt_at": "2026-11-07T06:18:51+00:00"
   },
   {
     "origin": "ICN",
@@ -1015,9 +1015,9 @@
     "destination_city": "London, United Kingdom",
     "min_nights": 6,
     "max_stops": 0,
-    "sample_count": 1056,
+    "sample_count": 1059,
     "no_direct": false,
-    "last_collected_at": "2026-11-06T16:26:36+00:00",
+    "last_collected_at": "2026-11-07T06:20:07+00:00",
     "latest_price": 1554100,
     "latest_depart_date": "2027-02-04",
     "latest_return_date": "2027-02-11",
@@ -1025,12 +1025,12 @@
     "arr_time": "16:30",
     "stops": "0",
     "airline": "대한항공",
-    "prev_price": 1574400,
+    "prev_price": 1554100,
     "min_price_30d": 1219000,
-    "avg_price_30d": 1560755,
-    "collect_status": "parse_zero",
-    "collect_status_detail": "li 13개 중 ₩ 가격 없음 (통화/로케일 또는 파서 확인)",
-    "last_attempt_at": "2026-11-06T22:09:55+00:00"
+    "avg_price_30d": 1561683,
+    "collect_status": "ok",
+    "collect_status_detail": "",
+    "last_attempt_at": "2026-11-07T06:24:58+00:00"
   },
   {
     "origin": "ICN",
@@ -1042,22 +1042,22 @@
     "destination_city": "Rome, Italy",
     "min_nights": 6,
     "max_stops": 0,
-    "sample_count": 972,
+    "sample_count": 974,
     "no_direct": false,
-    "last_collected_at": "2026-11-06T22:14:50+00:00",
-    "latest_price": 1510600,
-    "latest_depart_date": "2027-06-01",
-    "latest_return_date": "2027-06-08",
-    "dep_time": "12:40",
-    "arr_time": "19:15",
+    "last_collected_at": "2026-11-07T06:29:29+00:00",
+    "latest_price": 1576600,
+    "latest_depart_date": "2026-12-20",
+    "latest_return_date": "2027-01-03",
+    "dep_time": "11:00",
+    "arr_time": "17:00",
     "stops": "0",
     "airline": "Trinity Airways",
-    "prev_price": 1338900,
+    "prev_price": 1510600,
     "min_price_30d": 1226700,
-    "avg_price_30d": 2205111,
+    "avg_price_30d": 2200168,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-06T22:15:32+00:00"
+    "last_attempt_at": "2026-11-07T06:29:50+00:00"
   },
   {
     "origin": "ICN",
@@ -1069,22 +1069,22 @@
     "destination_city": "Barcelona, Spain",
     "min_nights": 6,
     "max_stops": 0,
-    "sample_count": 1062,
+    "sample_count": 1072,
     "no_direct": false,
-    "last_collected_at": "2026-11-06T22:19:44+00:00",
-    "latest_price": 1406400,
-    "latest_depart_date": "2026-12-21",
-    "latest_return_date": "2026-12-28",
+    "last_collected_at": "2026-11-07T06:33:22+00:00",
+    "latest_price": 1536400,
+    "latest_depart_date": "2027-02-24",
+    "latest_return_date": "2027-03-03",
     "dep_time": "11:30",
     "arr_time": "18:25",
     "stops": "0",
     "airline": "Trinity Airways",
-    "prev_price": 1406200,
+    "prev_price": 1406400,
     "min_price_30d": 1319400,
-    "avg_price_30d": 2111368,
+    "avg_price_30d": 2119618,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-06T22:19:44+00:00"
+    "last_attempt_at": "2026-11-07T06:33:22+00:00"
   },
   {
     "origin": "ICN",
@@ -1096,22 +1096,22 @@
     "destination_city": "Prague, Czechia",
     "min_nights": 6,
     "max_stops": 1,
-    "sample_count": 1950,
+    "sample_count": 1969,
     "no_direct": false,
-    "last_collected_at": "2026-11-06T22:26:16+00:00",
+    "last_collected_at": "2026-11-07T06:39:32+00:00",
     "latest_price": 816000,
-    "latest_depart_date": "2027-02-23",
-    "latest_return_date": "2027-03-02",
+    "latest_depart_date": "2027-02-24",
+    "latest_return_date": "2027-03-03",
     "dep_time": "13:20",
     "arr_time": "22:40",
     "stops": "1",
     "airline": "에어프랑스",
-    "prev_price": 814200,
+    "prev_price": 816000,
     "min_price_30d": 789600,
-    "avg_price_30d": 1468986,
+    "avg_price_30d": 1471190,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-06T22:26:58+00:00"
+    "last_attempt_at": "2026-11-07T06:39:32+00:00"
   },
   {
     "origin": "ICN",
@@ -1123,22 +1123,22 @@
     "destination_city": "Vienna, Austria",
     "min_nights": 6,
     "max_stops": 1,
-    "sample_count": 1257,
+    "sample_count": 1272,
     "no_direct": false,
-    "last_collected_at": "2026-11-06T22:33:40+00:00",
+    "last_collected_at": "2026-11-07T06:46:36+00:00",
     "latest_price": 851200,
-    "latest_depart_date": "2027-02-23",
-    "latest_return_date": "2027-03-02",
+    "latest_depart_date": "2027-02-24",
+    "latest_return_date": "2027-03-03",
     "dep_time": "13:20",
     "arr_time": "22:55",
     "stops": "1",
     "airline": "에어프랑스",
-    "prev_price": 849200,
+    "prev_price": 851200,
     "min_price_30d": 824200,
-    "avg_price_30d": 1380048,
+    "avg_price_30d": 1384974,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-06T22:33:40+00:00"
+    "last_attempt_at": "2026-11-07T06:46:36+00:00"
   },
   {
     "origin": "ICN",
@@ -1150,22 +1150,22 @@
     "destination_city": "Istanbul, Turkey",
     "min_nights": 6,
     "max_stops": 1,
-    "sample_count": 1538,
+    "sample_count": 1539,
     "no_direct": false,
-    "last_collected_at": "2026-11-07T00:37:29+00:00",
-    "latest_price": 891200,
-    "latest_depart_date": "2027-05-10",
-    "latest_return_date": "2027-05-16",
-    "dep_time": "14:20",
-    "arr_time": "11:25+1",
+    "last_collected_at": "2026-11-07T08:59:18+00:00",
+    "latest_price": 867800,
+    "latest_depart_date": "2026-12-25",
+    "latest_return_date": "2027-01-03",
+    "dep_time": "16:15",
+    "arr_time": "07:10",
     "stops": "1",
-    "airline": "몽골항공",
+    "airline": "중국남방항공",
     "prev_price": 821600,
     "min_price_30d": 788500,
-    "avg_price_30d": 1285170,
+    "avg_price_30d": 1284406,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-07T00:37:29+00:00"
+    "last_attempt_at": "2026-11-07T09:05:32+00:00"
   },
   {
     "origin": "ICN",
@@ -1177,9 +1177,9 @@
     "destination_city": "Frankfurt, Germany",
     "min_nights": 6,
     "max_stops": 1,
-    "sample_count": 2136,
+    "sample_count": 2138,
     "no_direct": false,
-    "last_collected_at": "2026-11-07T00:43:11+00:00",
+    "last_collected_at": "2026-11-07T09:10:55+00:00",
     "latest_price": 994000,
     "latest_depart_date": "2027-02-27",
     "latest_return_date": "2027-03-07",
@@ -1189,10 +1189,10 @@
     "airline": "폴란드항공",
     "prev_price": 1014100,
     "min_price_30d": 807700,
-    "avg_price_30d": 1442252,
+    "avg_price_30d": 1444259,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-07T00:43:11+00:00"
+    "last_attempt_at": "2026-11-07T09:17:09+00:00"
   },
   {
     "origin": "ICN",
@@ -1204,22 +1204,22 @@
     "destination_city": "Zurich, Switzerland",
     "min_nights": 6,
     "max_stops": 1,
-    "sample_count": 1386,
+    "sample_count": 1388,
     "no_direct": false,
-    "last_collected_at": "2026-11-07T00:54:31+00:00",
-    "latest_price": 1143400,
-    "latest_depart_date": "2027-02-04",
-    "latest_return_date": "2027-02-11",
-    "dep_time": "18:00",
-    "arr_time": "12:05+1",
+    "last_collected_at": "2026-11-07T09:29:04+00:00",
+    "latest_price": 945900,
+    "latest_depart_date": "2027-02-24",
+    "latest_return_date": "2027-03-03",
+    "dep_time": "22:20",
+    "arr_time": "12:25+1",
     "stops": "1",
-    "airline": "에티하드항공",
+    "airline": "에미레이트항공",
     "prev_price": 963200,
     "min_price_30d": 865200,
-    "avg_price_30d": 1503122,
+    "avg_price_30d": 1502613,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-07T00:54:31+00:00"
+    "last_attempt_at": "2026-11-07T09:29:04+00:00"
   },
   {
     "id": "ICN-LIS",
@@ -1234,7 +1234,7 @@
     "destination_city": "Lisbon",
     "sample_count": 471,
     "no_direct": false,
-    "last_collected_at": "2026-11-07T00:57:32+00:00",
+    "last_collected_at": "2026-11-07T09:30:34+00:00",
     "latest_price": 1974200,
     "latest_depart_date": "2027-05-10",
     "latest_return_date": "2027-05-16",
@@ -1247,7 +1247,7 @@
     "avg_price_30d": 2237418,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-07T00:57:46+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "id": "ICN-LAX",
@@ -1273,9 +1273,9 @@
     "prev_price": 1142000,
     "min_price_30d": 1000400,
     "avg_price_30d": 1541518,
-    "collect_status": "ok",
-    "collect_status_detail": "",
-    "last_attempt_at": "2026-11-07T01:00:22+00:00"
+    "collect_status": "skipped_budget",
+    "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "id": "ICN-JFK",
@@ -1301,9 +1301,9 @@
     "prev_price": 1249400,
     "min_price_30d": 1178500,
     "avg_price_30d": 1667821,
-    "collect_status": "ok",
-    "collect_status_detail": "",
-    "last_attempt_at": "2026-11-07T01:03:50+00:00"
+    "collect_status": "skipped_budget",
+    "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "id": "ICN-SFO",
@@ -1331,7 +1331,7 @@
     "avg_price_30d": 1409216,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "id": "ICN-SEA",
@@ -1359,7 +1359,7 @@
     "avg_price_30d": 1704143,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "id": "ICN-HNL",
@@ -1387,7 +1387,7 @@
     "avg_price_30d": 1609029,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "id": "ICN-YVR",
@@ -1415,7 +1415,7 @@
     "avg_price_30d": 1626780,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "id": "ICN-SYD",
@@ -1443,7 +1443,7 @@
     "avg_price_30d": 1274773,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "id": "ICN-IAO",
@@ -1471,7 +1471,7 @@
     "avg_price_30d": 775832,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "id": "ICN-LOP",
@@ -1499,7 +1499,7 @@
     "avg_price_30d": 1106732,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "id": "ICN-KLO",
@@ -1527,7 +1527,7 @@
     "avg_price_30d": 849028,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "id": "ICN-TAG",
@@ -1555,7 +1555,7 @@
     "avg_price_30d": 571912,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "id": "ICN-LGK",
@@ -1583,7 +1583,7 @@
     "avg_price_30d": 929715,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "id": "ICN-BNE",
@@ -1596,22 +1596,22 @@
     "flag": "🇦🇺",
     "origin_city": "Seoul",
     "destination_city": "Brisbane",
-    "sample_count": 698,
+    "sample_count": 711,
     "no_direct": false,
-    "last_collected_at": "2026-11-06T22:36:28+00:00",
-    "latest_price": 667727,
+    "last_collected_at": "2026-11-07T06:48:21+00:00",
+    "latest_price": 665403,
     "latest_depart_date": "2027-06-03",
     "latest_return_date": "2027-06-08",
     "dep_time": "21:30",
     "arr_time": "08:00+1",
     "stops": "0",
     "airline": "젯스타",
-    "prev_price": 850745,
-    "min_price_30d": 667727,
-    "avg_price_30d": 1492069,
+    "prev_price": 667727,
+    "min_price_30d": 665403,
+    "avg_price_30d": 1503510,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-06T22:36:28+00:00"
+    "last_attempt_at": "2026-11-07T06:48:45+00:00"
   },
   {
     "id": "ICN-AKL",
@@ -1624,22 +1624,22 @@
     "flag": "🇳🇿",
     "origin_city": "Seoul",
     "destination_city": "Auckland",
-    "sample_count": 1434,
+    "sample_count": 1452,
     "no_direct": false,
-    "last_collected_at": "2026-11-06T22:41:45+00:00",
-    "latest_price": 904132,
-    "latest_depart_date": "2027-08-10",
-    "latest_return_date": "2027-08-17",
-    "dep_time": "21:30",
+    "last_collected_at": "2026-11-07T06:54:34+00:00",
+    "latest_price": 893690,
+    "latest_depart_date": "2027-06-02",
+    "latest_return_date": "2027-06-09",
+    "dep_time": "21:50",
     "arr_time": "16:10+1",
     "stops": "1",
     "airline": "젯스타",
-    "prev_price": 1030100,
+    "prev_price": 904132,
     "min_price_30d": 860029,
-    "avg_price_30d": 1821316,
+    "avg_price_30d": 1821485,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-06T22:41:45+00:00"
+    "last_attempt_at": "2026-11-07T06:54:34+00:00"
   },
   {
     "id": "ICN-YYZ",
@@ -1652,22 +1652,22 @@
     "flag": "🇨🇦",
     "origin_city": "Seoul",
     "destination_city": "Toronto",
-    "sample_count": 1756,
+    "sample_count": 1780,
     "no_direct": false,
-    "last_collected_at": "2026-11-06T22:50:18+00:00",
-    "latest_price": 1622775,
-    "latest_depart_date": "2027-06-01",
-    "latest_return_date": "2027-06-08",
+    "last_collected_at": "2026-11-07T07:00:13+00:00",
+    "latest_price": 1617944,
+    "latest_depart_date": "2027-05-10",
+    "latest_return_date": "2027-05-16",
     "dep_time": "20:45",
     "arr_time": "00:10+1",
     "stops": "1",
     "airline": "",
-    "prev_price": 1628471,
+    "prev_price": 1622775,
     "min_price_30d": 1368531,
-    "avg_price_30d": 2033497,
+    "avg_price_30d": 2032704,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-06T22:50:18+00:00"
+    "last_attempt_at": "2026-11-07T07:00:13+00:00"
   },
   {
     "id": "ICN-ORD",
@@ -1680,22 +1680,22 @@
     "flag": "🇺🇸",
     "origin_city": "Seoul",
     "destination_city": "Chicago",
-    "sample_count": 1682,
+    "sample_count": 1692,
     "no_direct": false,
-    "last_collected_at": "2026-11-06T22:58:17+00:00",
+    "last_collected_at": "2026-11-07T07:02:14+00:00",
     "latest_price": 1679800,
-    "latest_depart_date": "2026-12-21",
-    "latest_return_date": "2026-12-28",
+    "latest_depart_date": "2026-12-25",
+    "latest_return_date": "2027-01-03",
     "dep_time": "18:55",
-    "arr_time": "14:37+1",
+    "arr_time": "20:04",
     "stops": "1",
     "airline": "에어캐나다",
-    "prev_price": 1679300,
+    "prev_price": 1679800,
     "min_price_30d": 1498600,
-    "avg_price_30d": 2186417,
+    "avg_price_30d": 2186773,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-06T22:58:17+00:00"
+    "last_attempt_at": "2026-11-07T07:09:52+00:00"
   },
   {
     "id": "ICN-BUD",
@@ -1708,22 +1708,22 @@
     "flag": "🇭🇺",
     "origin_city": "Seoul",
     "destination_city": "Budapest, Hungary",
-    "sample_count": 1372,
+    "sample_count": 1374,
     "no_direct": false,
-    "last_collected_at": "2026-11-06T23:04:05+00:00",
-    "latest_price": 827800,
-    "latest_depart_date": "2027-02-23",
-    "latest_return_date": "2027-03-02",
-    "dep_time": "23:05",
-    "arr_time": "11:30+1",
+    "last_collected_at": "2026-11-07T07:21:45+00:00",
+    "latest_price": 986700,
+    "latest_depart_date": "2026-12-29",
+    "latest_return_date": "2027-01-05",
+    "dep_time": "12:55",
+    "arr_time": "23:40",
     "stops": "1",
-    "airline": "KLM",
-    "prev_price": 825800,
+    "airline": "루프트한자",
+    "prev_price": 827800,
     "min_price_30d": 802000,
-    "avg_price_30d": 1421652,
+    "avg_price_30d": 1420260,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-06T23:04:05+00:00"
+    "last_attempt_at": "2026-11-07T07:21:45+00:00"
   },
   {
     "id": "ICN-AMS",
@@ -1736,22 +1736,22 @@
     "flag": "🇳🇱",
     "origin_city": "Seoul",
     "destination_city": "Amsterdam, Netherlands",
-    "sample_count": 1586,
+    "sample_count": 1587,
     "no_direct": false,
-    "last_collected_at": "2026-11-06T23:11:47+00:00",
-    "latest_price": 883900,
-    "latest_depart_date": "2026-12-28",
-    "latest_return_date": "2027-01-04",
-    "dep_time": "09:25",
-    "arr_time": "18:35",
-    "stops": "1",
-    "airline": "중국남방항공",
-    "prev_price": 881100,
+    "last_collected_at": "2026-11-07T07:30:30+00:00",
+    "latest_price": 1744300,
+    "latest_depart_date": "2026-12-22",
+    "latest_return_date": "2026-12-29",
+    "dep_time": "12:10",
+    "arr_time": "18:30",
+    "stops": "0",
+    "airline": "대한항공",
+    "prev_price": 883900,
     "min_price_30d": 820300,
-    "avg_price_30d": 1448429,
+    "avg_price_30d": 1449019,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-06T23:11:47+00:00"
+    "last_attempt_at": "2026-11-07T07:33:58+00:00"
   },
   {
     "id": "ICN-MAD",
@@ -1777,9 +1777,9 @@
     "prev_price": 915200,
     "min_price_30d": 890700,
     "avg_price_30d": 1411193,
-    "collect_status": "ok",
-    "collect_status_detail": "",
-    "last_attempt_at": "2026-11-06T23:20:18+00:00"
+    "collect_status": "parse_zero",
+    "collect_status_detail": "li 13개 중 ₩ 가격 없음 (통화/로케일 또는 파서 확인)",
+    "last_attempt_at": "2026-11-07T07:46:26+00:00"
   },
   {
     "id": "ICN-MXP",
@@ -1807,7 +1807,7 @@
     "avg_price_30d": 1775935,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "id": "ICN-DYG",
@@ -1835,7 +1835,7 @@
     "avg_price_30d": 929067,
     "collect_status": "skipped_budget",
     "collect_status_detail": "시간 예산 초과로 이번 런에서 건너뜀",
-    "last_attempt_at": "2026-11-07T01:16:11+00:00"
+    "last_attempt_at": "2026-11-07T09:33:03+00:00"
   },
   {
     "id": "ICN-ISG",
@@ -1848,22 +1848,22 @@
     "flag": "🇯🇵",
     "origin_city": "Seoul",
     "destination_city": "Ishigaki",
-    "sample_count": 1098,
+    "sample_count": 1107,
     "no_direct": false,
-    "last_collected_at": "2026-11-06T23:28:40+00:00",
-    "latest_price": 587100,
-    "latest_depart_date": "2027-06-03",
-    "latest_return_date": "2027-06-08",
+    "last_collected_at": "2026-11-07T07:56:12+00:00",
+    "latest_price": 622100,
+    "latest_depart_date": "2027-05-10",
+    "latest_return_date": "2027-05-15",
     "dep_time": "19:55",
     "arr_time": "11:30+1",
     "stops": "1",
     "airline": "전일본공수",
-    "prev_price": 551200,
+    "prev_price": 587100,
     "min_price_30d": 525000,
-    "avg_price_30d": 789919,
+    "avg_price_30d": 788210,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-06T23:28:40+00:00"
+    "last_attempt_at": "2026-11-07T07:56:12+00:00"
   },
   {
     "id": "ICN-TAK",
@@ -1876,22 +1876,22 @@
     "flag": "🇯🇵",
     "origin_city": "Seoul",
     "destination_city": "Takamatsu",
-    "sample_count": 1279,
+    "sample_count": 1289,
     "no_direct": false,
-    "last_collected_at": "2026-11-06T23:36:28+00:00",
-    "latest_price": 394800,
-    "latest_depart_date": "2026-12-26",
-    "latest_return_date": "2027-01-03",
-    "dep_time": "08:45",
-    "arr_time": "10:30",
+    "last_collected_at": "2026-11-07T08:05:06+00:00",
+    "latest_price": 518800,
+    "latest_depart_date": "2026-12-24",
+    "latest_return_date": "2026-12-27",
+    "dep_time": "14:10",
+    "arr_time": "15:50",
     "stops": "0",
-    "airline": "에어서울",
-    "prev_price": 329500,
+    "airline": "진에어",
+    "prev_price": 394800,
     "min_price_30d": 329500,
-    "avg_price_30d": 618679,
+    "avg_price_30d": 619153,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-06T23:36:28+00:00"
+    "last_attempt_at": "2026-11-07T08:05:48+00:00"
   },
   {
     "id": "ICN-KMJ",
@@ -1904,22 +1904,22 @@
     "flag": "🇯🇵",
     "origin_city": "Seoul",
     "destination_city": "Kumamoto",
-    "sample_count": 1263,
+    "sample_count": 1271,
     "no_direct": false,
-    "last_collected_at": "2026-11-06T23:44:44+00:00",
-    "latest_price": 482800,
-    "latest_depart_date": "2027-02-27",
-    "latest_return_date": "2027-03-08",
-    "dep_time": "07:50",
-    "arr_time": "09:25",
+    "last_collected_at": "2026-11-07T08:14:35+00:00",
+    "latest_price": 557200,
+    "latest_depart_date": "2026-12-31",
+    "latest_return_date": "2027-01-03",
+    "dep_time": "16:45",
+    "arr_time": "18:20",
     "stops": "0",
-    "airline": "Trinity Airways",
-    "prev_price": 432500,
+    "airline": "대한항공",
+    "prev_price": 482800,
     "min_price_30d": 353300,
-    "avg_price_30d": 645896,
+    "avg_price_30d": 647729,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-06T23:44:44+00:00"
+    "last_attempt_at": "2026-11-07T08:15:40+00:00"
   },
   {
     "id": "ICN-UKB",
@@ -1932,22 +1932,22 @@
     "flag": "🇯🇵",
     "origin_city": "Seoul",
     "destination_city": "Kobe",
-    "sample_count": 1238,
+    "sample_count": 1260,
     "no_direct": false,
-    "last_collected_at": "2026-11-06T23:54:00+00:00",
-    "latest_price": 525700,
-    "latest_depart_date": "2027-06-05",
-    "latest_return_date": "2027-06-13",
-    "dep_time": "09:05",
-    "arr_time": "10:55",
+    "last_collected_at": "2026-11-07T08:21:46+00:00",
+    "latest_price": 476200,
+    "latest_depart_date": "2027-02-27",
+    "latest_return_date": "2027-03-07",
+    "dep_time": "12:45",
+    "arr_time": "14:30",
     "stops": "0",
-    "airline": "대한항공",
-    "prev_price": 390300,
+    "airline": "진에어",
+    "prev_price": 525700,
     "min_price_30d": 377200,
-    "avg_price_30d": 672334,
+    "avg_price_30d": 672573,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-06T23:54:00+00:00"
+    "last_attempt_at": "2026-11-07T08:21:46+00:00"
   },
   {
     "id": "ICN-KMI",
@@ -1960,21 +1960,21 @@
     "flag": "🇯🇵",
     "origin_city": "Seoul",
     "destination_city": "Miyazaki",
-    "sample_count": 1053,
+    "sample_count": 1064,
     "no_direct": false,
-    "last_collected_at": "2026-11-07T00:03:57+00:00",
-    "latest_price": 622100,
-    "latest_depart_date": "2027-06-05",
-    "latest_return_date": "2027-06-13",
-    "dep_time": "07:40",
-    "arr_time": "13:40",
-    "stops": "1",
-    "airline": "전일본공수",
+    "last_collected_at": "2026-11-07T08:30:02+00:00",
+    "latest_price": 619400,
+    "latest_depart_date": "2026-12-25",
+    "latest_return_date": "2027-01-02",
+    "dep_time": "09:20",
+    "arr_time": "11:00",
+    "stops": "0",
+    "airline": "아시아나항공",
     "prev_price": 587100,
     "min_price_30d": 438100,
-    "avg_price_30d": 657875,
+    "avg_price_30d": 662032,
     "collect_status": "ok",
     "collect_status_detail": "",
-    "last_attempt_at": "2026-11-07T00:03:57+00:00"
+    "last_attempt_at": "2026-11-07T08:30:02+00:00"
   }
 ]
