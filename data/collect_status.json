@@ -1,576 +1,613 @@
 {
-  "updated_at": "2026-11-15T06:33:15+00:00",
+  "updated_at": "2026-11-15T19:24:24+00:00",
   "routes": {
     "ICN-LHR": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 2,
+      "rows": 2,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T19:07:12+00:00"
     },
     "ICN-FCO": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 20,
+      "ok": 7,
+      "rows": 7,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T19:11:56+00:00"
     },
     "ICN-BCN": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 5,
+      "rows": 5,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T19:16:31+00:00"
     },
     "ICN-PRG": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 13,
+      "ok": 3,
+      "rows": 4,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-VIE": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-IST": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-FRA": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-ZRH": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-NRT": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 13,
+      "rows": 14,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T15:51:41+00:00"
     },
     "ICN-KIX": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 16,
+      "rows": 27,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T15:57:20+00:00"
     },
     "ICN-DAD": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 17,
+      "rows": 33,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T16:00:49+00:00"
     },
     "ICN-DPS": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 16,
+      "rows": 29,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T16:05:42+00:00"
     },
     "ICN-ULN": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 15,
+      "rows": 25,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T16:12:03+00:00"
     },
     "ICN-PVG": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 16,
+      "rows": 29,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T16:17:02+00:00"
     },
     "ICN-TPE": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 17,
+      "rows": 33,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T16:19:55+00:00"
     },
     "ICN-KHH": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 14,
+      "rows": 28,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T16:23:45+00:00"
     },
     "ICN-PQC": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 17,
+      "rows": 28,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T16:28:10+00:00"
     },
     "ICN-GUM": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 16,
+      "rows": 16,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T16:30:02+00:00"
     },
     "ICN-SHI": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 3,
+      "rows": 3,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T16:38:45+00:00"
     },
     "ICN-KBV": {
-      "status": "blocked",
-      "detail": "li 13개 중 ₩ 가격 없음 (통화/로케일 또는 파서 확인)",
+      "status": "parse_zero",
+      "detail": "li 78개, 왕복 항목 파싱 0건 (사이트 구조 변경?)",
       "attempts": 20,
       "ok": 0,
       "rows": 0,
       "implausible": 0,
-      "last_attempt_at": "2026-11-15T06:16:32+00:00"
+      "last_attempt_at": "2026-11-15T15:39:45+00:00"
     },
     "ICN-ATH": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 12,
+      "rows": 12,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T16:47:24+00:00"
     },
     "ICN-CDG": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 12,
+      "rows": 12,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T16:50:45+00:00"
     },
     "ICN-FUK": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 16,
+      "rows": 29,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T16:55:28+00:00"
     },
     "ICN-CTS": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 17,
+      "rows": 31,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T16:59:47+00:00"
     },
     "ICN-OKA": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 16,
+      "rows": 29,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T17:04:39+00:00"
     },
     "ICN-NGO": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 20,
+      "ok": 15,
+      "rows": 21,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T17:10:16+00:00"
     },
     "ICN-HKG": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 20,
+      "ok": 18,
+      "rows": 35,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T17:14:07+00:00"
     },
     "ICN-MFM": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 20,
+      "ok": 18,
+      "rows": 34,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T17:18:49+00:00"
     },
     "ICN-PEK": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 20,
+      "ok": 15,
+      "rows": 27,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T17:25:04+00:00"
     },
     "ICN-TAO": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 20,
+      "ok": 14,
+      "rows": 24,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T17:32:54+00:00"
     },
     "ICN-BKK": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 20,
+      "ok": 18,
+      "rows": 31,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T17:39:56+00:00"
     },
     "ICN-HKT": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 20,
+      "ok": 17,
+      "rows": 32,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T17:45:14+00:00"
     },
     "ICN-CNX": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 20,
+      "ok": 18,
+      "rows": 25,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T17:51:30+00:00"
     },
     "ICN-SGN": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 20,
+      "ok": 18,
+      "rows": 34,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T17:56:47+00:00"
     },
     "ICN-HAN": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 20,
+      "ok": 19,
+      "rows": 35,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T18:01:44+00:00"
     },
     "ICN-CXR": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 20,
+      "ok": 18,
+      "rows": 29,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T18:08:07+00:00"
     },
     "ICN-CEB": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 20,
+      "ok": 17,
+      "rows": 25,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T18:16:38+00:00"
     },
     "ICN-MNL": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 20,
+      "ok": 16,
+      "rows": 25,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T18:23:24+00:00"
     },
     "ICN-KUL": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 20,
+      "ok": 14,
+      "rows": 19,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T18:31:46+00:00"
     },
     "ICN-BKI": {
       "status": "ok",
       "detail": "",
       "attempts": 18,
-      "ok": 9,
-      "rows": 11,
+      "ok": 14,
+      "rows": 26,
       "implausible": 0,
-      "last_attempt_at": "2026-11-15T06:28:35+00:00"
+      "last_attempt_at": "2026-11-15T15:44:42+00:00"
     },
     "ICN-SIN": {
       "status": "ok",
       "detail": "",
-      "attempts": 11,
-      "ok": 3,
-      "rows": 3,
+      "attempts": 18,
+      "ok": 15,
+      "rows": 15,
       "implausible": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T18:35:17+00:00"
     },
     "ICN-REP": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 8,
+      "rows": 8,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T18:44:46+00:00"
     },
     "ICN-SPN": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 20,
+      "ok": 6,
+      "rows": 6,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T18:54:24+00:00"
     },
     "ICN-ALA": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
-      "attempts": 0,
-      "ok": 0,
-      "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "status": "ok",
+      "detail": "",
+      "attempts": 18,
+      "ok": 12,
+      "rows": 20,
+      "implausible": 0,
+      "last_attempt_at": "2026-11-15T19:01:49+00:00"
     },
     "ICN-LIS": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-LAX": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-JFK": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-SFO": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-SEA": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-HNL": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-YVR": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-SYD": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-IAO": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-BNE": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-AKL": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-YYZ": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-ORD": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-BUD": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-AMS": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-MAD": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-MXP": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-DYG": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-ISG": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-TAK": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-KMJ": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-UKB": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-TAG": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-KLO": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-LOP": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-LGK": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     },
     "ICN-KMI": {
-      "status": "skipped_blocked",
-      "detail": "연속 차단 감지로 런 조기 중단",
+      "status": "skipped_budget",
+      "detail": "시간 예산 초과로 이번 런에서 건너뜀",
       "attempts": 0,
       "ok": 0,
       "rows": 0,
-      "last_attempt_at": "2026-11-15T06:33:15+00:00"
+      "last_attempt_at": "2026-11-15T19:24:24+00:00"
     }
   }
 }
